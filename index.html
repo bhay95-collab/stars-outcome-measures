@@ -3296,22 +3296,17 @@ async function exportASIAPdf(){
   }
   const btn=document.querySelector('#perf-panel-isncsci .pdf-btn');
   if(btn){btn.textContent='Generating…';btn.disabled=true;}
-
   try{
     const {PDFDocument,rgb,StandardFonts}=PDFLib;
-
-    // Load template
     const resp=await fetch('assets/ASIA-ISCOS-IntlWorksheet_2019.pdf');
     if(!resp.ok) throw new Error('Template PDF not found at assets/ASIA-ISCOS-IntlWorksheet_2019.pdf');
     const pdfDoc=await PDFDocument.load(await resp.arrayBuffer());
-    const page=pdfDoc.getPages()[0];
+    const page=pdfDoc.getPages()[0]; // landscape 792×612 pt
     const font =await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontB=await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const fontM=await pdfDoc.embedFont(StandardFonts.Courier);
     const BLACK=rgb(0,0,0);
-    const BLUE =rgb(0.1,0.2,0.65);
 
-    // Read a DOM field (input.value or element.textContent)
     const gv=(id)=>{
       const el=document.getElementById(id);
       if(!el) return '';
@@ -3319,91 +3314,94 @@ async function exportASIAPdf(){
       return(v==='—'||v==='')? '':v;
     };
 
-    // Draw text; centre=true centres within centerW pts starting at x
-    const draw=(text,x,y,{sz=8,f=fontM,col=BLACK,centre=false,cw=0}={})=>{
-      if(!text) return;
-      let dx=x;
-      if(centre&&cw){const tw=f.widthOfTextAtSize(text,sz);dx=x+Math.max(0,(cw-tw)/2);}
-      page.drawText(text,{x:dx,y,size:sz,font:f,color:col});
+    // Draw text centred in cell (x0=left edge, cw=width). cw=0 → left-aligned at x0.
+    const dc=(text,x0,y,cw=0,{sz=8,f=fontM,col=BLACK}={})=>{
+      if(!text||text==='—') return;
+      if(cw>0){const tw=f.widthOfTextAtSize(text,sz);page.drawText(text,{x:x0+Math.max(0,(cw-tw)/2),y,size:sz,font:f,color:col});}
+      else{page.drawText(text,{x:x0,y,size:sz,font:f,color:col});}
     };
 
-    // ── Patient header ──────────────────────────────────────
-    draw(gv('pt-name'),    36, 580,{sz:9,f:font});
-    draw(gv('pt-date'),   432, 580,{sz:9,f:font});
-    draw(gv('pt-assessor'),52, 563,{sz:9,f:font});
+    // ── Patient header ──────────────────────────────────────────
+    // Input underlines (from PDF drawings): Name x=436–585 y=26; Date x=654–767; Examiner x=446–585 y=49
+    dc(gv('pt-name'),    438,589,0,{sz:9,f:font});
+    dc(gv('pt-date'),    656,589,0,{sz:9,f:font});
+    dc(gv('pt-assessor'),448,565,0,{sz:9,f:font});
 
-    // ── Scoring grid ────────────────────────────────────────
-    // Column x-centres (pdf-lib x = same as fitz x for this page)
-    const COL={RM:24,RLT:73,RPP:122,LLT:216,LPP:265,LM:315};
-    const MOTOR_LVL=new Set(['C5','C6','C7','C8','T1','L2','L3','L4','L5','S1']);
+    // ── Main scoring grid ───────────────────────────────────────
+    // Column cells measured from PDF rectangles: [x0, width]
+    const C={RM:[190,30],RLT:[227,35],RPP:[273,35],LLT:[490,35],LPP:[536,35],LM:[579,30]};
+    const MOTOR=new Set(['C5','C6','C7','C8','T1','L2','L3','L4','L5','S1']);
 
-    // pdf-lib y per level (page_height − (row_top + 11))
+    // Text y = cell-centre − 2 (pdf-lib baseline in bottom-left coords)
+    // Cell centres derived from rect analysis (612 − fitz_centre_y)
     const LVL_Y={
-      C2:511,C3:495,C4:479,C5:463,C6:447,C7:431,C8:415,
-      T1:399,T2:383,T3:367,T4:351,T5:335,T6:319,T7:303,
-      T8:287,T9:271,T10:255,T11:239,T12:223,
-      L1:207,L2:191,L3:175,L4:159,L5:143,
-      S1:127,S2:111,S3:95,'S4-5':79
-    };
-
-    const drawCell=(val,cx,y)=>{
-      if(!val||val==='—') return;
-      const tw=fontM.widthOfTextAtSize(val,8);
-      draw(val,cx-tw/2,y,{sz:8,f:fontM});
+      C2:504,C3:491,C4:478,C5:465,C6:452,C7:439,C8:426,
+      T1:412,T2:399,T3:387,T4:373,T5:360,T6:347,T7:334,
+      T8:321,T9:308,T10:295,T11:282,T12:269,
+      L1:256,L2:243,L3:230,L4:217,L5:204,
+      S1:191,S2:178,S3:165,'S4-5':152
     };
 
     for(const lv of Object.keys(LVL_Y)){
       const y=LVL_Y[lv];
-      drawCell(gv(`sci-r-lt-${lv}`), COL.RLT, y);
-      drawCell(gv(`sci-r-pp-${lv}`), COL.RPP, y);
-      drawCell(gv(`sci-l-lt-${lv}`), COL.LLT, y);
-      drawCell(gv(`sci-l-pp-${lv}`), COL.LPP, y);
-      if(MOTOR_LVL.has(lv)){
-        drawCell(gv(`sci-r-m-${lv}`), COL.RM, y);
-        drawCell(gv(`sci-l-m-${lv}`), COL.LM, y);
+      dc(gv(`sci-r-lt-${lv}`),C.RLT[0],y,C.RLT[1]);
+      dc(gv(`sci-r-pp-${lv}`),C.RPP[0],y,C.RPP[1]);
+      dc(gv(`sci-l-lt-${lv}`),C.LLT[0],y,C.LLT[1]);
+      dc(gv(`sci-l-pp-${lv}`),C.LPP[0],y,C.LPP[1]);
+      if(MOTOR.has(lv)){
+        dc(gv(`sci-r-m-${lv}`),C.RM[0],y,C.RM[1]);
+        dc(gv(`sci-l-m-${lv}`),C.LM[0],y,C.LM[1]);
       }
     }
 
-    // ── Left-side sacral sparing ────────────────────────────
-    draw(gv('sci-vac'),    32, 63,{sz:8,f:fontM});
-    draw(gv('sci-dap'),    32, 51,{sz:8,f:fontM});
-    draw(gv('sci-s45lt'), 122, 63,{sz:8,f:fontM});
-    draw(gv('sci-s45pp'), 122, 51,{sz:8,f:fontM});
+    // ── S4-5 row: VAC / DAP extra cells ────────────────────────
+    // Cells at x0=139,w=29 (left of R-motor) and x0=630,w=29 (right of L-motor)
+    dc(gv('sci-vac'),139,152,29);
+    dc(gv('sci-dap'),630,152,29);
 
-    // ── Left-side totals strip ──────────────────────────────
-    const totY=40,totW=56;
-    [['sci-uems-r',4],['sci-uems-l',61],['sci-lems-r',118],['sci-lems-l',175],
-     ['sci-lt-total',232],['sci-pp-total',288]].forEach(([id,x])=>{
-      draw(gv(id),x,totY,{sz:8,f:fontM,centre:true,cw:totW});
-    });
+    // ── Motor column totals (RIGHT TOTALS / LEFT TOTALS, pdf_y≈132) ──
+    // Boxes: R-motor x0=186,w=34; L-motor x0=581,w=34
+    const uemsR=parseInt(gv('sci-uems-r'))||0,lemsR=parseInt(gv('sci-lems-r'))||0;
+    const uemsL=parseInt(gv('sci-uems-l'))||0,lemsL=parseInt(gv('sci-lems-l'))||0;
+    if(gv('sci-uems-r')&&gv('sci-lems-r')) dc(String(uemsR+lemsR),186,132,34);
+    if(gv('sci-uems-l')&&gv('sci-lems-l')) dc(String(uemsL+lemsL),581,132,34);
 
-    // ── Right panel — Scoring Summary ───────────────────────
-    const rb={sz:8,f:fontB};
-    draw(gv('sci-lt-r'),  528,536,rb); draw(gv('sci-lt-l'),  580,536,rb);
-    draw(gv('sci-pp-r'),  528,514,rb); draw(gv('sci-pp-l'),  580,514,rb);
-    draw(gv('sci-uems-r'),544,492,rb); draw(gv('sci-uems-l'),596,492,rb);
-    draw(gv('sci-lems-r'),544,470,rb); draw(gv('sci-lems-l'),596,470,rb);
+    // ── Subscores strip (pdf_y≈91) ──────────────────────────────
+    // UER x0=41,w=23 | UEL x0=91,w=23 | LER x0=232,w=27 | LEL x0=285,w=27
+    // LT TOTAL x0=562,w=25 | PP TOTAL x0=747,w=26
+    dc(gv('sci-uems-r'), 41,91,23);
+    dc(gv('sci-uems-l'), 91,91,23);
+    dc(gv('sci-lems-r'),232,91,27);
+    dc(gv('sci-lems-l'),285,91,27);
+    dc(gv('sci-lt-total'),562,91,25);
+    dc(gv('sci-pp-total'),747,91,26);
 
-    // ── Right panel — Neurological Classification ───────────
-    draw(gv('sci-sns-r'),  446,435,rb); draw(gv('sci-sns-l'),  508,435,rb);
-    draw(gv('sci-mot-r'),  446,411,rb); draw(gv('sci-mot-l'),  508,411,rb);
-    draw(gv('sci-nli'),    566,387,{sz:9,f:fontB});
-    draw(gv('sci-complete'),496,363,rb);
+    // ── Classification strip ────────────────────────────────────
+    // Sensory levels (Step 1): x0=163,w=23 / x0=191,w=23  pdf_y=50
+    // Motor levels  (Step 2): same x, pdf_y=36
+    // NLI           (Step 3): x0=318,w=32  pdf_y=46
+    // Complete/Inc  (Step 4): x0=522,w=22  pdf_y=50  (single letter C/I)
+    // AIS grade     (Step 5): x0=522,w=31  pdf_y=36
+    // ZPP Sensory   (Step 6): x0=714,w=23 / x0=741,w=24  pdf_y=50
+    // ZPP Motor     (Step 6): same x, pdf_y=36
+    const B={sz:8,f:fontB};
+    dc(gv('sci-sns-r'),163,50,23,B);
+    dc(gv('sci-sns-l'),191,50,23,B);
+    dc(gv('sci-mot-r'),163,36,23,B);
+    dc(gv('sci-mot-l'),191,36,23,B);
+    dc(gv('sci-nli'),  318,46,32,B);
+    const compl=gv('sci-complete');
+    if(compl) dc(compl==='Complete'?'C':'I',522,50,22,B);
+    const aisGrade=(gv('sci-ais')||'').replace(/^AIS\s+/i,'');
+    dc(aisGrade,522,36,31,{sz:10,f:fontB});
+    // ZPP stored as "R: C5 / L: T4" — split into R and L
+    const zppSplit=(s)=>{const m=/R:\s*(\S+)\s*\/\s*L:\s*(\S+)/i.exec(s||'');return m?[m[1]==='—'?'':m[1],m[2]==='—'?'':m[2]]:['',''];};
+    const[zsR,zsL]=zppSplit(gv('sci-zpp-sns'));
+    const[zmR,zmL]=zppSplit(gv('sci-zpp-mot'));
+    dc(zsR,714,50,23,B); dc(zsL,741,50,24,B);
+    dc(zmR,714,36,23,B); dc(zmL,741,36,24,B);
 
-    // ── Right panel — AIS ───────────────────────────────────
-    draw(gv('sci-ais'),693,264,{sz:13,f:fontB,col:BLUE});
-
-    // ── Right panel — ZPP ───────────────────────────────────
-    draw(gv('sci-zpp-sns'),494,238,rb);
-    draw(gv('sci-zpp-mot'),494,216,rb);
-
-    // ── Right panel — Sacral Sparing ───────────────────────
-    draw(gv('sci-vac'),   574,181,rb);
-    draw(gv('sci-dap'),   574,160,rb);
-    draw(gv('sci-s45lt'), 502,139,rb);
-    draw(gv('sci-s45pp'), 502,118,rb);
-
-    // ── Download ─────────────────────────────────────────────
+    // ── Download ─────────────────────────────────────────────────
     const filled=await pdfDoc.save();
     const blob=new Blob([filled],{type:'application/pdf'});
     const url=URL.createObjectURL(blob);
