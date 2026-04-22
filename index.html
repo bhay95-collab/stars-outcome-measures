@@ -2233,13 +2233,33 @@ function buildNarrative(name,diag,adate){
     const sciMotR=document.getElementById('sci-mot-r')?.textContent||'—';
     const sciMotL=document.getElementById('sci-mot-l')?.textContent||'—';
     const sciComplete=document.getElementById('sci-complete')?.textContent||'—';
-    const sciLtTotal=document.getElementById('sci-lt-total')?.textContent||'—';
-    const sciPpTotal=document.getElementById('sci-pp-total')?.textContent||'—';
     const sciUemsR=document.getElementById('sci-uems-r')?.textContent||'—';
     const sciUemsL=document.getElementById('sci-uems-l')?.textContent||'—';
     const sciLemsR=document.getElementById('sci-lems-r')?.textContent||'—';
     const sciLemsL=document.getElementById('sci-lems-l')?.textContent||'—';
-    rows.push(['ISNCSCI',`NLI: ${sciNli}. AIS: ${sciAis}. ${sciComplete}. Sensory levels R${sciSnsR}/L${sciSnsL}. Motor levels R${sciMotR}/L${sciMotL}. LT total: ${sciLtTotal}/112. PP total: ${sciPpTotal}/112. UEMS: R${sciUemsR}/L${sciUemsL}. LEMS: R${sciLemsR}/L${sciLemsL}.`]);
+    const sciLtTotal=document.getElementById('sci-lt-total')?.textContent||'—';
+    const sciPpTotal=document.getElementById('sci-pp-total')?.textContent||'—';
+    const sciZppSns=document.getElementById('sci-zpp-sns')?.textContent||'—';
+    const sciZppMot=document.getElementById('sci-zpp-mot')?.textContent||'—';
+    const sciRows=[
+      ['Neurological Level of Injury (NLI)',sciNli],
+      ['Sensory Level',`R: ${sciSnsR} / L: ${sciSnsL}`],
+      ['Motor Level',`R: ${sciMotR} / L: ${sciMotL}`],
+      ['Injury Classification',sciComplete],
+      ['AIS Grade',sciAis?`AIS ${sciAis}`:'—'],
+      ['UEMS',`R: ${sciUemsR}/25 · L: ${sciUemsL}/25`],
+      ['LEMS',`R: ${sciLemsR}/25 · L: ${sciLemsL}/25`],
+      ['Light Touch Total',`${sciLtTotal}/112`],
+      ['Pin Prick Total',`${sciPpTotal}/112`],
+      ['ZPP Sensory',sciZppSns],
+      ['ZPP Motor',sciZppMot],
+    ];
+    const s1='padding:4px 8px;border:1px solid #c8c5be;font-size:12px;font-weight:600;color:#555;white-space:nowrap;background:#f5f5f3';
+    const s2='padding:4px 8px;border:1px solid #c8c5be;font-size:12px;font-family:\'DM Mono\',monospace;color:#1a5c8c';
+    let sciHtml='<table style="border-collapse:collapse;width:100%">';
+    sciRows.forEach(([l,v])=>{sciHtml+=`<tr><td style="${s1}">${l}</td><td style="${s2}">${v}</td></tr>`;});
+    sciHtml+='</table>';
+    rows.push(['ISNCSCI',sciHtml]);
   }
 
   // Build HTML
@@ -2278,7 +2298,16 @@ function copyNarrative(){
   if(tables[0]){
     tables[0].querySelectorAll('tr').forEach(tr=>{
       const tds=tr.querySelectorAll('td');
-      if(tds.length>=2)lines.push(tds[0].textContent.trim()+'\t'+tds[1].textContent.trim());
+      if(tds.length>=2){
+        const label=tds[0].textContent.trim();
+        const nested=tds[1].querySelector('table');
+        if(nested){
+          lines.push(label);
+          nested.querySelectorAll('tr').forEach(nr=>{const ntds=nr.querySelectorAll('td');if(ntds.length>=2)lines.push('\t'+ntds[0].textContent.trim()+'\t'+ntds[1].textContent.trim());});
+        } else {
+          lines.push(label+'\t'+tds[1].textContent.trim());
+        }
+      }
     });
   }
   // Second table = change table (if present)
