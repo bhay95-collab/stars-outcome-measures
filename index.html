@@ -3324,6 +3324,22 @@ async function exportASIAPdf(){
       page.drawText(txt,{x:x0+Math.max(0,(cw-tw)/2),y,size:sz,font:hv,color:BLACK});
     };
 
+    // ── TASK 1: Inline totals (treat blank/NT as 0) ──────────────
+    const SENS_LVS=['C2','C3','C4','C5','C6','C7','C8','T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12','L1','L2','L3','L4','L5','S1','S2','S3','S4-5'];
+    const MOT_LVS=['C5','C6','C7','C8','T1','L2','L3','L4','L5','S1'];
+    const sciV=(id)=>{
+      const el=document.getElementById(id); if(!el) return 0;
+      const v=(el.value!==undefined?el.value:el.textContent||'').trim().toUpperCase();
+      if(!v||v==='—'||v.startsWith('NT')) return 0;
+      const n=parseInt(v); return isNaN(n)?0:n;
+    };
+    const rMotorTotal=MOT_LVS.reduce((s,lv)=>s+sciV(`sci-r-m-${lv}`),0);
+    const lMotorTotal=MOT_LVS.reduce((s,lv)=>s+sciV(`sci-l-m-${lv}`),0);
+    const rLtTotal=SENS_LVS.reduce((s,lv)=>s+sciV(`sci-r-lt-${lv}`),0);
+    const rPpTotal=SENS_LVS.reduce((s,lv)=>s+sciV(`sci-r-pp-${lv}`),0);
+    const lLtTotal=SENS_LVS.reduce((s,lv)=>s+sciV(`sci-l-lt-${lv}`),0);
+    const lPpTotal=SENS_LVS.reduce((s,lv)=>s+sciV(`sci-l-pp-${lv}`),0);
+
     // ── STEP 1: Patient header ───────────────────────────────────
     // Underlines measured from PDF drawings (PyMuPDF top-left → pdf-lib bottom-left):
     //   Patient Name  line: x=436–585,  fitz y=26.2  → pdf-lib y=585.8
