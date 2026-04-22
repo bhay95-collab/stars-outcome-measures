@@ -3380,6 +3380,16 @@ async function exportASIAPdf(){
       putC(gv(`sci-l-m-${lv}`),579,y,30);
     });
 
+    // ── TASK 2: RIGHT / LEFT TOTALS row (pdf-lib y=134) ──────────
+    // R Motor x0=190 w=30 · R LT x0=227 w=35 · R PP x0=273 w=35
+    // L LT x0=490 w=35 · L PP x0=536 w=35 · L Motor x0=579 w=30
+    putC(String(rMotorTotal),190,134,30,7);
+    putC(String(rLtTotal),   227,134,35,7);
+    putC(String(rPpTotal),   273,134,35,7);
+    putC(String(lLtTotal),   490,134,35,7);
+    putC(String(lPpTotal),   536,134,35,7);
+    putC(String(lMotorTotal),579,134,30,7);
+
     // ── STEP 4: Subscores strip (y≈93) ───────────────────────────
     // UER x0=41 w=23 · UEL x0=91 w=23 · LER x0=232 w=27 · LEL x0=285 w=27
     // LT Total x0=562 w=25 · PP Total x0=747 w=26
