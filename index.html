@@ -221,10 +221,10 @@
   .sb-btn{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:none;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text-2);text-align:left;transition:background .12s,color .12s;white-space:nowrap;overflow:hidden;border-radius:0;position:relative;min-height:38px}
   .sb-btn:hover{background:rgba(35,100,153,.07);color:var(--text)}
   .sb-btn.active{background:var(--accent-light);color:var(--accent);font-weight:600}
-  .sb-btn.active .sb-dot{background:var(--accent)}
+  .sb-btn.active .sb-dot{background:#1a7a1a}
 
   .sb-dot{width:7px;height:7px;border-radius:50%;background:var(--border-strong);flex-shrink:0;transition:background .15s}
-  .sb-btn.has-data .sb-dot{background:var(--accent)}
+  .sb-btn.has-data .sb-dot{background:#1a7a1a}
 
   .sb-abbr{font-size:11px;font-weight:700;letter-spacing:.2px;flex-shrink:0;min-width:36px;font-family:'DM Mono',monospace}
   .sb-name{font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .15s}
@@ -240,8 +240,8 @@
   .sidebar.collapsed .sb-btn{justify-content:center;padding:8px 6px;gap:6px}
   .sidebar.collapsed .sb-dot{display:none}
   /* Completed indicator when collapsed */
-  .sidebar.collapsed .sb-btn.has-data{background:rgba(35,100,153,.13);color:var(--accent)}
-  .sidebar.collapsed .sb-btn.has-data .sb-abbr{color:var(--accent);font-weight:800}
+  .sidebar.collapsed .sb-btn.has-data{background:rgba(34,139,34,.13);color:#1a7a1a}
+  .sidebar.collapsed .sb-btn.has-data .sb-abbr{color:#1a7a1a;font-weight:800}
 
   /* Content area beside sidebar */
   .sidebar-content{flex:1;overflow:hidden;min-width:0}
