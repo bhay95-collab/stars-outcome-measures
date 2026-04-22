@@ -3421,7 +3421,7 @@ async function exportASIAPdf(){
     putC(gv('sci-nli'),  318,46,32,8);
 
     const rawComplete=gv('sci-complete');
-    putC(rawComplete==='Complete'?'C':rawComplete==='Incomplete'?'I':rawComplete,522,50,22,8);
+    putC(rawComplete==='Complete'?'C':rawComplete==='Incomplete'?'I':rawComplete,522,53,22,8);
 
     const rawAis=gv('sci-ais');
     putC(rawAis.replace(/^AIS\s*/i,''),522,36,31,8);
