@@ -3390,15 +3390,25 @@ async function exportASIAPdf(){
     putC(String(lPpTotal),   536,134,35,7);
     putC(String(lMotorTotal),579,134,30,7);
 
-    // ── STEP 4: Subscores strip (y≈93) ───────────────────────────
-    // UER x0=41 w=23 · UEL x0=91 w=23 · LER x0=232 w=27 · LEL x0=285 w=27
-    // LT Total x0=562 w=25 · PP Total x0=747 w=26
+    // ── TASK 3 / STEP 4: Full subscores strip (y=93, sz=8) ───────
+    // UER x0=41 w=23 · UEL x0=91 w=23 · UEMS TOTAL x0=141 w=27
+    // LER x0=232 w=27 · LEL x0=285 w=27 · LEMS TOTAL x0=333 w=27
+    // LTR x0=516 w=25 · LTL x0=562 w=25 · LT TOTAL x0=608 w=28
+    // PPR x0=681 w=25 · PPL x0=716 w=25 · PP TOTAL x0=747 w=26
     const y4=93;
     putC(gv('sci-uems-r'), 41, y4, 23, 8);
     putC(gv('sci-uems-l'), 91, y4, 23, 8);
+    const uemsR=parseInt(gv('sci-uems-r')),uemsL=parseInt(gv('sci-uems-l'));
+    if(!isNaN(uemsR)||!isNaN(uemsL)) putC(String((isNaN(uemsR)?0:uemsR)+(isNaN(uemsL)?0:uemsL)),141,y4,27,8);
     putC(gv('sci-lems-r'),232, y4, 27, 8);
     putC(gv('sci-lems-l'),285, y4, 27, 8);
-    putC(gv('sci-lt-total'),562, y4, 25, 8);
+    const lemsR=parseInt(gv('sci-lems-r')),lemsL=parseInt(gv('sci-lems-l'));
+    if(!isNaN(lemsR)||!isNaN(lemsL)) putC(String((isNaN(lemsR)?0:lemsR)+(isNaN(lemsL)?0:lemsL)),333,y4,27,8);
+    putC(String(rLtTotal),516, y4, 25, 8);
+    putC(String(lLtTotal),562, y4, 25, 8);
+    putC(gv('sci-lt-total'),608, y4, 28, 8);
+    putC(String(rPpTotal),681, y4, 25, 8);
+    putC(String(lPpTotal),716, y4, 25, 8);
     putC(gv('sci-pp-total'),747, y4, 26, 8);
 
     // ── STEP 5: Classification strip ─────────────────────────────
