@@ -3353,6 +3353,17 @@ async function exportASIAPdf(){
       putC(gv(`sci-l-pp-${lv}`),536,y,35);
     });
 
+    // ── STEP 3: Motor grid (R Motor x0=190 w=30 · L Motor x0=579 w=30) ──
+    const MOTOR_ROWS=[
+      ['C5',467],['C6',454],['C7',441],['C8',428],['T1',414],
+      ['L2',245],['L3',232],['L4',219],['L5',206],['S1',193]
+    ];
+    MOTOR_ROWS.forEach(([lv,cy])=>{
+      const y=cy-2;
+      putC(gv(`sci-r-m-${lv}`),190,y,30);
+      putC(gv(`sci-l-m-${lv}`),579,y,30);
+    });
+
     // ── Download ─────────────────────────────────────────────────
     const filled=await pdfDoc.save();
     const blob=new Blob([filled],{type:'application/pdf'});
