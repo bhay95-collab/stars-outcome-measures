@@ -3301,10 +3301,8 @@ async function exportASIAPdf(){
     const resp=await fetch('assets/ASIA-ISCOS-IntlWorksheet_2019.pdf');
     if(!resp.ok) throw new Error('Template PDF not found at assets/ASIA-ISCOS-IntlWorksheet_2019.pdf');
     const pdfDoc=await PDFDocument.load(await resp.arrayBuffer());
-    const page=pdfDoc.getPages()[0]; // landscape 792×612 pt
-    const font =await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const fontB=await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const fontM=await pdfDoc.embedFont(StandardFonts.Courier);
+    const page=pdfDoc.getPages()[0]; // 792×612 landscape, pdf-lib origin = bottom-left
+    const hv=await pdfDoc.embedFont(StandardFonts.Helvetica);
     const BLACK=rgb(0,0,0);
 
     const gv=(id)=>{
@@ -3314,92 +3312,27 @@ async function exportASIAPdf(){
       return(v==='—'||v==='')? '':v;
     };
 
-    // Draw text centred in cell (x0=left edge, cw=width). cw=0 → left-aligned at x0.
-    const dc=(text,x0,y,cw=0,{sz=8,f=fontM,col=BLACK}={})=>{
-      if(!text||text==='—') return;
-      if(cw>0){const tw=f.widthOfTextAtSize(text,sz);page.drawText(text,{x:x0+Math.max(0,(cw-tw)/2),y,size:sz,font:f,color:col});}
-      else{page.drawText(text,{x:x0,y,size:sz,font:f,color:col});}
+    const put=(txt,x,y,sz=7)=>{
+      if(!txt||txt==='—') return;
+      page.drawText(txt,{x,y,size:sz,font:hv,color:BLACK});
     };
 
-    // ── Patient header ──────────────────────────────────────────
-    // Input underlines (from PDF drawings): Name x=436–585 y=26; Date x=654–767; Examiner x=446–585 y=49
-    dc(gv('pt-name'),    438,589,0,{sz:9,f:font});
-    dc(gv('pt-date'),    656,589,0,{sz:9,f:font});
-    dc(gv('pt-assessor'),448,565,0,{sz:9,f:font});
-
-    // ── Main scoring grid ───────────────────────────────────────
-    // Column cells measured from PDF rectangles: [x0, width]
-    const C={RM:[190,30],RLT:[227,35],RPP:[273,35],LLT:[490,35],LPP:[536,35],LM:[579,30]};
-    const MOTOR=new Set(['C5','C6','C7','C8','T1','L2','L3','L4','L5','S1']);
-
-    // Text y = cell-centre − 2 (pdf-lib baseline in bottom-left coords)
-    // Cell centres derived from rect analysis (612 − fitz_centre_y)
-    const LVL_Y={
-      C2:504,C3:491,C4:478,C5:465,C6:452,C7:439,C8:426,
-      T1:412,T2:399,T3:387,T4:373,T5:360,T6:347,T7:334,
-      T8:321,T9:308,T10:295,T11:282,T12:269,
-      L1:256,L2:243,L3:230,L4:217,L5:204,
-      S1:191,S2:178,S3:165,'S4-5':152
+    // Centre text in a box: x0=left edge, cw=box width
+    const putC=(txt,x0,y,cw,sz=7)=>{
+      if(!txt||txt==='—') return;
+      const tw=hv.widthOfTextAtSize(txt,sz);
+      page.drawText(txt,{x:x0+Math.max(0,(cw-tw)/2),y,size:sz,font:hv,color:BLACK});
     };
 
-    for(const lv of Object.keys(LVL_Y)){
-      const y=LVL_Y[lv];
-      dc(gv(`sci-r-lt-${lv}`),C.RLT[0],y,C.RLT[1]);
-      dc(gv(`sci-r-pp-${lv}`),C.RPP[0],y,C.RPP[1]);
-      dc(gv(`sci-l-lt-${lv}`),C.LLT[0],y,C.LLT[1]);
-      dc(gv(`sci-l-pp-${lv}`),C.LPP[0],y,C.LPP[1]);
-      if(MOTOR.has(lv)){
-        dc(gv(`sci-r-m-${lv}`),C.RM[0],y,C.RM[1]);
-        dc(gv(`sci-l-m-${lv}`),C.LM[0],y,C.LM[1]);
-      }
-    }
-
-    // ── S4-5 row: VAC / DAP extra cells ────────────────────────
-    // Cells at x0=139,w=29 (left of R-motor) and x0=630,w=29 (right of L-motor)
-    dc(gv('sci-vac'),139,152,29);
-    dc(gv('sci-dap'),630,152,29);
-
-    // ── Motor column totals (RIGHT TOTALS / LEFT TOTALS, pdf_y≈132) ──
-    // Boxes: R-motor x0=186,w=34; L-motor x0=581,w=34
-    const uemsR=parseInt(gv('sci-uems-r'))||0,lemsR=parseInt(gv('sci-lems-r'))||0;
-    const uemsL=parseInt(gv('sci-uems-l'))||0,lemsL=parseInt(gv('sci-lems-l'))||0;
-    if(gv('sci-uems-r')&&gv('sci-lems-r')) dc(String(uemsR+lemsR),186,132,34);
-    if(gv('sci-uems-l')&&gv('sci-lems-l')) dc(String(uemsL+lemsL),581,132,34);
-
-    // ── Subscores strip (pdf_y≈91) ──────────────────────────────
-    // UER x0=41,w=23 | UEL x0=91,w=23 | LER x0=232,w=27 | LEL x0=285,w=27
-    // LT TOTAL x0=562,w=25 | PP TOTAL x0=747,w=26
-    dc(gv('sci-uems-r'), 41,91,23);
-    dc(gv('sci-uems-l'), 91,91,23);
-    dc(gv('sci-lems-r'),232,91,27);
-    dc(gv('sci-lems-l'),285,91,27);
-    dc(gv('sci-lt-total'),562,91,25);
-    dc(gv('sci-pp-total'),747,91,26);
-
-    // ── Classification strip ────────────────────────────────────
-    // Sensory levels (Step 1): x0=163,w=23 / x0=191,w=23  pdf_y=50
-    // Motor levels  (Step 2): same x, pdf_y=36
-    // NLI           (Step 3): x0=318,w=32  pdf_y=46
-    // Complete/Inc  (Step 4): x0=522,w=22  pdf_y=50  (single letter C/I)
-    // AIS grade     (Step 5): x0=522,w=31  pdf_y=36
-    // ZPP Sensory   (Step 6): x0=714,w=23 / x0=741,w=24  pdf_y=50
-    // ZPP Motor     (Step 6): same x, pdf_y=36
-    const B={sz:8,f:fontB};
-    dc(gv('sci-sns-r'),163,50,23,B);
-    dc(gv('sci-sns-l'),191,50,23,B);
-    dc(gv('sci-mot-r'),163,36,23,B);
-    dc(gv('sci-mot-l'),191,36,23,B);
-    dc(gv('sci-nli'),  318,46,32,B);
-    const compl=gv('sci-complete');
-    if(compl) dc(compl==='Complete'?'C':'I',522,50,22,B);
-    const aisGrade=(gv('sci-ais')||'').replace(/^AIS\s+/i,'');
-    dc(aisGrade,522,36,31,{sz:10,f:fontB});
-    // ZPP stored as "R: C5 / L: T4" — split into R and L
-    const zppSplit=(s)=>{const m=/R:\s*(\S+)\s*\/\s*L:\s*(\S+)/i.exec(s||'');return m?[m[1]==='—'?'':m[1],m[2]==='—'?'':m[2]]:['',''];};
-    const[zsR,zsL]=zppSplit(gv('sci-zpp-sns'));
-    const[zmR,zmL]=zppSplit(gv('sci-zpp-mot'));
-    dc(zsR,714,50,23,B); dc(zsL,741,50,24,B);
-    dc(zmR,714,36,23,B); dc(zmL,741,36,24,B);
+    // ── STEP 1: Patient header ───────────────────────────────────
+    // Underlines measured from PDF drawings (PyMuPDF top-left → pdf-lib bottom-left):
+    //   Patient Name  line: x=436–585,  fitz y=26.2  → pdf-lib y=585.8
+    //   Date/Time     line: x=654–767,  fitz y=26.2  → pdf-lib y=585.8
+    //   Examiner Name line: x=446–585,  fitz y=49.2  → pdf-lib y=562.8
+    // Text baseline placed ~3 pt above each line.
+    put(gv('pt-name'),    438, 589, 9);
+    put(gv('pt-date'),    656, 589, 9);
+    put(gv('pt-assessor'),448, 565, 9);
 
     // ── Download ─────────────────────────────────────────────────
     const filled=await pdfDoc.save();
