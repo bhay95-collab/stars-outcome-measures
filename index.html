@@ -965,6 +965,7 @@
         <div class="measure-header">
           <div><div class="measure-title">ISNCSCI — Spinal Cord Injury Classification</div><div class="measure-subtitle">International Standards for Neurological Classification of Spinal Cord Injury (ASIA/ISCOS 2019). Type values directly into each cell. Scores auto-calculate.</div></div>
           <span class="lit-badge">ASIA/ISCOS 2019</span>
+          <button class="pdf-btn" onclick="exportASIAPdf()">&#10515; Export ASIA PDF</button>
         </div>
 
         <!-- SCORING LEGEND -->
@@ -3287,6 +3288,140 @@ function recalcAllMCID(){
 
 window.addEventListener('DOMContentLoaded',init);
 
+// ── ASIA PDF Export ──────────────────────────────────────────
+async function exportASIAPdf(){
+  if(typeof PDFLib==='undefined'){
+    alert('PDF library not loaded yet — please try again in a moment.');
+    return;
+  }
+  const btn=document.querySelector('#perf-panel-isncsci .pdf-btn');
+  if(btn){btn.textContent='Generating…';btn.disabled=true;}
+
+  try{
+    const {PDFDocument,rgb,StandardFonts}=PDFLib;
+
+    // Load template
+    const resp=await fetch('assets/ASIA-ISCOS-IntlWorksheet_2019.pdf');
+    if(!resp.ok) throw new Error('Template PDF not found at assets/ASIA-ISCOS-IntlWorksheet_2019.pdf');
+    const pdfDoc=await PDFDocument.load(await resp.arrayBuffer());
+    const page=pdfDoc.getPages()[0];
+    const font =await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontB=await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontM=await pdfDoc.embedFont(StandardFonts.Courier);
+    const BLACK=rgb(0,0,0);
+    const BLUE =rgb(0.1,0.2,0.65);
+
+    // Read a DOM field (input.value or element.textContent)
+    const gv=(id)=>{
+      const el=document.getElementById(id);
+      if(!el) return '';
+      const v=(el.value!==undefined?el.value:el.textContent||'').trim();
+      return(v==='—'||v==='')? '':v;
+    };
+
+    // Draw text; centre=true centres within centerW pts starting at x
+    const draw=(text,x,y,{sz=8,f=fontM,col=BLACK,centre=false,cw=0}={})=>{
+      if(!text) return;
+      let dx=x;
+      if(centre&&cw){const tw=f.widthOfTextAtSize(text,sz);dx=x+Math.max(0,(cw-tw)/2);}
+      page.drawText(text,{x:dx,y,size:sz,font:f,color:col});
+    };
+
+    // ── Patient header ──────────────────────────────────────
+    draw(gv('pt-name'),    36, 580,{sz:9,f:font});
+    draw(gv('pt-date'),   432, 580,{sz:9,f:font});
+    draw(gv('pt-assessor'),52, 563,{sz:9,f:font});
+
+    // ── Scoring grid ────────────────────────────────────────
+    // Column x-centres (pdf-lib x = same as fitz x for this page)
+    const COL={RM:24,RLT:73,RPP:122,LLT:216,LPP:265,LM:315};
+    const MOTOR_LVL=new Set(['C5','C6','C7','C8','T1','L2','L3','L4','L5','S1']);
+
+    // pdf-lib y per level (page_height − (row_top + 11))
+    const LVL_Y={
+      C2:511,C3:495,C4:479,C5:463,C6:447,C7:431,C8:415,
+      T1:399,T2:383,T3:367,T4:351,T5:335,T6:319,T7:303,
+      T8:287,T9:271,T10:255,T11:239,T12:223,
+      L1:207,L2:191,L3:175,L4:159,L5:143,
+      S1:127,S2:111,S3:95,'S4-5':79
+    };
+
+    const drawCell=(val,cx,y)=>{
+      if(!val||val==='—') return;
+      const tw=fontM.widthOfTextAtSize(val,8);
+      draw(val,cx-tw/2,y,{sz:8,f:fontM});
+    };
+
+    for(const lv of Object.keys(LVL_Y)){
+      const y=LVL_Y[lv];
+      drawCell(gv(`sci-r-lt-${lv}`), COL.RLT, y);
+      drawCell(gv(`sci-r-pp-${lv}`), COL.RPP, y);
+      drawCell(gv(`sci-l-lt-${lv}`), COL.LLT, y);
+      drawCell(gv(`sci-l-pp-${lv}`), COL.LPP, y);
+      if(MOTOR_LVL.has(lv)){
+        drawCell(gv(`sci-r-m-${lv}`), COL.RM, y);
+        drawCell(gv(`sci-l-m-${lv}`), COL.LM, y);
+      }
+    }
+
+    // ── Left-side sacral sparing ────────────────────────────
+    draw(gv('sci-vac'),    32, 63,{sz:8,f:fontM});
+    draw(gv('sci-dap'),    32, 51,{sz:8,f:fontM});
+    draw(gv('sci-s45lt'), 122, 63,{sz:8,f:fontM});
+    draw(gv('sci-s45pp'), 122, 51,{sz:8,f:fontM});
+
+    // ── Left-side totals strip ──────────────────────────────
+    const totY=40,totW=56;
+    [['sci-uems-r',4],['sci-uems-l',61],['sci-lems-r',118],['sci-lems-l',175],
+     ['sci-lt-total',232],['sci-pp-total',288]].forEach(([id,x])=>{
+      draw(gv(id),x,totY,{sz:8,f:fontM,centre:true,cw:totW});
+    });
+
+    // ── Right panel — Scoring Summary ───────────────────────
+    const rb={sz:8,f:fontB};
+    draw(gv('sci-lt-r'),  528,536,rb); draw(gv('sci-lt-l'),  580,536,rb);
+    draw(gv('sci-pp-r'),  528,514,rb); draw(gv('sci-pp-l'),  580,514,rb);
+    draw(gv('sci-uems-r'),544,492,rb); draw(gv('sci-uems-l'),596,492,rb);
+    draw(gv('sci-lems-r'),544,470,rb); draw(gv('sci-lems-l'),596,470,rb);
+
+    // ── Right panel — Neurological Classification ───────────
+    draw(gv('sci-sns-r'),  446,435,rb); draw(gv('sci-sns-l'),  508,435,rb);
+    draw(gv('sci-mot-r'),  446,411,rb); draw(gv('sci-mot-l'),  508,411,rb);
+    draw(gv('sci-nli'),    566,387,{sz:9,f:fontB});
+    draw(gv('sci-complete'),496,363,rb);
+
+    // ── Right panel — AIS ───────────────────────────────────
+    draw(gv('sci-ais'),693,264,{sz:13,f:fontB,col:BLUE});
+
+    // ── Right panel — ZPP ───────────────────────────────────
+    draw(gv('sci-zpp-sns'),494,238,rb);
+    draw(gv('sci-zpp-mot'),494,216,rb);
+
+    // ── Right panel — Sacral Sparing ───────────────────────
+    draw(gv('sci-vac'),   574,181,rb);
+    draw(gv('sci-dap'),   574,160,rb);
+    draw(gv('sci-s45lt'), 502,139,rb);
+    draw(gv('sci-s45pp'), 502,118,rb);
+
+    // ── Download ─────────────────────────────────────────────
+    const filled=await pdfDoc.save();
+    const blob=new Blob([filled],{type:'application/pdf'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const name=(gv('pt-name')||'Patient').replace(/[\s/\\:*?"<>|]+/g,'_');
+    const date=gv('pt-date')||new Date().toISOString().slice(0,10);
+    a.href=url; a.download=`ASIA_ISNCSCI_${name}_${date}.pdf`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+
+  }catch(err){
+    console.error('ASIA PDF export error:',err);
+    alert('Export failed: '+err.message);
+  }finally{
+    if(btn){btn.innerHTML='&#10515; Export ASIA PDF';btn.disabled=false;}
+  }
+}
+
 </script>
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 </body>
 </html>
