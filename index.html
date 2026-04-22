@@ -3375,6 +3375,36 @@ async function exportASIAPdf(){
     putC(gv('sci-lt-total'),562, y4, 25, 8);
     putC(gv('sci-pp-total'),747, y4, 26, 8);
 
+    // ── STEP 5: Classification strip ─────────────────────────────
+    // Sensory level R/L y=50, Motor level R/L y=36, NLI y=46
+    // Complete/Inc y=50, AIS y=36, ZPP Sns y=50, ZPP Mot y=36
+    putC(gv('sci-sns-r'),163,50,23,8);
+    putC(gv('sci-sns-l'),191,50,23,8);
+    putC(gv('sci-mot-r'),163,36,23,8);
+    putC(gv('sci-mot-l'),191,36,23,8);
+    putC(gv('sci-nli'),  318,46,32,8);
+
+    const rawComplete=gv('sci-complete');
+    putC(rawComplete==='Complete'?'C':rawComplete==='Incomplete'?'I':rawComplete,522,50,22,8);
+
+    const rawAis=gv('sci-ais');
+    putC(rawAis.replace(/^AIS\s*/i,''),522,36,31,8);
+
+    // ZPP format: "R: C5 / L: T4" — parse R and L sides
+    const parseZpp=(id)=>{
+      const raw=gv(id); if(!raw) return ['',''];
+      const parts=raw.split('/').map(s=>s.trim());
+      const r=(parts[0]||'').replace(/^R:\s*/i,'').trim();
+      const l=(parts[1]||'').replace(/^L:\s*/i,'').trim();
+      return[r,l];
+    };
+    const[zppSnsR,zppSnsL]=parseZpp('sci-zpp-sns');
+    const[zppMotR,zppMotL]=parseZpp('sci-zpp-mot');
+    putC(zppSnsR,714,50,23,8);
+    putC(zppSnsL,741,50,24,8);
+    putC(zppMotR,714,36,23,8);
+    putC(zppMotL,741,36,24,8);
+
     // ── Download ─────────────────────────────────────────────────
     const filled=await pdfDoc.save();
     const blob=new Blob([filled],{type:'application/pdf'});
