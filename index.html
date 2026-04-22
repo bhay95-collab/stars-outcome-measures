@@ -3405,6 +3405,11 @@ async function exportASIAPdf(){
     putC(zppMotR,714,36,23,8);
     putC(zppMotL,741,36,24,8);
 
+    // ── STEP 6: VAC / DAP (S4-5 row, y=152) ─────────────────────
+    // VAC x0=139 w=29 · DAP x0=630 w=29
+    putC(gv('sci-vac'),139,152,29);
+    putC(gv('sci-dap'),630,152,29);
+
     // ── Download ─────────────────────────────────────────────────
     const filled=await pdfDoc.save();
     const blob=new Blob([filled],{type:'application/pdf'});
