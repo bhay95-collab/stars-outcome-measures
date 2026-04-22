@@ -3334,6 +3334,25 @@ async function exportASIAPdf(){
     put(gv('pt-date'),    656, 589, 9);
     put(gv('pt-assessor'),448, 565, 9);
 
+    // ── STEP 2: Sensory grid (R LT, R PP, L LT, L PP × 28 rows) ──
+    // Column x0/width: R LT x0=227 w=35 · R PP x0=273 w=35
+    //                  L LT x0=490 w=35 · L PP x0=536 w=35
+    // y = cell-centre − 2 (text baseline)
+    const SENS_ROWS=[
+      ['C2',506],['C3',493],['C4',480],['C5',467],['C6',454],['C7',441],['C8',428],
+      ['T1',414],['T2',401],['T3',389],['T4',375],['T5',362],['T6',349],['T7',336],
+      ['T8',323],['T9',310],['T10',297],['T11',284],['T12',271],
+      ['L1',258],['L2',245],['L3',232],['L4',219],['L5',206],
+      ['S1',193],['S2',180],['S3',167],['S4-5',154]
+    ];
+    SENS_ROWS.forEach(([lv,cy])=>{
+      const y=cy-2;
+      putC(gv(`sci-r-lt-${lv}`),227,y,35);
+      putC(gv(`sci-r-pp-${lv}`),273,y,35);
+      putC(gv(`sci-l-lt-${lv}`),490,y,35);
+      putC(gv(`sci-l-pp-${lv}`),536,y,35);
+    });
+
     // ── Download ─────────────────────────────────────────────────
     const filled=await pdfDoc.save();
     const blob=new Blob([filled],{type:'application/pdf'});
