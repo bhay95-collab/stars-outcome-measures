@@ -63,9 +63,18 @@ export default function Landing() {
         .nav-cta:hover { background: var(--accent-dark); }
 
         /* HERO */
+        .hero-section {
+          position: relative;
+          background-image: url('https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=1800&q=85&fit=crop&crop=center');
+          background-size: cover;
+          background-position: center center;
+        }
+        .hero-overlay {
+          background: rgba(244,243,240,0.88);
+          padding: 100px 32px 80px;
+        }
         .hero {
           max-width: 1100px; margin: 0 auto;
-          padding: 100px 32px 80px;
           display: grid; grid-template-columns: 1fr 1fr;
           gap: 60px; align-items: center;
         }
@@ -105,10 +114,10 @@ export default function Landing() {
 
         /* MOCK UI */
         .hero-visual {
-          background: var(--surface);
+          background: rgba(255,255,255,0.96);
           border: 1px solid var(--border);
           border-radius: 16px; padding: 24px;
-          box-shadow: 0 8px 40px rgba(35,100,153,0.10), 0 2px 8px rgba(0,0,0,0.06);
+          box-shadow: 0 8px 40px rgba(35,100,153,0.12), 0 2px 8px rgba(0,0,0,0.08);
         }
         .mock-header {
           display: flex; align-items: center; gap: 10px;
@@ -165,11 +174,13 @@ export default function Landing() {
         /* FEATURES */
         .features {
           position: relative;
-          background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1600&q=80&fit=crop');
-          background-size: cover; background-position: center;
+          background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1800&q=85&fit=crop&crop=center');
+          background-size: cover;
+          background-position: center center;
+          background-attachment: fixed;
         }
         .features-overlay {
-          background: rgba(244,243,240,0.94);
+          background: rgba(244,243,240,0.82);
           padding: 80px 32px;
         }
         .features-inner { max-width: 1100px; margin: 0 auto; }
@@ -184,10 +195,9 @@ export default function Landing() {
         }
         .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
         .feature-card {
-          background: rgba(255,255,255,0.92); border: 1px solid var(--border);
+          background: rgba(255,255,255,0.95); border: 1px solid var(--border);
           border-radius: 12px; padding: 28px;
           transition: box-shadow 0.2s, transform 0.2s;
-          backdrop-filter: blur(4px);
         }
         .feature-card:hover { box-shadow: 0 8px 32px rgba(35,100,153,0.12); transform: translateY(-2px); }
         .feature-icon {
@@ -251,18 +261,20 @@ export default function Landing() {
         /* TESTIMONIALS */
         .social {
           position: relative;
-          background-image: url('https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=1600&q=80&fit=crop');
-          background-size: cover; background-position: center top;
+          background-image: url('https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=1800&q=85&fit=crop&crop=center');
+          background-size: cover;
+          background-position: center center;
+          background-attachment: fixed;
         }
         .social-overlay {
-          background: rgba(244,243,240,0.93);
+          background: rgba(244,243,240,0.82);
           padding: 80px 32px;
         }
         .social-inner { max-width: 1100px; margin: 0 auto; }
         .testimonials { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; }
         .testimonial {
-          background: rgba(255,255,255,0.92); border: 1px solid var(--border);
-          border-radius: 12px; padding: 24px; backdrop-filter: blur(4px);
+          background: rgba(255,255,255,0.95); border: 1px solid var(--border);
+          border-radius: 12px; padding: 24px;
         }
         .testimonial-text { font-size: 14px; line-height: 1.7; color: var(--text-2); margin-bottom: 16px; font-weight: 300; font-style: italic; }
         .testimonial-author { font-size: 13px; font-weight: 600; color: var(--text); }
@@ -297,6 +309,8 @@ export default function Landing() {
           .hero-visual { display: none; }
           .features-grid { grid-template-columns: 1fr; }
           .testimonials { grid-template-columns: 1fr; }
+          .features { background-attachment: scroll; }
+          .social { background-attachment: scroll; }
         }
       `}</style>
 
@@ -311,45 +325,47 @@ export default function Landing() {
       </nav>
 
       {/* HERO */}
-      <section>
-        <div className="hero">
-          <div>
-            <div className="hero-eyebrow">Built for Physiotherapists</div>
-            <h1 className="hero-title">Outcome measures, <em>simplified</em></h1>
-            <p className="hero-sub">Stop calculating by hand. RehabMetrics automates scoring, tracks MCID, and exports clinical-grade reports — so you spend more time with patients.</p>
-            <div className="hero-actions">
-              <a href="/signup" className="btn-primary">Start 14-day free trial</a>
-              <a href="#features" className="btn-secondary">See how it works →</a>
-            </div>
-          </div>
-          <div className="hero-visual">
-            <div className="mock-header">
-              <span className="mock-logo">RehabMetrics</span>
-              <span className="mock-badge">LIVE SCORING</span>
-            </div>
-            <div className="mock-tabs">
-              <span className="mock-tab active">Performance</span>
-              <span className="mock-tab">Questionnaires</span>
-              <span className="mock-tab">Summary</span>
-            </div>
-            {[
-              {abbr:'10MWT',name:'10 Metre Walk Test',score:'0.94 m/s',chip:'Community',cls:'chip-g'},
-              {abbr:'TUG',name:'Timed Up and Go',score:'11.2 sec',chip:'Mild risk',cls:'chip-a'},
-              {abbr:'BBS',name:'Berg Balance Scale',score:'42/56',chip:'MCID met',cls:'chip-b'},
-              {abbr:'6MWT',name:'6 Minute Walk Test',score:'387 m',chip:'Community',cls:'chip-g'},
-              {abbr:'FGA',name:'Functional Gait Assessment',score:'21/30',chip:'Low risk',cls:'chip-g'},
-            ].map(m => (
-              <div className="mock-measure" key={m.abbr}>
-                <div>
-                  <div className="mock-measure-label">{m.abbr}</div>
-                  <div className="mock-measure-name">{m.name}</div>
-                </div>
-                <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                  <span className="mock-score">{m.score}</span>
-                  <span className={`mock-chip ${m.cls}`}>{m.chip}</span>
-                </div>
+      <section className="hero-section">
+        <div className="hero-overlay">
+          <div className="hero">
+            <div>
+              <div className="hero-eyebrow">Built for Physiotherapists</div>
+              <h1 className="hero-title">Outcome measures, <em>simplified</em></h1>
+              <p className="hero-sub">Stop calculating by hand. RehabMetrics automates scoring, tracks MCID, and exports clinical-grade reports — so you spend more time with patients.</p>
+              <div className="hero-actions">
+                <a href="/signup" className="btn-primary">Start 14-day free trial</a>
+                <a href="#features" className="btn-secondary">See how it works →</a>
               </div>
-            ))}
+            </div>
+            <div className="hero-visual">
+              <div className="mock-header">
+                <span className="mock-logo">RehabMetrics</span>
+                <span className="mock-badge">LIVE SCORING</span>
+              </div>
+              <div className="mock-tabs">
+                <span className="mock-tab active">Performance</span>
+                <span className="mock-tab">Questionnaires</span>
+                <span className="mock-tab">Summary</span>
+              </div>
+              {[
+                {abbr:'10MWT',name:'10 Metre Walk Test',score:'0.94 m/s',chip:'Community',cls:'chip-g'},
+                {abbr:'TUG',name:'Timed Up and Go',score:'11.2 sec',chip:'Mild risk',cls:'chip-a'},
+                {abbr:'BBS',name:'Berg Balance Scale',score:'42/56',chip:'MCID met',cls:'chip-b'},
+                {abbr:'6MWT',name:'6 Minute Walk Test',score:'387 m',chip:'Community',cls:'chip-g'},
+                {abbr:'FGA',name:'Functional Gait Assessment',score:'21/30',chip:'Low risk',cls:'chip-g'},
+              ].map(m => (
+                <div className="mock-measure" key={m.abbr}>
+                  <div>
+                    <div className="mock-measure-label">{m.abbr}</div>
+                    <div className="mock-measure-name">{m.name}</div>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                    <span className="mock-score">{m.score}</span>
+                    <span className={`mock-chip ${m.cls}`}>{m.chip}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
