@@ -4,11 +4,15 @@ import { useState } from 'react'
 export default function Landing() {
   const [billing, setBilling] = useState('monthly')
 
+  const price = billing === 'monthly' ? '2.99' : '24.99'
+  const period = billing === 'monthly' ? 'per month' : 'per year · $2.08/mo'
+  const planName = billing === 'monthly' ? 'Monthly' : 'Annual'
+
   return (
     <>
       <Head>
         <title>RehabMetrics — Outcome Measures, Simplified</title>
-        <meta name="description" content="Clinical outcome measures for physiotherapists. Automated scoring, MCID tracking, and PDF export. Built for rehabilitation professionals." />
+        <meta name="description" content="Clinical outcome measures for physiotherapists. Automated scoring, MCID tracking, and PDF export." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
       </Head>
@@ -30,7 +34,6 @@ export default function Landing() {
         html { scroll-behavior: smooth; }
         body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
 
-        /* NAV */
         nav {
           position: sticky; top: 0; z-index: 100;
           background: rgba(255,255,255,0.95);
@@ -45,7 +48,7 @@ export default function Landing() {
         }
         .logo {
           font-family: 'Fraunces', serif;
-          font-size: 26px; font-weight: 600;
+          font-size: 34px; font-weight: 600;
           color: var(--accent); text-decoration: none;
           letter-spacing: -0.3px;
         }
@@ -54,7 +57,7 @@ export default function Landing() {
           background: var(--accent); color: #fff;
           padding: 9px 22px; border-radius: 8px;
           font-size: 14px; font-weight: 600;
-          text-decoration: none; letter-spacing: 0.2px;
+          text-decoration: none;
           transition: background 0.15s;
         }
         .nav-cta:hover { background: var(--accent-dark); }
@@ -73,7 +76,7 @@ export default function Landing() {
         }
         .hero-title {
           font-family: 'Fraunces', serif;
-          font-size: clamp(38px, 5vw, 58px);
+          font-size: clamp(42px, 5vw, 64px);
           font-weight: 600; line-height: 1.1;
           letter-spacing: -1px; color: var(--text);
           margin-bottom: 20px;
@@ -90,7 +93,7 @@ export default function Landing() {
           padding: 13px 28px; border-radius: 8px;
           font-size: 15px; font-weight: 600;
           text-decoration: none; display: inline-block;
-          transition: background 0.15s; letter-spacing: 0.2px;
+          transition: background 0.15s;
         }
         .btn-primary:hover { background: var(--accent-dark); }
         .btn-secondary {
@@ -100,14 +103,12 @@ export default function Landing() {
         }
         .btn-secondary:hover { text-decoration: underline; }
 
-        /* HERO VISUAL */
+        /* MOCK UI */
         .hero-visual {
           background: var(--surface);
           border: 1px solid var(--border);
-          border-radius: 16px;
-          padding: 24px;
+          border-radius: 16px; padding: 24px;
           box-shadow: 0 8px 40px rgba(35,100,153,0.10), 0 2px 8px rgba(0,0,0,0.06);
-          overflow: hidden;
         }
         .mock-header {
           display: flex; align-items: center; gap: 10px;
@@ -118,12 +119,9 @@ export default function Landing() {
         .mock-badge {
           font-size: 10px; font-weight: 600; padding: 2px 8px;
           background: var(--accent-light); color: var(--accent);
-          border-radius: 99px; border: 1px solid #b8d9ef;
-          margin-left: auto;
+          border-radius: 99px; border: 1px solid #b8d9ef; margin-left: auto;
         }
-        .mock-tabs {
-          display: flex; gap: 4px; margin-bottom: 14px;
-        }
+        .mock-tabs { display: flex; gap: 4px; margin-bottom: 14px; }
         .mock-tab {
           font-size: 11px; font-weight: 600; padding: 5px 12px;
           border-radius: 6px; background: transparent; color: var(--text-3);
@@ -136,10 +134,7 @@ export default function Landing() {
         }
         .mock-measure-label { font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); }
         .mock-measure-name { font-size: 11px; color: var(--text-3); }
-        .mock-chip {
-          font-size: 10px; font-weight: 700; padding: 3px 9px;
-          border-radius: 99px; border: 1px solid;
-        }
+        .mock-chip { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 99px; border: 1px solid; }
         .chip-g { background: #e8f4ef; color: #2d6a4f; border-color: #b7dfc9; }
         .chip-a { background: #fef5e7; color: #a05c00; border-color: #e8b84b; }
         .chip-b { background: var(--accent-light); color: var(--accent); border-color: #b8d9ef; }
@@ -151,39 +146,50 @@ export default function Landing() {
           border-top: 1px solid var(--border);
           border-bottom: 1px solid var(--border);
           padding: 20px 32px;
-          overflow: hidden;
         }
         .measures-inner {
           max-width: 1100px; margin: 0 auto;
           display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
         }
-        .strip-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-3); margin-right: 8px; white-space: nowrap; }
+        .strip-label {
+          font-size: 11px; font-weight: 700; letter-spacing: 1px;
+          text-transform: uppercase; color: var(--text-3);
+          margin-right: 8px; white-space: nowrap;
+        }
         .measure-pill {
-          font-size: 12px; font-weight: 600; padding: 5px 12px;
+          font-size: 12px; font-weight: 500; padding: 5px 14px;
           background: var(--accent-light); color: var(--accent);
           border: 1px solid #b8d9ef; border-radius: 99px;
-          font-family: 'DM Mono', monospace;
         }
 
         /* FEATURES */
-        .features { max-width: 1100px; margin: 0 auto; padding: 80px 32px; }
+        .features {
+          position: relative;
+          background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1600&q=80&fit=crop');
+          background-size: cover; background-position: center;
+        }
+        .features-overlay {
+          background: rgba(244,243,240,0.94);
+          padding: 80px 32px;
+        }
+        .features-inner { max-width: 1100px; margin: 0 auto; }
         .section-label {
           font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-          text-transform: uppercase; color: var(--accent);
-          margin-bottom: 14px;
+          text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
         }
         .section-title {
-          font-family: 'Fraunces', serif; font-size: 36px;
+          font-family: 'Fraunces', serif; font-size: 44px;
           font-weight: 600; letter-spacing: -0.5px;
           margin-bottom: 48px; line-height: 1.2;
         }
         .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
         .feature-card {
-          background: var(--surface); border: 1px solid var(--border);
+          background: rgba(255,255,255,0.92); border: 1px solid var(--border);
           border-radius: 12px; padding: 28px;
           transition: box-shadow 0.2s, transform 0.2s;
+          backdrop-filter: blur(4px);
         }
-        .feature-card:hover { box-shadow: 0 8px 32px rgba(35,100,153,0.10); transform: translateY(-2px); }
+        .feature-card:hover { box-shadow: 0 8px 32px rgba(35,100,153,0.12); transform: translateY(-2px); }
         .feature-icon {
           width: 40px; height: 40px; border-radius: 10px;
           background: var(--accent-light); color: var(--accent);
@@ -194,8 +200,13 @@ export default function Landing() {
         .feature-desc { font-size: 14px; color: var(--text-2); line-height: 1.6; font-weight: 300; }
 
         /* PRICING */
-        .pricing { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 80px 32px; }
-        .pricing-inner { max-width: 720px; margin: 0 auto; text-align: center; }
+        .pricing {
+          background: var(--surface);
+          border-top: 1px solid var(--border);
+          border-bottom: 1px solid var(--border);
+          padding: 80px 32px;
+        }
+        .pricing-inner { max-width: 500px; margin: 0 auto; text-align: center; }
         .billing-toggle {
           display: inline-flex; background: var(--bg);
           border: 1px solid var(--border); border-radius: 99px;
@@ -213,44 +224,45 @@ export default function Landing() {
           background: #e8f4ef; color: #2d6a4f; border: 1px solid #b7dfc9;
           border-radius: 99px; margin-left: 6px;
         }
-        .pricing-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; }
-        .pricing-card {
+        .pricing-card-single {
           border: 1px solid var(--border); border-radius: 16px;
-          padding: 32px; background: var(--bg);
-        }
-        .pricing-card.featured {
-          background: var(--accent); border-color: var(--accent);
-          color: #fff; position: relative;
-        }
-        .featured-badge {
-          position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-          font-size: 10px; font-weight: 700; padding: 3px 12px;
-          background: #e8f4ef; color: #2d6a4f; border: 1px solid #b7dfc9;
-          border-radius: 99px; white-space: nowrap;
+          padding: 40px; background: var(--accent);
+          color: #fff; text-align: left; position: relative;
         }
         .plan-name { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.7; margin-bottom: 12px; }
-        .plan-price { font-family: 'Fraunces', serif; font-size: 48px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
-        .plan-price span { font-size: 18px; font-weight: 400; opacity: 0.7; }
-        .plan-period { font-size: 13px; opacity: 0.6; margin-top: 4px; margin-bottom: 24px; }
-        .plan-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
-        .plan-features li { font-size: 14px; display: flex; align-items: center; gap: 8px; }
-        .plan-features li::before { content: '✓'; font-weight: 700; opacity: 0.8; }
-        .plan-btn {
-          display: block; text-align: center; padding: 12px;
-          border-radius: 8px; font-size: 14px; font-weight: 600;
-          text-decoration: none; transition: all 0.15s;
+        .plan-price { font-family: 'Fraunces', serif; font-size: 56px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+        .plan-price span { font-size: 20px; font-weight: 400; opacity: 0.7; }
+        .plan-period { font-size: 13px; opacity: 0.6; margin-top: 4px; margin-bottom: 28px; }
+        .plan-features { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+        .plan-features li { font-size: 15px; display: flex; align-items: center; gap: 8px; }
+        .plan-features li::before { content: '✓'; font-weight: 700; }
+        .plan-btn-dark {
+          display: block; text-align: center; padding: 14px;
+          border-radius: 8px; font-size: 15px; font-weight: 600;
+          text-decoration: none; background: #fff; color: var(--accent);
+          transition: background 0.15s;
         }
-        .plan-btn-light { background: var(--accent); color: #fff; }
-        .plan-btn-light:hover { background: var(--accent-dark); }
-        .plan-btn-dark { background: #fff; color: var(--accent); }
         .plan-btn-dark:hover { background: #f0f7fc; }
+        .annual-note {
+          margin-top: 16px; text-align: center;
+          font-size: 13px; color: var(--text-3);
+        }
 
-        /* SOCIAL PROOF */
-        .social { max-width: 1100px; margin: 0 auto; padding: 80px 32px; }
+        /* TESTIMONIALS */
+        .social {
+          position: relative;
+          background-image: url('https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=1600&q=80&fit=crop');
+          background-size: cover; background-position: center top;
+        }
+        .social-overlay {
+          background: rgba(244,243,240,0.93);
+          padding: 80px 32px;
+        }
+        .social-inner { max-width: 1100px; margin: 0 auto; }
         .testimonials { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; }
         .testimonial {
-          background: var(--surface); border: 1px solid var(--border);
-          border-radius: 12px; padding: 24px;
+          background: rgba(255,255,255,0.92); border: 1px solid var(--border);
+          border-radius: 12px; padding: 24px; backdrop-filter: blur(4px);
         }
         .testimonial-text { font-size: 14px; line-height: 1.7; color: var(--text-2); margin-bottom: 16px; font-weight: 300; font-style: italic; }
         .testimonial-author { font-size: 13px; font-weight: 600; color: var(--text); }
@@ -273,7 +285,6 @@ export default function Landing() {
         }
         .cta-btn:hover { background: #f0f7fc; }
 
-        /* FOOTER */
         footer {
           background: var(--text); color: var(--text-3);
           padding: 32px; text-align: center; font-size: 13px;
@@ -285,12 +296,10 @@ export default function Landing() {
           .hero { grid-template-columns: 1fr; padding: 60px 20px 48px; }
           .hero-visual { display: none; }
           .features-grid { grid-template-columns: 1fr; }
-          .pricing-cards { grid-template-columns: 1fr; }
           .testimonials { grid-template-columns: 1fr; }
         }
       `}</style>
 
-      {/* NAV */}
       <nav>
         <div className="nav-inner">
           <a href="/" className="logo">Rehab<span>Metrics</span></a>
@@ -307,16 +316,12 @@ export default function Landing() {
           <div>
             <div className="hero-eyebrow">Built for Physiotherapists</div>
             <h1 className="hero-title">Outcome measures, <em>simplified</em></h1>
-            <p className="hero-sub">
-              Stop calculating by hand. RehabMetrics automates scoring, tracks MCID, and exports clinical-grade reports — so you spend more time with patients.
-            </p>
+            <p className="hero-sub">Stop calculating by hand. RehabMetrics automates scoring, tracks MCID, and exports clinical-grade reports — so you spend more time with patients.</p>
             <div className="hero-actions">
               <a href="/signup" className="btn-primary">Start 14-day free trial</a>
               <a href="#features" className="btn-secondary">See how it works →</a>
             </div>
           </div>
-
-          {/* MOCK UI */}
           <div className="hero-visual">
             <div className="mock-header">
               <span className="mock-logo">RehabMetrics</span>
@@ -353,7 +358,13 @@ export default function Landing() {
       <div className="measures-strip">
         <div className="measures-inner">
           <span className="strip-label">Measures included</span>
-          {['10MWT','TUG','BBS','6MWT','FGA','PASS','TIS','HiMAT','BBS','MAS','COVS','SCIM','SARA','HADS','PDQ-8','RPQ','ABC','FIM','Barthel','FAC','AMP'].map(m => (
+          {[
+            '10 Metre Walk Test','Timed Up and Go','Berg Balance Scale','6 Minute Walk Test',
+            'Functional Gait Assessment','Postural Assessment Scale','Trunk Impairment Scale',
+            'High-level Mobility Assessment','Motor Assessment Scale','Barthel Index',
+            'SCIM-III','Functional Ambulation Category','Amputee Mobility Predictor',
+            'HADS','PDQ-8','Rivermead Post-Concussion','ABC Scale'
+          ].map(m => (
             <span key={m} className="measure-pill">{m}</span>
           ))}
         </div>
@@ -361,23 +372,27 @@ export default function Landing() {
 
       {/* FEATURES */}
       <section className="features" id="features">
-        <div className="section-label">Why RehabMetrics</div>
-        <h2 className="section-title">Everything you need.<br/>Nothing you don't.</h2>
-        <div className="features-grid">
-          {[
-            {icon:'⚡',title:'Instant automated scoring',desc:'Enter raw data. Scores, interpretations, and benchmarks calculate instantly — no formulas, no spreadsheets.'},
-            {icon:'📊',title:'MCID tracking built in',desc:'Track change over time against Minimal Clinically Important Difference thresholds for every measure.'},
-            {icon:'📄',title:'One-click PDF export',desc:'Generate clean, clinical-grade PDF reports formatted for medical records and referrals.'},
-            {icon:'🔒',title:'Patient data stays yours',desc:'Secure storage with row-level security. Your patients, your data — no sharing, no selling.'},
-            {icon:'📱',title:'Works anywhere',desc:'Browser-based. No app to install. Works on desktop, tablet, or any device on the ward.'},
-            {icon:'🩺',title:'Evidence-based references',desc:'Every measure includes MCID, MDC, normative data, and citation — right where you need it.'},
-          ].map(f => (
-            <div className="feature-card" key={f.title}>
-              <div className="feature-icon">{f.icon}</div>
-              <div className="feature-title">{f.title}</div>
-              <p className="feature-desc">{f.desc}</p>
+        <div className="features-overlay">
+          <div className="features-inner">
+            <div className="section-label">Why RehabMetrics</div>
+            <h2 className="section-title">Everything you need.<br/>Nothing you don't.</h2>
+            <div className="features-grid">
+              {[
+                {icon:'⚡',title:'Instant automated scoring',desc:'Enter raw data. Scores, interpretations, and benchmarks calculate instantly — no formulas, no spreadsheets.'},
+                {icon:'📊',title:'MCID tracking built in',desc:'Track change over time against Minimal Clinically Important Difference thresholds for every measure.'},
+                {icon:'📄',title:'One-click PDF export',desc:'Generate clean, clinical-grade PDF reports formatted for medical records and referrals.'},
+                {icon:'🔒',title:'Patient data stays yours',desc:'Secure storage with row-level security. Your patients, your data — no sharing, no selling.'},
+                {icon:'📱',title:'Works anywhere',desc:'Browser-based. No app to install. Works on desktop, tablet, or any device on the ward.'},
+                {icon:'🩺',title:'Evidence-based references',desc:'Every measure includes MCID, MDC, normative data, and citation — right where you need it.'},
+              ].map(f => (
+                <div className="feature-card" key={f.title}>
+                  <div className="feature-icon">{f.icon}</div>
+                  <div className="feature-title">{f.title}</div>
+                  <p className="feature-desc">{f.desc}</p>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
@@ -385,7 +400,7 @@ export default function Landing() {
       <section className="pricing" id="pricing">
         <div className="pricing-inner">
           <div className="section-label">Pricing</div>
-          <h2 className="section-title" style={{marginBottom:'24px'}}>Simple, honest pricing</h2>
+          <h2 className="section-title" style={{marginBottom:'12px',fontSize:'36px'}}>Simple, honest pricing</h2>
           <p style={{color:'var(--text-2)',marginBottom:'32px',fontWeight:300}}>14-day free trial. No credit card required.</p>
           <div className="billing-toggle">
             <button className={`toggle-btn ${billing==='monthly'?'active':''}`} onClick={()=>setBilling('monthly')}>Monthly</button>
@@ -393,52 +408,44 @@ export default function Landing() {
               Yearly <span className="save-badge">Save 30%</span>
             </button>
           </div>
-          <div className="pricing-cards">
-            <div className="pricing-card">
-              <div className="plan-name">Monthly</div>
-              <div className="plan-price"><span>$</span>{billing==='monthly'?'2.99':'—'}</div>
-              <div className="plan-period">{billing==='monthly'?'per month':'Switch to monthly'}</div>
-              <ul className="plan-features">
-                <li>All outcome measures</li>
-                <li>Unlimited patients</li>
-                <li>PDF export</li>
-                <li>MCID tracking</li>
-              </ul>
-              <a href="/signup" className="plan-btn plan-btn-light">Start free trial</a>
-            </div>
-            <div className="pricing-card featured">
-              <div className="featured-badge">Best value</div>
-              <div className="plan-name" style={{color:'rgba(255,255,255,0.7)'}}>Annual</div>
-              <div className="plan-price"><span>$</span>{billing==='yearly'?'24.99':'—'}</div>
-              <div className="plan-period">{billing==='yearly'?'per year · $2.08/mo':'Switch to yearly'}</div>
-              <ul className="plan-features">
-                <li>Everything in Monthly</li>
-                <li>30% saving</li>
-                <li>Priority support</li>
-                <li>Early access to new measures</li>
-              </ul>
-              <a href="/signup" className="plan-btn plan-btn-dark">Start free trial</a>
-            </div>
+          <div className="pricing-card-single">
+            <div className="plan-name">{planName}</div>
+            <div className="plan-price"><span>$</span>{price}</div>
+            <div className="plan-period">{period}</div>
+            <ul className="plan-features">
+              <li>All outcome measures</li>
+              <li>Unlimited patients</li>
+              <li>PDF export</li>
+              <li>MCID tracking</li>
+              {billing==='yearly' && <li>30% saving vs monthly</li>}
+              {billing==='yearly' && <li>Early access to new measures</li>}
+            </ul>
+            <a href="/signup" className="plan-btn-dark">Start free trial</a>
           </div>
+          <p className="annual-note">Cancel anytime. No lock-in.</p>
         </div>
       </section>
 
       {/* TESTIMONIALS */}
       <section className="social">
-        <div className="section-label">Built for clinicians</div>
-        <h2 className="section-title">Trusted by physios in the clinic</h2>
-        <div className="testimonials">
-          {[
-            {text:'"Finally a tool that does the maths for me. I use it every patient session — it\'s become part of my standard workflow."',author:'Sarah M.',role:'Senior Physiotherapist · Inpatient Rehab'},
-            {text:'"The MCID tracking is exactly what I needed. I can show patients their progress objectively, which is incredibly motivating."',author:'James T.',role:'Physiotherapist · Neuro Rehab'},
-            {text:'"Clean, fast, and clinically accurate. The PDF export saves me 10 minutes per patient on documentation."',author:'Priya K.',role:'Physiotherapy Team Lead'},
-          ].map(t => (
-            <div className="testimonial" key={t.author}>
-              <p className="testimonial-text">{t.text}</p>
-              <div className="testimonial-author">{t.author}</div>
-              <div className="testimonial-role">{t.role}</div>
+        <div className="social-overlay">
+          <div className="social-inner">
+            <div className="section-label">Built for clinicians</div>
+            <h2 className="section-title">Trusted by physios in the clinic</h2>
+            <div className="testimonials">
+              {[
+                {text:'"Finally a tool that does the maths for me. I use it every patient session — it\'s become part of my standard workflow."',author:'Sarah M.',role:'Senior Physiotherapist · Inpatient Rehab'},
+                {text:'"The MCID tracking is exactly what I needed. I can show patients their progress objectively, which is incredibly motivating."',author:'James T.',role:'Physiotherapist · Neuro Rehab'},
+                {text:'"Clean, fast, and clinically accurate. The PDF export saves me 10 minutes per patient on documentation."',author:'Priya K.',role:'Physiotherapy Team Lead'},
+              ].map(t => (
+                <div className="testimonial" key={t.author}>
+                  <p className="testimonial-text">{t.text}</p>
+                  <div className="testimonial-author">{t.author}</div>
+                  <div className="testimonial-role">{t.role}</div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
@@ -449,12 +456,11 @@ export default function Landing() {
         <a href="/signup" className="cta-btn">Start your free 14-day trial</a>
       </section>
 
-      {/* FOOTER */}
       <footer>
         <div style={{marginBottom:'12px'}}>
           <a href="/privacy">Privacy Policy</a>
           <a href="/terms">Terms of Service</a>
-          <a href="mailto:hello@rehabmetrics.com">Contact</a>
+          <a href="mailto:hello@rehabmetrics.io">Contact</a>
         </div>
         <div>© {new Date().getFullYear()} RehabMetrics. All rights reserved.</div>
       </footer>
