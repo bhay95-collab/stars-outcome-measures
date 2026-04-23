@@ -1008,14 +1008,6 @@
               <span class="sci-sacral-label">DAP (Deep Anal Pressure)</span>
               <select class="sci-sacral-sel" id="sci-dap" onchange="sciCalc()"><option value="">—</option><option value="Y">Yes</option><option value="N">No</option></select>
             </div>
-            <div class="sci-sacral-item">
-              <span class="sci-sacral-label">S4-5 LT</span>
-              <select class="sci-sacral-sel" id="sci-s45lt" onchange="sciCalc()"><option value="">—</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="NT">NT</option></select>
-            </div>
-            <div class="sci-sacral-item">
-              <span class="sci-sacral-label">S4-5 PP</span>
-              <select class="sci-sacral-sel" id="sci-s45pp" onchange="sciCalc()"><option value="">—</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="NT">NT</option></select>
-            </div>
           </div>
         </div>
 
@@ -2583,8 +2575,8 @@ function buildSciGrid(){
   const tdLevel = 'style="padding:3px 8px;border-bottom:1px solid var(--border);border-left:2px solid var(--border-strong);border-right:2px solid var(--border-strong);text-align:center;font-size:12px;font-weight:700;color:var(--text-2);white-space:nowrap;background:var(--surface-2);width:60px"';
   const tdMotorLevel = 'style="padding:3px 8px;border-bottom:1px solid var(--border);border-left:2px solid var(--border-strong);border-right:2px solid var(--border-strong);text-align:center;font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap;background:var(--accent-light);width:60px"';
 
-  const inpSens = (id) => `<input class="sci-inp" id="${id}" type="text" maxlength="3" placeholder="—" oninput="sciCalc()" style="width:36px;text-align:center;background:#fffef9;border:1px solid var(--border);border-radius:4px;padding:3px 2px;font-family:'DM Mono',monospace;font-size:12px;color:#111;outline:none" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 2px rgba(35,100,153,.15)'" onblur="this.style.borderColor='';this.style.boxShadow='';sciStyleCell(this)">`;
-  const inpMotor = (id) => `<input class="sci-inp sci-motor-inp" id="${id}" type="text" maxlength="3" placeholder="—" oninput="sciCalc()" style="width:36px;text-align:center;background:#e8f0f9;border:1px solid #b8cfe8;border-radius:4px;padding:3px 2px;font-family:'DM Mono',monospace;font-size:12px;color:#111;outline:none" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 2px rgba(35,100,153,.15)'" onblur="this.style.borderColor='';this.style.boxShadow='';sciStyleCell(this)">`;
+  const inpSens = (id) => `<input class="sci-inp" id="${id}" type="text" maxlength="3" placeholder="—" oninput="sciValidateInp(this,2)" style="width:36px;text-align:center;background:#fffef9;border:1px solid var(--border);border-radius:4px;padding:3px 2px;font-family:'DM Mono',monospace;font-size:12px;color:#111;outline:none" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 2px rgba(35,100,153,.15)'" onblur="this.style.borderColor='';this.style.boxShadow='';sciStyleCell(this)">`;
+  const inpMotor = (id) => `<input class="sci-inp sci-motor-inp" id="${id}" type="text" maxlength="3" placeholder="—" oninput="sciValidateInp(this,5)" style="width:36px;text-align:center;background:#e8f0f9;border:1px solid #b8cfe8;border-radius:4px;padding:3px 2px;font-family:'DM Mono',monospace;font-size:12px;color:#111;outline:none" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 2px rgba(35,100,153,.15)'" onblur="this.style.borderColor='';this.style.boxShadow='';sciStyleCell(this)">`;
   const emptyMotor = `<span style="display:inline-block;width:36px;color:var(--text-3);font-size:10px;text-align:center">—</span>`;
 
   let html = '';
@@ -2604,6 +2596,19 @@ function buildSciGrid(){
     </tr>`;
   });
   tbody.innerHTML = html;
+}
+
+function sciValidateInp(inp, maxVal){
+  const raw = inp.value.toUpperCase();
+  // Strip any character that isn't a digit, N, T, or *
+  let v = raw.replace(/[^0-9NT*]/g, '');
+  // Clamp purely numeric values to [0, maxVal]
+  if(/^\d+$/.test(v)){
+    const n = parseInt(v, 10);
+    if(n > maxVal) v = String(maxVal);
+  }
+  if(inp.value !== v) inp.value = v;
+  sciCalc();
 }
 
 function sciStyleCell(inp){
@@ -2691,12 +2696,15 @@ function sciNLI(snsR, snsL, motR, motL){
 function sciIsComplete(){
   const vac = document.getElementById('sci-vac')?.value || '';
   const dap = document.getElementById('sci-dap')?.value || '';
-  const s45lt = document.getElementById('sci-s45lt')?.value || '';
-  const s45pp = document.getElementById('sci-s45pp')?.value || '';
+  const rlt = sciGetVal('sci-r-lt-S4-5');
+  const llt = sciGetVal('sci-l-lt-S4-5');
+  const rpp = sciGetVal('sci-r-pp-S4-5');
+  const lpp = sciGetVal('sci-l-pp-S4-5');
   // Sacral sparing present = any of: VAC=Y, DAP=Y, S4-5 LT/PP > 0
   if(vac==='Y' || dap==='Y') return 'Incomplete';
-  if(s45lt==='1'||s45lt==='2'||s45pp==='1'||s45pp==='2') return 'Incomplete';
-  if(vac==='N' && dap==='N' && (s45lt==='0'||s45lt==='NT') && (s45pp==='0'||s45pp==='NT')) return 'Complete';
+  if(rlt==='1'||rlt==='2'||llt==='1'||llt==='2'||rpp==='1'||rpp==='2'||lpp==='1'||lpp==='2') return 'Incomplete';
+  const noSensation = v => v==='0' || v.startsWith('NT');
+  if(vac==='N' && dap==='N' && noSensation(rlt) && noSensation(llt) && noSensation(rpp) && noSensation(lpp)) return 'Complete';
   return null; // insufficient data
 }
 
@@ -3382,8 +3390,10 @@ async function exportASIAPdf(){
     //   Date/Time     line: x=654–767,  fitz y=26.2  → pdf-lib y=585.8
     //   Examiner Name line: x=446–585,  fitz y=49.2  → pdf-lib y=562.8
     // Text baseline placed ~3 pt above each line.
+    const rawDate = gv('pt-date');
+    const fmtDate = rawDate ? (([y,m,d]) => `${d}/${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]}/${y}`)(rawDate.split('-')) : '';
     put(gv('pt-name'),    438, 589, 9);
-    put(gv('pt-date'),    656, 589, 9);
+    put(fmtDate,          656, 589, 9);
     put(gv('pt-assessor'),448, 565, 9);
 
     // ── STEP 2: Sensory grid (R LT, R PP, L LT, L PP × 28 rows) ──
