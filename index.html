@@ -3390,8 +3390,10 @@ async function exportASIAPdf(){
     //   Date/Time     line: x=654–767,  fitz y=26.2  → pdf-lib y=585.8
     //   Examiner Name line: x=446–585,  fitz y=49.2  → pdf-lib y=562.8
     // Text baseline placed ~3 pt above each line.
+    const rawDate = gv('pt-date');
+    const fmtDate = rawDate ? (([y,m,d]) => `${d}/${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]}/${y}`)(rawDate.split('-')) : '';
     put(gv('pt-name'),    438, 589, 9);
-    put(gv('pt-date'),    656, 589, 9);
+    put(fmtDate,          656, 589, 9);
     put(gv('pt-assessor'),448, 565, 9);
 
     // ── STEP 2: Sensory grid (R LT, R PP, L LT, L PP × 28 rows) ──
