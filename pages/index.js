@@ -65,7 +65,7 @@ export default function Landing() {
         /* HERO */
         .hero-section {
           position: relative;
-          background-image: url('https://images.pexels.com/photos/8346659/pexels-photo-8346659.jpeg');
+          background-image: url('https://images.pexels.com/photos/20860617/pexels-photo-20860617.jpeg');
           background-size: cover;
           background-position: center center;
         }
@@ -174,7 +174,7 @@ export default function Landing() {
         /* FEATURES */
         .features {
           position: relative;
-          background-image: url('https://images.pexels.com/photos/20860617/pexels-photo-20860617.jpeg');
+          background-image: url('https://images.pexels.com/photos/8346659/pexels-photo-8346659.jpeg');
           background-size: cover;
           background-position: center center;
           background-attachment: fixed;
