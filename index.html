@@ -1008,14 +1008,6 @@
               <span class="sci-sacral-label">DAP (Deep Anal Pressure)</span>
               <select class="sci-sacral-sel" id="sci-dap" onchange="sciCalc()"><option value="">—</option><option value="Y">Yes</option><option value="N">No</option></select>
             </div>
-            <div class="sci-sacral-item">
-              <span class="sci-sacral-label">S4-5 LT</span>
-              <select class="sci-sacral-sel" id="sci-s45lt" onchange="sciCalc()"><option value="">—</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="NT">NT</option></select>
-            </div>
-            <div class="sci-sacral-item">
-              <span class="sci-sacral-label">S4-5 PP</span>
-              <select class="sci-sacral-sel" id="sci-s45pp" onchange="sciCalc()"><option value="">—</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="NT">NT</option></select>
-            </div>
           </div>
         </div>
 
@@ -2691,12 +2683,15 @@ function sciNLI(snsR, snsL, motR, motL){
 function sciIsComplete(){
   const vac = document.getElementById('sci-vac')?.value || '';
   const dap = document.getElementById('sci-dap')?.value || '';
-  const s45lt = document.getElementById('sci-s45lt')?.value || '';
-  const s45pp = document.getElementById('sci-s45pp')?.value || '';
+  const rlt = sciGetVal('sci-r-lt-S4-5');
+  const llt = sciGetVal('sci-l-lt-S4-5');
+  const rpp = sciGetVal('sci-r-pp-S4-5');
+  const lpp = sciGetVal('sci-l-pp-S4-5');
   // Sacral sparing present = any of: VAC=Y, DAP=Y, S4-5 LT/PP > 0
   if(vac==='Y' || dap==='Y') return 'Incomplete';
-  if(s45lt==='1'||s45lt==='2'||s45pp==='1'||s45pp==='2') return 'Incomplete';
-  if(vac==='N' && dap==='N' && (s45lt==='0'||s45lt==='NT') && (s45pp==='0'||s45pp==='NT')) return 'Complete';
+  if(rlt==='1'||rlt==='2'||llt==='1'||llt==='2'||rpp==='1'||rpp==='2'||lpp==='1'||lpp==='2') return 'Incomplete';
+  const noSensation = v => v==='0' || v.startsWith('NT');
+  if(vac==='N' && dap==='N' && noSensation(rlt) && noSensation(llt) && noSensation(rpp) && noSensation(lpp)) return 'Complete';
   return null; // insufficient data
 }
 
