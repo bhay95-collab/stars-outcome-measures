@@ -2575,8 +2575,8 @@ function buildSciGrid(){
   const tdLevel = 'style="padding:3px 8px;border-bottom:1px solid var(--border);border-left:2px solid var(--border-strong);border-right:2px solid var(--border-strong);text-align:center;font-size:12px;font-weight:700;color:var(--text-2);white-space:nowrap;background:var(--surface-2);width:60px"';
   const tdMotorLevel = 'style="padding:3px 8px;border-bottom:1px solid var(--border);border-left:2px solid var(--border-strong);border-right:2px solid var(--border-strong);text-align:center;font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap;background:var(--accent-light);width:60px"';
 
-  const inpSens = (id) => `<input class="sci-inp" id="${id}" type="text" maxlength="3" placeholder="—" oninput="sciCalc()" style="width:36px;text-align:center;background:#fffef9;border:1px solid var(--border);border-radius:4px;padding:3px 2px;font-family:'DM Mono',monospace;font-size:12px;color:#111;outline:none" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 2px rgba(35,100,153,.15)'" onblur="this.style.borderColor='';this.style.boxShadow='';sciStyleCell(this)">`;
-  const inpMotor = (id) => `<input class="sci-inp sci-motor-inp" id="${id}" type="text" maxlength="3" placeholder="—" oninput="sciCalc()" style="width:36px;text-align:center;background:#e8f0f9;border:1px solid #b8cfe8;border-radius:4px;padding:3px 2px;font-family:'DM Mono',monospace;font-size:12px;color:#111;outline:none" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 2px rgba(35,100,153,.15)'" onblur="this.style.borderColor='';this.style.boxShadow='';sciStyleCell(this)">`;
+  const inpSens = (id) => `<input class="sci-inp" id="${id}" type="text" maxlength="3" placeholder="—" oninput="sciValidateInp(this,2)" style="width:36px;text-align:center;background:#fffef9;border:1px solid var(--border);border-radius:4px;padding:3px 2px;font-family:'DM Mono',monospace;font-size:12px;color:#111;outline:none" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 2px rgba(35,100,153,.15)'" onblur="this.style.borderColor='';this.style.boxShadow='';sciStyleCell(this)">`;
+  const inpMotor = (id) => `<input class="sci-inp sci-motor-inp" id="${id}" type="text" maxlength="3" placeholder="—" oninput="sciValidateInp(this,5)" style="width:36px;text-align:center;background:#e8f0f9;border:1px solid #b8cfe8;border-radius:4px;padding:3px 2px;font-family:'DM Mono',monospace;font-size:12px;color:#111;outline:none" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 2px rgba(35,100,153,.15)'" onblur="this.style.borderColor='';this.style.boxShadow='';sciStyleCell(this)">`;
   const emptyMotor = `<span style="display:inline-block;width:36px;color:var(--text-3);font-size:10px;text-align:center">—</span>`;
 
   let html = '';
@@ -2596,6 +2596,19 @@ function buildSciGrid(){
     </tr>`;
   });
   tbody.innerHTML = html;
+}
+
+function sciValidateInp(inp, maxVal){
+  const raw = inp.value.toUpperCase();
+  // Strip any character that isn't a digit, N, T, or *
+  let v = raw.replace(/[^0-9NT*]/g, '');
+  // Clamp purely numeric values to [0, maxVal]
+  if(/^\d+$/.test(v)){
+    const n = parseInt(v, 10);
+    if(n > maxVal) v = String(maxVal);
+  }
+  if(inp.value !== v) inp.value = v;
+  sciCalc();
 }
 
 function sciStyleCell(inp){
