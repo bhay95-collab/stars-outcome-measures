@@ -65,7 +65,7 @@ export default function Landing() {
         /* HERO */
         .hero-section {
           position: relative;
-          background-image: url('https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=1800&q=85&fit=crop&crop=center');
+          background-image: url('https://images.pexels.com/photos/8346659/pexels-photo-8346659.jpeg');
           background-size: cover;
           background-position: center center;
         }
@@ -174,7 +174,7 @@ export default function Landing() {
         /* FEATURES */
         .features {
           position: relative;
-          background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1800&q=85&fit=crop&crop=center');
+          background-image: url('https://images.pexels.com/photos/20860617/pexels-photo-20860617.jpeg');
           background-size: cover;
           background-position: center center;
           background-attachment: fixed;
@@ -261,7 +261,7 @@ export default function Landing() {
         /* TESTIMONIALS */
         .social {
           position: relative;
-          background-image: url('https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=1800&q=85&fit=crop&crop=center');
+          background-image: url('https://images.pexels.com/photos/7289770/pexels-photo-7289770.jpeg');
           background-size: cover;
           background-position: center center;
           background-attachment: fixed;
