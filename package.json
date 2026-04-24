@@ -8,11 +8,12 @@
     "start": "next start"
   },
   "dependencies": {
+    "@stripe/stripe-js": "latest",
+    "@supabase/supabase-js": "latest",
+    "lucide-react": "^1.9.0",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "@supabase/supabase-js": "latest",
-    "stripe": "latest",
-    "@stripe/stripe-js": "latest"
+    "stripe": "latest"
   }
 }
