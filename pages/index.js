@@ -11,28 +11,30 @@ export default function Landing() {
   return (
     <>
       <Head>
-        <title>RehabMetrics — Outcome Measures, Simplified</title>
+        <title>RehabMetrics IQ — Outcome Measures, Simplified</title>
         <meta name="description" content="Clinical outcome measures for physiotherapists. Automated scoring, MCID tracking, and PDF export." />
+        <link rel="icon" href="/SquareLogo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,600;1,300&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
       </Head>
 
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
           --accent: #236499;
+          --secondary: #7FB3E6;
           --accent-light: #e8f2f9;
           --accent-mid: #4a9fd4;
           --accent-dark: #1a4e77;
           --bg: #f4f3f0;
           --surface: #ffffff;
-          --border: #e2e0db;
-          --text: #1a1917;
-          --text-2: #5c5a56;
-          --text-3: #9b9891;
+          --border: #D8E2EC;
+          --text: #1F2933;
+          --text-2: #5F6B7A;
+          --text-3: #8A96A3;
         }
         html { scroll-behavior: smooth; }
-        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
 
         nav {
           position: sticky; top: 0; z-index: 100;
@@ -47,11 +49,13 @@ export default function Landing() {
           height: 68px;
         }
         .logo {
-          font-family: 'Fraunces', serif;
+          font-family: 'Source Serif 4', serif;
           font-size: 34px; font-weight: 600;
           color: var(--accent); text-decoration: none;
           letter-spacing: -0.3px;
+          display: flex; align-items: center; gap: 10px;
         }
+        .logo-img { height: 32px; width: 32px; object-fit: contain; }
         .logo span { font-style: italic; font-weight: 300; }
         .nav-cta {
           background: var(--accent); color: #fff;
@@ -84,7 +88,7 @@ export default function Landing() {
           color: var(--accent); margin-bottom: 16px;
         }
         .hero-title {
-          font-family: 'Fraunces', serif;
+          font-family: 'Source Serif 4', serif;
           font-size: clamp(42px, 5vw, 64px);
           font-weight: 600; line-height: 1.1;
           letter-spacing: -1px; color: var(--text);
@@ -124,7 +128,7 @@ export default function Landing() {
           margin-bottom: 16px; padding-bottom: 14px;
           border-bottom: 1px solid var(--border);
         }
-        .mock-logo { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; color: var(--accent); }
+        .mock-logo { font-family: 'Source Serif 4', serif; font-size: 18px; font-weight: 600; color: var(--accent); }
         .mock-badge {
           font-size: 10px; font-weight: 600; padding: 2px 8px;
           background: var(--accent-light); color: var(--accent);
@@ -141,13 +145,13 @@ export default function Landing() {
           padding: 8px 10px; border-radius: 8px; margin-bottom: 6px;
           border: 1px solid var(--border);
         }
-        .mock-measure-label { font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); }
+        .mock-measure-label { font-size: 12px; font-weight: 600; font-family: monospace; color: var(--text); }
         .mock-measure-name { font-size: 11px; color: var(--text-3); }
         .mock-chip { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 99px; border: 1px solid; }
         .chip-g { background: #e8f4ef; color: #2d6a4f; border-color: #b7dfc9; }
         .chip-a { background: #fef5e7; color: #a05c00; border-color: #e8b84b; }
         .chip-b { background: var(--accent-light); color: var(--accent); border-color: #b8d9ef; }
-        .mock-score { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--accent); }
+        .mock-score { font-family: monospace; font-size: 14px; font-weight: 500; color: var(--accent); }
 
         /* MEASURES STRIP */
         .measures-strip {
@@ -189,7 +193,7 @@ export default function Landing() {
           text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
         }
         .section-title {
-          font-family: 'Fraunces', serif; font-size: 44px;
+          font-family: 'Source Serif 4', serif; font-size: 44px;
           font-weight: 600; letter-spacing: -0.5px;
           margin-bottom: 48px; line-height: 1.2;
         }
@@ -224,7 +228,7 @@ export default function Landing() {
         }
         .toggle-btn {
           padding: 8px 22px; border-radius: 99px; border: none;
-          font-family: 'DM Sans', sans-serif; font-size: 13px;
+          font-family: 'Inter', sans-serif; font-size: 13px;
           font-weight: 500; cursor: pointer; transition: all 0.15s;
           background: transparent; color: var(--text-2);
         }
@@ -240,7 +244,7 @@ export default function Landing() {
           color: #fff; text-align: left; position: relative;
         }
         .plan-name { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.7; margin-bottom: 12px; }
-        .plan-price { font-family: 'Fraunces', serif; font-size: 56px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+        .plan-price { font-family: 'Source Serif 4', serif; font-size: 56px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
         .plan-price span { font-size: 20px; font-weight: 400; opacity: 0.7; }
         .plan-period { font-size: 13px; opacity: 0.6; margin-top: 4px; margin-bottom: 28px; }
         .plan-features { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
@@ -285,7 +289,7 @@ export default function Landing() {
           background: var(--accent); color: #fff;
           text-align: center; padding: 80px 32px;
         }
-        .cta-title { font-family: 'Fraunces', serif; font-size: 42px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 16px; line-height: 1.15; }
+        .cta-title { font-family: 'Source Serif 4', serif; font-size: 42px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 16px; line-height: 1.15; }
         .cta-title em { font-style: italic; font-weight: 300; }
         .cta-sub { font-size: 16px; opacity: 0.8; margin-bottom: 36px; font-weight: 300; }
         .cta-btn {
@@ -316,7 +320,10 @@ export default function Landing() {
 
       <nav>
         <div className="nav-inner">
-          <a href="/" className="logo">Rehab<span>Metrics</span></a>
+          <a href="/" className="logo">
+            <img src="/SquareLogo.png" alt="RehabMetrics IQ" className="logo-img" />
+            RehabMetrics <span>IQ</span>
+          </a>
           <div style={{display:'flex',gap:'12px',alignItems:'center'}}>
             <a href="/login" style={{fontSize:'14px',color:'var(--text-2)',textDecoration:'none',fontWeight:500}}>Log in</a>
             <a href="/signup" className="nav-cta">Start free trial</a>
