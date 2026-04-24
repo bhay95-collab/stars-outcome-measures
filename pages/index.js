@@ -5,37 +5,37 @@ import { ClipboardCheck, LineChart, Users, FileText, Target, Database } from 'lu
 const WHY_CARDS = [
   {
     Icon: ClipboardCheck,
-    iconBg: '#EFF6FF', iconColor: '#2563EB',
+    iconBg: 'var(--color-primary-soft)', iconColor: 'var(--color-primary)',
     heading: 'Physio Outcome Measures. Simplified.',
     body: 'Capture and score physiotherapy and rehabilitation outcome measures without spreadsheets. Standardised, fast, and clinically reliable.',
   },
   {
     Icon: LineChart,
-    iconBg: '#F0FDFA', iconColor: '#0D9488',
+    iconBg: 'var(--color-primary-soft)', iconColor: 'var(--color-secondary)',
     heading: 'Track Rehab Progress Over Time',
     body: 'Monitor patient outcomes across sessions and clearly see how rehabilitation is progressing over time.',
   },
   {
     Icon: Users,
-    iconBg: '#F1F5F9', iconColor: '#475569',
+    iconBg: 'var(--color-surface-soft)', iconColor: 'var(--color-muted)',
     heading: 'Built for Physiotherapy & Rehab Teams',
     body: 'Designed for physios, OTs and multidisciplinary rehab teams across inpatient, outpatient and community settings.',
   },
   {
     Icon: FileText,
-    iconBg: '#FFFBEB', iconColor: '#D97706',
+    iconBg: 'var(--color-primary-soft)', iconColor: 'var(--color-primary)',
     heading: 'Reduce Documentation Burden',
     body: 'Eliminate manual scoring and duplicate entry. Capture outcome measures once and use them everywhere.',
   },
   {
     Icon: Target,
-    iconBg: '#EEF2FF', iconColor: '#4F46E5',
+    iconBg: 'var(--color-primary-soft)', iconColor: 'var(--color-secondary)',
     heading: 'Improve Clinical Decision-Making',
     body: 'Use structured outcome data to guide better clinical decisions and support outcome-based care.',
   },
   {
     Icon: Database,
-    iconBg: '#F1F5F9', iconColor: '#334155',
+    iconBg: 'var(--color-surface-soft)', iconColor: 'var(--color-muted)',
     heading: 'Consistent, Reliable Outcome Data',
     body: 'Ensure outcome measures are recorded consistently across clinicians, improving accuracy and data quality.',
   },
@@ -94,14 +94,14 @@ export default function Landing() {
           font-size: 34px; font-weight: 400;
           text-decoration: none;
           letter-spacing: -0.3px;
-          display: flex; align-items: center; gap: 10px;
+          display: flex; align-items: center; gap: 8px;
         }
         .logo-img { height: 32px; width: 32px; object-fit: contain; }
-        .logo-wordmark-rehab { font-weight: 700; color: #236499; }
-        .logo-wordmark-iq    { font-weight: 600; color: #7FB3E6; }
+        .logo-wordmark-rehab { font-weight: 700; color: var(--color-primary); }
+        .logo-wordmark-iq    { font-weight: 600; color: var(--color-secondary); }
         .nav-cta {
-          background: var(--color-primary); color: #fff;
-          padding: 9px 22px; border-radius: 10px;
+          background: var(--color-primary); color: var(--color-surface);
+          padding: 12px 20px; border-radius: 10px;
           font-size: 14px; font-weight: 600;
           text-decoration: none;
           transition: background 0.15s;
@@ -116,7 +116,7 @@ export default function Landing() {
           background-position: center center;
         }
         .hero-overlay {
-          background: rgba(244,243,240,0.88);
+          background: rgba(247,250,252,0.88);
           padding: 100px 32px 80px;
         }
         .hero {
@@ -144,8 +144,8 @@ export default function Landing() {
         }
         .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
         .btn-primary {
-          background: var(--color-primary); color: #fff;
-          padding: 13px 28px; border-radius: 10px;
+          background: var(--color-primary); color: var(--color-surface);
+          padding: 12px 28px; border-radius: 10px;
           font-size: 15px; font-weight: 600;
           text-decoration: none; display: inline-block;
           transition: background 0.15s;
@@ -154,7 +154,7 @@ export default function Landing() {
         .btn-secondary {
           color: var(--color-primary); font-size: 14px;
           font-weight: 500; text-decoration: none;
-          padding: 13px 20px;
+          padding: 12px 20px;
         }
         .btn-secondary:hover { text-decoration: underline; }
 
@@ -163,37 +163,37 @@ export default function Landing() {
           background: rgba(255,255,255,0.96);
           border: 1px solid var(--color-border);
           border-radius: 16px; padding: 24px;
-          box-shadow: 0 8px 40px rgba(35,100,153,0.12), 0 2px 8px rgba(0,0,0,0.08);
+          box-shadow: var(--shadow-md);
         }
         .mock-header {
-          display: flex; align-items: center; gap: 10px;
-          margin-bottom: 16px; padding-bottom: 14px;
+          display: flex; align-items: center; gap: 8px;
+          margin-bottom: 16px; padding-bottom: 12px;
           border-bottom: 1px solid var(--color-border);
         }
         .mock-logo { font-family: 'Source Serif 4', serif; font-size: 18px; font-weight: 600; color: var(--color-primary); }
         .mock-badge {
           font-size: 10px; font-weight: 600; padding: 2px 8px;
           background: var(--color-primary-soft); color: var(--color-primary);
-          border-radius: 99px; border: 1px solid #b8d9ef; margin-left: auto;
+          border-radius: 99px; border: 1px solid var(--color-border); margin-left: auto;
         }
         .mock-tabs { display: flex; gap: 4px; margin-bottom: 14px; }
         .mock-tab {
-          font-size: 11px; font-weight: 600; padding: 5px 12px;
+          font-size: 11px; font-weight: 600; padding: 4px 12px;
           border-radius: 6px; background: transparent; color: var(--color-subtle);
         }
         .mock-tab.active { background: var(--color-primary-soft); color: var(--color-primary); }
         .mock-measure {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 8px 10px; border-radius: 8px; margin-bottom: 6px;
+          padding: 8px 12px; border-radius: 8px; margin-bottom: 8px;
           border: 1px solid var(--color-border);
         }
-        .mock-measure-label { font-size: 12px; font-weight: 600; font-family: monospace; color: var(--color-ink); }
+        .mock-measure-label { font-size: 12px; font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--color-ink); }
         .mock-measure-name { font-size: 11px; color: var(--color-subtle); }
-        .mock-chip { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 99px; border: 1px solid; }
+        .mock-chip { font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 99px; border: 1px solid; }
         .chip-g { background: #e8f4ef; color: #2d6a4f; border-color: #b7dfc9; }
         .chip-a { background: #fef5e7; color: #a05c00; border-color: #e8b84b; }
-        .chip-b { background: var(--color-primary-soft); color: var(--color-primary); border-color: #b8d9ef; }
-        .mock-score { font-family: monospace; font-size: 14px; font-weight: 500; color: var(--color-primary); }
+        .chip-b { background: var(--color-primary-soft); color: var(--color-primary); border-color: var(--color-border); }
+        .mock-score { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; font-weight: 500; color: var(--color-primary); }
 
         /* MEASURES STRIP */
         .measures-strip {
@@ -212,9 +212,9 @@ export default function Landing() {
           margin-right: 8px; white-space: nowrap;
         }
         .measure-pill {
-          font-size: 12px; font-weight: 500; padding: 5px 14px;
+          font-size: 12px; font-weight: 500; padding: 4px 16px;
           background: var(--color-primary-soft); color: var(--color-primary);
-          border: 1px solid #b8d9ef; border-radius: 99px;
+          border: 1px solid var(--color-border); border-radius: 99px;
         }
 
         /* FEATURES */
@@ -226,13 +226,13 @@ export default function Landing() {
           background-attachment: fixed;
         }
         .features-overlay {
-          background: rgba(244,243,240,0.82);
+          background: rgba(247,250,252,0.82);
           padding: 80px 32px;
         }
         .features-inner { max-width: 1100px; margin: 0 auto; }
         .section-label {
           font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-          text-transform: uppercase; color: var(--color-primary); margin-bottom: 14px;
+          text-transform: uppercase; color: var(--color-primary); margin-bottom: 16px;
         }
         .section-title {
           font-family: 'Source Serif 4', serif; font-size: 44px;
@@ -246,7 +246,7 @@ export default function Landing() {
           margin-top: 40px;
         }
         .why-card {
-          background: #ffffff;
+          background: var(--color-surface);
           border: 1px solid var(--color-border);
           border-radius: 16px;
           padding: 24px;
@@ -290,21 +290,21 @@ export default function Landing() {
           padding: 4px; margin-bottom: 40px; gap: 4px;
         }
         .toggle-btn {
-          padding: 8px 22px; border-radius: 99px; border: none;
+          padding: 8px 20px; border-radius: 99px; border: none;
           font-family: 'Inter', sans-serif; font-size: 13px;
           font-weight: 500; cursor: pointer; transition: all 0.15s;
           background: transparent; color: var(--color-muted);
         }
-        .toggle-btn.active { background: var(--color-primary); color: #fff; font-weight: 600; }
+        .toggle-btn.active { background: var(--color-primary); color: var(--color-surface); font-weight: 600; }
         .save-badge {
-          font-size: 10px; font-weight: 700; padding: 2px 7px;
+          font-size: 10px; font-weight: 700; padding: 2px 8px;
           background: #e8f4ef; color: #2d6a4f; border: 1px solid #b7dfc9;
-          border-radius: 99px; margin-left: 6px;
+          border-radius: 99px; margin-left: 8px;
         }
         .pricing-card-single {
           border: 1px solid var(--color-border); border-radius: 16px;
           padding: 40px; background: var(--color-primary);
-          color: #fff; text-align: left; position: relative;
+          color: var(--color-surface); text-align: left; position: relative;
         }
         .plan-name { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.7; margin-bottom: 12px; }
         .plan-price { font-family: 'Source Serif 4', serif; font-size: 56px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
@@ -314,12 +314,12 @@ export default function Landing() {
         .plan-features li { font-size: 15px; display: flex; align-items: center; gap: 8px; }
         .plan-features li::before { content: '✓'; font-weight: 700; }
         .plan-btn-dark {
-          display: block; text-align: center; padding: 14px;
+          display: block; text-align: center; padding: 12px;
           border-radius: 10px; font-size: 15px; font-weight: 600;
-          text-decoration: none; background: #fff; color: var(--color-primary);
+          text-decoration: none; background: var(--color-surface); color: var(--color-primary);
           transition: background 0.15s;
         }
-        .plan-btn-dark:hover { background: #f0f7fc; }
+        .plan-btn-dark:hover { background: var(--color-primary-soft); }
         .annual-note {
           margin-top: 16px; text-align: center;
           font-size: 13px; color: var(--color-subtle);
@@ -334,7 +334,7 @@ export default function Landing() {
           background-attachment: fixed;
         }
         .social-overlay {
-          background: rgba(244,243,240,0.82);
+          background: rgba(247,250,252,0.82);
           padding: 80px 32px;
         }
         .social-inner { max-width: 1100px; margin: 0 auto; }
@@ -349,27 +349,27 @@ export default function Landing() {
 
         /* CTA */
         .cta-section {
-          background: var(--color-primary); color: #fff;
+          background: var(--color-primary); color: var(--color-surface);
           text-align: center; padding: 80px 32px;
         }
         .cta-title { font-family: 'Source Serif 4', serif; font-size: 42px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 16px; line-height: 1.15; }
         .cta-title em { font-style: italic; font-weight: 300; }
         .cta-sub { font-size: 16px; opacity: 0.8; margin-bottom: 36px; font-weight: 300; }
         .cta-btn {
-          background: #fff; color: var(--color-primary);
-          padding: 14px 36px; border-radius: 10px;
-          font-size: 15px; font-weight: 700;
+          background: var(--color-surface); color: var(--color-primary);
+          padding: 12px 36px; border-radius: 10px;
+          font-size: 15px; font-weight: 600;
           text-decoration: none; display: inline-block;
           transition: background 0.15s;
         }
-        .cta-btn:hover { background: #f0f7fc; }
+        .cta-btn:hover { background: var(--color-primary-soft); }
 
         footer {
           background: var(--color-ink); color: var(--color-subtle);
           padding: 32px; text-align: center; font-size: 13px;
         }
         footer a { color: var(--color-subtle); text-decoration: none; margin: 0 12px; }
-        footer a:hover { color: #fff; }
+        footer a:hover { color: var(--color-surface); }
 
         @media (max-width: 900px) {
           .why-grid { grid-template-columns: repeat(2, 1fr); }
@@ -405,9 +405,9 @@ export default function Landing() {
         <div className="hero-overlay">
           <div className="hero">
             <div>
-              <div className="hero-eyebrow">Built for Physiotherapists</div>
-              <h1 className="hero-title">Outcome measures, <em>simplified</em></h1>
-              <p className="hero-sub">Stop calculating by hand. RehabMetrics automates scoring, tracks MCID, and exports clinical-grade reports — so you spend more time with patients.</p>
+              <div className="hero-eyebrow">Standardised measures. Automated scoring. Clear clinical insight.</div>
+              <h1 className="hero-title">Data-driven outcomes. Better patient care.</h1>
+              <p className="hero-sub">RehabMetrics helps physiotherapists track what matters most with automated scoring, MCID tracking, and clinical-grade reports—so you can focus on your patients.</p>
               <div className="hero-actions">
                 <a href="/signup" className="btn-primary">Start 14-day free trial</a>
                 <a href="#features" className="btn-secondary">See how it works →</a>
@@ -435,7 +435,7 @@ export default function Landing() {
                     <div className="mock-measure-label">{m.abbr}</div>
                     <div className="mock-measure-name">{m.name}</div>
                   </div>
-                  <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
                     <span className="mock-score">{m.score}</span>
                     <span className={`mock-chip ${m.cls}`}>{m.chip}</span>
                   </div>
@@ -467,7 +467,7 @@ export default function Landing() {
         <div className="features-overlay">
           <div className="features-inner">
             <div className="section-label">Why RehabMetrics</div>
-            <h2 className="section-title">Everything you need.<br/>Nothing you don't.</h2>
+            <h2 className="section-title">Outcome measures, simplified.</h2>
             <div className="why-grid">
               {WHY_CARDS.map(({ Icon, iconBg, iconColor, heading, body }) => (
                 <div key={heading} className="why-card">
@@ -487,7 +487,7 @@ export default function Landing() {
       <section className="pricing" id="pricing">
         <div className="pricing-inner">
           <div className="section-label">Pricing</div>
-          <h2 className="section-title" style={{marginBottom:'12px',fontSize:'36px'}}>Simple, honest pricing</h2>
+          <h2 className="section-title" style={{marginBottom:'12px',fontSize:'36px'}}>Clear pricing. No surprises.</h2>
           <p style={{color:'var(--color-muted)',marginBottom:'32px',fontWeight:300}}>14-day free trial. No credit card required.</p>
           <div className="billing-toggle">
             <button className={`toggle-btn ${billing==='monthly'?'active':''}`} onClick={()=>setBilling('monthly')}>Monthly</button>
