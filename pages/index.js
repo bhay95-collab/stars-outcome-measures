@@ -547,7 +547,7 @@ export default function Landing() {
         <div style={{marginBottom:'12px'}}>
           <a href="/privacy">Privacy Policy</a>
           <a href="/terms">Terms of Service</a>
-          <a href="mailto:hello@rehabmetrics.io">Contact</a>
+          <a href="mailto:Support@RehabMetricsIQ.com">Contact</a>
         </div>
         <div>© {new Date().getFullYear()} RehabMetrics. All rights reserved.</div>
       </footer>
