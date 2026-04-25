@@ -55,6 +55,22 @@ function getClassification(s) {
 }
 
 const MAX_SCALE_SPEED = 1.6
+const MCID_STANDARD = 0.10
+const MCID_STROKE = 0.06
+const PATIENT_AGE = 68
+const PREV_TIME = 12.9
+
+function getClassificationColor(s) {
+  if (s < 0.4) return 'var(--color-primary-dark)'
+  if (s < 0.8) return 'var(--color-secondary)'
+  return 'var(--color-primary)'
+}
+
+function getAgeInterpretation(pct) {
+  if (pct < 80) return 'Walking speed below expected for age.'
+  if (pct <= 100) return 'Walking speed within expected range for age.'
+  return 'Walking speed above expected for age.'
+}
 
 export default function Landing() {
   const [billing, setBilling] = useState('monthly')
@@ -64,6 +80,14 @@ export default function Landing() {
 
   const speed   = time > 0 ? 10 / time : 0
   const cadence = time > 0 ? (steps / time) * 60 : 0
+
+  const predictedSpeed    = 1.79 - (0.0073 * PATIENT_AGE)
+  const percentPredicted  = predictedSpeed > 0 ? (speed / predictedSpeed) * 100 : 0
+  const prevSpeed         = 10 / PREV_TIME
+  const speedChange       = speed - prevSpeed
+  const percentChange     = prevSpeed > 0 ? (speedChange / prevSpeed) * 100 : 0
+  const meetsMCID         = speedChange >= MCID_STANDARD
+  const classificationColor = speed > 0 ? getClassificationColor(speed) : 'var(--color-primary)'
 
   const price = billing === 'monthly' ? '2.99' : '24.99'
   const period = billing === 'monthly' ? 'per month' : 'per year · $2.08/mo'
@@ -507,7 +531,7 @@ export default function Landing() {
           margin-bottom: 20px;
         }
         .demo-classification-label { font-size: 13px; color: var(--color-muted); font-weight: 500; }
-        .demo-classification-value { font-size: 14px; font-weight: 600; color: var(--color-ink); }
+        .demo-classification-value { font-size: 14px; font-weight: 600; }
         .speed-scale { margin-bottom: 20px; }
         .scale-track {
           position: relative; height: 8px;
@@ -528,6 +552,29 @@ export default function Landing() {
         .demo-interp-text {
           font-size: 13px; color: var(--color-muted);
           margin-top: 4px; line-height: 1.5; font-weight: 300;
+        }
+        .demo-change-section {
+          margin-top: 16px; padding-top: 16px;
+          border-top: 1px solid var(--color-border);
+        }
+        .demo-change-heading {
+          font-size: 11px; font-weight: 700; letter-spacing: 1px;
+          text-transform: uppercase; color: var(--color-subtle);
+          margin-bottom: 12px;
+        }
+        .demo-change-grid {
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+          margin-bottom: 12px;
+        }
+        .demo-change-item { }
+        .demo-change-item-label { font-size: 12px; color: var(--color-muted); margin-bottom: 4px; }
+        .demo-change-item-value { font-size: 18px; font-weight: 600; font-family: 'Source Serif 4', serif; }
+        .demo-mcid-text {
+          font-size: 13px; color: var(--color-muted);
+          line-height: 1.5; font-weight: 400; margin-bottom: 4px;
+        }
+        .demo-mcid-ref {
+          font-size: 11px; color: var(--color-subtle); line-height: 1.5;
         }
         .demo-reference {
           margin-top: 16px; padding: 12px;
@@ -763,9 +810,27 @@ export default function Landing() {
                 </div>
               </div>
 
+              <div className="demo-metric">
+                <div className="demo-metric-row">
+                  <span className="demo-metric-label">% predicted (age {PATIENT_AGE})</span>
+                  <span className="demo-metric-value">
+                    {speed > 0 ? percentPredicted.toFixed(0) : '—'} <span className="demo-metric-unit">%</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="demo-metric">
+                <div className="demo-metric-row">
+                  <span className="demo-metric-label">Cadence</span>
+                  <span className="demo-metric-value">
+                    {cadence.toFixed(0)} <span className="demo-metric-unit">steps/min</span>
+                  </span>
+                </div>
+              </div>
+
               <div className="speed-scale" role="img" aria-label={`Walking speed ${speed.toFixed(2)} m/s on 0–1.6 scale`}>
                 <div className="scale-track">
-                  <div className="scale-marker" style={{ left: `${Math.min((speed / MAX_SCALE_SPEED) * 100, 100)}%` }} />
+                  <div className="scale-marker" style={{ left: `${Math.min((speed / MAX_SCALE_SPEED) * 100, 100)}%`, background: classificationColor }} />
                 </div>
                 <div className="scale-labels" aria-hidden="true">
                   <span>0</span>
@@ -778,19 +843,45 @@ export default function Landing() {
 
               <div className="demo-classification-row">
                 <span className="demo-classification-label">Community classification</span>
-                <span className="demo-classification-value">{speed > 0 ? getClassification(speed) : '—'}</span>
-              </div>
-
-              <div className="demo-metric">
-                <div className="demo-metric-row">
-                  <span className="demo-metric-label">Cadence</span>
-                  <span className="demo-metric-value">
-                    {cadence.toFixed(0)} <span className="demo-metric-unit">steps/min</span>
-                  </span>
-                </div>
+                <span className="demo-classification-value" style={{ color: classificationColor }}>
+                  {speed > 0 ? getClassification(speed) : '—'}
+                </span>
               </div>
 
               <p className="demo-interp-text">{speed > 0 ? getInterpretation(speed) : '—'}</p>
+              <p className="demo-interp-text">{speed > 0 ? getAgeInterpretation(percentPredicted) : '—'}</p>
+
+              <div className="demo-change-section">
+                <div className="demo-change-heading">Change from previous</div>
+                <div className="demo-change-grid">
+                  <div className="demo-change-item">
+                    <div className="demo-change-item-label">Previous</div>
+                    <div className="demo-change-item-value" style={{ color: 'var(--color-muted)' }}>
+                      {prevSpeed.toFixed(2)} <span style={{ fontSize: '12px', fontWeight: 400 }}>m/s</span>
+                    </div>
+                  </div>
+                  <div className="demo-change-item">
+                    <div className="demo-change-item-label">Δ m/s</div>
+                    <div className="demo-change-item-value" style={{ color: speedChange >= 0 ? 'var(--color-primary)' : 'var(--color-primary-dark)' }}>
+                      {speed > 0 ? `${speedChange >= 0 ? '+' : ''}${speedChange.toFixed(2)}` : '—'}
+                    </div>
+                  </div>
+                  <div className="demo-change-item">
+                    <div className="demo-change-item-label">Δ %</div>
+                    <div className="demo-change-item-value" style={{ color: speedChange >= 0 ? 'var(--color-primary)' : 'var(--color-primary-dark)' }}>
+                      {speed > 0 ? `${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(0)}%` : '—'}
+                    </div>
+                  </div>
+                </div>
+                <p className="demo-mcid-text">
+                  {speed > 0
+                    ? meetsMCID
+                      ? 'Change exceeds minimal clinically important difference (MCID).'
+                      : 'Change does not exceed minimal clinically important difference (MCID).'
+                    : '—'}
+                </p>
+                <p className="demo-mcid-ref">MCID: {MCID_STANDARD} m/s (general) · {MCID_STROKE} m/s (stroke)</p>
+              </div>
 
               <div className="demo-reference">
                 Community classification (Lusardi 2003): &lt;0.4 m/s = Household ambulator · 0.4–0.79 = Limited community · 0.8–1.19 = Community · ≥1.2 = Full community ambulator
