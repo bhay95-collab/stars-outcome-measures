@@ -29,6 +29,31 @@ export default function Signup() {
       return
     }
 
+    const userId = data.user?.id
+    const userEmail = data.user?.email
+
+    if (userId) {
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (!existing) {
+        const now = new Date()
+        const trialEnd = new Date(now)
+        trialEnd.setDate(trialEnd.getDate() + 14)
+
+        await supabase.from('profiles').insert({
+          id: userId,
+          email: userEmail,
+          trial_start_date: now.toISOString(),
+          trial_end_date: trialEnd.toISOString(),
+          is_active: true
+        })
+      }
+    }
+
     if (data.session) {
       router.push('/app')
     } else {

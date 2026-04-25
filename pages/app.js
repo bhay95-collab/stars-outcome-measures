@@ -12,25 +12,46 @@ export default function App() {
 
   useEffect(() => {
     async function checkAccess() {
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      if (!currentUser) { router.replace('/login'); return }
+      // Step 1: auth check — only redirect if no session
+      let session
+      try {
+        const { data } = await supabase.auth.getSession()
+        session = data.session
+      } catch {
+        router.replace('/login')
+        return
+      }
 
-      const { data: profile, error: dbError } = await supabase
-        .from('users')
+      if (!session || !session.user) {
+        router.replace('/login')
+        return
+      }
+
+      setUser(session.user)
+
+      // Step 2: fetch profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
         .select('trial_end_date, is_active')
-        .eq('id', currentUser.id)
-        .single()
+        .eq('id', session.user.id)
+        .maybeSingle()
 
-      if (dbError || !profile) { router.replace('/login'); return }
+      if (profileError) {
+        router.replace('/login')
+        return
+      }
 
-      const isValid = profile.is_active === true && new Date() <= new Date(profile.trial_end_date)
+      if (profile && profile.trial_end_date) {
+        const trialEnd = new Date(profile.trial_end_date)
+        setTrialValid(profile.is_active === true && new Date() <= trialEnd)
+      } else {
+        setTrialValid(false)
+      }
 
-      setUser(currentUser)
-      setTrialValid(isValid)
       setLoading(false)
     }
 
-    checkAccess().catch(() => router.replace('/login'))
+    checkAccess()
   }, [router])
 
   async function handleSignOut() {
