@@ -53,9 +53,15 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
     <>
       <style jsx>{styles}</style>
       <div className="overlay" onClick={onClose}>
-        <div className="modal" onClick={e => e.stopPropagation()}>
+        <div
+          className="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="np-modal-title"
+          onClick={e => e.stopPropagation()}
+        >
           <div className="modal-header">
-            <h2 className="modal-title">New patient</h2>
+            <h2 id="np-modal-title" className="modal-title">New patient</h2>
             <button className="close-btn" onClick={onClose} aria-label="Close">×</button>
           </div>
 
@@ -196,7 +202,7 @@ const styles = `
   .field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     margin-bottom: 16px;
   }
 
@@ -213,10 +219,12 @@ const styles = `
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    padding: 9px 12px;
+    height: 44px;
+    padding: 0 12px;
     outline: none;
     transition: border-color 0.15s;
     width: 100%;
+    box-sizing: border-box;
   }
 
   input:focus, select:focus { border-color: var(--color-primary); }
@@ -224,7 +232,7 @@ const styles = `
 
   .error {
     font-size: 13px;
-    color: #b91c1c;
+    color: var(--color-ink);
     margin-bottom: 16px;
     line-height: 1.4;
   }
@@ -232,7 +240,7 @@ const styles = `
   .actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 8px;
     margin-top: 8px;
   }
 
@@ -244,7 +252,7 @@ const styles = `
     background: none;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: 9px 20px;
+    padding: 8px 20px;
     cursor: pointer;
     transition: color 0.15s;
   }
@@ -255,11 +263,11 @@ const styles = `
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--color-surface);
     background: var(--color-primary);
     border: none;
     border-radius: var(--radius-md);
-    padding: 9px 20px;
+    padding: 8px 20px;
     cursor: pointer;
     transition: opacity 0.15s;
   }

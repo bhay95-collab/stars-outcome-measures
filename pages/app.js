@@ -164,16 +164,21 @@ export default function App() {
           <main className="main">
             {selectedPatient ? (
               <>
-                <PatientHeader patient={selectedPatient} />
+                <PatientHeader
+                  patient={selectedPatient}
+                  onRecord={() => setShowMeasureEntry(true)}
+                />
                 <SummaryTab
                   patient={selectedPatient}
                   assessments={assessments}
-                  onRecord={() => setShowMeasureEntry(true)}
                 />
               </>
             ) : (
               <div className="empty-state">
-                <p className="empty-text">Select a patient to view their summary.</p>
+                <div className="empty-block">
+                  <p className="empty-state-title">Select a patient</p>
+                  <p className="empty-state-sub">Choose a patient from the left panel to view their clinical summary.</p>
+                </div>
               </div>
             )}
           </main>
@@ -222,12 +227,14 @@ const pageStyles = `
 
   .dashboard { display: flex; flex: 1; height: calc(100vh - 56px); overflow: hidden; }
 
-  .sidebar { width: 272px; flex-shrink: 0; background: var(--color-surface); border-right: 1px solid var(--color-border); overflow-y: auto; }
+  .sidebar { width: 272px; flex-shrink: 0; background: var(--color-surface-soft); border-right: 1px solid var(--color-border); overflow-y: auto; }
 
   .main { flex: 1; overflow-y: auto; padding: 32px 40px; }
 
-  .empty-state { display: flex; align-items: center; justify-content: center; height: 40%; }
-  .empty-text { font-size: 14px; color: var(--color-subtle); }
+  .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; }
+  .empty-block { text-align: center; max-width: 320px; }
+  .empty-state-title { font-family: 'Source Serif 4', serif; font-size: 22px; font-weight: 600; color: var(--color-ink); margin-bottom: 8px; }
+  .empty-state-sub { font-size: 14px; color: var(--color-muted); line-height: 1.6; }
 
   .main-center { flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px 32px; }
 

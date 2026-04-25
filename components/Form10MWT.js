@@ -11,12 +11,6 @@ function calculateAge(dateOfBirth) {
   return age
 }
 
-const CHIP_COLORS = {
-  'chip-green': { bg: '#e8f5ee', color: '#156534' },
-  'chip-amber': { bg: '#fef3e2', color: '#8a4f00' },
-  'chip-red':   { bg: '#fdecea', color: '#b91c1c' },
-}
-
 export default function Form10MWT({ patient, onSubmit, loading }) {
   const [comfortTime, setComfortTime] = useState('')
   const [fastTime, setFastTime] = useState('')
@@ -42,10 +36,6 @@ export default function Form10MWT({ patient, onSubmit, loading }) {
       preview,
     )
   }
-
-  const cc = preview
-    ? (CHIP_COLORS[preview.meta.classColor] ?? CHIP_COLORS['chip-green'])
-    : null
 
   return (
     <>
@@ -93,7 +83,7 @@ export default function Form10MWT({ patient, onSubmit, loading }) {
             <div className="preview-row">
               <span className="speed">{preview.primaryValue.toFixed(2)}</span>
               <span className="speed-unit">m/s</span>
-              <span className="chip" style={{ background: cc.bg, color: cc.color }}>
+              <span className={`chip ${preview.meta.classColor ?? 'chip-green'}`}>
                 {preview.interpretation}
               </span>
             </div>
@@ -130,7 +120,7 @@ const styles = `
   .field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     margin-bottom: 16px;
   }
 
@@ -148,7 +138,7 @@ const styles = `
   .input-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
   input {
@@ -158,7 +148,7 @@ const styles = `
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    padding: 9px 12px;
+    padding: 8px 12px;
     outline: none;
     width: 140px;
     transition: border-color 0.15s;
@@ -172,15 +162,15 @@ const styles = `
     background: var(--color-surface-soft);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: 16px 20px;
-    margin: 20px 0 24px;
+    padding: 16px;
+    margin: 16px 0 24px;
   }
 
   .preview-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 6px;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
   .speed {
@@ -199,9 +189,13 @@ const styles = `
   .chip {
     font-size: 12px;
     font-weight: 500;
-    padding: 4px 10px;
-    border-radius: 20px;
+    padding: 4px 8px;
+    border-radius: 999px;
   }
+
+  .chip-green { background: var(--color-primary-soft); color: var(--color-primary-dark); }
+  .chip-amber { background: var(--color-surface-soft); color: var(--color-muted); }
+  .chip-red   { background: var(--color-border);       color: var(--color-ink); }
 
   .pct { font-size: 12px; color: var(--color-muted); margin-bottom: 2px; }
   .fast-row { font-size: 12px; color: var(--color-muted); margin-top: 4px; }
@@ -211,11 +205,11 @@ const styles = `
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--color-surface);
     background: var(--color-primary);
     border: none;
     border-radius: var(--radius-md);
-    padding: 11px 24px;
+    padding: 12px 24px;
     cursor: pointer;
     transition: opacity 0.15s;
   }

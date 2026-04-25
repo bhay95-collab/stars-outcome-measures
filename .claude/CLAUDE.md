@@ -8,12 +8,16 @@ Positioning:
 
 The product helps clinicians capture, score, interpret, and report rehabilitation outcome measures with less manual work and clearer clinical insight.
 
+---
+
 ## My Situation
 - I am not a developer
 - Claude Code writes and edits the code for this project
 - Explain changes clearly in plain English
 - When giving instructions, be specific about what changed and why
 - Prefer direct, practical guidance over technical theory
+
+---
 
 ## Development Workflow
 - Use `/plan` before any multi-step change
@@ -22,6 +26,8 @@ The product helps clinicians capture, score, interpret, and report rehabilitatio
 - After visual changes, use Playwright to check the page renders correctly
 - If a change touches auth, payments, or sensitive data, run `/security-review`
 - If the code becomes bloated, use `/simplify`
+
+---
 
 ## Project Structure
 Main stack:
@@ -33,14 +39,20 @@ Main stack:
 - Stripe in `lib/stripe.js`
 - `lucide-react` for icons
 
+---
+
 ## File Rules
-- Edit `pages/index.js` directly unless explicitly told otherwise
-- Do not create extra component files unless explicitly asked
+- Edit `pages/index.js` directly for landing page work
+- Application logic may create:
+  - `/lib/clinical/`
+  - `/components/`
 - Do not install packages without confirming first
 - Never hardcode secrets; use environment variables
 - Use proper error handling
 - No `console.log` in production code
 - Do not mutate arrays or objects
+
+---
 
 ## How To Communicate Changes
 When making changes:
@@ -49,7 +61,10 @@ When making changes:
 - Summarise the reason for the change in simple language
 - Keep explanations clear enough for a non-technical user
 
+---
+
 ## Brand Identity
+
 ### Brand
 - Name: **RehabMetrics IQ**
 - Tone: calm, precise, trustworthy
@@ -59,6 +74,8 @@ When making changes:
 ### Core Positioning
 - Primary message: **Data-driven outcomes. Better patient care.**
 - Product theme: standardised measures, automated scoring, clear clinical insight
+
+---
 
 ## Locked Design Tokens
 Do not deviate from these tokens.
@@ -83,3 +100,107 @@ Do not deviate from these tokens.
   --radius-md: 10px;
   --radius-lg: 16px;
 }
+
+## Clinical Architecture (Non-Negotiable)
+
+RehabMetrics IQ is a clinical interpretation tool. The architecture must remain strictly separated.
+
+### 1. Clinical Logic (`/lib/clinical/`)
+- All calculations, thresholds, MCID logic, and interpretation text live here
+- Pure JavaScript only (no React, no DOM)
+- Interpretation text must remain verbatim from source material
+- Each measure has its own file (e.g. `10mwt.js`, `tug.js`)
+
+### 2. Measure Registry (`/lib/clinical/measures.js`)
+- Single source of truth for:
+  - measure name
+  - category (`performance` | `questionnaire`)
+  - unit
+  - `higherIsBetter`
+  - chart config (`yMin`, `yMax`, `thresholds`)
+  - `mcidKey`
+- Components must never hardcode these values
+
+### 3. UI Components (`/components/`)
+- Responsible for display only
+- Must not contain calculation logic
+- Must consume data from clinical functions
+
+### 4. Page Layer (`pages/`)
+- Handles state, layout, and orchestration
+- Must not contain clinical logic
+
+---
+
+## Data Contracts (Strict)
+
+All clinical calculation functions must return:
+
+{
+  primaryValue: number,
+  primaryUnit: string,
+  interpretation: string,
+  meta: object
+}
+
+Rules:
+- `primaryValue` is used for charts and MCID
+- `interpretation` must NOT be rewritten or simplified
+- `meta` contains measure-specific outputs
+
+---
+
+## Clinical Integrity Rules
+
+- Do NOT simplify or generalise measure logic
+- Do NOT create generic summaries across measures
+- Each measure defines its own:
+  - inputs
+  - outputs
+  - interpretation
+- Condition must influence:
+  - MCID thresholds
+  - interpretation logic
+
+---
+
+## Development Rules (Clinical App)
+
+- Implement ONE measure at a time
+- Fully validate before adding another
+- Do NOT batch-build multiple measures
+- ISNCSCI must only be implemented after at least 3 measures are fully working
+
+---
+
+## Charts
+
+- Must use clinically accurate scales
+- Must include threshold reference lines
+- Must not auto-scale without clinical reasoning
+- Chart config must come from `MEASURES` registry only
+
+---
+
+## Patient Data
+
+- Use `date_of_birth`, not stored age
+- Age calculated at runtime
+- Condition must be selected from controlled list (`CONDITION_OPTIONS`)
+- No free text condition input
+
+---
+
+## Supabase
+
+- `patients` table is source of truth for patient data
+- `assessments` table stores:
+  - inputs (JSONB)
+  - results (JSONB)
+  - created_at
+
+- Always sort assessments by `created_at DESC`
+  - latest = first
+  - previous = second
+
+- Never rely on localStorage for clinical data

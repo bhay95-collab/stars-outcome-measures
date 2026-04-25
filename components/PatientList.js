@@ -1,96 +1,126 @@
+import { useState } from 'react'
+
 export default function PatientList({ patients, selectedId, onSelect, onNew }) {
+  const [query, setQuery] = useState('')
+
+  const filtered = query.trim()
+    ? patients.filter(p => {
+        const full = `${p.first_name} ${p.last_name}`.toLowerCase()
+        return full.includes(query.trim().toLowerCase())
+      })
+    : patients
+
   return (
     <>
       <style jsx>{styles}</style>
-      <div className="list-header">
-        <span className="list-title">Patients</span>
-        <button className="new-btn" onClick={onNew}>+ New</button>
-      </div>
-
-      {patients.length === 0 ? (
-        <div className="empty">
-          <p className="empty-text">No patients yet.</p>
-          <button className="first-btn" onClick={onNew}>Add first patient</button>
+      <div className="panel">
+        <div className="panel-head">
+          <h2 className="panel-title">Patients</h2>
         </div>
-      ) : (
-        <ul className="list">
-          {patients.map(p => (
-            <li
-              key={p.id}
-              className={`item${p.id === selectedId ? ' item-active' : ''}`}
-              onClick={() => onSelect(p)}
-            >
-              <span className="name">{p.last_name}, {p.first_name}</span>
-              {p.condition && <span className="condition">{p.condition}</span>}
-            </li>
-          ))}
-        </ul>
-      )}
+
+        <div className="search-wrap">
+          <input
+            className="search-input"
+            type="text"
+            placeholder="Search patients…"
+            aria-label="Search patients"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+          />
+        </div>
+
+        {filtered.length === 0 && patients.length === 0 ? (
+          <div className="empty">
+            <p className="empty-text">No patients yet.</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="empty">
+            <p className="empty-text">No results for "{query}"</p>
+          </div>
+        ) : (
+          <ul className="list">
+            {filtered.map(p => (
+              <li
+                key={p.id}
+                role="button"
+                tabIndex={0}
+                className={`item${p.id === selectedId ? ' item-active' : ''}`}
+                onClick={() => onSelect(p)}
+                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect(p)}
+              >
+                <span className="name">{p.last_name}, {p.first_name}</span>
+                {p.condition && <span className="condition">{p.condition}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="panel-footer">
+          <button className="new-btn" onClick={onNew}>+ New Patient</button>
+        </div>
+      </div>
     </>
   )
 }
 
 const styles = `
-  .list-header {
+  .panel {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 16px 12px;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .panel-head {
+    padding: 20px 16px 12px;
     border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
   }
 
-  .list-title {
-    font-size: 11px;
+  .panel-title {
+    font-family: 'Source Serif 4', serif;
+    font-size: 17px;
     font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--color-subtle);
+    color: var(--color-ink);
   }
 
-  .new-btn {
+  .search-wrap {
+    padding: 12px 12px 8px;
+    flex-shrink: 0;
+  }
+
+  .search-input {
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-primary);
-    background: var(--color-primary-soft);
-    border: none;
+    font-size: 13px;
+    color: var(--color-ink);
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    padding: 4px 10px;
-    cursor: pointer;
-    transition: opacity 0.15s;
+    padding: 8px 12px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
   }
 
-  .new-btn:hover { opacity: 0.8; }
+  .search-input:focus { border-color: var(--color-primary); background: var(--color-surface); }
+  .search-input::placeholder { color: var(--color-subtle); }
 
   .empty {
-    padding: 32px 16px;
+    padding: 24px 16px;
     text-align: center;
+    flex: 1;
   }
 
   .empty-text {
     font-size: 13px;
     color: var(--color-subtle);
-    margin-bottom: 12px;
   }
-
-  .first-btn {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-primary);
-    background: none;
-    border: 1px solid var(--color-primary);
-    border-radius: var(--radius-sm);
-    padding: 6px 14px;
-    cursor: pointer;
-    transition: opacity 0.15s;
-  }
-
-  .first-btn:hover { opacity: 0.75; }
 
   .list {
     list-style: none;
     padding: 6px 0;
+    flex: 1;
+    overflow-y: auto;
   }
 
   .item {
@@ -121,4 +151,26 @@ const styles = `
     color: var(--color-muted);
     margin-top: 2px;
   }
+
+  .panel-footer {
+    padding: 12px;
+    border-top: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+
+  .new-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-primary);
+    background: var(--color-primary-soft);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 12px 0;
+    width: 100%;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .new-btn:hover { opacity: 0.8; }
 `

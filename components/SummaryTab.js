@@ -1,4 +1,4 @@
-import { getMCIDStatus, getMCIDContext, MEASURES } from '../lib/clinical'
+import { getMCIDStatus, getMCIDContext } from '../lib/clinical'
 import ProgressChart from './ProgressChart'
 
 function fmtDate(iso) {
@@ -8,14 +8,7 @@ function fmtDate(iso) {
   })
 }
 
-const CHIP_COLORS = {
-  'chip-green': { bg: '#e8f5ee', color: '#156534' },
-  'chip-amber': { bg: '#fef3e2', color: '#8a4f00' },
-  'chip-red':   { bg: '#fdecea', color: '#b91c1c' },
-  'chip-grey':  { bg: '#f0f2f4', color: '#5f6b7a' },
-}
-
-export default function SummaryTab({ patient, assessments, onRecord }) {
+export default function SummaryTab({ patient, assessments }) {
   const mwtList = assessments.filter(a => a.measure === '10MWT')
   const latest  = mwtList[0] ?? null
   const previous = mwtList[1] ?? null
@@ -38,15 +31,11 @@ export default function SummaryTab({ patient, assessments, onRecord }) {
     <>
       <style jsx>{styles}</style>
 
-      <div className="tab-actions">
-        <button className="record-btn" onClick={onRecord}>+ Record 10MWT</button>
-      </div>
-
       {mwtList.length === 0 ? (
         <div className="empty">
           <p className="empty-title">No assessments recorded</p>
           <p className="empty-hint">
-            Record the first 10MWT for {patient.first_name} using the button above.
+            Use "+ New Assessment" above to record the first 10MWT for {patient.first_name}.
           </p>
         </div>
       ) : (
@@ -74,7 +63,6 @@ export default function SummaryTab({ patient, assessments, onRecord }) {
 
 function MWTCard({ assessment, mcid, label, dim }) {
   const r = assessment.results
-  const cc = CHIP_COLORS[r.meta?.classColor] ?? CHIP_COLORS['chip-grey']
 
   return (
     <>
@@ -91,7 +79,7 @@ function MWTCard({ assessment, mcid, label, dim }) {
         <div className="result-row">
           <span className="primary-value">{r.primaryValue.toFixed(2)}</span>
           <span className="primary-unit">m/s</span>
-          <span className="chip" style={{ background: cc.bg, color: cc.color }}>
+          <span className={`chip ${r.meta?.classColor ?? 'chip-grey'}`}>
             {r.interpretation}
           </span>
         </div>
@@ -121,27 +109,6 @@ function MWTCard({ assessment, mcid, label, dim }) {
 }
 
 const styles = `
-  .tab-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 24px;
-  }
-
-  .record-btn {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: #ffffff;
-    background: var(--color-primary);
-    border: none;
-    border-radius: var(--radius-sm);
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: opacity 0.15s;
-  }
-
-  .record-btn:hover { opacity: 0.88; }
-
   .empty {
     padding: 16px 0;
     max-width: 400px;
@@ -168,12 +135,12 @@ const styles = `
   }
 
   .context-panel {
-    margin-top: 20px;
+    margin-top: 16px;
     max-width: 560px;
     background: var(--color-primary-soft);
     border: 1px solid var(--color-secondary);
     border-radius: var(--radius-md);
-    padding: 14px 18px;
+    padding: 12px 16px;
   }
 
   .context-label {
@@ -209,7 +176,7 @@ const cardStyles = `
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
 
   .measure-name {
@@ -231,7 +198,7 @@ const cardStyles = `
     font-weight: 500;
     color: var(--color-primary);
     background: var(--color-primary-soft);
-    border-radius: 20px;
+    border-radius: 999px;
     padding: 2px 8px;
   }
 
@@ -264,9 +231,14 @@ const cardStyles = `
   .chip {
     font-size: 12px;
     font-weight: 500;
-    padding: 4px 10px;
-    border-radius: 20px;
+    padding: 4px 8px;
+    border-radius: 999px;
   }
+
+  .chip-green { background: var(--color-primary-soft); color: var(--color-primary-dark); }
+  .chip-amber { background: var(--color-surface-soft); color: var(--color-muted); }
+  .chip-red   { background: var(--color-border);       color: var(--color-ink); }
+  .chip-grey  { background: var(--color-surface-soft); color: var(--color-subtle); }
 
   .meta-line {
     font-size: 12px;
@@ -285,9 +257,9 @@ const cardStyles = `
     font-weight: 500;
   }
 
-  .mcid-met     { color: #156534; }
-  .mcid-near    { color: #8a4f00; }
-  .mcid-decline { color: #b91c1c; }
+  .mcid-met     { color: var(--color-primary-dark); }
+  .mcid-near    { color: var(--color-muted); }
+  .mcid-decline { color: var(--color-ink); }
 
   .mcid-arrow { font-size: 10px; }
 `

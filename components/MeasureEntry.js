@@ -98,7 +98,7 @@ const styles = `
 
   .error {
     font-size: 13px;
-    color: #b91c1c;
+    color: var(--color-ink);
     margin-top: 12px;
     line-height: 1.4;
   }
