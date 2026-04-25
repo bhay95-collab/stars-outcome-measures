@@ -125,14 +125,14 @@ export default function Landing() {
           gap: 60px; align-items: center;
         }
         .hero-eyebrow {
-          font-size: 11px; font-weight: 700;
+          font-size: 11px; font-weight: 500;
           letter-spacing: 1.5px; text-transform: uppercase;
-          color: var(--color-primary); margin-bottom: 16px;
+          color: var(--color-subtle); margin-bottom: 12px;
         }
         .hero-title {
           font-family: 'Source Serif 4', serif;
           font-size: clamp(42px, 5vw, 64px);
-          font-weight: 600; line-height: 1.1;
+          font-weight: 600; line-height: 1.15;
           letter-spacing: -1px; color: var(--color-ink);
           margin-bottom: 20px;
         }
@@ -231,19 +231,18 @@ export default function Landing() {
         }
         .features-inner { max-width: 1100px; margin: 0 auto; }
         .section-label {
-          font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-          text-transform: uppercase; color: var(--color-primary); margin-bottom: 16px;
+          font-size: 11px; font-weight: 500; letter-spacing: 1.5px;
+          text-transform: uppercase; color: var(--color-subtle); margin-bottom: 12px;
         }
         .section-title {
-          font-family: 'Source Serif 4', serif; font-size: 44px;
+          font-family: 'Source Serif 4', serif; font-size: 36px;
           font-weight: 600; letter-spacing: -0.5px;
-          margin-bottom: 48px; line-height: 1.2;
+          margin-bottom: 48px; line-height: 1.2; color: var(--color-ink);
         }
         .why-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 24px;
-          margin-top: 40px;
         }
         .why-card {
           background: var(--color-surface);
@@ -405,7 +404,7 @@ export default function Landing() {
         <div className="hero-overlay">
           <div className="hero">
             <div>
-              <div className="hero-eyebrow">Standardised measures. Automated scoring. Clear clinical insight.</div>
+              <div className="hero-eyebrow">Automated scoring. Clinical-grade reporting.</div>
               <h1 className="hero-title">Data-driven outcomes. Better patient care.</h1>
               <p className="hero-sub">RehabMetrics helps physiotherapists track what matters most with automated scoring, MCID tracking, and clinical-grade reports—so you can focus on your patients.</p>
               <div className="hero-actions">
@@ -487,7 +486,7 @@ export default function Landing() {
       <section className="pricing" id="pricing">
         <div className="pricing-inner">
           <div className="section-label">Pricing</div>
-          <h2 className="section-title" style={{marginBottom:'12px',fontSize:'36px'}}>Clear pricing. No surprises.</h2>
+          <h2 className="section-title" style={{marginBottom:'12px'}}>Clear pricing. No surprises.</h2>
           <p style={{color:'var(--color-muted)',marginBottom:'32px',fontWeight:300}}>14-day free trial. No credit card required.</p>
           <div className="billing-toggle">
             <button className={`toggle-btn ${billing==='monthly'?'active':''}`} onClick={()=>setBilling('monthly')}>Monthly</button>
