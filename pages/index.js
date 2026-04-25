@@ -42,10 +42,19 @@ const WHY_CARDS = [
 ]
 
 function getInterpretation(s) {
-  if (s < 0.8) return 'Below functional walking threshold'
-  if (s <= 1.2) return 'Within typical community ambulation range'
-  return 'Above average walking speed'
+  if (s < 0.8) return 'Walking speed below community ambulation threshold.'
+  if (s < 1.2) return 'Walking speed consistent with independent community ambulation.'
+  return 'Walking speed above average for community ambulation.'
 }
+
+function getClassification(s) {
+  if (s < 0.4) return 'Household ambulator'
+  if (s < 0.8) return 'Limited community ambulator'
+  if (s < 1.2) return 'Community ambulator'
+  return 'Full community ambulator'
+}
+
+const MAX_SCALE_SPEED = 1.6
 
 export default function Landing() {
   const [billing, setBilling] = useState('monthly')
@@ -493,17 +502,38 @@ export default function Landing() {
           color: var(--color-primary); font-family: 'Source Serif 4', serif;
         }
         .demo-metric-unit { font-size: 12px; font-weight: 400; color: var(--color-muted); }
-        .bar {
-          height: 8px; background: var(--color-border);
-          border-radius: 999px; overflow: hidden;
+        .demo-classification-row {
+          display: flex; justify-content: space-between; align-items: baseline;
+          margin-bottom: 20px;
         }
-        .bar-fill {
-          height: 100%; background: var(--color-primary);
-          border-radius: 999px; transition: width 0.2s ease;
+        .demo-classification-label { font-size: 13px; color: var(--color-muted); font-weight: 500; }
+        .demo-classification-value { font-size: 14px; font-weight: 600; color: var(--color-ink); }
+        .speed-scale { margin-bottom: 20px; }
+        .scale-track {
+          position: relative; height: 8px;
+          background: var(--color-border); border-radius: 999px;
+        }
+        .scale-marker {
+          position: absolute; top: -4px;
+          width: 12px; height: 16px;
+          background: var(--color-primary);
+          border-radius: 4px;
+          transform: translateX(-50%);
+          transition: left 0.2s ease;
+        }
+        .scale-labels {
+          display: flex; justify-content: space-between;
+          font-size: 12px; color: var(--color-subtle); margin-top: 6px;
         }
         .demo-interp-text {
           font-size: 13px; color: var(--color-muted);
-          margin-top: 12px; line-height: 1.5; font-weight: 300;
+          margin-top: 4px; line-height: 1.5; font-weight: 300;
+        }
+        .demo-reference {
+          margin-top: 16px; padding: 12px;
+          background: var(--color-primary-soft);
+          border-radius: var(--radius-sm);
+          font-size: 12px; color: var(--color-muted); line-height: 1.6;
         }
       `}</style>
 
@@ -731,9 +761,24 @@ export default function Landing() {
                     {speed.toFixed(2)} <span className="demo-metric-unit">m/s</span>
                   </span>
                 </div>
-                <div className="bar" role="progressbar" aria-label="Walking speed" aria-valuenow={speed.toFixed(2)} aria-valuemin="0" aria-valuemax="2">
-                  <div className="bar-fill" style={{ width: `${Math.min((speed / 2.0) * 100, 100)}%` }} />
+              </div>
+
+              <div className="speed-scale" role="img" aria-label={`Walking speed ${speed.toFixed(2)} m/s on 0–1.6 scale`}>
+                <div className="scale-track">
+                  <div className="scale-marker" style={{ left: `${Math.min((speed / MAX_SCALE_SPEED) * 100, 100)}%` }} />
                 </div>
+                <div className="scale-labels" aria-hidden="true">
+                  <span>0</span>
+                  <span>0.4</span>
+                  <span>0.8</span>
+                  <span>1.2</span>
+                  <span>1.6</span>
+                </div>
+              </div>
+
+              <div className="demo-classification-row">
+                <span className="demo-classification-label">Community classification</span>
+                <span className="demo-classification-value">{speed > 0 ? getClassification(speed) : '—'}</span>
               </div>
 
               <div className="demo-metric">
@@ -743,12 +788,13 @@ export default function Landing() {
                     {cadence.toFixed(0)} <span className="demo-metric-unit">steps/min</span>
                   </span>
                 </div>
-                <div className="bar" role="progressbar" aria-label="Cadence" aria-valuenow={cadence.toFixed(0)} aria-valuemin="0" aria-valuemax="150">
-                  <div className="bar-fill" style={{ width: `${Math.min((cadence / 150) * 100, 100)}%` }} />
-                </div>
               </div>
 
               <p className="demo-interp-text">{speed > 0 ? getInterpretation(speed) : '—'}</p>
+
+              <div className="demo-reference">
+                Community classification (Lusardi 2003): &lt;0.4 m/s = Household ambulator · 0.4–0.79 = Limited community · 0.8–1.19 = Community · ≥1.2 = Full community ambulator
+              </div>
             </div>
           </div>
         </div>
