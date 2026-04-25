@@ -41,47 +41,24 @@ const WHY_CARDS = [
   },
 ]
 
-function getAgeNorm(age) {
-  if (age < 40) return 1.42
-  if (age < 60) return 1.31
-  if (age < 70) return 1.22
-  if (age < 80) return 1.09
-  return 0.94
-}
-
-function getClassification(s) {
-  if (s < 0.4) return { label: 'Household Ambulator', key: 'household' }
-  if (s < 0.8) return { label: 'Limited Community',   key: 'limited'   }
-  return         { label: 'Community Ambulator',  key: 'community' }
+function getInterpretation(s) {
+  if (s < 0.8) return 'Below functional walking threshold'
+  if (s <= 1.2) return 'Within typical community ambulation range'
+  return 'Above average walking speed'
 }
 
 export default function Landing() {
   const [billing, setBilling] = useState('monthly')
   const [showDemoModal, setShowDemoModal] = useState(false)
-  const [demoStep, setDemoStep] = useState('input')
   const [time, setTime] = useState(8.2)
   const [steps, setSteps] = useState(12)
-  const [patientName, setPatientName] = useState('')
-  const [patientAge,  setPatientAge]  = useState(68)
-  const [testDate,    setTestDate]    = useState(() => new Date().toISOString().slice(0, 10))
-  const [prevSpeed,   setPrevSpeed]   = useState(0.72)
 
-  const speed        = time > 0 ? 10 / time : 0
-  const cadence      = time > 0 ? (steps / time) * 60 : 0
-  const ageNorm      = getAgeNorm(patientAge)
-  const normPct      = ageNorm > 0 ? Math.round((speed / ageNorm) * 100) : 0
-  const speedChange  = speed - prevSpeed
-  const mcidMet      = Math.abs(speedChange) >= 0.1
-  const classification = getClassification(speed)
+  const speed   = time > 0 ? 10 / time : 0
+  const cadence = time > 0 ? (steps / time) * 60 : 0
 
   const price = billing === 'monthly' ? '2.99' : '24.99'
   const period = billing === 'monthly' ? 'per month' : 'per year · $2.08/mo'
   const planName = billing === 'monthly' ? 'Monthly' : 'Annual'
-
-  function closeDemoModal() {
-    setShowDemoModal(false)
-    setDemoStep('input')
-  }
 
   return (
     <>
@@ -436,8 +413,8 @@ export default function Landing() {
         .demo-modal {
           background: var(--color-surface);
           border-radius: var(--radius-lg);
-          padding: 32px;
-          width: 100%; max-width: 580px;
+          padding: 24px;
+          width: 100%; max-width: 520px;
           box-shadow: var(--shadow-md);
           position: relative;
           max-height: 90vh; overflow-y: auto;
@@ -451,13 +428,33 @@ export default function Landing() {
         .demo-close:hover { color: var(--color-ink); }
         .demo-title {
           font-family: 'Source Serif 4', serif;
-          font-size: 22px; font-weight: 600;
-          color: var(--color-ink); margin-bottom: 6px;
+          font-size: 20px; font-weight: 600;
+          color: var(--color-ink); margin-bottom: 4px;
         }
         .demo-sub {
-          font-size: 14px; color: var(--color-muted);
-          font-weight: 300; margin-bottom: 24px; line-height: 1.5;
+          font-size: 13px; color: var(--color-muted);
+          font-weight: 300; margin-bottom: 20px; line-height: 1.5;
         }
+
+        /* Patient block */
+        .demo-patient {
+          display: grid; grid-template-columns: repeat(3, 1fr);
+          gap: 12px; margin-bottom: 24px;
+          padding: 12px 16px;
+          background: var(--color-surface-soft);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+        }
+        .demo-pt-label {
+          display: block; font-size: 11px; font-weight: 600;
+          color: var(--color-subtle); text-transform: uppercase;
+          letter-spacing: 0.5px; margin-bottom: 4px;
+        }
+        .demo-pt-value {
+          display: block; font-size: 14px; font-weight: 500; color: var(--color-ink);
+        }
+
+        /* Inputs */
         .demo-field { margin-bottom: 16px; }
         .demo-label {
           display: block; font-size: 12px; font-weight: 600;
@@ -474,114 +471,40 @@ export default function Landing() {
           outline: none;
         }
         .demo-input:focus { border-color: var(--color-primary); }
-        .demo-live {
-          background: var(--color-surface-soft);
-          border-radius: var(--radius-sm);
-          padding: 14px 16px;
-          display: flex; gap: 32px;
-          margin-bottom: 24px;
-        }
-        .demo-live-item { flex: 1; }
-        .demo-live-label { font-size: 11px; font-weight: 600; color: var(--color-subtle); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-        .demo-live-value { font-size: 22px; font-weight: 600; color: var(--color-primary); font-family: 'Source Serif 4', serif; }
-        .demo-live-unit { font-size: 12px; color: var(--color-muted); font-weight: 400; }
-        .demo-btn {
-          width: 100%; height: 44px;
-          background: var(--color-primary); color: var(--color-surface);
-          border: none; border-radius: var(--radius-sm);
-          font-size: 15px; font-weight: 600;
-          font-family: 'Inter', sans-serif;
-          cursor: pointer;
-        }
-        .demo-btn:hover { background: var(--color-primary-dark); }
-        .demo-back {
-          background: none; border: none; cursor: pointer;
-          font-size: 13px; color: var(--color-muted);
-          font-family: 'Inter', sans-serif;
-          padding: 0; margin-top: 16px; display: block;
-        }
-        .demo-back:hover { color: var(--color-ink); text-decoration: underline; }
 
-        /* Patient grid */
-        .demo-patient-grid {
-          display: grid; grid-template-columns: repeat(3, 1fr);
-          gap: 12px; margin-bottom: 4px;
+        /* Summary */
+        .demo-summary {
+          margin-top: 24px; padding-top: 16px;
+          border-top: 1px solid var(--color-border);
         }
-
-        /* Zone visual */
-        .demo-zone-wrap { margin-bottom: 12px; }
-        .demo-zone-track {
-          position: relative; display: flex;
-          height: 28px; border-radius: var(--radius-sm); overflow: hidden;
-          margin-bottom: 4px;
-        }
-        .demo-zone-seg {
-          display: flex; align-items: center; justify-content: center;
-          font-size: 10px; font-weight: 600; color: rgba(0,0,0,0.45);
-          text-transform: uppercase; letter-spacing: 0.4px;
-        }
-        .zone-household { flex: 2; background: #f3ece6; }
-        .zone-limited   { flex: 2; background: #fef5e7; }
-        .zone-community { flex: 6; background: #e8f4ef; }
-        .demo-zone-marker {
-          position: absolute; top: 50%; transform: translate(-50%, -50%);
-          width: 14px; height: 14px; border-radius: 50%;
-          background: var(--color-primary);
-          border: 2px solid var(--color-surface);
-          box-shadow: 0 0 0 1px var(--color-primary);
-        }
-        .demo-zone-legend {
-          display: flex; justify-content: space-between;
-          font-size: 10px; color: var(--color-subtle); margin-bottom: 8px;
-        }
-        .demo-classification {
-          font-family: 'Source Serif 4', serif;
-          font-size: 20px; font-weight: 600;
-          color: var(--color-ink); margin-bottom: 20px; text-align: center;
-        }
-
-        /* Norm / compare rows */
-        .demo-norm-row, .demo-compare-row {
-          display: grid; grid-template-columns: repeat(3, 1fr);
-          gap: 12px; margin-bottom: 16px;
-        }
-        .demo-norm-item, .demo-compare-item {
-          background: var(--color-surface-soft);
-          border-radius: var(--radius-sm); padding: 12px;
-        }
-        .demo-norm-label {
-          font-size: 11px; font-weight: 600; color: var(--color-subtle);
-          text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
-        }
-        .demo-norm-value {
-          font-size: 20px; font-weight: 600;
-          font-family: 'Source Serif 4', serif; color: var(--color-ink);
-        }
-        .demo-norm-value span { font-size: 12px; font-weight: 400; color: var(--color-muted); }
-        .demo-change { color: var(--color-primary); }
-        .demo-mcid-badge {
-          display: inline-block; font-size: 13px; font-weight: 600;
-          padding: 4px 10px; border-radius: 99px; margin-top: 4px;
-        }
-        .mcid-met { background: #e8f4ef; color: #2d6a4f; }
-        .mcid-not { background: var(--color-surface); color: var(--color-muted); border: 1px solid var(--color-border); }
-
-        /* Clinical interpretation block */
-        .demo-interp-block {
-          background: var(--color-primary-soft);
-          border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;
-        }
-        .demo-interp-label {
+        .demo-summary-heading {
           font-size: 11px; font-weight: 700; letter-spacing: 1px;
-          text-transform: uppercase; color: var(--color-primary); margin-bottom: 12px;
+          text-transform: uppercase; color: var(--color-subtle);
+          margin-bottom: 16px;
         }
-        .demo-interp-row {
-          display: flex; justify-content: space-between; gap: 16px;
-          padding: 6px 0; border-bottom: 1px solid var(--color-border);
+        .demo-metric { margin-bottom: 16px; }
+        .demo-metric-row {
+          display: flex; justify-content: space-between; align-items: baseline;
+          margin-bottom: 8px;
         }
-        .demo-interp-row:last-child { border-bottom: none; }
-        .demo-interp-key { font-size: 13px; font-weight: 500; color: var(--color-muted); flex-shrink: 0; }
-        .demo-interp-val { font-size: 13px; color: var(--color-ink); text-align: right; }
+        .demo-metric-label { font-size: 13px; color: var(--color-muted); font-weight: 500; }
+        .demo-metric-value {
+          font-size: 20px; font-weight: 600;
+          color: var(--color-primary); font-family: 'Source Serif 4', serif;
+        }
+        .demo-metric-unit { font-size: 12px; font-weight: 400; color: var(--color-muted); }
+        .bar {
+          height: 8px; background: var(--color-border);
+          border-radius: 999px; overflow: hidden;
+        }
+        .bar-fill {
+          height: 100%; background: var(--color-primary);
+          border-radius: 999px; transition: width 0.2s ease;
+        }
+        .demo-interp-text {
+          font-size: 13px; color: var(--color-muted);
+          margin-top: 12px; line-height: 1.5; font-weight: 300;
+        }
       `}</style>
 
       <nav>
@@ -751,172 +674,82 @@ export default function Landing() {
       </footer>
 
       {showDemoModal && (
-        <div className="demo-overlay" onClick={e => { if (e.target === e.currentTarget) closeDemoModal() }}>
+        <div className="demo-overlay" onClick={e => { if (e.target === e.currentTarget) setShowDemoModal(false) }}>
           <div className="demo-modal">
-            <button className="demo-close" onClick={closeDemoModal} aria-label="Close">×</button>
+            <button className="demo-close" onClick={() => setShowDemoModal(false)} aria-label="Close">×</button>
 
             <div className="demo-title">10 Metre Walk Test</div>
-            <p className="demo-sub">Enter a single trial to see how RehabMetrics calculates outcomes.</p>
+            <p className="demo-sub">Edit time and steps to see live results.</p>
 
-            {demoStep === 'input' && (
-              <>
-                <div className="demo-patient-grid">
-                  <div className="demo-field">
-                    <label className="demo-label" htmlFor="demo-name">Patient name</label>
-                    <input
-                      id="demo-name"
-                      type="text"
-                      className="demo-input"
-                      value={patientName}
-                      onChange={e => setPatientName(e.target.value)}
-                    />
-                  </div>
-                  <div className="demo-field">
-                    <label className="demo-label" htmlFor="demo-age">Age</label>
-                    <input
-                      id="demo-age"
-                      type="number"
-                      min="18"
-                      max="120"
-                      className="demo-input"
-                      value={patientAge}
-                      onChange={e => setPatientAge(parseInt(e.target.value, 10) || 0)}
-                    />
-                  </div>
-                  <div className="demo-field">
-                    <label className="demo-label" htmlFor="demo-date">Date</label>
-                    <input
-                      id="demo-date"
-                      type="date"
-                      className="demo-input"
-                      value={testDate}
-                      onChange={e => setTestDate(e.target.value)}
-                    />
-                  </div>
+            <div className="demo-patient">
+              <div>
+                <span className="demo-pt-label">Name</span>
+                <span className="demo-pt-value">John Smith</span>
+              </div>
+              <div>
+                <span className="demo-pt-label">Age</span>
+                <span className="demo-pt-value">68</span>
+              </div>
+              <div>
+                <span className="demo-pt-label">Diagnosis</span>
+                <span className="demo-pt-value">Stroke</span>
+              </div>
+            </div>
+
+            <div className="demo-field">
+              <label className="demo-label" htmlFor="demo-time">Time (seconds)</label>
+              <input
+                id="demo-time"
+                type="number"
+                min="1"
+                step="0.1"
+                className="demo-input"
+                value={time}
+                onChange={e => setTime(parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <div className="demo-field">
+              <label className="demo-label" htmlFor="demo-steps">Steps</label>
+              <input
+                id="demo-steps"
+                type="number"
+                min="1"
+                step="1"
+                className="demo-input"
+                value={steps}
+                onChange={e => setSteps(parseInt(e.target.value, 10) || 0)}
+              />
+            </div>
+
+            <div className="demo-summary">
+              <div className="demo-summary-heading">Summary</div>
+
+              <div className="demo-metric">
+                <div className="demo-metric-row">
+                  <span className="demo-metric-label">Walking speed</span>
+                  <span className="demo-metric-value">
+                    {speed.toFixed(2)} <span className="demo-metric-unit">m/s</span>
+                  </span>
                 </div>
-
-                <div className="demo-field">
-                  <label className="demo-label" htmlFor="demo-time">Time (seconds)</label>
-                  <input
-                    id="demo-time"
-                    type="number"
-                    min="1"
-                    step="0.1"
-                    className="demo-input"
-                    value={time}
-                    onChange={e => setTime(parseFloat(e.target.value) || 0)}
-                  />
+                <div className="bar" role="progressbar" aria-label="Walking speed" aria-valuenow={speed.toFixed(2)} aria-valuemin="0" aria-valuemax="2">
+                  <div className="bar-fill" style={{ width: `${Math.min((speed / 2.0) * 100, 100)}%` }} />
                 </div>
-                <div className="demo-field">
-                  <label className="demo-label" htmlFor="demo-steps">Steps</label>
-                  <input
-                    id="demo-steps"
-                    type="number"
-                    min="1"
-                    step="1"
-                    className="demo-input"
-                    value={steps}
-                    onChange={e => setSteps(parseInt(e.target.value, 10) || 0)}
-                  />
+              </div>
+
+              <div className="demo-metric">
+                <div className="demo-metric-row">
+                  <span className="demo-metric-label">Cadence</span>
+                  <span className="demo-metric-value">
+                    {cadence.toFixed(0)} <span className="demo-metric-unit">steps/min</span>
+                  </span>
                 </div>
-
-                <div className="demo-live">
-                  <div className="demo-live-item">
-                    <div className="demo-live-label">Walking speed</div>
-                    <div className="demo-live-value">
-                      {speed.toFixed(2)} <span className="demo-live-unit">m/s</span>
-                    </div>
-                  </div>
-                  <div className="demo-live-item">
-                    <div className="demo-live-label">Cadence</div>
-                    <div className="demo-live-value">
-                      {cadence.toFixed(2)} <span className="demo-live-unit">steps/min</span>
-                    </div>
-                  </div>
+                <div className="bar" role="progressbar" aria-label="Cadence" aria-valuenow={cadence.toFixed(0)} aria-valuemin="0" aria-valuemax="150">
+                  <div className="bar-fill" style={{ width: `${Math.min((cadence / 150) * 100, 100)}%` }} />
                 </div>
+              </div>
 
-                <button className="demo-btn" onClick={() => setDemoStep('summary')}>View Summary</button>
-              </>
-            )}
-
-            {demoStep === 'summary' && (
-              <>
-                <div className="demo-zone-wrap">
-                  <div className="demo-zone-track">
-                    <div className="demo-zone-seg zone-household">Household</div>
-                    <div className="demo-zone-seg zone-limited">Limited</div>
-                    <div className="demo-zone-seg zone-community">Community</div>
-                    <div className="demo-zone-marker" style={{ left: `${Math.min(speed / 2, 1) * 100}%` }} />
-                  </div>
-                  <div className="demo-zone-legend">
-                    <span>0 m/s</span><span>0.4</span><span>0.8</span><span>2.0 m/s</span>
-                  </div>
-                </div>
-                <p className="demo-classification">{classification.label}</p>
-
-                <div className="demo-norm-row">
-                  <div className="demo-norm-item">
-                    <div className="demo-norm-label">Walking speed</div>
-                    <div className="demo-norm-value">{speed.toFixed(2)} <span>m/s</span></div>
-                  </div>
-                  <div className="demo-norm-item">
-                    <div className="demo-norm-label">Age-matched norm</div>
-                    <div className="demo-norm-value">{ageNorm.toFixed(2)} <span>m/s</span></div>
-                  </div>
-                  <div className="demo-norm-item">
-                    <div className="demo-norm-label">% of norm</div>
-                    <div className="demo-norm-value">{normPct}<span>%</span></div>
-                  </div>
-                </div>
-
-                <div className="demo-compare-row">
-                  <div className="demo-compare-item">
-                    <div className="demo-norm-label">Previous</div>
-                    <div className="demo-norm-value">{prevSpeed.toFixed(2)} <span>m/s</span></div>
-                  </div>
-                  <div className="demo-compare-item">
-                    <div className="demo-norm-label">Change</div>
-                    <div className="demo-norm-value demo-change">
-                      {speedChange >= 0 ? '+' : ''}{speedChange.toFixed(2)} <span>m/s</span>
-                    </div>
-                  </div>
-                  <div className="demo-compare-item">
-                    <div className="demo-norm-label">MCID (≥0.1 m/s)</div>
-                    <div className={`demo-mcid-badge ${mcidMet ? 'mcid-met' : 'mcid-not'}`}>
-                      {mcidMet ? 'Met' : 'Not met'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="demo-interp-block">
-                  <div className="demo-interp-label">Clinical Interpretation</div>
-                  <div className="demo-interp-row">
-                    <span className="demo-interp-key">Classification</span>
-                    <span className="demo-interp-val">{classification.label}</span>
-                  </div>
-                  <div className="demo-interp-row">
-                    <span className="demo-interp-key">Norm comparison</span>
-                    <span className="demo-interp-val">{normPct}% of age-matched norm ({ageNorm.toFixed(2)} m/s)</span>
-                  </div>
-                  <div className="demo-interp-row">
-                    <span className="demo-interp-key">Change over time</span>
-                    <span className="demo-interp-val">
-                      {speedChange >= 0 ? '+' : ''}{speedChange.toFixed(2)} m/s from previous test
-                    </span>
-                  </div>
-                  <div className="demo-interp-row">
-                    <span className="demo-interp-key">MCID status</span>
-                    <span className="demo-interp-val">
-                      {mcidMet
-                        ? 'Clinically meaningful improvement detected'
-                        : 'Change does not reach minimal clinically important difference'}
-                    </span>
-                  </div>
-                </div>
-
-                <button className="demo-back" onClick={() => setDemoStep('input')}>← Back to inputs</button>
-              </>
-            )}
+              <p className="demo-interp-text">{speed > 0 ? getInterpretation(speed) : '—'}</p>
+            </div>
           </div>
         </div>
       )}
