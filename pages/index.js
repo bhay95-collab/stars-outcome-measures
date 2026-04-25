@@ -41,12 +41,33 @@ const WHY_CARDS = [
   },
 ]
 
+const SPEED_MAX = 2
+const CADENCE_MAX = 150
+
 export default function Landing() {
   const [billing, setBilling] = useState('monthly')
+  const [showDemoModal, setShowDemoModal] = useState(false)
+  const [demoStep, setDemoStep] = useState('input')
+  const [time, setTime] = useState(8.2)
+  const [steps, setSteps] = useState(12)
+
+  const speed = time > 0 ? 10 / time : 0
+  const cadence = time > 0 ? (steps / time) * 60 : 0
 
   const price = billing === 'monthly' ? '2.99' : '24.99'
   const period = billing === 'monthly' ? 'per month' : 'per year · $2.08/mo'
   const planName = billing === 'monthly' ? 'Monthly' : 'Annual'
+
+  function closeDemoModal() {
+    setShowDemoModal(false)
+    setDemoStep('input')
+  }
+
+  function getInterpretation(s) {
+    if (s < 0.8) return 'Below functional walking threshold'
+    if (s <= 1.2) return 'Within typical community ambulation range'
+    return 'Above average walking speed'
+  }
 
   return (
     <>
@@ -155,6 +176,8 @@ export default function Landing() {
           color: var(--color-primary); font-size: 14px;
           font-weight: 500; text-decoration: none;
           padding: 12px 20px;
+          background: none; border: none; cursor: pointer;
+          font-family: 'Inter', sans-serif;
         }
         .btn-secondary:hover { text-decoration: underline; }
 
@@ -383,6 +406,104 @@ export default function Landing() {
         @media (max-width: 560px) {
           .why-grid { grid-template-columns: 1fr; }
         }
+
+        /* DEMO MODAL */
+        .demo-overlay {
+          position: fixed; inset: 0; z-index: 200;
+          background: rgba(31,41,51,0.4);
+          display: flex; align-items: center; justify-content: center;
+          padding: 24px;
+        }
+        .demo-modal {
+          background: var(--color-surface);
+          border-radius: var(--radius-lg);
+          padding: 32px;
+          width: 100%; max-width: 520px;
+          box-shadow: var(--shadow-md);
+          position: relative;
+        }
+        .demo-close {
+          position: absolute; top: 16px; right: 20px;
+          background: none; border: none; cursor: pointer;
+          font-size: 22px; color: var(--color-muted); line-height: 1;
+          padding: 4px;
+        }
+        .demo-close:hover { color: var(--color-ink); }
+        .demo-title {
+          font-family: 'Source Serif 4', serif;
+          font-size: 22px; font-weight: 600;
+          color: var(--color-ink); margin-bottom: 6px;
+        }
+        .demo-sub {
+          font-size: 14px; color: var(--color-muted);
+          font-weight: 300; margin-bottom: 24px; line-height: 1.5;
+        }
+        .demo-field { margin-bottom: 16px; }
+        .demo-label {
+          display: block; font-size: 12px; font-weight: 600;
+          color: var(--color-muted); margin-bottom: 6px;
+          text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .demo-input {
+          width: 100%; height: 44px;
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          padding: 0 12px; font-size: 15px;
+          font-family: 'Inter', sans-serif;
+          color: var(--color-ink); background: var(--color-surface);
+          outline: none;
+        }
+        .demo-input:focus { border-color: var(--color-primary); }
+        .demo-live {
+          background: var(--color-surface-soft);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          padding: 14px 16px;
+          display: flex; gap: 32px;
+          margin-bottom: 24px;
+        }
+        .demo-live-item { flex: 1; }
+        .demo-live-label { font-size: 11px; font-weight: 600; color: var(--color-subtle); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .demo-live-value { font-size: 22px; font-weight: 600; color: var(--color-primary); font-family: 'Source Serif 4', serif; }
+        .demo-live-unit { font-size: 12px; color: var(--color-muted); font-weight: 400; }
+        .demo-btn {
+          width: 100%; height: 44px;
+          background: var(--color-primary); color: var(--color-surface);
+          border: none; border-radius: var(--radius-sm);
+          font-size: 15px; font-weight: 600;
+          font-family: 'Inter', sans-serif;
+          cursor: pointer;
+        }
+        .demo-btn:hover { background: var(--color-primary-dark); }
+        .demo-summary-row { margin-bottom: 20px; }
+        .demo-summary-label {
+          display: flex; justify-content: space-between;
+          font-size: 13px; font-weight: 600; color: var(--color-ink);
+          margin-bottom: 6px;
+        }
+        .demo-bar-track {
+          height: 8px; border-radius: 99px;
+          background: var(--color-border); overflow: hidden;
+        }
+        .demo-bar-fill {
+          height: 100%; border-radius: 99px;
+          background: var(--color-primary);
+        }
+        .demo-interpretation {
+          font-size: 13px; color: var(--color-muted);
+          background: var(--color-primary-soft);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          padding: 12px 14px; margin-top: 20px;
+          line-height: 1.5;
+        }
+        .demo-back {
+          background: none; border: none; cursor: pointer;
+          font-size: 13px; color: var(--color-muted);
+          font-family: 'Inter', sans-serif;
+          padding: 0; margin-top: 16px; display: block;
+        }
+        .demo-back:hover { color: var(--color-ink); text-decoration: underline; }
       `}</style>
 
       <nav>
@@ -409,7 +530,7 @@ export default function Landing() {
               <p className="hero-sub">RehabMetrics helps physiotherapists track what matters most with automated scoring, MCID tracking, and clinical-grade reports—so you can focus on your patients.</p>
               <div className="hero-actions">
                 <a href="/signup" className="btn-primary">Start 14-day free trial</a>
-                <a href="#features" className="btn-secondary">See how it works →</a>
+                <button className="btn-secondary" onClick={() => setShowDemoModal(true)}>See how it works →</button>
               </div>
             </div>
             <div className="hero-visual">
@@ -550,6 +671,99 @@ export default function Landing() {
         </div>
         <div>© {new Date().getFullYear()} RehabMetrics. All rights reserved.</div>
       </footer>
+
+      {showDemoModal && (
+        <div className="demo-overlay" onClick={e => { if (e.target === e.currentTarget) closeDemoModal() }}>
+          <div className="demo-modal">
+            <button className="demo-close" onClick={closeDemoModal} aria-label="Close">×</button>
+
+            <div className="demo-title">10 Metre Walk Test</div>
+            <p className="demo-sub">Enter a single trial to see how RehabMetrics calculates outcomes.</p>
+
+            {demoStep === 'input' && (
+              <>
+                <div className="demo-field">
+                  <label className="demo-label" htmlFor="demo-time">Time (seconds)</label>
+                  <input
+                    id="demo-time"
+                    type="number"
+                    min="1"
+                    step="0.1"
+                    className="demo-input"
+                    value={time}
+                    onChange={e => setTime(parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="demo-field">
+                  <label className="demo-label" htmlFor="demo-steps">Steps</label>
+                  <input
+                    id="demo-steps"
+                    type="number"
+                    min="1"
+                    step="1"
+                    className="demo-input"
+                    value={steps}
+                    onChange={e => setSteps(parseInt(e.target.value, 10) || 0)}
+                  />
+                </div>
+
+                <div className="demo-live">
+                  <div className="demo-live-item">
+                    <div className="demo-live-label">Walking speed</div>
+                    <div className="demo-live-value">
+                      {speed.toFixed(2)} <span className="demo-live-unit">m/s</span>
+                    </div>
+                  </div>
+                  <div className="demo-live-item">
+                    <div className="demo-live-label">Cadence</div>
+                    <div className="demo-live-value">
+                      {cadence.toFixed(2)} <span className="demo-live-unit">steps/min</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button className="demo-btn" onClick={() => setDemoStep('summary')}>View Summary</button>
+              </>
+            )}
+
+            {demoStep === 'summary' && (
+              <>
+                <div className="demo-summary-row">
+                  <div className="demo-summary-label">
+                    <span>Walking Speed</span>
+                    <span>{speed.toFixed(2)} m/s</span>
+                  </div>
+                  <div className="demo-bar-track">
+                    <div
+                      className="demo-bar-fill"
+                      style={{ width: `${Math.min(speed / SPEED_MAX, 1) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="demo-summary-row">
+                  <div className="demo-summary-label">
+                    <span>Cadence</span>
+                    <span>{cadence.toFixed(2)} steps/min</span>
+                  </div>
+                  <div className="demo-bar-track">
+                    <div
+                      className="demo-bar-fill"
+                      style={{ width: `${Math.min(cadence / CADENCE_MAX, 1) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="demo-interpretation">
+                  <strong>Interpretation:</strong> {getInterpretation(speed)}
+                </div>
+
+                <button className="demo-back" onClick={() => setDemoStep('input')}>← Back to inputs</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </>
   )
 }
