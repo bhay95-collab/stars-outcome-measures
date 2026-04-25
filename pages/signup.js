@@ -17,7 +17,11 @@ export default function Signup() {
     setLoading(true)
     setError('')
 
-    const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: 'https://rehabmetricsiq.com/app' }
+    })
 
     if (signUpError) {
       setError(signUpError.message)

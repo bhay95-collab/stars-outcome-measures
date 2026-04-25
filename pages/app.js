@@ -7,19 +7,30 @@ export async function getServerSideProps() { return { props: {} } }
 export default function App() {
   const router = useRouter()
   const [user, setUser] = useState(null)
-  const [checking, setChecking] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [trialValid, setTrialValid] = useState(null)
 
   useEffect(() => {
-    supabase.auth.getUser()
-      .then(({ data: { user: currentUser } }) => {
-        if (!currentUser) {
-          router.replace('/login')
-        } else {
-          setUser(currentUser)
-          setChecking(false)
-        }
-      })
-      .catch(() => router.replace('/login'))
+    async function checkAccess() {
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser) { router.replace('/login'); return }
+
+      const { data: profile, error: dbError } = await supabase
+        .from('users')
+        .select('trial_end_date, is_active')
+        .eq('id', currentUser.id)
+        .single()
+
+      if (dbError || !profile) { router.replace('/login'); return }
+
+      const isValid = profile.is_active === true && new Date() <= new Date(profile.trial_end_date)
+
+      setUser(currentUser)
+      setTrialValid(isValid)
+      setLoading(false)
+    }
+
+    checkAccess().catch(() => router.replace('/login'))
   }, [router])
 
   async function handleSignOut() {
@@ -27,11 +38,13 @@ export default function App() {
     router.push('/')
   }
 
-  if (checking) {
+  if (loading) {
     return (
       <>
         <style jsx>{pageStyles}</style>
-        <div className="loading-page" />
+        <div className="loading-page">
+          <p className="loading-text">Loading…</p>
+        </div>
       </>
     )
   }
@@ -48,14 +61,26 @@ export default function App() {
         </header>
 
         <main className="main">
-          <div className="welcome-card">
-            <p className="trial-label">14-day free trial</p>
-            <h1 className="heading">Welcome to RehabMetrics IQ</h1>
-            <p className="subtext">
-              You&apos;re signed in as <strong>{user.email}</strong>.
-              Your dashboard is coming soon.
-            </p>
-          </div>
+          {trialValid ? (
+            <div className="welcome-card">
+              <p className="trial-label">14-day free trial</p>
+              <h1 className="heading">Welcome to RehabMetrics IQ</h1>
+              <p className="subtext">
+                You&apos;re signed in as <strong>{user.email}</strong>.
+                Your dashboard is coming soon.
+              </p>
+            </div>
+          ) : (
+            <div className="welcome-card">
+              <p className="trial-label">Trial ended</p>
+              <h1 className="heading">Trial expired</h1>
+              <p className="subtext">
+                Your 14-day trial has ended. To continue using RehabMetrics IQ,
+                please upgrade your plan.
+              </p>
+              <button className="upgrade-btn" disabled>Upgrade (coming soon)</button>
+            </div>
+          )}
         </main>
       </div>
     </>
@@ -81,6 +106,13 @@ const pageStyles = `
   .loading-page {
     min-height: 100vh;
     background: var(--color-surface-soft);
+  }
+
+  .loading-text {
+    font-size: 14px;
+    color: var(--color-subtle);
+    text-align: center;
+    padding-top: 40vh;
   }
 
   .page {
@@ -163,5 +195,19 @@ const pageStyles = `
     color: var(--color-muted);
     line-height: 1.6;
     font-weight: 300;
+  }
+
+  .upgrade-btn {
+    margin-top: 24px;
+    padding: 10px 24px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-subtle);
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    cursor: not-allowed;
+    width: 100%;
   }
 `
