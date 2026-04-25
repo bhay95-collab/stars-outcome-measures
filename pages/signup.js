@@ -24,40 +24,17 @@ export default function Signup() {
     })
 
     if (signUpError) {
+      console.error('[signup] error:', signUpError.message)
       setError(signUpError.message)
       setLoading(false)
       return
     }
 
-    const userId = data.user?.id
-    const userEmail = data.user?.email
-
-    if (userId) {
-      const { data: existing } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle()
-
-      if (!existing) {
-        const now = new Date()
-        const trialEnd = new Date(now)
-        trialEnd.setDate(trialEnd.getDate() + 14)
-
-        await supabase.from('profiles').insert({
-          id: userId,
-          email: userEmail,
-          trial_start_date: now.toISOString(),
-          trial_end_date: trialEnd.toISOString(),
-          is_active: true
-        })
-      }
-    }
+    console.log('[signup] user:', data.user?.id, '| session:', data.session ? 'present' : 'absent (email confirmation required)')
 
     if (data.session) {
       router.push('/app')
     } else {
-      // Email confirmation is enabled in Supabase — no session until confirmed
       setEmailSent(true)
       setLoading(false)
     }

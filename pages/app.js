@@ -28,26 +28,27 @@ export default function App() {
       }
 
       setUser(session.user)
+      console.log('[app] session:', session.user.id)
 
       // Step 2: fetch profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('trial_end_date, is_active')
+        .select('*')
         .eq('id', session.user.id)
         .maybeSingle()
 
+      console.log('[app] profile:', profile)
+
       if (profileError) {
-        router.replace('/login')
+        console.error('[app] profile fetch error:', profileError.message)
+        setTrialValid(false)
+        setLoading(false)
         return
       }
 
-      if (profile && profile.trial_end_date) {
-        const trialEnd = new Date(profile.trial_end_date)
-        setTrialValid(profile.is_active === true && new Date() <= trialEnd)
-      } else {
-        setTrialValid(false)
-      }
-
+      const trialValid = profile ? new Date(profile.trial_end_date) > new Date() : false
+      console.log('[app] trialValid:', trialValid)
+      setTrialValid(trialValid)
       setLoading(false)
     }
 
