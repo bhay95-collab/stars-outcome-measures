@@ -182,6 +182,7 @@ export default function App() {
               <>
                 <PatientHeader
                   patient={selectedPatient}
+                  assessments={assessments}
                   onViewChange={setView}
                   activeView={view}
                 />

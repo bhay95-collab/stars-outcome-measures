@@ -3,7 +3,12 @@ function calculateAge(dobYear) {
   return new Date().getFullYear() - dobYear
 }
 
-export default function PatientHeader({ patient, onViewChange, activeView }) {
+function formatDate(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+export default function PatientHeader({ patient, assessments, onViewChange, activeView }) {
   const age = calculateAge(patient.dob_year)
   const genderLabel =
     patient.gender === 'M' ? 'Male' :
@@ -29,6 +34,14 @@ export default function PatientHeader({ patient, onViewChange, activeView }) {
         <div className="field-group" data-field="diagnosis">
           <span className="field-label">Diagnosis</span>
           <span>{patient.diagnosis ?? '—'}</span>
+        </div>
+        <div className="field-group">
+          <span className="field-label">Added On</span>
+          <span>{formatDate(patient.created_at)}</span>
+        </div>
+        <div className="field-group">
+          <span className="field-label">Last Assessment</span>
+          <span>{formatDate(assessments?.[0]?.created_at)}</span>
         </div>
       </div>
       <div data-view-toggle="">
