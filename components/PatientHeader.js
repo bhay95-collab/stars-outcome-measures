@@ -1,15 +1,10 @@
-function calculateAge(dateOfBirth) {
-  if (!dateOfBirth) return null
-  const today = new Date()
-  const dob = new Date(dateOfBirth)
-  let age = today.getFullYear() - dob.getFullYear()
-  const m = today.getMonth() - dob.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--
-  return age
+function calculateAge(dobYear) {
+  if (!dobYear) return null
+  return new Date().getFullYear() - dobYear
 }
 
 export default function PatientHeader({ patient, onRecord }) {
-  const age = calculateAge(patient.date_of_birth)
+  const age = calculateAge(patient.dob_year)
   const genderLabel =
     patient.gender === 'M' ? 'Male' :
     patient.gender === 'F' ? 'Female' :
@@ -21,7 +16,7 @@ export default function PatientHeader({ patient, onRecord }) {
       <div className="header">
         <div className="header-left">
           <p className="eyebrow">Patient</p>
-          <h2 className="name">{patient.first_name} {patient.last_name}</h2>
+          <h2 className="name">{patient.initials}</h2>
           <div className="meta">
             {age != null && <span className="meta-item">Age {age}</span>}
             {genderLabel && <span className="meta-item">{genderLabel}</span>}
@@ -93,7 +88,7 @@ const styles = `
     font-weight: 600;
     color: var(--color-primary-dark);
     background: var(--color-primary-soft);
-    border: 1px solid rgba(35,100,153,0.2);
+    border: 1px solid var(--color-border);
     border-radius: 999px;
     padding: 3px 10px;
     line-height: 1.6;

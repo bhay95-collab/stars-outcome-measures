@@ -4,10 +4,9 @@ export default function PatientList({ patients, selectedId, onSelect, onNew }) {
   const [query, setQuery] = useState('')
 
   const filtered = query.trim()
-    ? patients.filter(p => {
-        const full = `${p.first_name} ${p.last_name}`.toLowerCase()
-        return full.includes(query.trim().toLowerCase())
-      })
+    ? patients.filter(p =>
+        (p.initials ?? '').toLowerCase().includes(query.trim().toLowerCase())
+      )
     : patients
 
   return (
@@ -48,7 +47,7 @@ export default function PatientList({ patients, selectedId, onSelect, onNew }) {
                 onClick={() => onSelect(p)}
                 onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect(p)}
               >
-                <span className="name">{p.last_name}, {p.first_name}</span>
+                <span className="name">{p.initials}</span>
                 {p.diagnosis && <span className="condition">{p.diagnosis}</span>}
               </li>
             ))}

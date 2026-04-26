@@ -4,9 +4,8 @@ import { CONDITION_OPTIONS } from '../lib/clinical'
 
 export default function NewPatientModal({ userId, onCreated, onClose }) {
   const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
-    date_of_birth: '',
+    initials: '',
+    dob_year: '',
     gender: '',
     diagnosis: '',
   })
@@ -19,8 +18,8 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.first_name.trim() || !form.last_name.trim() || !form.date_of_birth) {
-      setError('First name, last name, and date of birth are required.')
+    if (!form.initials.trim()) {
+      setError('Initials are required.')
       return
     }
 
@@ -31,9 +30,8 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
       .from('patients')
       .insert({
         user_id: userId,
-        first_name: form.first_name.trim(),
-        last_name: form.last_name.trim(),
-        date_of_birth: form.date_of_birth,
+        initials: form.initials.trim(),
+        dob_year: form.dob_year ? parseInt(form.dob_year, 10) : null,
         gender: form.gender || null,
         diagnosis: form.diagnosis || null,
       })
@@ -68,38 +66,31 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
           <form onSubmit={handleSubmit}>
             <div className="row">
               <div className="field">
-                <label htmlFor="np-first">First name *</label>
+                <label htmlFor="np-initials">Initials *</label>
                 <input
-                  id="np-first"
-                  value={form.first_name}
-                  onChange={e => set('first_name', e.target.value)}
-                  placeholder="Jane"
+                  id="np-initials"
+                  value={form.initials}
+                  onChange={e => set('initials', e.target.value.toUpperCase())}
+                  placeholder="e.g. BH"
+                  maxLength={6}
                   required
                 />
               </div>
               <div className="field">
-                <label htmlFor="np-last">Last name *</label>
+                <label htmlFor="np-dob-year">Birth year</label>
                 <input
-                  id="np-last"
-                  value={form.last_name}
-                  onChange={e => set('last_name', e.target.value)}
-                  placeholder="Smith"
-                  required
+                  id="np-dob-year"
+                  type="number"
+                  value={form.dob_year}
+                  onChange={e => set('dob_year', e.target.value)}
+                  placeholder="e.g. 1985"
+                  min="1900"
+                  max={new Date().getFullYear()}
                 />
               </div>
             </div>
 
             <div className="row">
-              <div className="field">
-                <label htmlFor="np-dob">Date of birth *</label>
-                <input
-                  id="np-dob"
-                  type="date"
-                  value={form.date_of_birth}
-                  onChange={e => set('date_of_birth', e.target.value)}
-                  required
-                />
-              </div>
               <div className="field">
                 <label htmlFor="np-gender">Gender</label>
                 <select
@@ -113,20 +104,19 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
                   <option value="Other">Other</option>
                 </select>
               </div>
-            </div>
-
-            <div className="field">
-              <label htmlFor="np-condition">Condition</label>
-              <select
-                id="np-condition"
-                value={form.diagnosis}
-                onChange={e => set('diagnosis', e.target.value)}
-              >
-                <option value="">— Select —</option>
-                {CONDITION_OPTIONS.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              <div className="field">
+                <label htmlFor="np-diagnosis">Diagnosis</label>
+                <select
+                  id="np-diagnosis"
+                  value={form.diagnosis}
+                  onChange={e => set('diagnosis', e.target.value)}
+                >
+                  <option value="">— Select —</option>
+                  {CONDITION_OPTIONS.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {error && <p className="error">{error}</p>}
@@ -292,7 +282,7 @@ const styles = `
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
-    color: #fff;
+    color: var(--color-surface);
     background: var(--color-primary);
     border: none;
     border-radius: var(--radius-sm);

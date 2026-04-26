@@ -62,7 +62,7 @@ export default function App() {
         const { data: pats } = await supabase
           .from('patients')
           .select('*')
-          .order('last_name', { ascending: true })
+          .order('initials', { ascending: true })
         setPatients(pats ?? [])
       }
 
@@ -84,7 +84,9 @@ export default function App() {
 
   const handlePatientCreated = useCallback((patient) => {
     setPatients(prev =>
-      [...prev, patient].sort((a, b) => a.last_name.localeCompare(b.last_name))
+      [...prev, patient].sort((a, b) =>
+        (a.initials ?? '').localeCompare(b.initials ?? '')
+      )
     )
     setShowNewPatient(false)
     handlePatientSelect(patient)
