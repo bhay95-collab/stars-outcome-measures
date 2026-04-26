@@ -17,6 +17,7 @@ function measuresInCat(cat) {
 
 export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
   const [activeMeasure, setActiveMeasure] = useState('10MWT')
+  const [activeCategory, setActiveCategory] = useState('performance')
   const [completed, setCompleted] = useState(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -57,12 +58,24 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
         </div>
       </div>
 
+      <div data-measure-tabs="">
+        {CATEGORY_ORDER.map(cat => (
+          <button
+            key={cat}
+            type="button"
+            data-active={activeCategory === cat ? '' : undefined}
+            onClick={() => setActiveCategory(cat)}
+          >
+            {CATEGORY_LABELS[cat]}
+          </button>
+        ))}
+      </div>
+
       <div data-measure-layout="">
 
         <nav data-measure-nav="">
-          {CATEGORY_ORDER.map(cat => (
+          {CATEGORY_ORDER.filter(cat => cat === activeCategory).map(cat => (
             <div key={cat} data-measure-group="">
-              <span className="section-label">{CATEGORY_LABELS[cat]}</span>
               {measuresInCat(cat).map(m => (
                 <button
                   key={m.id}

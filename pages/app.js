@@ -892,4 +892,29 @@ const globalStyles = `
   }
   [data-view-toggle] button:hover { border-color: var(--color-primary); color: var(--color-primary); }
   [data-view-toggle] button[data-active] { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); }
+
+  /* ── MEASURE CATEGORY TABS ── */
+  [data-measure-tabs] {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-soft);
+    padding: 0 16px;
+  }
+
+  [data-measure-tabs] button {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    margin-bottom: -1px;
+  }
+
+  [data-measure-tabs] button:hover { color: var(--color-ink); }
+  [data-measure-tabs] button[data-active] { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
 `
