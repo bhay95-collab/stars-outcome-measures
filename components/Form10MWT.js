@@ -118,7 +118,7 @@ export default function Form10MWT({ patient, onSubmit, loading }) {
         ) : (
           <em>Enter comfortable walk time to calculate results.</em>
         )}
-        <button type="submit" disabled={!preview || loading}>
+        <button type="submit" disabled={!preview || loading} style={{ width: 'auto', padding: '8px 20px', alignSelf: 'center' }}>
           {loading ? 'Saving…' : 'Save assessment'}
         </button>
       </div>

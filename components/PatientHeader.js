@@ -3,7 +3,7 @@ function calculateAge(dobYear) {
   return new Date().getFullYear() - dobYear
 }
 
-export default function PatientHeader({ patient, onRecord }) {
+export default function PatientHeader({ patient, onViewChange, activeView }) {
   const age = calculateAge(patient.dob_year)
   const genderLabel =
     patient.gender === 'M' ? 'Male' :
@@ -31,7 +31,18 @@ export default function PatientHeader({ patient, onRecord }) {
           <span>{patient.diagnosis ?? '—'}</span>
         </div>
       </div>
-      <button type="button" onClick={onRecord}>New Assessment</button>
+      <div data-view-toggle="">
+        <button
+          type="button"
+          data-active={activeView === 'summary' ? '' : undefined}
+          onClick={() => onViewChange('summary')}
+        >Summary</button>
+        <button
+          type="button"
+          data-active={activeView === 'assessment' ? '' : undefined}
+          onClick={() => onViewChange('assessment')}
+        >Add Assessment</button>
+      </div>
     </div>
   )
 }

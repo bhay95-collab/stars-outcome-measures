@@ -18,10 +18,11 @@ export default function App() {
   const [selectedPatient, setSelectedPatient] = useState(null)
   const [assessments, setAssessments] = useState([])
   const [showNewPatient, setShowNewPatient] = useState(false)
-  const [showMeasureEntry, setShowMeasureEntry] = useState(false)
+  const [view, setView] = useState('summary')
 
   const handleAssessmentSaved = useCallback((assessment) => {
-    setAssessments(prev => [assessment, ...prev])
+    if (assessment) setAssessments(prev => [assessment, ...prev])
+    setView('summary')
   }, [])
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function App() {
 
   const handlePatientSelect = useCallback(async (patient) => {
     setSelectedPatient(patient)
+    setView('summary')
     const { data } = await supabase
       .from('assessments')
       .select('*')
@@ -149,14 +151,6 @@ export default function App() {
           onClose={() => setShowNewPatient(false)}
         />
       )}
-      {showMeasureEntry && selectedPatient && (
-        <MeasureEntry
-          patient={selectedPatient}
-          userId={user.id}
-          onSaved={handleAssessmentSaved}
-          onClose={() => setShowMeasureEntry(false)}
-        />
-      )}
       <div className="page">
         <header className="header">
           <div className="header-inner">
@@ -188,12 +182,21 @@ export default function App() {
               <>
                 <PatientHeader
                   patient={selectedPatient}
-                  onRecord={() => setShowMeasureEntry(true)}
+                  onViewChange={setView}
+                  activeView={view}
                 />
-                <SummaryTab
-                  patient={selectedPatient}
-                  assessments={assessments}
-                />
+                {view === 'summary' ? (
+                  <SummaryTab
+                    patient={selectedPatient}
+                    assessments={assessments}
+                  />
+                ) : (
+                  <MeasureEntry
+                    patient={selectedPatient}
+                    onSaved={handleAssessmentSaved}
+                    onDone={() => setView('summary')}
+                  />
+                )}
               </>
             ) : (
               <div className="patient-card" data-empty="">
@@ -659,8 +662,8 @@ const globalStyles = `
   }
   .modal-content button[aria-label="Close"]:hover { color: var(--color-ink); background: var(--color-border); }
 
-  /* Modal: MeasureEntry — measure-header padding */
-  .modal-content > .measure-header { padding: 20px 24px; margin-bottom: 0; }
+  /* Inline panel — measure-header padding */
+  [data-measure-panel] > .measure-header { padding: 20px 24px; margin-bottom: 0; }
 
   /* Modal: form padding — applies to both NewPatientModal and MeasureEntry */
   .modal-content > form,
@@ -853,4 +856,39 @@ const globalStyles = `
     transition: background 0.15s;
   }
   [data-measure-footer] button:hover { background: var(--color-primary-dark); }
+
+  [data-measure-footer] button[data-secondary] {
+    background: var(--color-surface);
+    color: var(--color-muted);
+    border: 1px solid var(--color-border);
+  }
+  [data-measure-footer] button[data-secondary]:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-surface); }
+
+  /* ── INLINE MEASURE PANEL ── */
+  [data-measure-panel] {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  /* ── VIEW TOGGLE ── */
+  [data-view-toggle] { display: flex; gap: 6px; margin-top: 16px; }
+
+  [data-view-toggle] button {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  [data-view-toggle] button:hover { border-color: var(--color-primary); color: var(--color-primary); }
+  [data-view-toggle] button[data-active] { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); }
 `
