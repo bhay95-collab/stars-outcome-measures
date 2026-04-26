@@ -509,7 +509,7 @@ const globalStyles = `
   .chip-grey  { background: var(--color-surface-soft); color: var(--color-subtle); border-color: var(--color-border); }
 
   /* ── INFO PANEL ── */
-  .info-panel { padding: 14px 16px; background: #eef3fa; border: 1px solid #c8d9ef; border-radius: var(--radius-sm); font-size: 12px; color: #1d4e89; line-height: 1.6; margin-top: 14px; }
+  .info-panel { padding: 14px 16px; background: #eef3fa; border: 1px solid #c8d9ef; border-radius: var(--radius-sm); font-size: 12px; color: #1d4e89; line-height: 1.6; margin-top: 14px; margin-bottom: 16px; }
   .info-panel strong { font-weight: 600; }
 
   /* ── RESULT BOX ── */

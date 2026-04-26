@@ -3,7 +3,9 @@ import { calc10mwt } from '../lib/clinical'
 
 export default function Form10MWT({ patient, onSubmit, loading }) {
   const [comfortTime, setComfortTime] = useState('')
+  const [comfortSteps, setComfortSteps] = useState('')
   const [fastTime, setFastTime] = useState('')
+  const [fastSteps, setFastSteps] = useState('')
 
   const age = patient.dob_year ? new Date().getFullYear() - patient.dob_year : null
   const ct = parseFloat(comfortTime)
@@ -22,7 +24,12 @@ export default function Form10MWT({ patient, onSubmit, loading }) {
     e.preventDefault()
     if (!preview || loading) return
     onSubmit(
-      { comfortTime: ct, fastTime: ft > 0 ? ft : null },
+      {
+        comfortTime: ct,
+        fastTime: ft > 0 ? ft : null,
+        comfortSteps: comfortSteps !== '' ? parseInt(comfortSteps, 10) : null,
+        fastSteps: fastSteps !== '' ? parseInt(fastSteps, 10) : null,
+      },
       preview,
     )
   }
@@ -39,6 +46,7 @@ export default function Form10MWT({ patient, onSubmit, loading }) {
           <tr>
             <th>Condition</th>
             <th>Time (sec)</th>
+            <th>Steps</th>
             <th>Speed (m/s)</th>
             <th>% Predicted</th>
             <th>Community Classification</th>
@@ -58,6 +66,17 @@ export default function Form10MWT({ patient, onSubmit, loading }) {
                 value={comfortTime}
                 onChange={e => setComfortTime(e.target.value)}
                 required
+              />
+            </td>
+            <td>
+              <input
+                className="input-narrow"
+                type="number"
+                step="1"
+                min="1"
+                placeholder="steps"
+                value={comfortSteps}
+                onChange={e => setComfortSteps(e.target.value)}
               />
             </td>
             <td><span className="calc-value">{comfortSpeed}</span></td>
@@ -82,6 +101,17 @@ export default function Form10MWT({ patient, onSubmit, loading }) {
                 placeholder="sec"
                 value={fastTime}
                 onChange={e => setFastTime(e.target.value)}
+              />
+            </td>
+            <td>
+              <input
+                className="input-narrow"
+                type="number"
+                step="1"
+                min="1"
+                placeholder="steps"
+                value={fastSteps}
+                onChange={e => setFastSteps(e.target.value)}
               />
             </td>
             <td colSpan={4}>
