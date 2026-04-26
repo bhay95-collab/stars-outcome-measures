@@ -1,5 +1,12 @@
 import { useState } from 'react'
 
+function formatDob(iso) {
+  if (!iso) return null
+  const [year, month, day] = iso.split('-')
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  return `${parseInt(day, 10)} ${months[parseInt(month, 10) - 1]} ${year}`
+}
+
 export default function PatientList({ patients, selectedId, onSelect, onNew }) {
   const [query, setQuery] = useState('')
 
@@ -41,7 +48,7 @@ export default function PatientList({ patients, selectedId, onSelect, onNew }) {
               onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect(p)}
             >
               <strong>{p.initials}</strong>
-              {p.dob_year && <span>b. {p.dob_year}</span>}
+              {(p.dob || p.dob_year) && <span>{p.dob ? formatDob(p.dob) : `b. ${p.dob_year}`}</span>}
               {p.diagnosis && <span>{p.diagnosis}</span>}
             </li>
           ))

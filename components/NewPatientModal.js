@@ -39,6 +39,7 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
       .insert({
         user_id: userId,
         initials,
+        dob: form.dob || null,
         dob_year: dobYear,
         gender: form.gender || null,
         diagnosis: form.diagnosis || null,
