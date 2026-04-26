@@ -8,7 +8,7 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
     last_name: '',
     date_of_birth: '',
     gender: '',
-    condition: '',
+    diagnosis: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -35,7 +35,7 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
         last_name: form.last_name.trim(),
         date_of_birth: form.date_of_birth,
         gender: form.gender || null,
-        condition: form.condition || null,
+        diagnosis: form.diagnosis || null,
       })
       .select()
       .single()
@@ -119,8 +119,8 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
               <label htmlFor="np-condition">Condition</label>
               <select
                 id="np-condition"
-                value={form.condition}
-                onChange={e => set('condition', e.target.value)}
+                value={form.diagnosis}
+                onChange={e => set('diagnosis', e.target.value)}
               >
                 <option value="">— Select —</option>
                 {CONDITION_OPTIONS.map(c => (
@@ -148,50 +148,63 @@ const styles = `
   .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(31, 41, 51, 0.4);
+    background: rgba(15, 23, 32, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
+    z-index: 200;
     padding: 24px;
+    backdrop-filter: blur(2px);
   }
 
   .modal {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 20px 48px rgba(31,41,51,0.14);
     width: 100%;
     max-width: 520px;
-    padding: 32px;
+    padding: 0;
+    overflow: hidden;
   }
 
   .modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-soft);
   }
 
   .modal-title {
     font-family: 'Source Serif 4', serif;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--color-ink);
+    letter-spacing: -0.2px;
   }
 
   .close-btn {
-    font-size: 20px;
+    font-size: 18px;
+    line-height: 1;
     color: var(--color-subtle);
     background: none;
     border: none;
     cursor: pointer;
-    line-height: 1;
-    padding: 4px;
-    transition: color 0.15s;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s, background 0.15s;
   }
 
-  .close-btn:hover { color: var(--color-ink); }
+  .close-btn:hover {
+    color: var(--color-ink);
+    background: var(--color-border);
+  }
+
+  .modal form {
+    padding: 24px 28px 28px;
+  }
 
   .row {
     display: grid;
@@ -202,14 +215,17 @@ const styles = `
   .field {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 16px;
   }
 
   label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--color-muted);
   }
 
   input, select {
@@ -219,20 +235,28 @@ const styles = `
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    height: 44px;
+    height: 40px;
     padding: 0 12px;
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
     width: 100%;
     box-sizing: border-box;
   }
 
-  input:focus, select:focus { border-color: var(--color-primary); }
-  input::placeholder { color: var(--color-subtle); }
+  input:focus, select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(35,100,153,0.1);
+  }
+
+  input::placeholder { color: var(--color-subtle); font-size: 13px; }
 
   .error {
-    font-size: 13px;
-    color: var(--color-ink);
+    font-size: 12px;
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
     margin-bottom: 16px;
     line-height: 1.4;
   }
@@ -242,36 +266,42 @@ const styles = `
     justify-content: flex-end;
     gap: 8px;
     margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
   }
 
   .cancel-btn {
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--color-muted);
     background: none;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     padding: 8px 20px;
     cursor: pointer;
-    transition: color 0.15s;
+    transition: color 0.15s, border-color 0.15s;
   }
 
-  .cancel-btn:hover { color: var(--color-ink); }
+  .cancel-btn:hover {
+    color: var(--color-ink);
+    border-color: var(--color-muted);
+  }
 
   .submit-btn {
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--color-surface);
+    color: #fff;
     background: var(--color-primary);
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     padding: 8px 20px;
     cursor: pointer;
     transition: opacity 0.15s;
+    letter-spacing: 0.1px;
   }
 
-  .submit-btn:hover { opacity: 0.9; }
-  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .submit-btn:hover { opacity: 0.88; }
+  .submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 `

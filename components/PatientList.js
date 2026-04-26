@@ -49,7 +49,7 @@ export default function PatientList({ patients, selectedId, onSelect, onNew }) {
                 onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect(p)}
               >
                 <span className="name">{p.last_name}, {p.first_name}</span>
-                {p.condition && <span className="condition">{p.condition}</span>}
+                {p.diagnosis && <span className="condition">{p.diagnosis}</span>}
               </li>
             ))}
           </ul>
@@ -68,19 +68,21 @@ const styles = `
     display: flex;
     flex-direction: column;
     height: 100%;
+    background: var(--color-surface-soft);
   }
 
   .panel-head {
-    padding: 20px 16px 12px;
+    padding: 20px 16px 16px;
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
   }
 
   .panel-title {
     font-family: 'Source Serif 4', serif;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--color-ink);
+    letter-spacing: -0.2px;
   }
 
   .search-wrap {
@@ -92,21 +94,26 @@ const styles = `
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     color: var(--color-ink);
-    background: var(--color-surface-soft);
+    background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: 8px 12px;
     width: 100%;
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
     box-sizing: border-box;
   }
 
-  .search-input:focus { border-color: var(--color-primary); background: var(--color-surface); }
+  .search-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(35,100,153,0.1);
+    background: var(--color-surface);
+  }
+
   .search-input::placeholder { color: var(--color-subtle); }
 
   .empty {
-    padding: 24px 16px;
+    padding: 32px 16px;
     text-align: center;
     flex: 1;
   }
@@ -114,11 +121,12 @@ const styles = `
   .empty-text {
     font-size: 13px;
     color: var(--color-subtle);
+    line-height: 1.5;
   }
 
   .list {
     list-style: none;
-    padding: 6px 0;
+    padding: 8px 0;
     flex: 1;
     overflow-y: auto;
   }
@@ -127,10 +135,11 @@ const styles = `
     padding: 10px 16px;
     cursor: pointer;
     border-left: 3px solid transparent;
-    transition: background 0.1s;
+    transition: background 0.1s, border-color 0.1s;
+    outline: none;
   }
 
-  .item:hover { background: var(--color-surface-soft); }
+  .item:hover { background: rgba(35,100,153,0.04); }
 
   .item-active {
     background: var(--color-primary-soft);
@@ -139,23 +148,28 @@ const styles = `
 
   .name {
     display: block;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 500;
     color: var(--color-ink);
-    line-height: 1.3;
+    line-height: 1.4;
   }
+
+  .item-active .name { color: var(--color-primary-dark); }
 
   .condition {
     display: block;
     font-size: 11px;
-    color: var(--color-muted);
+    color: var(--color-subtle);
     margin-top: 2px;
+    font-weight: 400;
   }
 
   .panel-footer {
     padding: 12px;
     border-top: 1px solid var(--color-border);
     flex-shrink: 0;
+    background: var(--color-surface-soft);
   }
 
   .new-btn {
@@ -163,14 +177,18 @@ const styles = `
     font-size: 13px;
     font-weight: 600;
     color: var(--color-primary);
-    background: var(--color-primary-soft);
-    border: none;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    padding: 12px 0;
+    padding: 10px 0;
     width: 100%;
     cursor: pointer;
-    transition: opacity 0.15s;
+    transition: background 0.15s, border-color 0.15s;
+    letter-spacing: 0.1px;
   }
 
-  .new-btn:hover { opacity: 0.8; }
+  .new-btn:hover {
+    background: var(--color-primary-soft);
+    border-color: var(--color-secondary);
+  }
 `

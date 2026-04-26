@@ -25,7 +25,7 @@ export default function SummaryTab({ patient, assessments }) {
     ? [...mwtList].reverse().map(a => ({ date: a.created_at, value: a.results.primaryValue }))
     : null
 
-  const mcidContext = patient.condition ? getMCIDContext(patient.condition) : null
+  const mcidContext = patient.diagnosis ? getMCIDContext(patient.diagnosis) : null
 
   return (
     <>
@@ -33,6 +33,7 @@ export default function SummaryTab({ patient, assessments }) {
 
       {mwtList.length === 0 ? (
         <div className="empty">
+          <p className="empty-eyebrow">Clinical Summary</p>
           <p className="empty-title">No assessments recorded</p>
           <p className="empty-hint">
             Use "+ New Assessment" above to record the first 10MWT for {patient.first_name}.
@@ -51,7 +52,7 @@ export default function SummaryTab({ patient, assessments }) {
           </div>
           {mcidContext && (
             <div className="context-panel">
-              <p className="context-label">MCID reference — {patient.condition}</p>
+              <p className="context-label">MCID reference — {patient.diagnosis}</p>
               <p className="context-text">{mcidContext}</p>
             </div>
           )}
@@ -110,15 +111,26 @@ function MWTCard({ assessment, mcid, label, dim }) {
 
 const styles = `
   .empty {
-    padding: 16px 0;
-    max-width: 400px;
+    padding: 48px 0;
+    max-width: 360px;
+  }
+
+  .empty-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--color-subtle);
+    margin-bottom: 10px;
   }
 
   .empty-title {
-    font-size: 15px;
-    font-weight: 500;
+    font-family: 'Source Serif 4', serif;
+    font-size: 20px;
+    font-weight: 600;
     color: var(--color-ink);
     margin-bottom: 8px;
+    letter-spacing: -0.2px;
   }
 
   .empty-hint {
@@ -127,20 +139,30 @@ const styles = `
     line-height: 1.6;
   }
 
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--color-subtle);
+    margin-bottom: 12px;
+  }
+
   .cards {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    max-width: 560px;
+    gap: 12px;
+    max-width: 600px;
+    margin-bottom: 20px;
   }
 
   .context-panel {
-    margin-top: 16px;
-    max-width: 560px;
-    background: var(--color-primary-soft);
-    border: 1px solid var(--color-secondary);
+    max-width: 600px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: 12px 16px;
+    padding: 16px 20px;
+    box-shadow: var(--shadow-sm);
   }
 
   .context-label {
@@ -148,14 +170,14 @@ const styles = `
     font-weight: 600;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--color-primary);
-    margin-bottom: 6px;
+    color: var(--color-subtle);
+    margin-bottom: 8px;
   }
 
   .context-text {
     font-size: 12px;
     color: var(--color-muted);
-    line-height: 1.6;
+    line-height: 1.7;
   }
 `
 
@@ -166,11 +188,12 @@ const cardStyles = `
     border-radius: var(--radius-md);
     padding: 20px 24px;
     box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s;
   }
 
-  .card-dim {
-    opacity: 0.65;
-  }
+  .card:hover { box-shadow: var(--shadow-md); }
+
+  .card-dim { opacity: 0.6; }
 
   .card-header {
     display: flex;
@@ -180,9 +203,9 @@ const cardStyles = `
   }
 
   .measure-name {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     text-transform: uppercase;
     color: var(--color-subtle);
   }
@@ -194,8 +217,10 @@ const cardStyles = `
   }
 
   .card-label {
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
     color: var(--color-primary);
     background: var(--color-primary-soft);
     border-radius: 999px;
@@ -204,62 +229,66 @@ const cardStyles = `
 
   .card-date {
     font-size: 12px;
-    color: var(--color-muted);
+    color: var(--color-subtle);
+    font-variant-numeric: tabular-nums;
   }
 
   .result-row {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    margin-bottom: 8px;
+    gap: 6px;
+    margin-bottom: 10px;
   }
 
   .primary-value {
-    font-size: 28px;
-    font-weight: 700;
+    font-family: 'Source Serif 4', serif;
+    font-size: 32px;
+    font-weight: 600;
     color: var(--color-ink);
-    font-variant-numeric: tabular-nums;
     line-height: 1;
+    letter-spacing: -0.5px;
   }
 
   .primary-unit {
-    font-size: 14px;
-    color: var(--color-muted);
-    margin-right: 4px;
+    font-size: 13px;
+    color: var(--color-subtle);
+    margin-right: 6px;
   }
 
   .chip {
-    font-size: 12px;
-    font-weight: 500;
-    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
     border-radius: 999px;
+    border: 1px solid;
   }
 
-  .chip-green { background: var(--color-primary-soft); color: var(--color-primary-dark); }
-  .chip-amber { background: var(--color-surface-soft); color: var(--color-muted); }
-  .chip-red   { background: var(--color-border);       color: var(--color-ink); }
-  .chip-grey  { background: var(--color-surface-soft); color: var(--color-subtle); }
+  .chip-green { background: #e8f4ef; color: #2d6a4f; border-color: #b7dfc9; }
+  .chip-amber { background: #fef3e2; color: #a05c00; border-color: #f5d49a; }
+  .chip-red   { background: #fdf0ec; color: #b5451b; border-color: #f0b8a2; }
+  .chip-grey  { background: var(--color-surface-soft); color: var(--color-subtle); border-color: var(--color-border); }
 
   .meta-line {
     font-size: 12px;
     color: var(--color-muted);
     margin-bottom: 3px;
+    line-height: 1.5;
   }
 
   .mcid-row {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-top: 12px;
-    padding-top: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
     border-top: 1px solid var(--color-border);
     font-size: 12px;
     font-weight: 500;
+    line-height: 1.4;
   }
 
-  .mcid-met     { color: var(--color-primary-dark); }
+  .mcid-met     { color: #2d6a4f; }
   .mcid-near    { color: var(--color-muted); }
-  .mcid-decline { color: var(--color-ink); }
-
-  .mcid-arrow { font-size: 10px; }
+  .mcid-decline { color: #b5451b; }
+  .mcid-arrow   { font-size: 10px; }
 `
