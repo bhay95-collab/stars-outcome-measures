@@ -143,6 +143,7 @@ export default function App() {
       {showMeasureEntry && selectedPatient && (
         <MeasureEntry
           patient={selectedPatient}
+          userId={user.id}
           onSaved={handleAssessmentSaved}
           onClose={() => setShowMeasureEntry(false)}
         />
@@ -216,29 +217,29 @@ const pageStyles = `
   .loading-page { min-height: 100vh; background: var(--color-surface-soft); }
   .loading-text { font-size: 14px; color: var(--color-subtle); text-align: center; padding-top: 40vh; }
 
-  .page { min-height: 100vh; display: flex; flex-direction: column; background: var(--color-surface-soft); }
+  .page { min-height: 100vh; background: var(--color-surface-soft); }
 
-  .header { background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 0 24px; flex-shrink: 0; }
-  .header-inner { height: 56px; display: flex; align-items: center; justify-content: space-between; }
+  .header { background: var(--color-surface); border-bottom: 1px solid var(--color-border); position: sticky; top: 0; z-index: 10; }
+  .header-inner { height: 80px; max-width: 1300px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; }
 
-  .wordmark { font-family: 'Source Serif 4', serif; font-size: 18px; font-weight: 600; color: var(--color-primary); }
+  .wordmark { font-family: 'Source Serif 4', serif; font-size: 36px; font-weight: 600; color: var(--color-primary); letter-spacing: -0.3px; display: flex; align-items: center; gap: 0; }
   .wordmark-iq { font-style: italic; font-weight: 300; }
 
   .signout-btn { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--color-muted); background: none; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 14px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
   .signout-btn:hover { color: var(--color-ink); border-color: var(--color-muted); }
 
-  .dashboard { display: flex; flex: 1; height: calc(100vh - 56px); overflow: hidden; }
+  .dashboard { max-width: 1300px; margin: 0 auto; padding: 24px 32px 60px; display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
 
-  .sidebar { width: 272px; flex-shrink: 0; background: var(--color-surface-soft); border-right: 1px solid var(--color-border); overflow-y: auto; }
+  .sidebar { }
 
-  .main { flex: 1; overflow-y: auto; padding: 32px 40px; }
+  .main { min-width: 0; }
 
-  .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; }
-  .empty-block { text-align: center; max-width: 320px; }
+  .empty-state { padding: 60px 0; text-align: center; }
+  .empty-block { max-width: 320px; margin: 0 auto; }
   .empty-state-title { font-family: 'Source Serif 4', serif; font-size: 22px; font-weight: 600; color: var(--color-ink); margin-bottom: 8px; }
   .empty-state-sub { font-size: 14px; color: var(--color-muted); line-height: 1.6; }
 
-  .main-center { flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px 32px; }
+  .main-center { min-height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center; padding: 60px 32px; }
 
   .expired-card { max-width: 480px; }
   .tier-label { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--color-subtle); margin-bottom: 12px; }

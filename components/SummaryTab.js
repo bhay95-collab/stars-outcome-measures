@@ -36,7 +36,7 @@ export default function SummaryTab({ patient, assessments }) {
           <p className="empty-eyebrow">Clinical Summary</p>
           <p className="empty-title">No assessments recorded</p>
           <p className="empty-hint">
-            Use "+ New Assessment" above to record the first 10MWT for {patient.first_name}.
+            Use &ldquo;+ New Assessment&rdquo; above to record the first 10MWT for {patient.initials}.
           </p>
         </div>
       ) : (
@@ -111,8 +111,12 @@ function MWTCard({ assessment, mcid, label, dim }) {
 
 const styles = `
   .empty {
-    padding: 48px 0;
-    max-width: 360px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 32px 28px;
+    box-shadow: var(--shadow-sm);
+    max-width: 480px;
   }
 
   .empty-eyebrow {

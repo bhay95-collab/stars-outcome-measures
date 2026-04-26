@@ -8,93 +8,83 @@ export default function PatientHeader({ patient, onRecord }) {
   const genderLabel =
     patient.gender === 'M' ? 'Male' :
     patient.gender === 'F' ? 'Female' :
-    patient.gender ?? null
+    patient.gender ?? '—'
 
   return (
     <>
       <style jsx>{styles}</style>
-      <div className="header">
-        <div className="header-left">
-          <p className="eyebrow">Patient</p>
-          <h2 className="name">{patient.initials}</h2>
-          <div className="meta">
-            {age != null && <span className="meta-item">Age {age}</span>}
-            {genderLabel && <span className="meta-item">{genderLabel}</span>}
-            {patient.diagnosis && (
-              <span className="diagnosis-chip">{patient.diagnosis}</span>
-            )}
+      <div className="patient-card">
+        <div className="section-label">Patient Details</div>
+        <div className="patient-grid">
+          <div className="field-group">
+            <span className="field-label">Patient</span>
+            <span className="field-value">{patient.initials ?? '—'}</span>
+          </div>
+          <div className="field-group">
+            <span className="field-label">Age</span>
+            <span className="field-value">{age != null ? `${age} yrs` : '—'}</span>
+          </div>
+          <div className="field-group">
+            <span className="field-label">Gender</span>
+            <span className="field-value">{genderLabel}</span>
+          </div>
+          <div className="field-group">
+            <span className="field-label">Diagnosis</span>
+            <span className="field-value">{patient.diagnosis ?? '—'}</span>
           </div>
         </div>
-        <button className="assess-btn" onClick={onRecord}>+ New Assessment</button>
+        <button className="assessment-btn" onClick={onRecord}>+ New Assessment</button>
       </div>
     </>
   )
 }
 
 const styles = `
-  .header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--color-border);
+  .patient-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
   }
 
-  .header-left { flex: 1; min-width: 0; }
-
-  .eyebrow {
+  .section-label {
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 1.2px;
     text-transform: uppercase;
     color: var(--color-subtle);
-    margin-bottom: 6px;
+    margin-bottom: 14px;
   }
 
-  .name {
-    font-family: 'Source Serif 4', serif;
-    font-size: 26px;
-    font-weight: 600;
-    color: var(--color-ink);
-    line-height: 1.2;
-    letter-spacing: -0.4px;
-    margin-bottom: 10px;
+  .patient-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px 20px;
+    margin-bottom: 16px;
   }
 
-  .meta {
+  .field-group {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
+    flex-direction: column;
+    gap: 4px;
   }
 
-  .meta-item {
-    font-family: 'Inter', sans-serif;
+  .field-label {
     font-size: 11px;
     font-weight: 500;
     color: var(--color-muted);
-    background: var(--color-surface-soft);
-    border: 1px solid var(--color-border);
-    border-radius: 999px;
-    padding: 3px 10px;
-    line-height: 1.6;
   }
 
-  .diagnosis-chip {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--color-primary-dark);
-    background: var(--color-primary-soft);
-    border: 1px solid var(--color-border);
-    border-radius: 999px;
-    padding: 3px 10px;
-    line-height: 1.6;
+  .field-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-ink);
+    line-height: 1.4;
   }
 
-  .assess-btn {
+  .assessment-btn {
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
@@ -104,11 +94,9 @@ const styles = `
     border-radius: var(--radius-sm);
     padding: 9px 18px;
     cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
     transition: opacity 0.15s;
     letter-spacing: 0.1px;
   }
 
-  .assess-btn:hover { opacity: 0.88; }
+  .assessment-btn:hover { opacity: 0.88; }
 `

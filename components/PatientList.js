@@ -14,12 +14,12 @@ export default function PatientList({ patients, selectedId, onSelect, onNew }) {
       <style jsx>{styles}</style>
       <div className="panel">
         <div className="panel-head">
-          <h2 className="panel-title">Patients</h2>
+          <span className="section-label">Patients</span>
         </div>
 
         <div className="search-wrap">
           <input
-            className="search-input"
+            className="field-input"
             type="text"
             placeholder="Search patients…"
             aria-label="Search patients"
@@ -34,7 +34,7 @@ export default function PatientList({ patients, selectedId, onSelect, onNew }) {
           </div>
         ) : filtered.length === 0 ? (
           <div className="empty">
-            <p className="empty-text">No results for "{query}"</p>
+            <p className="empty-text">No results for &ldquo;{query}&rdquo;</p>
           </div>
         ) : (
           <ul className="list">
@@ -47,8 +47,8 @@ export default function PatientList({ patients, selectedId, onSelect, onNew }) {
                 onClick={() => onSelect(p)}
                 onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect(p)}
               >
-                <span className="name">{p.initials}</span>
-                {p.diagnosis && <span className="condition">{p.diagnosis}</span>}
+                <span className="item-initials">{p.initials}</span>
+                {p.diagnosis && <span className="item-diagnosis">{p.diagnosis}</span>}
               </li>
             ))}
           </ul>
@@ -66,22 +66,25 @@ const styles = `
   .panel {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    background: var(--color-surface-soft);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
   }
 
   .panel-head {
-    padding: 20px 16px 16px;
+    padding: 16px 16px 12px;
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
   }
 
-  .panel-title {
-    font-family: 'Source Serif 4', serif;
-    font-size: 16px;
+  .section-label {
+    font-size: 10px;
     font-weight: 600;
-    color: var(--color-ink);
-    letter-spacing: -0.2px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--color-subtle);
   }
 
   .search-wrap {
@@ -89,27 +92,27 @@ const styles = `
     flex-shrink: 0;
   }
 
-  .search-input {
+  .field-input {
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     color: var(--color-ink);
-    background: var(--color-surface);
+    background: var(--color-surface-soft);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    padding: 8px 12px;
+    padding: 7px 10px;
     width: 100%;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
     box-sizing: border-box;
   }
 
-  .search-input:focus {
+  .field-input:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(35,100,153,0.1);
-    background: var(--color-surface);
+    box-shadow: 0 0 0 3px rgba(35, 100, 153, 0.1);
+    background: #fff;
   }
 
-  .search-input::placeholder { color: var(--color-subtle); }
+  .field-input::placeholder { color: var(--color-subtle); }
 
   .empty {
     padding: 32px 16px;
@@ -126,7 +129,6 @@ const styles = `
   .list {
     list-style: none;
     padding: 8px 0;
-    flex: 1;
     overflow-y: auto;
   }
 
@@ -138,14 +140,14 @@ const styles = `
     outline: none;
   }
 
-  .item:hover { background: rgba(35,100,153,0.04); }
+  .item:hover { background: rgba(35, 100, 153, 0.04); }
 
   .item-active {
     background: var(--color-primary-soft);
     border-left-color: var(--color-primary);
   }
 
-  .name {
+  .item-initials {
     display: block;
     font-family: 'Inter', sans-serif;
     font-size: 13px;
@@ -154,9 +156,9 @@ const styles = `
     line-height: 1.4;
   }
 
-  .item-active .name { color: var(--color-primary-dark); }
+  .item-active .item-initials { color: var(--color-primary-dark); }
 
-  .condition {
+  .item-diagnosis {
     display: block;
     font-size: 11px;
     color: var(--color-subtle);
@@ -168,7 +170,6 @@ const styles = `
     padding: 12px;
     border-top: 1px solid var(--color-border);
     flex-shrink: 0;
-    background: var(--color-surface-soft);
   }
 
   .new-btn {
