@@ -8,7 +8,7 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export default function PatientHeader({ patient, assessments, onViewChange, activeView }) {
+export default function PatientHeader({ patient, assessments, onViewChange, activeView, onDeletePatient }) {
   const age = calculateAge(patient.dob_year)
   const genderLabel =
     patient.gender === 'M' ? 'Male' :
@@ -55,6 +55,12 @@ export default function PatientHeader({ patient, assessments, onViewChange, acti
           data-active={activeView === 'assessment' ? '' : undefined}
           onClick={() => onViewChange('assessment')}
         >Add Assessment</button>
+        <button
+          type="button"
+          data-delete-btn=""
+          data-patient-delete=""
+          onClick={() => onDeletePatient(patient.id)}
+        >Delete Patient</button>
       </div>
     </div>
   )

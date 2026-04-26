@@ -25,6 +25,23 @@ export default function App() {
     setView('summary')
   }, [])
 
+  const handleDeleteAssessment = useCallback(async (assessmentId) => {
+    if (!window.confirm('Delete this assessment? This cannot be undone.')) return
+    const { error } = await supabase.from('assessments').delete().eq('id', assessmentId)
+    if (!error) setAssessments(prev => prev.filter(a => a.id !== assessmentId))
+  }, [])
+
+  const handleDeletePatient = useCallback(async (patientId) => {
+    if (!window.confirm('Delete this patient and all their assessments? This cannot be undone.')) return
+    await supabase.from('assessments').delete().eq('patient_id', patientId)
+    const { error } = await supabase.from('patients').delete().eq('id', patientId)
+    if (!error) {
+      setPatients(prev => prev.filter(p => p.id !== patientId))
+      setSelectedPatient(null)
+      setAssessments([])
+    }
+  }, [])
+
   useEffect(() => {
     async function checkAccess() {
       let session
@@ -185,11 +202,13 @@ export default function App() {
                   assessments={assessments}
                   onViewChange={setView}
                   activeView={view}
+                  onDeletePatient={handleDeletePatient}
                 />
                 {view === 'summary' ? (
                   <SummaryTab
                     patient={selectedPatient}
                     assessments={assessments}
+                    onDeleteAssessment={handleDeleteAssessment}
                   />
                 ) : (
                   <MeasureEntry
@@ -893,6 +912,27 @@ const globalStyles = `
   }
   [data-view-toggle] button:hover { border-color: var(--color-primary); color: var(--color-primary); }
   [data-view-toggle] button[data-active] { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); }
+
+  /* ── DELETE BUTTONS ── */
+  [data-delete-btn] {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: #b5451b;
+    background: none;
+    border: 1px solid #f0b8a2;
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  [data-delete-btn]:hover { background: #fdf0ec; }
+
+  /* Patient delete pushed to far right in toggle row */
+  [data-view-toggle] [data-patient-delete] { margin-left: auto; }
+
+  /* Assessment card: date + delete button inline */
+  [data-assessment-meta] { display: flex; align-items: center; gap: 10px; }
 
   /* ── MEASURE CATEGORY TABS ── */
   [data-measure-tabs] {

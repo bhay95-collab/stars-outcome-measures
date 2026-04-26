@@ -8,7 +8,7 @@ function fmtDate(iso) {
   })
 }
 
-export default function SummaryTab({ patient, assessments }) {
+export default function SummaryTab({ patient, assessments, onDeleteAssessment }) {
   const mwtList = assessments.filter(a => a.measure === '10MWT')
   const latest  = mwtList[0] ?? null
   const previous = mwtList[1] ?? null
@@ -32,7 +32,7 @@ export default function SummaryTab({ patient, assessments }) {
       <div className="patient-card" data-empty="">
         <p className="section-label">Clinical Summary</p>
         <p className="empty-hint">
-          Use &ldquo;+ New Assessment&rdquo; above to record the first 10MWT for {patient.initials}.
+          Use &ldquo;Add Assessment&rdquo; above to record the first 10MWT for {patient.initials}.
         </p>
       </div>
     )
@@ -46,8 +46,8 @@ export default function SummaryTab({ patient, assessments }) {
         </div>
       )}
 
-      <AssessmentCard assessment={latest} mcid={mcid} label="Latest" />
-      {previous && <AssessmentCard assessment={previous} mcid={null} label="Previous" dim />}
+      <AssessmentCard assessment={latest} mcid={mcid} label="Latest" onDelete={onDeleteAssessment} />
+      {previous && <AssessmentCard assessment={previous} mcid={null} label="Previous" dim onDelete={onDeleteAssessment} />}
 
       {mcidContext && (
         <div className="info-panel">
@@ -58,7 +58,7 @@ export default function SummaryTab({ patient, assessments }) {
   )
 }
 
-function AssessmentCard({ assessment, mcid, label, dim }) {
+function AssessmentCard({ assessment, mcid, label, dim, onDelete }) {
   const r = assessment.results
   const classColor = r.meta?.classColor ?? 'grey'
   const mcidState = mcid
@@ -69,7 +69,15 @@ function AssessmentCard({ assessment, mcid, label, dim }) {
     <div className="result-box" data-dim={dim ? '' : undefined}>
       <div className="result-row">
         <span className="result-label">10 Metre Walk Test · {label}</span>
-        <span className="na-text">{fmtDate(assessment.created_at)}</span>
+        <div data-assessment-meta="">
+          <span className="na-text">{fmtDate(assessment.created_at)}</span>
+          <button
+            type="button"
+            data-delete-btn=""
+            onClick={() => onDelete(assessment.id)}
+            aria-label="Delete assessment"
+          >Delete</button>
+        </div>
       </div>
 
       <div className="result-row">
