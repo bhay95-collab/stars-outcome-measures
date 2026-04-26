@@ -204,3 +204,123 @@ Rules:
   - previous = second
 
 - Never rely on localStorage for clinical data
+
+UI SYSTEM (MANDATORY — NO DEVIATION)
+
+The dashboard UI must NOT be designed freely.
+
+It must strictly follow the index.html reference system.
+
+This is a class-based system, not component styling.
+
+REQUIRED CLASS SYSTEM
+
+All UI must use ONLY these classes:
+
+.page
+.header
+.header-inner
+.dashboard
+.sidebar
+.main
+
+.patient-card
+.section-label
+.patient-grid
+
+.field-group
+.field-label
+.field-input
+
+.data-table
+.input-narrow
+
+.info-panel
+.result-box
+
+.modal
+.modal-content
+FORBIDDEN
+
+DO NOT create new class names.
+
+Examples of forbidden patterns:
+
+np-*
+mwt-*
+card-*
+modal-wide
+any custom naming
+
+FAIL if any appear.
+
+STYLE SYSTEM
+ALL styles must live in ONE global style block (pages/app.js)
+NO component-level styles
+NO <style jsx> inside components
+NO inline styles
+INPUT SYSTEM (MANDATORY)
+
+ALL inputs must use:
+
+className="field-input"
+
+Narrow inputs:
+
+className="input-narrow"
+
+FAIL if any <input> lacks these
+
+10MWT UI STRUCTURE (NON-NEGOTIABLE)
+
+The 10MWT must be rendered as:
+
+<table className="data-table">
+
+NOT:
+
+stacked inputs
+vertical form
+LAYOUT STRUCTURE
+
+Must follow:
+
+Header (top)
+Sidebar (patients)
+Main content
+
+Main content must use:
+
+.patient-card
+MODAL SYSTEM
+
+Only allowed:
+
+.modal
+.modal-content
+
+No variants.
+
+VISUAL INTENT
+
+This is NOT a SaaS UI.
+
+This is a:
+
+clinical document interface
+
+Must feel like:
+
+structured
+quiet
+typographic
+not component-heavy
+FAILURE CONDITIONS
+
+Reject output if:
+
+any custom class names exist
+UI looks like generic form
+inputs look browser default
+10MWT not table-based
+multiple style systems exist
