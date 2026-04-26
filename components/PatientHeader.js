@@ -26,7 +26,7 @@ export default function PatientHeader({ patient, onRecord }) {
           <span className="field-label">Gender</span>
           <span>{genderLabel}</span>
         </div>
-        <div className="field-group">
+        <div className="field-group" data-field="diagnosis">
           <span className="field-label">Diagnosis</span>
           <span>{patient.diagnosis ?? '—'}</span>
         </div>

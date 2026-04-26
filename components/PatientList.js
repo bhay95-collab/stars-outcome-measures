@@ -36,10 +36,11 @@ export default function PatientList({ patients, selectedId, onSelect, onNew }) {
               role="button"
               tabIndex={0}
               aria-selected={p.id === selectedId}
+              data-initials={p.initials?.charAt(0) ?? '?'}
               onClick={() => onSelect(p)}
               onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect(p)}
             >
-              {p.initials}
+              <strong>{p.initials}</strong>
               {p.diagnosis && <span>{p.diagnosis}</span>}
             </li>
           ))

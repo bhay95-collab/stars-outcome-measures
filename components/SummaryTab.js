@@ -29,7 +29,7 @@ export default function SummaryTab({ patient, assessments }) {
 
   if (mwtList.length === 0) {
     return (
-      <div className="patient-card">
+      <div className="patient-card" data-empty="">
         <p className="section-label">Clinical Summary</p>
         <p className="empty-hint">
           Use &ldquo;+ New Assessment&rdquo; above to record the first 10MWT for {patient.initials}.
