@@ -31,7 +31,7 @@ export default function PatientHeader({ patient, onRecord }) {
           <span>{patient.diagnosis ?? '—'}</span>
         </div>
       </div>
-      <button type="button" onClick={onRecord}>+ New Assessment</button>
+      <button type="button" onClick={onRecord}>New Assessment</button>
     </div>
   )
 }

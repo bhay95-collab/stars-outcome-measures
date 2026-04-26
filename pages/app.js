@@ -22,7 +22,6 @@ export default function App() {
 
   const handleAssessmentSaved = useCallback((assessment) => {
     setAssessments(prev => [assessment, ...prev])
-    setShowMeasureEntry(false)
   }, [])
 
   useEffect(() => {
@@ -272,7 +271,6 @@ const globalStyles = `
     padding: 20px 24px;
     margin-bottom: 20px;
     box-shadow: var(--shadow-sm);
-    overflow: hidden;
   }
 
   .patient-card[data-empty] {
@@ -355,7 +353,7 @@ const globalStyles = `
   /* PatientList: list items inside patient-card */
   .patient-card ul {
     list-style: none;
-    margin: 8px -24px -20px;
+    margin: 8px -24px 0;
     padding: 4px 0 0;
     border-top: 1px solid var(--color-border);
   }
@@ -662,7 +660,7 @@ const globalStyles = `
   .modal-content button[aria-label="Close"]:hover { color: var(--color-ink); background: var(--color-border); }
 
   /* Modal: MeasureEntry — measure-header padding */
-  .modal-content > .measure-header { padding: 24px 24px 0; margin-bottom: 20px; }
+  .modal-content > .measure-header { padding: 20px 24px; margin-bottom: 0; }
 
   /* Modal: form padding — applies to both NewPatientModal and MeasureEntry */
   .modal-content > form,
@@ -761,4 +759,98 @@ const globalStyles = `
   }
 
   [data-chart] svg { width: 100%; height: auto; display: block; }
+
+  /* ── MEASURE ENTRY LAYOUT ── */
+  [data-measure-layout] {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 480px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  [data-measure-nav] {
+    background: var(--color-surface-soft);
+    border-right: 1px solid var(--color-border);
+    overflow-y: auto;
+    padding: 12px 0;
+  }
+
+  [data-measure-group] { padding: 0 0 12px; }
+
+  [data-measure-group] .section-label { padding: 8px 16px 4px; margin-bottom: 0; }
+
+  [data-measure-btn] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 16px;
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.1s, border-color 0.1s;
+    text-align: left;
+  }
+
+  [data-measure-btn]:hover:not([data-unavailable]) { background: rgba(35,100,153,0.05); }
+  [data-measure-btn][data-active] { background: var(--color-primary-soft); border-left-color: var(--color-primary); }
+  [data-measure-btn][data-unavailable] { cursor: default; opacity: 0.45; }
+
+  [data-measure-abbr] {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-primary);
+    flex-shrink: 0;
+    min-width: 44px;
+  }
+  [data-measure-btn][data-unavailable] [data-measure-abbr] { color: var(--color-subtle); }
+
+  [data-measure-name] {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-ink);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  [data-done-badge] { font-size: 11px; font-weight: 700; color: #2d6a4f; flex-shrink: 0; }
+
+  [data-soon-badge] {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-subtle);
+    background: var(--color-border);
+    border-radius: 4px;
+    padding: 2px 5px;
+    flex-shrink: 0;
+  }
+
+  [data-measure-form] { padding: 24px; overflow-y: auto; min-width: 0; }
+
+  [data-measure-footer] {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 24px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface-soft);
+  }
+
+  [data-measure-footer] button {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-surface);
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 10px 28px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  [data-measure-footer] button:hover { background: var(--color-primary-dark); }
 `

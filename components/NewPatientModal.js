@@ -4,8 +4,9 @@ import { CONDITION_OPTIONS } from '../lib/clinical'
 
 export default function NewPatientModal({ userId, onCreated, onClose }) {
   const [form, setForm] = useState({
-    initials: '',
-    dob_year: '',
+    firstName: '',
+    lastInitial: '',
+    dob: '',
     gender: '',
     diagnosis: '',
   })
@@ -18,10 +19,17 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.initials.trim()) {
-      setError('Initials are required.')
+    if (!form.firstName.trim()) {
+      setError('First name is required.')
       return
     }
+
+    const initials = [
+      form.firstName.trim(),
+      form.lastInitial.trim() ? form.lastInitial.trim().charAt(0).toUpperCase() + '.' : '',
+    ].filter(Boolean).join(' ')
+
+    const dobYear = form.dob ? new Date(form.dob).getFullYear() : null
 
     setLoading(true)
     setError('')
@@ -30,8 +38,8 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
       .from('patients')
       .insert({
         user_id: userId,
-        initials: form.initials.trim(),
-        dob_year: form.dob_year ? parseInt(form.dob_year, 10) : null,
+        initials,
+        dob_year: dobYear,
         gender: form.gender || null,
         diagnosis: form.diagnosis || null,
       })
@@ -64,28 +72,37 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
         <form onSubmit={handleSubmit}>
           <div className="patient-grid">
             <div className="field-group">
-              <label htmlFor="np-initials" className="field-label">Initials *</label>
+              <label htmlFor="np-firstname" className="field-label">First name *</label>
               <input
-                id="np-initials"
+                id="np-firstname"
                 className="field-input"
-                value={form.initials}
-                onChange={e => set('initials', e.target.value.toUpperCase())}
-                placeholder="e.g. BH"
-                maxLength={6}
+                value={form.firstName}
+                onChange={e => set('firstName', e.target.value)}
+                placeholder="e.g. Benjamin"
+                maxLength={40}
                 required
               />
             </div>
             <div className="field-group">
-              <label htmlFor="np-dob-year" className="field-label">Birth year</label>
+              <label htmlFor="np-lastinitial" className="field-label">Last initial</label>
               <input
-                id="np-dob-year"
+                id="np-lastinitial"
                 className="field-input"
-                type="number"
-                value={form.dob_year}
-                onChange={e => set('dob_year', e.target.value)}
-                placeholder="e.g. 1985"
-                min="1900"
-                max={new Date().getFullYear()}
+                value={form.lastInitial}
+                onChange={e => set('lastInitial', e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 1).toUpperCase())}
+                placeholder="e.g. H"
+                maxLength={1}
+              />
+            </div>
+            <div className="field-group">
+              <label htmlFor="np-dob" className="field-label">Date of birth</label>
+              <input
+                id="np-dob"
+                className="field-input"
+                type="date"
+                value={form.dob}
+                onChange={e => set('dob', e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
               />
             </div>
             <div className="field-group">
