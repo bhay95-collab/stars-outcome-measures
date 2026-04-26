@@ -15,7 +15,7 @@ function measuresInCat(cat) {
   return Object.values(MEASURES).filter(m => m.category === cat)
 }
 
-export default function MeasureEntry({ patient, onSaved, onDone }) {
+export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
   const [activeMeasure, setActiveMeasure] = useState('10MWT')
   const [completed, setCompleted] = useState(new Set())
   const [loading, setLoading] = useState(false)
@@ -28,6 +28,7 @@ export default function MeasureEntry({ patient, onSaved, onDone }) {
     const { data, error: insertError } = await supabase
       .from('assessments')
       .insert({
+        user_id: userId,
         patient_id: patient.id,
         measure: activeMeasure,
         inputs,

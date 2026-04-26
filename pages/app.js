@@ -193,6 +193,7 @@ export default function App() {
                 ) : (
                   <MeasureEntry
                     patient={selectedPatient}
+                    userId={user.id}
                     onSaved={handleAssessmentSaved}
                     onDone={() => setView('summary')}
                   />
