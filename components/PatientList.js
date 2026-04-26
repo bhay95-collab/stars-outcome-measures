@@ -41,6 +41,7 @@ export default function PatientList({ patients, selectedId, onSelect, onNew }) {
               onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect(p)}
             >
               <strong>{p.initials}</strong>
+              {p.dob_year && <span>b. {p.dob_year}</span>}
               {p.diagnosis && <span>{p.diagnosis}</span>}
             </li>
           ))
