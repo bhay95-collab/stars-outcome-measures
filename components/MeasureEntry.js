@@ -10,8 +10,13 @@ import FormFSS from './FormFSS'
 import FormHADS from './FormHADS'
 import FormBarthel from './FormBarthel'
 import FormStepTest from './FormStepTest'
+import FormPASS from './FormPASS'
+import FormFGA from './FormFGA'
+import FormSARA from './FormSARA'
+import FormPDQ8 from './FormPDQ8'
+import FormABC from './FormABC'
 
-const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step'])
+const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
 const CATEGORY_LABELS = {
   performance: 'Performance',
@@ -114,6 +119,11 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
           {activeMeasure === 'HADS'    && <FormHADS    onSubmit={handleSubmit} loading={loading} />}
           {activeMeasure === 'Barthel' && <FormBarthel onSubmit={handleSubmit} loading={loading} />}
           {activeMeasure === 'Step'    && <FormStepTest onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'PASS'    && <FormPASS     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'FGA'     && <FormFGA      onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'SARA'    && <FormSARA     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'PDQ8'    && <FormPDQ8     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'ABC'     && <FormABC      onSubmit={handleSubmit} loading={loading} />}
           {error && <p className="error">{error}</p>}
         </div>
 

@@ -2,19 +2,19 @@ import { useState } from 'react'
 import { calcStepTest } from '../lib/clinical'
 
 export default function FormStepTest({ onSubmit, loading }) {
-  const [rightSteps, setRightSteps] = useState('')
-  const [leftSteps, setLeftSteps]   = useState('')
+  const [affectedSteps,    setAffectedSteps]    = useState('')
+  const [nonAffectedSteps, setNonAffectedSteps] = useState('')
 
-  const r = rightSteps !== '' ? parseInt(rightSteps, 10) : null
-  const l = leftSteps  !== '' ? parseInt(leftSteps,  10) : null
+  const a = affectedSteps    !== '' ? parseInt(affectedSteps,    10) : null
+  const n = nonAffectedSteps !== '' ? parseInt(nonAffectedSteps, 10) : null
 
-  const preview = r !== null ? calcStepTest({ rightSteps: r, leftSteps: l ?? undefined }) : null
+  const preview    = a !== null ? calcStepTest({ affectedSteps: a, nonAffectedSteps: n ?? undefined }) : null
   const classColor = preview?.meta?.classColor ?? 'grey'
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!preview || loading) return
-    onSubmit({ rightSteps: r, leftSteps: l }, preview)
+    onSubmit({ affectedSteps: a, nonAffectedSteps: n }, preview)
   }
 
   return (
@@ -22,15 +22,15 @@ export default function FormStepTest({ onSubmit, loading }) {
       <table className="data-table">
         <thead>
           <tr>
-            <th>Side</th>
+            <th>Leg</th>
             <th>Steps (15 sec)</th>
-            <th>Result</th>
+            <th>Classification</th>
             <th>Notes</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>Right leg</strong></td>
+            <td><strong>Affected leg</strong></td>
             <td>
               <input
                 className="input-narrow"
@@ -38,8 +38,8 @@ export default function FormStepTest({ onSubmit, loading }) {
                 step="1"
                 min="0"
                 placeholder="steps"
-                value={rightSteps}
-                onChange={e => setRightSteps(e.target.value)}
+                value={affectedSteps}
+                onChange={e => setAffectedSteps(e.target.value)}
                 required
               />
             </td>
@@ -50,10 +50,13 @@ export default function FormStepTest({ onSubmit, loading }) {
                 <span className="na-text">Enter steps</span>
               )}
             </td>
-            <td className="ref-note" rowSpan={2}>Community threshold ≥10 steps</td>
+            <td className="ref-note" rowSpan={2}>
+              Community threshold ≥10 steps<br/>
+              Asymmetry flagged when AI &gt;20%
+            </td>
           </tr>
           <tr>
-            <td><strong>Left leg</strong></td>
+            <td><strong>Non-affected leg</strong></td>
             <td>
               <input
                 className="input-narrow"
@@ -61,23 +64,36 @@ export default function FormStepTest({ onSubmit, loading }) {
                 step="1"
                 min="0"
                 placeholder="steps"
-                value={leftSteps}
-                onChange={e => setLeftSteps(e.target.value)}
+                value={nonAffectedSteps}
+                onChange={e => setNonAffectedSteps(e.target.value)}
               />
             </td>
             <td>
-              {preview?.meta?.asymmetry && (
-                <span className="na-text">⚠ Asymmetry</span>
+              {preview?.meta?.nonAffectedInterp ? (
+                <span className={`interp-chip chip-${preview.meta.nonAffectedColor}`}>{preview.meta.nonAffectedInterp}</span>
+              ) : (
+                <span className="na-text">Optional</span>
               )}
             </td>
           </tr>
+          {preview?.meta?.asymmetryIndex != null && (
+            <tr>
+              <td colSpan={2} className="ref-note">Asymmetry Index (AI)</td>
+              <td colSpan={2}>
+                <strong>{preview.meta.asymmetryIndex}%</strong>
+                {preview.meta.asymmetry && (
+                  <>{' '}<span className="na-text">⚠ Asymmetry detected (&gt;20%)</span></>
+                )}
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 
       <div className="info-panel">
         <strong>Step Test (Hill 1996):</strong>{' '}
         Count steps onto a 7.5 cm block in 15 seconds per leg. Community ambulation threshold ≥10 steps.
-        Asymmetry flagged when sides differ by &gt;2 steps.
+        Asymmetry Index (AI) = |affected − non-affected| / non-affected × 100%; flagged when AI &gt;20%.
       </div>
 
       <div className="result-box">
@@ -86,17 +102,18 @@ export default function FormStepTest({ onSubmit, loading }) {
             <div>
               <span className="result-label">Step Test</span>
               <div>
-                R: <strong>{r}</strong> · L: <strong>{l ?? '—'}</strong>
+                Affected: <strong>{a}</strong>
+                {n !== null && <> · Non-affected: <strong>{n}</strong></>}
                 <span> steps</span>
                 {preview.meta?.asymmetry && (
-                  <>{' '}<span className="na-text">⚠ Asymmetry detected</span></>
+                  <>{' '}<span className="na-text">⚠ Asymmetry {preview.meta.asymmetryIndex}%</span></>
                 )}
               </div>
             </div>
             <span className={`interp-chip chip-${classColor}`}>{preview.interpretation}</span>
           </div>
         ) : (
-          <em>Enter right leg step count to calculate results.</em>
+          <em>Enter affected leg step count to calculate results.</em>
         )}
         <button type="submit" disabled={!preview || loading} style={{ width: 'auto', padding: '8px 20px', alignSelf: 'center' }}>
           {loading ? 'Saving…' : 'Save assessment'}
