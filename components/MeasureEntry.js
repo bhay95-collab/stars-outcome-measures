@@ -2,8 +2,16 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { MEASURES } from '../lib/clinical'
 import Form10MWT from './Form10MWT'
+import FormTUG from './FormTUG'
+import FormBBS from './FormBBS'
+import Form6MWT from './Form6MWT'
+import FormFAC from './FormFAC'
+import FormFSS from './FormFSS'
+import FormHADS from './FormHADS'
+import FormBarthel from './FormBarthel'
+import FormStepTest from './FormStepTest'
 
-const IMPLEMENTED = new Set(['10MWT'])
+const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
 const CATEGORY_LABELS = {
   performance: 'Performance',
@@ -97,9 +105,15 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
         </nav>
 
         <div data-measure-form="">
-          {activeMeasure === '10MWT' && (
-            <Form10MWT patient={patient} onSubmit={handleSubmit} loading={loading} />
-          )}
+          {activeMeasure === '10MWT'   && <Form10MWT   patient={patient} onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'TUG'     && <FormTUG     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'BBS'     && <FormBBS     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === '6MWT'    && <Form6MWT    patient={patient} onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'FAC'     && <FormFAC     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'FSS'     && <FormFSS     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'HADS'    && <FormHADS    onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'Barthel' && <FormBarthel onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'Step'    && <FormStepTest onSubmit={handleSubmit} loading={loading} />}
           {error && <p className="error">{error}</p>}
         </div>
 
