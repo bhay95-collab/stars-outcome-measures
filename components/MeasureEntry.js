@@ -15,8 +15,13 @@ import FormFGA from './FormFGA'
 import FormSARA from './FormSARA'
 import FormPDQ8 from './FormPDQ8'
 import FormABC from './FormABC'
+import FormTIS from './FormTIS'
+import FormMAS from './FormMAS'
+import FormCOVS from './FormCOVS'
+import FormBOOMER from './FormBOOMER'
+import FormHiMAT from './FormHiMAT'
 
-const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC'])
+const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
 const CATEGORY_LABELS = {
   performance: 'Performance',
@@ -124,6 +129,11 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
           {activeMeasure === 'SARA'    && <FormSARA     onSubmit={handleSubmit} loading={loading} />}
           {activeMeasure === 'PDQ8'    && <FormPDQ8     onSubmit={handleSubmit} loading={loading} />}
           {activeMeasure === 'ABC'     && <FormABC      onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'TIS'    && <FormTIS     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'MAS'    && <FormMAS     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'COVS'   && <FormCOVS    onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'BOOMER' && <FormBOOMER  onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'HiMAT'  && <FormHiMAT   onSubmit={handleSubmit} loading={loading} />}
           {error && <p className="error">{error}</p>}
         </div>
 
