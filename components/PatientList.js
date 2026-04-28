@@ -47,8 +47,10 @@ export default function PatientList({ patients, selectedId, onSelect, onNew }) {
               onClick={() => onSelect(p)}
               onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect(p)}
             >
-              <strong>{p.initials}</strong>
-              {(p.dob || p.dob_year) && <span>{p.dob ? formatDob(p.dob) : `b. ${p.dob_year}`}</span>}
+              <div className="patient-name-block">
+                <strong>{p.initials}</strong>
+                {(p.dob || p.dob_year) && <span>{p.dob ? formatDob(p.dob) : `b. ${p.dob_year}`}</span>}
+              </div>
               {p.diagnosis && <span>{p.diagnosis}</span>}
             </li>
           ))

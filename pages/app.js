@@ -421,8 +421,25 @@ const globalStyles = `
     text-transform: uppercase;
   }
 
-  .patient-card li strong {
+  .patient-card li .patient-name-block {
+    display: flex;
+    flex-direction: column;
     flex: 1;
+    min-width: 0;
+    gap: 1px;
+  }
+
+  .patient-card li .patient-name-block > span {
+    font-size: 11px;
+    color: var(--color-subtle);
+    font-weight: 400;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .patient-card li strong {
     min-width: 0;
     font-size: 13px;
     font-weight: 600;
