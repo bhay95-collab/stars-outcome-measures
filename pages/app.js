@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
+import ProfileModal from '../components/ProfileModal'
 import PatientHeader from '../components/PatientHeader'
 import SummaryTab from '../components/SummaryTab'
 import MeasureEntry from '../components/MeasureEntry'
@@ -18,6 +19,8 @@ export default function App() {
   const [selectedPatient, setSelectedPatient] = useState(null)
   const [assessments, setAssessments] = useState([])
   const [showNewPatient, setShowNewPatient] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const [profileData, setProfileData] = useState({ firstName: '', lastName: '', avatarUrl: null })
   const [view, setView] = useState('summary')
 
   const handleAssessmentSaved = useCallback((assessment) => {
@@ -52,7 +55,7 @@ export default function App() {
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('trial_end_date')
+        .select('trial_end_date, first_name, last_name, avatar_url')
         .eq('id', sessionUser.id)
         .maybeSingle()
 
@@ -64,6 +67,13 @@ export default function App() {
 
       const valid = profile ? new Date(profile.trial_end_date) > new Date() : false
       setTrialValid(valid)
+      if (profile) {
+        setProfileData({
+          firstName: profile.first_name ?? '',
+          lastName: profile.last_name ?? '',
+          avatarUrl: profile.avatar_url ?? null,
+        })
+      }
 
       if (valid) {
         const { data: pats } = await supabase
@@ -147,7 +157,18 @@ export default function App() {
               {user?.email && (
                 <>
                   <span data-header-divider="" />
-                  <span data-header-subtitle="">{user.email}</span>
+                  <button data-profile-btn="" onClick={() => setShowProfile(true)}>
+                    {profileData.avatarUrl
+                      ? <img data-profile-avatar="" src={profileData.avatarUrl} alt="Profile photo" />
+                      : <span data-profile-initials="">
+                          {(profileData.firstName?.[0] || user.email?.[0] || '?').toUpperCase()}
+                        </span>}
+                    <span data-header-subtitle="">
+                      {profileData.firstName
+                        ? `${profileData.firstName} ${profileData.lastName}`.trim()
+                        : user.email}
+                    </span>
+                  </button>
                 </>
               )}
               <button className="signout-btn" onClick={handleSignOut}>Sign out</button>
@@ -174,6 +195,13 @@ export default function App() {
           userId={user.id}
           onCreated={handlePatientCreated}
           onClose={() => setShowNewPatient(false)}
+        />
+      )}
+      {showProfile && (
+        <ProfileModal
+          user={user}
+          onClose={() => setShowProfile(false)}
+          onProfileUpdated={(data) => { setProfileData(data); setShowProfile(false) }}
         />
       )}
       <div className="page">
@@ -279,6 +307,15 @@ const globalStyles = `
 
   [data-header-divider] { width: 1px; height: 28px; background: var(--color-border); flex-shrink: 0; }
   [data-header-subtitle] { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--color-subtle); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+
+  [data-profile-btn] { display: flex; align-items: center; gap: 10px; background: none; border: none; cursor: pointer; padding: 0; min-width: 0; flex: 1; text-align: left; }
+  [data-profile-btn]:hover [data-header-subtitle] { color: var(--color-primary); }
+  [data-profile-avatar] { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--color-border); flex-shrink: 0; }
+  [data-profile-initials] { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary-soft); border: 1px solid var(--color-border); color: var(--color-primary-dark); font-size: 12px; font-weight: 700; font-family: 'Inter', sans-serif; text-transform: uppercase; flex-shrink: 0; }
+  [data-avatar-upload] { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  [data-avatar-upload] [data-profile-avatar], [data-avatar-upload] [data-profile-initials] { width: 64px; height: 64px; font-size: 22px; }
+  [data-avatar-upload] input[type="file"] { display: none; }
+  [data-avatar-upload] label { font-size: 13px; font-weight: 500; color: var(--color-primary); cursor: pointer; text-decoration: underline; }
 
   .signout-btn { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--color-muted); background: none; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 14px; cursor: pointer; transition: color 0.15s, border-color 0.15s, background 0.15s; flex-shrink: 0; margin-left: auto; }
   .signout-btn:hover { color: var(--color-ink); border-color: var(--color-muted); background: rgba(255,255,255,0.8); }
@@ -833,7 +870,7 @@ const globalStyles = `
     align-items: center;
     gap: 8px;
     width: 100%;
-    padding: 7px 16px;
+    padding: 9px 14px;
     background: none;
     border: none;
     border-left: 3px solid transparent;
@@ -847,24 +884,28 @@ const globalStyles = `
   [data-measure-btn][data-active] { background: var(--color-primary-soft); border-left-color: var(--color-primary); }
   [data-measure-btn][data-unavailable] { cursor: default; opacity: 0.45; }
 
+  [data-measure-label] {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+
   [data-measure-abbr] {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 11px;
     font-weight: 700;
     color: var(--color-primary);
-    flex-shrink: 0;
-    min-width: 44px;
   }
   [data-measure-btn][data-unavailable] [data-measure-abbr] { color: var(--color-subtle); }
 
   [data-measure-name] {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--color-ink);
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--color-muted);
+    white-space: normal;
+    line-height: 1.3;
   }
 
   [data-done-badge] { font-size: 11px; font-weight: 700; color: #2d6a4f; flex-shrink: 0; }
@@ -963,24 +1004,24 @@ const globalStyles = `
   [data-measure-tabs] {
     display: flex;
     border-bottom: 1px solid var(--color-border);
-    background: var(--color-surface-soft);
+    background: var(--color-surface);
     padding: 0 16px;
   }
 
   [data-measure-tabs] button {
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
-    color: var(--color-muted);
+    color: var(--color-ink);
     background: none;
     border: none;
     border-bottom: 2px solid transparent;
-    padding: 10px 14px;
+    padding: 12px 18px;
     cursor: pointer;
     transition: color 0.15s, border-color 0.15s;
     margin-bottom: -1px;
   }
 
-  [data-measure-tabs] button:hover { color: var(--color-ink); }
-  [data-measure-tabs] button[data-active] { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
+  [data-measure-tabs] button:hover { color: var(--color-primary); }
+  [data-measure-tabs] button[data-active] { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 700; }
 `

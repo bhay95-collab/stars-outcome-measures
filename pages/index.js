@@ -1,6 +1,8 @@
 import Head from 'next/head'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { ClipboardCheck, LineChart, Users, FileText, Target, Database } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 const WHY_CARDS = [
   {
@@ -73,10 +75,17 @@ function getAgeInterpretation(pct) {
 }
 
 export default function Landing() {
+  const router = useRouter()
   const [billing, setBilling] = useState('monthly')
   const [showDemoModal, setShowDemoModal] = useState(false)
   const [time, setTime] = useState(8.2)
   const [steps, setSteps] = useState(12)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) router.replace('/app')
+    })
+  }, [router])
 
   const speed   = time > 0 ? 10 / time : 0
   const cadence = time > 0 ? (steps / time) * 60 : 0
@@ -591,10 +600,7 @@ export default function Landing() {
             <span className="logo-wordmark-rehab">RehabMetrics</span>
             <span className="logo-wordmark-iq"> IQ</span>
           </a>
-          <div style={{display:'flex',gap:'12px',alignItems:'center'}}>
-            <a href="/login" style={{fontSize:'14px',color:'var(--color-muted)',textDecoration:'none',fontWeight:500}}>Log in</a>
-            <a href="/signup" className="nav-cta">Start free trial</a>
-          </div>
+          <a href="/login" style={{fontSize:'14px',color:'var(--color-muted)',textDecoration:'none',fontWeight:500}}>Log in</a>
         </div>
       </nav>
 
