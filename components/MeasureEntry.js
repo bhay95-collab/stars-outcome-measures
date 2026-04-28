@@ -20,8 +20,12 @@ import FormMAS from './FormMAS'
 import FormCOVS from './FormCOVS'
 import FormBOOMER from './FormBOOMER'
 import FormHiMAT from './FormHiMAT'
+import FormAMP from './FormAMP'
+import FormSCIM from './FormSCIM'
+import FormRPQ from './FormRPQ'
+import FormBIVI from './FormBIVI'
 
-const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT'])
+const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
 const CATEGORY_LABELS = {
   performance: 'Performance',
@@ -104,8 +108,10 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
                   disabled={!IMPLEMENTED.has(m.id)}
                   onClick={() => setActiveMeasure(m.id)}
                 >
-                  <span data-measure-abbr="">{m.id}</span>
-                  <span data-measure-name="">{m.name}</span>
+                  <div data-measure-label="">
+                    <span data-measure-abbr="">{m.id}</span>
+                    <span data-measure-name="">{m.name}</span>
+                  </div>
                   {completed.has(m.id) && <span data-done-badge="">✓</span>}
                   {!IMPLEMENTED.has(m.id) && <span data-soon-badge="">Soon</span>}
                 </button>
@@ -134,6 +140,10 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
           {activeMeasure === 'COVS'   && <FormCOVS    onSubmit={handleSubmit} loading={loading} />}
           {activeMeasure === 'BOOMER' && <FormBOOMER  onSubmit={handleSubmit} loading={loading} />}
           {activeMeasure === 'HiMAT'  && <FormHiMAT   onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'AMP'    && <FormAMP     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'SCIM'   && <FormSCIM    onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'RPQ'    && <FormRPQ     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'BIVI'   && <FormBIVI    onSubmit={handleSubmit} loading={loading} />}
           {error && <p className="error">{error}</p>}
         </div>
 
