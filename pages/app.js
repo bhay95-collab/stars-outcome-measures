@@ -43,27 +43,17 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    async function checkAccess() {
-      let session
-      try {
-        const { data } = await supabase.auth.getSession()
-        session = data.session
-      } catch {
-        router.replace('/login')
-        return
-      }
+    let loaded = false
 
-      if (!session?.user) {
-        router.replace('/login')
-        return
-      }
-
-      setUser(session.user)
+    async function loadUserData(sessionUser) {
+      if (loaded) return
+      loaded = true
+      setUser(sessionUser)
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('trial_end_date')
-        .eq('id', session.user.id)
+        .eq('id', sessionUser.id)
         .maybeSingle()
 
       if (profileError) {
@@ -86,7 +76,25 @@ export default function App() {
       setLoading(false)
     }
 
-    checkAccess()
+    // Check for an existing session (covers normal page load and cookie restore)
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) loadUserData(data.session.user)
+    }).catch(() => router.replace('/login'))
+
+    // Handles OAuth redirect (SIGNED_IN fires after code exchange completes)
+    // and session expiry (SIGNED_OUT). INITIAL_SESSION with no session means
+    // truly not logged in — redirect to login.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        loadUserData(session.user)
+      } else if (event === 'INITIAL_SESSION' && !session) {
+        router.replace('/login')
+      } else if (event === 'SIGNED_OUT') {
+        router.replace('/login')
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [router])
 
   const handlePatientSelect = useCallback(async (patient) => {
