@@ -1,6 +1,9 @@
 import { useState, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { calcISNCSCI, ISNCSCI_LEVELS, ISNCSCI_MOTOR_LEVELS, ISNCSCI_KEY_MUSCLES, ISNCSCI_AIS_DETAIL } from '../lib/clinical'
 import { exportISNCSCIPdf } from '../lib/clinical/isncsciPdfExport'
+
+const DermatomeMap = dynamic(() => import('./DermatomeMap'), { ssr: false })
 
 const MOTOR_SET = new Set(ISNCSCI_MOTOR_LEVELS)
 
@@ -152,45 +155,80 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
 
       {/* ── Grid ────────────────────────────────────────────────────── */}
       <div style={{ overflowX: 'auto', marginBottom: 16 }}>
-        <table className="data-table" style={{ margin: '0 auto', borderCollapse: 'separate', borderSpacing: 0 }}>
-          <thead>
-            <tr>
-              <th colSpan={3} style={TH({ color: '#236499', fontSize: 12, fontWeight: 700, letterSpacing: 1, borderBottom: 'none', paddingBottom: 2 })}>RIGHT</th>
-              <th style={{ ...TD_LVL(false), borderBottom: 'none', fontSize: 10 }}>LEVEL</th>
-              <th colSpan={3} style={TH({ color: '#236499', fontSize: 12, fontWeight: 700, letterSpacing: 1, borderBottom: 'none', paddingBottom: 2 })}>LEFT</th>
-            </tr>
-            <tr>
-              <th style={TH({ color: '#236499', width: 40 })}>M</th>
-              <th style={TH({ width: 40 })}>LT</th>
-              <th style={TH({ width: 40 })}>PP</th>
-              <th style={{ ...TD_LVL(false), borderTop: 'none' }}></th>
-              <th style={TH({ width: 40 })}>LT</th>
-              <th style={TH({ width: 40 })}>PP</th>
-              <th style={TH({ color: '#236499', width: 40 })}>M</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ISNCSCI_LEVELS.map(lv => {
-              const hasM   = MOTOR_SET.has(lv)
-              const muscle = ISNCSCI_KEY_MUSCLES[lv]
-              const dash   = <span style={{ display: 'inline-block', width: 36, color: '#8a96a3', fontSize: 10, textAlign: 'center' }}>—</span>
-              return (
-                <tr key={lv}>
-                  <td style={TD}>{hasM ? <CellInput value={motorR[lv]} isMotor onChange={v => setMotorCell('r', lv, v)} /> : dash}</td>
-                  <td style={TD}><CellInput value={ltR[lv]} isMotor={false} onChange={v => setSensCell('r', 'lt', lv, v)} /></td>
-                  <td style={TD}><CellInput value={ppR[lv]} isMotor={false} onChange={v => setSensCell('r', 'pp', lv, v)} /></td>
-                  <td style={TD_LVL(hasM)}>
-                    {lv}
-                    {muscle && <div style={{ fontSize: 9, fontWeight: 400, color: '#8a96a3', marginTop: 1 }}>{muscle}</div>}
-                  </td>
-                  <td style={TD}><CellInput value={ltL[lv]} isMotor={false} onChange={v => setSensCell('l', 'lt', lv, v)} /></td>
-                  <td style={TD}><CellInput value={ppL[lv]} isMotor={false} onChange={v => setSensCell('l', 'pp', lv, v)} /></td>
-                  <td style={TD}>{hasM ? <CellInput value={motorL[lv]} isMotor onChange={v => setMotorCell('l', lv, v)} /> : dash}</td>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, width: 'fit-content', margin: '0 auto' }}>
+
+          {/* Right-side inputs */}
+          <div>
+            <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, letterSpacing: 1, color: '#236499', marginBottom: 4 }}>RIGHT</div>
+            <table className="data-table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+              <thead>
+                <tr>
+                  <th style={TH({ color: '#236499', width: 40 })}>M</th>
+                  <th style={TH({ width: 40 })}>LT</th>
+                  <th style={TH({ width: 40 })}>PP</th>
+                  <th style={TH({ width: 60 })}>LEVEL</th>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {ISNCSCI_LEVELS.map(lv => {
+                  const hasM   = MOTOR_SET.has(lv)
+                  const muscle = ISNCSCI_KEY_MUSCLES[lv]
+                  const dash   = <span style={{ display: 'inline-block', width: 36, color: '#8a96a3', fontSize: 10, textAlign: 'center' }}>—</span>
+                  return (
+                    <tr key={lv}>
+                      <td style={TD}>{hasM ? <CellInput value={motorR[lv]} isMotor onChange={v => setMotorCell('r', lv, v)} /> : dash}</td>
+                      <td style={TD}><CellInput value={ltR[lv]} isMotor={false} onChange={v => setSensCell('r', 'lt', lv, v)} /></td>
+                      <td style={TD}><CellInput value={ppR[lv]} isMotor={false} onChange={v => setSensCell('r', 'pp', lv, v)} /></td>
+                      <td style={TD_LVL(hasM)}>
+                        {lv}
+                        {muscle && <div style={{ fontSize: 9, fontWeight: 400, color: '#8a96a3', marginTop: 1 }}>{muscle}</div>}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Dermatome map */}
+          <div style={{ display: 'flex', alignItems: 'center', paddingTop: 28 }}>
+            <DermatomeMap ltR={ltR} ltL={ltL} ppR={ppR} ppL={ppL} />
+          </div>
+
+          {/* Left-side inputs */}
+          <div>
+            <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, letterSpacing: 1, color: '#236499', marginBottom: 4 }}>LEFT</div>
+            <table className="data-table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+              <thead>
+                <tr>
+                  <th style={TH({ width: 60 })}>LEVEL</th>
+                  <th style={TH({ width: 40 })}>LT</th>
+                  <th style={TH({ width: 40 })}>PP</th>
+                  <th style={TH({ color: '#236499', width: 40 })}>M</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ISNCSCI_LEVELS.map(lv => {
+                  const hasM   = MOTOR_SET.has(lv)
+                  const muscle = ISNCSCI_KEY_MUSCLES[lv]
+                  const dash   = <span style={{ display: 'inline-block', width: 36, color: '#8a96a3', fontSize: 10, textAlign: 'center' }}>—</span>
+                  return (
+                    <tr key={lv}>
+                      <td style={TD_LVL(hasM)}>
+                        {lv}
+                        {muscle && <div style={{ fontSize: 9, fontWeight: 400, color: '#8a96a3', marginTop: 1 }}>{muscle}</div>}
+                      </td>
+                      <td style={TD}><CellInput value={ltL[lv]} isMotor={false} onChange={v => setSensCell('l', 'lt', lv, v)} /></td>
+                      <td style={TD}><CellInput value={ppL[lv]} isMotor={false} onChange={v => setSensCell('l', 'pp', lv, v)} /></td>
+                      <td style={TD}>{hasM ? <CellInput value={motorL[lv]} isMotor onChange={v => setMotorCell('l', lv, v)} /> : dash}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
       </div>
 
       {/* ── Sacral sparing ──────────────────────────────────────────── */}
