@@ -69,8 +69,8 @@ const AIS_COLOR = { A: '#c0392b', B: '#a05c00', C: '#6b6b00', D: '#2d6a4f', E: '
 const TH = (extra = {}) => ({ textAlign: 'center', fontSize: 11, padding: '3px 4px 6px', fontWeight: 600, color: '#5f6b7a', ...extra })
 const TD = { padding: '2px 3px', borderBottom: '1px solid #d8e2ec', verticalAlign: 'middle', textAlign: 'center' }
 const TD_LVL = (isMotor) => ({
-  ...TD, padding: '3px 8px', borderLeft: '2px solid #b8cfe8', borderRight: '2px solid #b8cfe8',
-  fontSize: 12, fontWeight: 700, width: 60, whiteSpace: 'nowrap',
+  ...TD, padding: '3px 4px', borderLeft: '2px solid #b8cfe8', borderRight: '2px solid #b8cfe8',
+  fontSize: 12, fontWeight: 700, width: 40, whiteSpace: 'nowrap',
   color: isMotor ? '#236499' : '#5f6b7a',
   background: isMotor ? '#eaf3fb' : '#f7fafc',
 })
@@ -174,7 +174,7 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
                   <th style={TH({ color: '#236499', width: 40 })}>M</th>
                   <th style={TH({ width: 40 })}>LT</th>
                   <th style={TH({ width: 40 })}>PP</th>
-                  <th style={TH({ width: 60 })}>LEVEL</th>
+                  <th style={TH({ width: 40 })}>LEVEL</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,7 +189,6 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
                       <td style={TD}><CellInput value={ppR[lv]} isMotor={false} onChange={v => setSensCell('r', 'pp', lv, v)} /></td>
                       <td style={TD_LVL(hasM)}>
                         {lv}
-                        {muscle && <div style={{ fontSize: 9, fontWeight: 400, color: '#8a96a3', marginTop: 1 }}>{muscle}</div>}
                       </td>
                     </tr>
                   )
@@ -209,7 +208,7 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
             <table className="data-table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead>
                 <tr>
-                  <th style={TH({ width: 60 })}>LEVEL</th>
+                  <th style={TH({ width: 40 })}>LEVEL</th>
                   <th style={TH({ width: 40 })}>LT</th>
                   <th style={TH({ width: 40 })}>PP</th>
                   <th style={TH({ color: '#236499', width: 40 })}>M</th>
@@ -224,7 +223,6 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
                     <tr key={lv}>
                       <td style={TD_LVL(hasM)}>
                         {lv}
-                        {muscle && <div style={{ fontSize: 9, fontWeight: 400, color: '#8a96a3', marginTop: 1 }}>{muscle}</div>}
                       </td>
                       <td style={TD}><CellInput value={ltL[lv]} isMotor={false} onChange={v => setSensCell('l', 'lt', lv, v)} /></td>
                       <td style={TD}><CellInput value={ppL[lv]} isMotor={false} onChange={v => setSensCell('l', 'pp', lv, v)} /></td>
