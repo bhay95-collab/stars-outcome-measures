@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase'
 export default function ProfileModal({ user, onClose, onProfileUpdated }) {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [originalFirstName, setOriginalFirstName] = useState('')
+  const [originalLastName, setOriginalLastName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
@@ -22,8 +24,12 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
         .eq('id', user.id)
         .maybeSingle()
       if (data) {
-        setFirstName(data.first_name ?? '')
-        setLastName(data.last_name ?? '')
+        const fn = data.first_name ?? ''
+        const ln = data.last_name ?? ''
+        setFirstName(fn)
+        setLastName(ln)
+        setOriginalFirstName(fn)
+        setOriginalLastName(ln)
         setAvatarUrl(data.avatar_url ?? null)
       }
     }
@@ -65,14 +71,22 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
       savedAvatarUrl = urlData.publicUrl + '?t=' + Date.now()
     }
 
+    const profileUpdates = { id: user.id, email: user.email }
+    if (firstName !== originalFirstName) profileUpdates.first_name = firstName
+    if (lastName !== originalLastName) profileUpdates.last_name = lastName
+    if (avatarFile) profileUpdates.avatar_url = savedAvatarUrl
+
     const { error: profileError } = await supabase
       .from('profiles')
-      .upsert({ id: user.id, first_name: firstName, last_name: lastName, avatar_url: savedAvatarUrl })
+      .upsert(profileUpdates)
     if (profileError) {
       setError('Could not save profile: ' + profileError.message)
       setSaving(false)
       return
     }
+
+    if (firstName !== originalFirstName) setOriginalFirstName(firstName)
+    if (lastName !== originalLastName) setOriginalLastName(lastName)
 
     if (newEmail && newEmail !== user.email) {
       const { error: emailError } = await supabase.auth.updateUser({ email: newEmail })
@@ -186,6 +200,7 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
                 placeholder="Leave blank to keep current"
+                autoComplete="new-password"
               />
             </div>
             <div className="field-group">
@@ -196,6 +211,7 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
                 placeholder="Repeat new password"
+                autoComplete="new-password"
               />
             </div>
           </div>
