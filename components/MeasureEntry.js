@@ -24,8 +24,9 @@ import FormAMP from './FormAMP'
 import FormSCIM from './FormSCIM'
 import FormRPQ from './FormRPQ'
 import FormBIVI from './FormBIVI'
+import FormISNCSCI from './FormISNCSCI'
 
-const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI'])
+const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
 const CATEGORY_LABELS = {
   performance: 'Performance',
@@ -142,8 +143,9 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
           {activeMeasure === 'HiMAT'  && <FormHiMAT   onSubmit={handleSubmit} loading={loading} />}
           {activeMeasure === 'AMP'    && <FormAMP     onSubmit={handleSubmit} loading={loading} />}
           {activeMeasure === 'SCIM'   && <FormSCIM    onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'RPQ'    && <FormRPQ     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'BIVI'   && <FormBIVI    onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'RPQ'     && <FormRPQ      onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'BIVI'    && <FormBIVI     onSubmit={handleSubmit} loading={loading} />}
+          {activeMeasure === 'ISNCSCI' && <FormISNCSCI  patient={patient} onSubmit={handleSubmit} loading={loading} />}
           {error && <p className="error">{error}</p>}
         </div>
 
