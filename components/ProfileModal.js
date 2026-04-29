@@ -106,7 +106,7 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
 
   return (
     <div className="modal" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="modal-content">
+      <div className="modal-content" style={{ padding: '28px' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <h2 style={{ fontFamily: "'Source Serif 4', serif", fontSize: '18px', fontWeight: 600, color: 'var(--color-ink)' }}>
@@ -120,7 +120,7 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
         </div>
 
         {/* Avatar */}
-        <div data-avatar-upload="">
+        <div data-avatar-upload="" style={{ paddingBottom: '20px', borderBottom: '1px solid var(--color-border)', marginBottom: '24px' }}>
           {displayAvatar
             ? <img data-profile-avatar="" src={displayAvatar} alt="Profile photo" />
             : <span data-profile-initials="">
@@ -136,7 +136,7 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
         </div>
 
         {/* Personal details */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
           <div className="field-group">
             <label className="field-label">First name</label>
             <input
@@ -158,7 +158,7 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
         </div>
 
         {/* Email */}
-        <div className="field-group" style={{ marginBottom: '16px' }}>
+        <div className="field-group" style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid var(--color-border)' }}>
           <label className="field-label">Current email</label>
           <p style={{ fontSize: '13px', color: 'var(--color-muted)', marginBottom: '8px' }}>{user.email}</p>
           <label className="field-label">New email address</label>
@@ -175,9 +175,9 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
         </div>
 
         {/* Password */}
-        <div style={{ marginBottom: '20px' }}>
-          <label className="field-label" style={{ display: 'block', marginBottom: '8px' }}>Change password</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <label className="field-label" style={{ display: 'block', marginBottom: '12px' }}>Change password</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div className="field-group">
               <label className="field-label">New password</label>
               <input
@@ -202,13 +202,13 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
         </div>
 
         {error && (
-          <p style={{ fontSize: '13px', color: '#c0392b', marginBottom: '12px' }}>{error}</p>
+          <div style={{ fontSize: '13px', color: '#922b21', background: '#fdf2f0', border: '1px solid #f5c6c2', borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: '16px' }}>{error}</div>
         )}
         {successMsg && (
-          <p style={{ fontSize: '13px', color: 'var(--color-primary)', marginBottom: '12px' }}>{successMsg}</p>
+          <div style={{ fontSize: '13px', color: '#1a5c3a', background: '#edfaf3', border: '1px solid #b7eacf', borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: '16px' }}>{successMsg}</div>
         )}
 
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '4px' }}>
           <button
             onClick={onClose}
             style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 500, color: 'var(--color-muted)', background: 'none', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '8px 18px', cursor: 'pointer' }}
