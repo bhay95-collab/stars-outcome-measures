@@ -215,7 +215,18 @@ export default function App() {
             {user?.email && (
               <>
                 <span data-header-divider="" />
-                <span data-header-subtitle="">{user.email}</span>
+                <button data-profile-btn="" onClick={() => setShowProfile(true)}>
+                  {profileData.avatarUrl
+                    ? <img data-profile-avatar="" src={profileData.avatarUrl} alt="Profile photo" />
+                    : <span data-profile-initials="">
+                        {(profileData.firstName?.[0] || user.email?.[0] || '?').toUpperCase()}
+                      </span>}
+                  <span data-header-subtitle="">
+                    {profileData.firstName
+                      ? `${profileData.firstName} ${profileData.lastName}`.trim()
+                      : user.email}
+                  </span>
+                </button>
               </>
             )}
             <button className="signout-btn" onClick={handleSignOut}>Sign out</button>
