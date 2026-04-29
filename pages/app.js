@@ -859,13 +859,14 @@ const globalStyles = `
 
   /* ── MEASURE ENTRY LAYOUT ── */
   [data-measure-layout] {
-    display: grid;
-    grid-template-columns: 220px 1fr;
+    display: flex;
     min-height: 480px;
     border-top: 1px solid var(--color-border);
   }
 
   [data-measure-nav] {
+    width: 220px;
+    flex-shrink: 0;
     background: var(--color-surface-soft);
     border-right: 1px solid var(--color-border);
     overflow-y: auto;
@@ -931,7 +932,7 @@ const globalStyles = `
     flex-shrink: 0;
   }
 
-  [data-measure-form] { padding: 24px; overflow-y: auto; min-width: 0; }
+  [data-measure-form] { flex: 1; padding: 24px; overflow-y: auto; min-width: 0; }
 
   [data-measure-footer] {
     display: flex;

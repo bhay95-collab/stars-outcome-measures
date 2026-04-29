@@ -146,7 +146,7 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
             data-map-btn=""
             onClick={() => setMapOpen(true)}
           >
-            🫀 View Dermatome Map
+            View Dermatome Map
           </button>
           <button type="button" onClick={handleExport} disabled={exporting}
             style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, background: '#236499', color: '#fff', border: 'none', borderRadius: 6, cursor: exporting ? 'default' : 'pointer', opacity: exporting ? 0.7 : 1 }}>
