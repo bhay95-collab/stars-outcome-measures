@@ -44,6 +44,7 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
   const [completed, setCompleted] = useState(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [navCollapsed, setNavCollapsed] = useState(false)
 
   async function handleSubmit(inputs, results) {
     setLoading(true)
@@ -96,7 +97,15 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
 
       <div data-measure-layout="">
 
-        <nav data-measure-nav="">
+        <nav data-measure-nav="" data-collapsed={navCollapsed ? '' : undefined}>
+          <button
+            type="button"
+            data-nav-toggle=""
+            onClick={() => setNavCollapsed(prev => !prev)}
+            title={navCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {navCollapsed ? '›' : '‹'}
+          </button>
           {CATEGORY_ORDER.filter(cat => cat === activeCategory).map(cat => (
             <div key={cat} data-measure-group="">
               {measuresInCat(cat).map(m => (
@@ -111,10 +120,10 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
                 >
                   <div data-measure-label="">
                     <span data-measure-abbr="">{m.id}</span>
-                    <span data-measure-name="">{m.name}</span>
+                    {!navCollapsed && <span data-measure-name="">{m.name}</span>}
                   </div>
-                  {completed.has(m.id) && <span data-done-badge="">✓</span>}
-                  {!IMPLEMENTED.has(m.id) && <span data-soon-badge="">Soon</span>}
+                  {completed.has(m.id) && !navCollapsed && <span data-done-badge="">✓</span>}
+                  {!IMPLEMENTED.has(m.id) && !navCollapsed && <span data-soon-badge="">Soon</span>}
                 </button>
               ))}
             </div>

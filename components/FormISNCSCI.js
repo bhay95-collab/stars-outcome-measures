@@ -86,6 +86,7 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
   const [vac,    setVac]    = useState('')
   const [dap,    setDap]    = useState('')
   const [exporting, setExporting] = useState(false)
+  const [mapOpen, setMapOpen] = useState(false)
 
   const preview = useMemo(
     () => calcISNCSCI({ motorR, motorL, ltR, ltL, ppR, ppL, vac, dap }),
@@ -140,6 +141,13 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, padding: '3px 8px', borderRadius: 4, background: '#eaf3fb', color: '#236499', border: '1px solid #b8cfe8' }}>ASIA/ISCOS 2019</span>
+          <button
+            type="button"
+            data-map-btn=""
+            onClick={() => setMapOpen(true)}
+          >
+            🫀 View Dermatome Map
+          </button>
           <button type="button" onClick={handleExport} disabled={exporting}
             style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, background: '#236499', color: '#fff', border: 'none', borderRadius: 6, cursor: exporting ? 'default' : 'pointer', opacity: exporting ? 0.7 : 1 }}>
             {exporting ? 'Generating…' : '⬇ Export ASIA PDF'}
@@ -348,6 +356,25 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
           {loading ? 'Saving…' : 'Save assessment'}
         </button>
       </div>
+
+      {mapOpen && (
+        <div data-map-overlay="" onClick={() => setMapOpen(false)}>
+          <div data-map-modal="" onClick={e => e.stopPropagation()}>
+            <div data-map-modal-header="">
+              <span>Dermatome Map</span>
+              <button type="button" onClick={() => setMapOpen(false)}>✕</button>
+            </div>
+            <div data-map-modal-body="">
+              <DermatomeMap ltR={ltR} ltL={ltL} ppR={ppR} ppL={ppL} />
+            </div>
+            <div data-map-legend="">
+              <span data-legend-green="">■ Normal (2)</span>
+              <span data-legend-yellow="">■ Altered (1)</span>
+              <span data-legend-red="">■ Absent (0)</span>
+            </div>
+          </div>
+        </div>
+      )}
 
     </form>
   )

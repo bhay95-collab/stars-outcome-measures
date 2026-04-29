@@ -1035,4 +1035,102 @@ const globalStyles = `
 
   [data-measure-tabs] button:hover { color: var(--color-primary); }
   [data-measure-tabs] button[data-active] { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 700; }
+
+  /* ── Sidebar collapse ── */
+  [data-measure-nav] {
+    transition: width 0.2s ease, min-width 0.2s ease;
+  }
+  [data-measure-nav][data-collapsed] {
+    width: 52px;
+    min-width: 52px;
+    overflow: hidden;
+  }
+  [data-measure-nav][data-collapsed] [data-measure-btn] {
+    justify-content: center;
+    padding: 8px 6px;
+  }
+  [data-nav-toggle] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-bottom: 1px solid var(--color-border);
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--color-subtle);
+    transition: background 0.15s;
+  }
+  [data-nav-toggle]:hover {
+    background: rgba(0,0,0,0.04);
+    color: var(--color-ink);
+  }
+
+  /* ── Dermatome map modal ── */
+  [data-map-btn] {
+    padding: 7px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  [data-map-btn]:hover {
+    background: var(--color-surface-soft);
+  }
+  [data-map-overlay] {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  [data-map-modal] {
+    background: var(--color-surface);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  [data-map-modal-header] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 600;
+    font-size: 14px;
+  }
+  [data-map-modal-header] button {
+    border: none;
+    background: transparent;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--color-subtle);
+    line-height: 1;
+  }
+  [data-map-modal-body] {
+    overflow: auto;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  [data-map-legend] {
+    display: flex;
+    gap: 20px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--color-border);
+    font-size: 12px;
+  }
+  [data-legend-green]  { color: #2d6a4f; }
+  [data-legend-yellow] { color: #a05c00; }
+  [data-legend-red]    { color: #b5451b; }
 `
