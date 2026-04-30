@@ -229,6 +229,7 @@ export default function App() {
                 </button>
               </>
             )}
+            {trialValid && <span className="trial-badge">Trial</span>}
             <button className="signout-btn" onClick={handleSignOut}>Sign out</button>
           </div>
         </header>
@@ -328,7 +329,8 @@ const globalStyles = `
   [data-avatar-upload] input[type="file"] { display: none; }
   [data-avatar-upload] label { font-size: 13px; font-weight: 500; color: var(--color-primary); cursor: pointer; text-decoration: underline; }
 
-  .signout-btn { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--color-muted); background: none; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 14px; cursor: pointer; transition: color 0.15s, border-color 0.15s, background 0.15s; flex-shrink: 0; margin-left: auto; }
+  .trial-badge { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; border-radius: var(--radius-sm); padding: 3px 9px; flex-shrink: 0; margin-left: auto; }
+  .signout-btn { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--color-muted); background: none; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 14px; cursor: pointer; transition: color 0.15s, border-color 0.15s, background 0.15s; flex-shrink: 0; }
   .signout-btn:hover { color: var(--color-ink); border-color: var(--color-muted); background: rgba(255,255,255,0.8); }
 
   .dashboard { max-width: 1300px; margin: 0 auto; padding: 24px 32px 60px; display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
@@ -865,7 +867,7 @@ const globalStyles = `
   }
 
   [data-measure-nav] {
-    width: 220px;
+    width: 260px;
     flex-shrink: 0;
     background: var(--color-surface-soft);
     border-right: 1px solid var(--color-border);
