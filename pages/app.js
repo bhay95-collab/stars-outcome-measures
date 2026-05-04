@@ -7,6 +7,7 @@ import ProfileModal from '../components/ProfileModal'
 import PatientHeader from '../components/PatientHeader'
 import SummaryTab from '../components/SummaryTab'
 import MeasureEntry from '../components/MeasureEntry'
+import SubscriptionWall from '../components/SubscriptionWall'
 
 export async function getServerSideProps() { return { props: {} } }
 
@@ -15,6 +16,8 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [trialValid, setTrialValid] = useState(null)
+  const [hasAccess, setHasAccess] = useState(null)
+  const [subscription, setSubscription] = useState(null)
   const [patients, setPatients] = useState([])
   const [selectedPatient, setSelectedPatient] = useState(null)
   const [assessments, setAssessments] = useState([])
@@ -22,6 +25,7 @@ export default function App() {
   const [showProfile, setShowProfile] = useState(false)
   const [profileData, setProfileData] = useState({ firstName: '', lastName: '', avatarUrl: null })
   const [view, setView] = useState('summary')
+  const [notification, setNotification] = useState(null)
 
   const handleAssessmentSaved = useCallback((assessment) => {
     if (assessment) setAssessments(prev => [assessment, ...prev])
@@ -53,20 +57,38 @@ export default function App() {
       loaded = true
       setUser(sessionUser)
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('trial_end_date, first_name, last_name, avatar_url')
-        .eq('id', sessionUser.id)
-        .maybeSingle()
+      const [
+        { data: profile, error: profileError },
+        { data: subData }
+      ] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('trial_end_date, first_name, last_name, avatar_url')
+          .eq('id', sessionUser.id)
+          .maybeSingle(),
+        supabase
+          .from('subscriptions')
+          .select('stripe_customer_id, stripe_subscription_id, status, current_period_end')
+          .eq('user_id', sessionUser.id)
+          .maybeSingle(),
+      ])
 
       if (profileError) {
-        setTrialValid(false)
+        setHasAccess(false)
         setLoading(false)
         return
       }
 
-      const valid = profile ? new Date(profile.trial_end_date) > new Date() : false
-      setTrialValid(valid)
+      const isTrialActive = profile ? new Date(profile.trial_end_date) > new Date() : false
+      const isSubscriptionActive =
+        subData?.status === 'active' &&
+        subData?.current_period_end &&
+        new Date(subData.current_period_end) > new Date()
+
+      setTrialValid(isTrialActive)
+      setSubscription(subData ?? null)
+      setHasAccess(isTrialActive || isSubscriptionActive)
+
       if (profile) {
         setProfileData({
           firstName: profile.first_name ?? '',
@@ -75,7 +97,7 @@ export default function App() {
         })
       }
 
-      if (valid) {
+      if (isTrialActive || isSubscriptionActive) {
         const { data: pats } = await supabase
           .from('patients')
           .select('*')
@@ -86,15 +108,11 @@ export default function App() {
       setLoading(false)
     }
 
-    // Check for an existing session (covers normal page load and cookie restore)
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) loadUserData(data.session.user)
     }).catch(() => router.replace('/login'))
 
-    // Handles OAuth redirect (SIGNED_IN fires after code exchange completes)
-    // and session expiry (SIGNED_OUT). INITIAL_SESSION with no session means
-    // truly not logged in — redirect to login.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         loadUserData(session.user)
       } else if (event === 'INITIAL_SESSION' && !session) {
@@ -104,8 +122,39 @@ export default function App() {
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => authSub.unsubscribe()
   }, [router])
+
+  // Handle Stripe redirect query params
+  useEffect(() => {
+    if (!router.isReady) return
+    const { payment } = router.query
+    if (!payment) return
+
+    if (payment === 'success') {
+      setNotification('success')
+      // Refresh subscription state so the dashboard unlocks immediately
+      supabase
+        .from('subscriptions')
+        .select('stripe_customer_id, stripe_subscription_id, status, current_period_end')
+        .eq('user_id', user?.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setSubscription(data)
+            const active =
+              data.status === 'active' &&
+              data.current_period_end &&
+              new Date(data.current_period_end) > new Date()
+            if (active) setHasAccess(true)
+          }
+        })
+    } else if (payment === 'cancelled') {
+      setNotification('cancelled')
+    }
+
+    router.replace('/app', undefined, { shallow: true })
+  }, [router.isReady, router.query.payment])
 
   const handlePatientSelect = useCallback(async (patient) => {
     setSelectedPatient(patient)
@@ -142,7 +191,7 @@ export default function App() {
     )
   }
 
-  if (!trialValid) {
+  if (!hasAccess) {
     return (
       <>
         <style jsx global>{globalStyles}</style>
@@ -171,18 +220,21 @@ export default function App() {
                   </button>
                 </>
               )}
-              <button className="signout-btn" onClick={handleSignOut}>Sign out</button>
             </div>
           </header>
-          <main className="main-center">
-            <div className="expired-card">
-              <p className="tier-label">Trial ended</p>
-              <h1 className="heading">Your trial has expired</h1>
-              <p className="subtext">To continue using RehabMetrics IQ, please upgrade your plan.</p>
-              <button className="upgrade-btn" disabled>Upgrade (coming soon)</button>
-            </div>
-          </main>
+          <SubscriptionWall
+            user={user}
+            subscription={subscription}
+            onSignOut={handleSignOut}
+          />
         </div>
+        {showProfile && (
+          <ProfileModal
+            user={user}
+            onClose={() => setShowProfile(false)}
+            onProfileUpdated={(data) => { setProfileData(data); setShowProfile(false) }}
+          />
+        )}
       </>
     )
   }
@@ -229,7 +281,7 @@ export default function App() {
                 </button>
               </>
             )}
-            {trialValid && <span className="trial-badge">Trial</span>}
+            {trialValid && !subscription && <span className="trial-badge">Trial</span>}
             <button className="signout-btn" onClick={handleSignOut}>Sign out</button>
           </div>
         </header>
@@ -243,6 +295,13 @@ export default function App() {
             />
           </aside>
           <main className="main">
+            {notification && (
+              <div data-notification={notification}>
+                {notification === 'success'
+                  ? 'Subscription active — welcome to RehabMetrics IQ!'
+                  : 'Payment cancelled. Your plan has not changed.'}
+              </div>
+            )}
             {selectedPatient ? (
               <>
                 <PatientHeader
@@ -337,13 +396,41 @@ const globalStyles = `
   .sidebar { }
   .main { min-width: 0; }
 
-  /* Trial expired */
+  /* ── SUBSCRIPTION WALL ── */
   .main-center { min-height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center; padding: 60px 32px; }
-  .expired-card { max-width: 480px; }
+  .expired-card { max-width: 560px; width: 100%; }
   .tier-label { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--color-subtle); margin-bottom: 12px; }
   .heading { font-family: 'Source Serif 4', serif; font-size: 32px; font-weight: 600; color: var(--color-ink); line-height: 1.2; margin-bottom: 12px; }
   .subtext { font-size: 15px; color: var(--color-muted); line-height: 1.6; }
-  .upgrade-btn { margin-top: 24px; padding: 10px 24px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; color: var(--color-subtle); background: var(--color-surface-soft); border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: not-allowed; }
+
+  [data-plans] { display: flex; gap: 16px; margin-top: 28px; flex-wrap: wrap; }
+  [data-plan-card] { flex: 1; min-width: 180px; margin: 0; }
+  [data-plan-price] { font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 700; color: var(--color-ink); margin: 8px 0 4px; }
+  [data-subscribe-btn] {
+    display: block; width: 100%; margin-top: 16px; padding: 10px 20px;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    color: var(--color-surface); background: var(--color-primary);
+    border: none; border-radius: var(--radius-md);
+    cursor: pointer; transition: background 0.15s, opacity 0.15s;
+  }
+  [data-subscribe-btn]:hover { background: var(--color-primary-dark); }
+  [data-subscribe-btn]:disabled { opacity: 0.55; cursor: wait; }
+
+  [data-wall-links] { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  [data-wall-link] { background: none; border: none; padding: 0; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; }
+  [data-wall-link="manage"] { color: var(--color-primary); text-decoration: underline; }
+  [data-wall-link="manage"]:disabled { opacity: 0.55; cursor: wait; }
+  [data-wall-link="signout"] { color: var(--color-muted); }
+  [data-wall-link="delete"] { color: #b5451b; }
+
+  /* Danger submit button in delete modal */
+  .modal-content form button[type="submit"][data-danger] { background: #b5451b; }
+  .modal-content form button[type="submit"][data-danger]:hover { background: #9a3a16; }
+
+  /* Payment notification banner */
+  [data-notification] { padding: 12px 16px; font-size: 13px; font-weight: 500; border-radius: var(--radius-sm); margin-bottom: 20px; }
+  [data-notification="success"] { background: #e8f4ef; color: #2d6a4f; border: 1px solid #b7dfc9; }
+  [data-notification="cancelled"] { background: var(--color-surface-soft); color: var(--color-muted); border: 1px solid var(--color-border); }
 
   /* ── PATIENT CARD ── */
   .patient-card {
@@ -811,6 +898,8 @@ const globalStyles = `
   }
   .modal-content form button[type="submit"]:hover { opacity: 0.88; }
   .modal-content form button[type="submit"]:disabled { opacity: 0.55; cursor: not-allowed; }
+  .modal-content form button[type="submit"][data-danger] { background: #b5451b; }
+  .modal-content form button[type="submit"][data-danger]:hover { background: #9a3a16; opacity: 1; }
 
   /* Modal: error message padding */
   .modal-content > .error { margin: 0 24px 20px; }

@@ -37,6 +37,23 @@ export default function Signup() {
     setLoading(true)
     setError('')
 
+    // Block emails that previously deleted their account from claiming a new trial
+    try {
+      const checkRes = await fetch('/api/check-deleted', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const checkData = await checkRes.json()
+      if (checkData.blocked) {
+        setError('An account with this email has been permanently deleted and is not eligible for a new free trial.')
+        setLoading(false)
+        return
+      }
+    } catch {
+      // If the check fails, allow signup to proceed rather than blocking legitimate users
+    }
+
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
