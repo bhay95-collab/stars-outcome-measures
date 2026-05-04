@@ -378,9 +378,6 @@ function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, 
         </button>
       </nav>
       <div className="app-sidebar__bottom">
-        <button type="button" className="app-sidebar__settings" onClick={onProfile}>
-          <Settings size={21} /> Settings
-        </button>
         <button type="button" className="profile-strip" onClick={onProfile}>
           {profileData.avatarUrl
             ? <img src={profileData.avatarUrl} alt="" />
