@@ -44,7 +44,7 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
   const [completed, setCompleted] = useState(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [navCollapsed, setNavCollapsed] = useState(true)
+  const [navCollapsed, setNavCollapsed] = useState(false)
 
   async function handleSubmit(inputs, results) {
     setLoading(true)

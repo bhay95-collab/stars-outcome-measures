@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { getAppRedirectUrl, supabase } from '../lib/supabase'
+import LogoWordmark from '../components/LogoWordmark'
 
 export async function getServerSideProps() { return { props: {} } }
 
@@ -80,7 +81,7 @@ export default function Signup() {
         <style jsx>{pageStyles}</style>
         <div className="page">
           <div className="card">
-            <div className="wordmark">RehabMetrics <span className="wordmark-iq">IQ</span></div>
+            <LogoWordmark size="md" spaceAfter />
             <h1 className="heading">Check your email</h1>
             <p className="subtext">
               We sent a confirmation link to <strong>{email}</strong>.
@@ -100,7 +101,7 @@ export default function Signup() {
       <style jsx>{pageStyles}</style>
       <div className="page">
         <div className="card">
-          <div className="wordmark">RehabMetrics <span className="wordmark-iq">IQ</span></div>
+          <LogoWordmark size="md" spaceAfter />
           <h1 className="heading">Create your account</h1>
           <p className="subtext">Start your 14-day free trial — no credit card required.</p>
 
@@ -199,16 +200,6 @@ const pageStyles = `
     padding: 40px;
     box-shadow: var(--shadow-md);
   }
-
-  .wordmark {
-    font-family: 'Source Serif 4', serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--color-primary);
-    margin-bottom: 28px;
-  }
-
-  .wordmark-iq { font-style: italic; font-weight: 300; }
 
   .heading {
     font-family: 'Source Serif 4', serif;

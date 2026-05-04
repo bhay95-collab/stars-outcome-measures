@@ -1,3 +1,5 @@
+import LogoWordmark from '../components/LogoWordmark'
+
 export default function Privacy() {
   return (
     <>
@@ -5,7 +7,7 @@ export default function Privacy() {
       <div className="page">
         <div className="content">
           <div className="nav">
-            <a href="/" className="wordmark">RehabMetrics <span className="wordmark-iq">IQ</span></a>
+            <LogoWordmark href="/" className="wordmark" size="sm" />
           </div>
 
           <h1 className="title">Privacy Policy</h1>
@@ -118,15 +120,7 @@ const pageStyles = `
 
   .nav { margin-bottom: 40px; }
 
-  .wordmark {
-    font-family: 'Source Serif 4', serif;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--color-primary);
-    text-decoration: none;
-  }
-
-  .wordmark-iq { font-style: italic; font-weight: 300; }
+  .wordmark { text-decoration: none; }
 
   .title {
     font-family: 'Source Serif 4', serif;

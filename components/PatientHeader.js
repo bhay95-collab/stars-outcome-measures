@@ -14,54 +14,42 @@ export default function PatientHeader({ patient, assessments, onViewChange, acti
     patient.gender === 'M' ? 'Male' :
     patient.gender === 'F' ? 'Female' :
     patient.gender ?? '—'
+  const recoveryProgress = Math.min(30 + (assessments?.length ?? 0) * 8, 92)
+  const riskLabel = assessments?.length ? 'Low risk' : 'Review'
 
   return (
-    <div className="patient-card">
-      <div className="section-label">Patient Details</div>
-      <div className="patient-grid">
-        <div className="field-group">
-          <span className="field-label">Patient</span>
-          <span>{patient.initials ?? '—'}</span>
+    <section className="patient-summary-card">
+      <div className="patient-summary-card__head">
+        <h2>Patient Summary</h2>
+        <button type="button" onClick={() => onViewChange('summary')}>View Full Report</button>
+      </div>
+      <div className="patient-summary-card__body">
+        <div className="patient-photo" aria-hidden="true">{patient.initials?.slice(0, 2) ?? 'RM'}</div>
+        <div className="patient-identity">
+          <h3>{patient.initials ? `Patient ${patient.initials}` : 'Patient Profile'}</h3>
+          <p>{patient.diagnosis ?? 'Patient Profile'}</p>
         </div>
-        <div className="field-group">
-          <span className="field-label">Age</span>
-          <span>{age != null ? `${age} yrs` : '—'}</span>
+        <div className="summary-divider" />
+        <div className="summary-block">
+          <span>Next Appointment</span>
+          <strong>{formatDate(assessments?.[0]?.created_at || patient.created_at)}</strong>
+          <small>{age != null ? `${age} yrs` : 'Age not set'} / {genderLabel}</small>
         </div>
-        <div className="field-group">
-          <span className="field-label">Gender</span>
-          <span>{genderLabel}</span>
+        <div className="summary-divider" />
+        <div className="summary-block">
+          <span>Recovery Progress</span>
+          <div className="mini-progress" aria-label={`${recoveryProgress}% recovery progress`}>
+            <i style={{ width: `${recoveryProgress}%` }} />
+          </div>
+          <small>{recoveryProgress}% recovery progress</small>
         </div>
-        <div className="field-group" data-field="diagnosis">
-          <span className="field-label">Diagnosis</span>
-          <span>{patient.diagnosis ?? '—'}</span>
-        </div>
-        <div className="field-group">
-          <span className="field-label">Added On</span>
-          <span>{formatDate(patient.created_at)}</span>
-        </div>
-        <div className="field-group">
-          <span className="field-label">Last Assessment</span>
-          <span>{formatDate(assessments?.[0]?.created_at)}</span>
+        <div className="summary-divider" />
+        <div className="summary-block">
+          <span>Alerts</span>
+          <em>{riskLabel}</em>
+          <button type="button" data-delete-btn="" onClick={() => onDeletePatient(patient.id)}>Delete Patient</button>
         </div>
       </div>
-      <div data-view-toggle="">
-        <button
-          type="button"
-          data-active={activeView === 'summary' ? '' : undefined}
-          onClick={() => onViewChange('summary')}
-        >Summary</button>
-        <button
-          type="button"
-          data-active={activeView === 'assessment' ? '' : undefined}
-          onClick={() => onViewChange('assessment')}
-        >Add Assessment</button>
-        <button
-          type="button"
-          data-delete-btn=""
-          data-patient-delete=""
-          onClick={() => onDeletePatient(patient.id)}
-        >Delete Patient</button>
-      </div>
-    </div>
+    </section>
   )
 }

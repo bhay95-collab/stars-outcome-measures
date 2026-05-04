@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
+import { BarChart3, ChevronDown, ClipboardList, LayoutDashboard, Plus, Settings, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
@@ -9,6 +10,7 @@ import PatientHeader from '../components/PatientHeader'
 import SummaryTab from '../components/SummaryTab'
 import MeasureEntry from '../components/MeasureEntry'
 import SubscriptionWall from '../components/SubscriptionWall'
+import LogoWordmark from '../components/LogoWordmark'
 
 export async function getServerSideProps() { return { props: {} } }
 
@@ -172,6 +174,12 @@ export default function App() {
     setAssessments(data ?? [])
   }, [])
 
+  useEffect(() => {
+    if (view !== 'patients' && !selectedPatient && patients.length > 0) {
+      handlePatientSelect(patients[0])
+    }
+  }, [patients, selectedPatient, view, handlePatientSelect])
+
   const handlePatientCreated = useCallback((patient) => {
     setPatients(prev =>
       [...prev, patient].sort((a, b) =>
@@ -205,11 +213,7 @@ export default function App() {
         <div className="page">
           <header className="header">
             <div className="header-inner">
-              <div className="wordmark">
-                <img src="/SquareLogo.png" alt="" aria-hidden="true" />
-                <span>RehabMetrics</span>
-                <span className="wordmark-iq"> IQ</span>
-              </div>
+              <LogoWordmark className="wordmark" size="md" />
               {user?.email && (
                 <>
                   <span data-header-divider="" />
@@ -264,54 +268,50 @@ export default function App() {
           onProfileUpdated={(data) => { setProfileData(data); setShowProfile(false) }}
         />
       )}
-      <div className="page">
-        <header className="header">
-          <div className="header-inner">
-            <div className="wordmark">
-              <img src="/SquareLogo.png" alt="" aria-hidden="true" />
-              <span>RehabMetrics</span>
-              <span className="wordmark-iq"> IQ</span>
-            </div>
-            {user?.email && (
-              <>
-                <span data-header-divider="" />
-                <button data-profile-btn="" onClick={() => setShowProfile(true)}>
-                  {profileData.avatarUrl
-                    ? <img data-profile-avatar="" src={profileData.avatarUrl} alt="Profile photo" />
-                    : <span data-profile-initials="">
-                        {(profileData.firstName?.[0] || user.email?.[0] || '?').toUpperCase()}
-                      </span>}
-                  <span data-header-subtitle="">
-                    {profileData.firstName
-                      ? `${profileData.firstName} ${profileData.lastName}`.trim()
-                      : user.email}
-                  </span>
-                </button>
-              </>
-            )}
-            {trialValid && !subscription && <span className="trial-badge">Trial</span>}
-            <button className="signout-btn" onClick={handleSignOut}>Sign out</button>
+      <div className="app-shell">
+        <AppSidebar
+          activeView={view}
+          profileData={profileData}
+          user={user}
+          onDashboard={() => setView('summary')}
+          onAssessment={() => selectedPatient ? setView('assessment') : setShowNewPatient(true)}
+          onPatients={() => setView('patients')}
+          onProfile={() => setShowProfile(true)}
+          onSignOut={handleSignOut}
+        />
+        <main className="app-main">
+          <div className="page-toolbar">
+            <h1>{view === 'assessment' ? 'New Assessment' : view === 'patients' ? 'Patients' : 'Patient Overview'}</h1>
+            <button
+              type="button"
+              className="new-assessment-btn"
+              onClick={() => selectedPatient ? setView('assessment') : setShowNewPatient(true)}
+            >
+              <Plus size={17} />
+              New Assessment
+            </button>
           </div>
-        </header>
-        <div className="dashboard">
-          <aside className="sidebar">
-            <PatientList
-              patients={patients}
-              selectedId={selectedPatient?.id ?? null}
-              onSelect={handlePatientSelect}
-              onNew={() => setShowNewPatient(true)}
-            />
-          </aside>
-          <main className="main">
-            {notification && (
-              <div data-notification={notification}>
-                {notification === 'success'
-                  ? 'Subscription active — welcome to RehabMetrics IQ!'
-                  : 'Payment cancelled. Your plan has not changed.'}
-              </div>
-            )}
-            {selectedPatient ? (
-              <>
+
+          {notification && (
+            <div data-notification={notification}>
+              {notification === 'success'
+                ? 'Subscription active — welcome to RehabMetrics IQ!'
+                : 'Payment cancelled. Your plan has not changed.'}
+            </div>
+          )}
+
+          {view === 'patients' ? (
+            <div className="patient-directory-card">
+              <PatientList
+                patients={patients}
+                selectedId={selectedPatient?.id ?? null}
+                onSelect={handlePatientSelect}
+                onNew={() => setShowNewPatient(true)}
+              />
+            </div>
+          ) : selectedPatient ? (
+            <>
+              {view === 'summary' && (
                 <PatientHeader
                   patient={selectedPatient}
                   assessments={assessments}
@@ -319,31 +319,78 @@ export default function App() {
                   activeView={view}
                   onDeletePatient={handleDeletePatient}
                 />
-                {view === 'summary' ? (
-                  <SummaryTab
-                    patient={selectedPatient}
-                    assessments={assessments}
-                    onDeleteAssessment={handleDeleteAssessment}
-                  />
-                ) : (
-                  <MeasureEntry
-                    patient={selectedPatient}
-                    userId={user.id}
-                    onSaved={handleAssessmentSaved}
-                    onDone={() => setView('summary')}
-                  />
-                )}
-              </>
-            ) : (
-              <div className="patient-card" data-empty="">
-                <p className="section-label">Clinical Summary</p>
-                <p className="empty-hint">Select a patient from the left panel to view their clinical summary.</p>
-              </div>
-            )}
-          </main>
-        </div>
+              )}
+              {view === 'summary' ? (
+                <SummaryTab
+                  patient={selectedPatient}
+                  assessments={assessments}
+                  onDeleteAssessment={handleDeleteAssessment}
+                />
+              ) : (
+                <MeasureEntry
+                  patient={selectedPatient}
+                  userId={user.id}
+                  onSaved={handleAssessmentSaved}
+                  onDone={() => setView('summary')}
+                />
+              )}
+            </>
+          ) : (
+            <div className="patient-directory-card">
+              <PatientList
+                patients={patients}
+                selectedId={selectedPatient?.id ?? null}
+                onSelect={handlePatientSelect}
+                onNew={() => setShowNewPatient(true)}
+              />
+            </div>
+          )}
+        </main>
       </div>
     </>
+  )
+}
+
+function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, onPatients, onProfile, onSignOut }) {
+  const displayName = profileData.firstName
+    ? `${profileData.firstName} ${profileData.lastName}`.trim()
+    : user?.email ?? 'User Profile'
+  const initial = (profileData.firstName?.[0] || user?.email?.[0] || '?').toUpperCase()
+
+  return (
+    <aside className="app-sidebar">
+      <LogoWordmark className="app-sidebar__logo" size="md" />
+      <nav className="app-nav" aria-label="Dashboard navigation">
+        <button type="button" data-active={activeView === 'summary' ? '' : undefined} onClick={onDashboard}>
+          <LayoutDashboard size={21} /> Dashboard
+        </button>
+        <button type="button" data-active={activeView === 'patients' ? '' : undefined} onClick={onPatients}>
+          <Users size={21} /> Patients
+        </button>
+        <button type="button" data-active={activeView === 'assessment' ? '' : undefined} onClick={onAssessment}>
+          <ClipboardList size={21} /> Assessments
+        </button>
+        <button type="button">
+          <BarChart3 size={21} /> Analytics
+        </button>
+        <button type="button" onClick={onProfile}>
+          <Settings size={21} /> Settings
+        </button>
+      </nav>
+      <div className="app-sidebar__bottom">
+        <button type="button" className="app-sidebar__settings" onClick={onProfile}>
+          <Settings size={21} /> Settings
+        </button>
+        <button type="button" className="profile-strip" onClick={onProfile}>
+          {profileData.avatarUrl
+            ? <img src={profileData.avatarUrl} alt="" />
+            : <span>{initial}</span>}
+          <strong>{displayName}</strong>
+          <ChevronDown size={16} />
+        </button>
+        <button type="button" className="sidebar-signout" onClick={onSignOut}>Sign out</button>
+      </div>
+    </aside>
   )
 }
 
@@ -393,10 +440,7 @@ const globalStyles = `
   .header { background: rgba(255,255,255,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--color-border); position: sticky; top: 0; z-index: 10; }
   .header-inner { height: 64px; max-width: 1360px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; gap: 14px; }
 
-  .wordmark { font-size: 18px; font-weight: 800; color: var(--color-primary); letter-spacing: 0; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .wordmark > img { height: 28px; width: 28px; object-fit: contain; flex-shrink: 0; }
-  .wordmark > span:first-of-type { font-weight: 800; color: var(--color-primary); }
-  .wordmark-iq { font-style: normal; font-weight: 800; color: var(--color-secondary); }
+  .wordmark { flex-shrink: 0; }
 
   [data-header-divider] { width: 1px; height: 28px; background: var(--color-border); flex-shrink: 0; }
   [data-header-subtitle] { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--color-subtle); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
@@ -1246,4 +1290,719 @@ const globalStyles = `
   [data-legend-green]  { color: #2d6a4f; }
   [data-legend-yellow] { color: #a05c00; }
   [data-legend-red]    { color: #b5451b; }
+
+  /* ── Premium Stitch-inspired app shell ── */
+  :root {
+    --color-primary: #173d68;
+    --color-primary-dark: #102947;
+    --color-primary-soft: #e8f1fb;
+    --color-secondary: #78c8bd;
+    --color-secondary-soft: #e4f6f3;
+    --color-coral: #ee8a70;
+    --color-violet: #8b82c6;
+    --color-ink: #152238;
+    --color-muted: #5b6674;
+    --color-subtle: #8a96a3;
+    --color-surface-soft: #eff4f9;
+    --color-panel: #f7fafc;
+    --color-border: #d8e1ea;
+    --shadow-sm: 0 6px 18px rgba(21,34,56,0.08);
+    --shadow-md: 0 18px 42px rgba(21,34,56,0.12);
+    --radius-lg: 16px;
+  }
+
+  .app-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    background:
+      radial-gradient(circle at 86% 0%, rgba(120,200,189,0.14), transparent 34%),
+      linear-gradient(135deg, #f7fbff 0%, #eaf1f8 100%);
+  }
+
+  .app-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 14px 18px;
+    border-right: 1px solid rgba(216,225,234,0.85);
+    background: rgba(255,255,255,0.62);
+    box-shadow: inset -1px 0 rgba(255,255,255,0.65);
+    backdrop-filter: blur(18px);
+  }
+
+  .app-sidebar__logo {
+    margin: 0 16px 28px;
+  }
+
+  .app-nav {
+    display: grid;
+    gap: 8px;
+  }
+
+  .app-nav button,
+  .app-sidebar__settings,
+  .profile-strip {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #1f2937;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: left;
+  }
+
+  .app-nav button:hover,
+  .app-sidebar__settings:hover,
+  .profile-strip:hover {
+    background: rgba(23,61,104,0.07);
+  }
+
+  .app-nav button[data-active] {
+    background: linear-gradient(180deg, #214d81, #173d68);
+    box-shadow: 0 10px 22px rgba(23,61,104,0.27);
+    color: #fff;
+  }
+
+  .app-sidebar__bottom {
+    display: grid;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .profile-strip {
+    justify-content: flex-start;
+    min-height: 52px;
+    padding: 0 10px;
+  }
+
+  .profile-strip img,
+  .profile-strip span {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 auto;
+  }
+
+  .profile-strip span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    color: #fff;
+    font-weight: 800;
+  }
+
+  .profile-strip strong {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    color: #1f2937;
+    font-size: 14px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sidebar-signout {
+    width: 100%;
+    min-height: 34px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.72);
+    color: var(--color-muted);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .sidebar-signout:hover {
+    color: var(--color-primary);
+    border-color: rgba(23,61,104,0.35);
+  }
+
+  .app-main {
+    min-width: 0;
+    padding: 58px 46px 60px 38px;
+  }
+
+  .page-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 22px;
+  }
+
+  .page-toolbar h1 {
+    color: var(--color-ink);
+    font-size: clamp(34px, 4vw, 42px);
+    font-weight: 800;
+    line-height: 1.04;
+  }
+
+  .new-assessment-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #214d81, #173d68);
+    box-shadow: 0 8px 18px rgba(23,61,104,0.28);
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .patient-summary-card,
+  .summary-card,
+  .patient-directory-card > .patient-card {
+    border: 1px solid rgba(216,225,234,0.9);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.72);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(16px);
+  }
+
+  .patient-summary-card {
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+
+  .patient-summary-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+
+  .patient-summary-card__head h2,
+  .summary-card h3 {
+    color: #111827;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .patient-summary-card__head button {
+    min-height: 38px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--color-primary);
+    box-shadow: 0 8px 18px rgba(23,61,104,0.22);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .patient-summary-card__body {
+    display: grid;
+    grid-template-columns: 160px 1.3fr 1px 1.35fr 1px 1.5fr 1px 1.2fr;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .patient-photo {
+    width: 160px;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background:
+      linear-gradient(135deg, rgba(23,61,104,0.18), rgba(120,200,189,0.18)),
+      #e6edf4;
+    color: var(--color-primary);
+    font-size: 44px;
+    font-weight: 800;
+  }
+
+  .patient-identity h3 {
+    color: #111827;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.05;
+  }
+
+  .patient-identity p,
+  .summary-block small {
+    color: var(--color-muted);
+    font-size: 14px;
+  }
+
+  .summary-divider {
+    width: 1px;
+    height: 74px;
+    background: var(--color-border);
+  }
+
+  .summary-block {
+    min-width: 0;
+  }
+
+  .summary-block span {
+    display: block;
+    margin-bottom: 6px;
+    color: #111827;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .summary-block strong {
+    display: block;
+    color: #1f2937;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .summary-block em {
+    display: inline-flex;
+    padding: 4px 10px;
+    border: 1px solid #f0c5a8;
+    border-radius: 999px;
+    background: #fff0e7;
+    color: #a25722;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 800;
+  }
+
+  .mini-progress {
+    width: min(100%, 164px);
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #dbe3ec;
+  }
+
+  .mini-progress i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-secondary);
+  }
+
+  .summary-dashboard {
+    display: grid;
+    gap: 18px;
+  }
+
+  .summary-card {
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  .summary-card--wide {
+    min-height: 300px;
+  }
+
+  .summary-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    color: var(--color-muted);
+    font-size: 12px;
+  }
+
+  .chart-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chart-legend span::before,
+  .bar-legend span::before {
+    content: '';
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--color-secondary);
+  }
+
+  .chart-legend [data-tone="coral"]::before,
+  .bar-legend span:last-child::before { background: var(--color-coral); }
+  .chart-legend [data-tone="mist"]::before { background: var(--color-violet); }
+
+  .trajectory-chart {
+    width: 100%;
+    height: 224px;
+    margin-top: 10px;
+    display: block;
+  }
+
+  .trajectory-chart line,
+  .pain-trend line {
+    stroke: #d5dee7;
+    stroke-width: 1;
+  }
+
+  .trajectory-chart text,
+  .pain-trend text {
+    fill: var(--color-muted);
+    font-size: 12px;
+  }
+
+  .trajectory-chart path[data-line] {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .trajectory-chart path[data-line="progress"] { stroke: var(--color-secondary); }
+  .trajectory-chart path[data-line="coral"] { stroke: var(--color-coral); }
+  .trajectory-chart path[data-line="mist"] { stroke: var(--color-violet); }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1.25fr 0.9fr 1.1fr 1.15fr;
+    gap: 18px;
+  }
+
+  .bar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 22px;
+    margin: 14px 0 8px;
+    color: #111827;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .bar-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .bar-stage {
+    height: 188px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: end;
+    gap: 12px;
+    padding-top: 16px;
+    background-image: linear-gradient(#dce4ed 1px, transparent 1px);
+    background-size: 100% 25%;
+  }
+
+  .bar-pair {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+    gap: 4px;
+    position: relative;
+    padding-bottom: 22px;
+  }
+
+  .bar-pair i,
+  .bar-pair b {
+    min-height: 16px;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .bar-pair i { background: var(--color-secondary); }
+  .bar-pair b { background: var(--color-coral); }
+  .bar-pair small {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    color: var(--color-muted);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .activity-mix {
+    display: grid;
+    justify-items: center;
+    gap: 16px;
+    margin-top: 18px;
+  }
+
+  .donut {
+    width: 120px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: conic-gradient(var(--color-secondary) 0 38%, var(--color-coral) 38% 66%, #6fb7d0 66% 83%, var(--color-violet) 83% 100%);
+    position: relative;
+  }
+
+  .donut::after {
+    content: '';
+    position: absolute;
+    inset: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+  }
+
+  .activity-lines {
+    width: 100%;
+    display: grid;
+    gap: 10px;
+  }
+
+  .activity-lines strong {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    align-items: center;
+    color: #111827;
+    font-size: 15px;
+  }
+
+  .activity-lines span {
+    color: var(--color-muted);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .activity-lines strong::after {
+    content: '';
+    height: 28px;
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, transparent 45%, rgba(238,138,112,0.32) 45% 55%, transparent 55%),
+      linear-gradient(90deg, rgba(238,138,112,0.18), rgba(139,130,198,0.18));
+  }
+
+  .pain-trend {
+    width: 100%;
+    height: 210px;
+    margin-top: 10px;
+  }
+
+  .pain-trend path:first-of-type {
+    fill: rgba(139,130,198,0.2);
+  }
+
+  .pain-trend path[data-line] {
+    fill: none;
+    stroke: var(--color-coral);
+    stroke-width: 3;
+  }
+
+  .detail-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .detail-list div {
+    display: grid;
+    grid-template-columns: 1fr auto 18px;
+    column-gap: 10px;
+    align-items: center;
+  }
+
+  .detail-list strong {
+    color: #111827;
+    font-size: 13px;
+  }
+
+  .detail-list span {
+    color: #111827;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .detail-list small,
+  .detail-list em {
+    color: var(--color-muted);
+    font-size: 12px;
+    font-style: normal;
+  }
+
+  .detail-list i {
+    grid-row: span 2;
+    color: var(--color-secondary);
+    font-style: normal;
+    font-weight: 800;
+  }
+
+  .assessment-history h3 {
+    margin-bottom: 14px;
+  }
+
+  .assessment-history .result-box {
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .patient-directory-card > .patient-card {
+    max-width: 520px;
+  }
+
+  [data-measure-panel] {
+    max-width: 960px;
+    margin: 0 auto;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.72);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(18px);
+  }
+
+  [data-measure-panel] > .measure-header {
+    padding: 22px 28px 14px;
+  }
+
+  .measure-title {
+    font-size: 18px;
+  }
+
+  [data-measure-tabs] {
+    width: min(100%, 560px);
+    margin: 0 auto 14px;
+    padding: 4px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.72);
+    box-shadow: inset 0 0 0 1px rgba(216,225,234,0.8);
+  }
+
+  [data-measure-tabs] button {
+    flex: 1;
+    border: 0;
+    border-radius: 999px;
+    color: var(--color-muted);
+  }
+
+  [data-measure-tabs] button[data-active] {
+    background: rgba(255,255,255,0.96);
+    box-shadow: 0 4px 12px rgba(21,34,56,0.12);
+    color: var(--color-primary);
+  }
+
+  [data-measure-layout] {
+    min-height: 440px;
+    border-top: 1px solid rgba(216,225,234,0.74);
+  }
+
+  [data-measure-nav] {
+    width: 210px;
+    background: rgba(239,244,249,0.74);
+  }
+
+  [data-measure-btn] {
+    padding: 9px 16px;
+  }
+
+  [data-measure-btn][data-active] {
+    background: rgba(23,61,104,0.1);
+    border-left-color: var(--color-primary);
+  }
+
+  [data-measure-form] {
+    padding: 26px 32px;
+  }
+
+  [data-measure-footer] {
+    background: rgba(247,250,252,0.74);
+  }
+
+  @media (max-width: 1100px) {
+    .app-shell {
+      grid-template-columns: 86px minmax(0, 1fr);
+    }
+    .app-sidebar__logo {
+      margin-inline: 8px;
+      overflow: hidden;
+      width: 36px;
+    }
+    .app-nav button,
+    .app-sidebar__settings {
+      justify-content: center;
+      padding: 0;
+      font-size: 0;
+    }
+    .profile-strip strong,
+    .profile-strip svg {
+      display: none;
+    }
+    .summary-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .patient-summary-card__body {
+      grid-template-columns: 130px 1fr;
+    }
+    .summary-divider {
+      display: none;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .app-shell {
+      display: block;
+    }
+    .app-sidebar {
+      position: static;
+      height: auto;
+      padding: 16px;
+    }
+    .app-sidebar__logo {
+      width: auto;
+      margin: 0 0 14px;
+    }
+    .app-nav {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .app-nav button {
+      justify-content: center;
+      font-size: 0;
+    }
+    .app-sidebar__bottom {
+      display: none;
+    }
+    .app-main {
+      padding: 28px 16px 44px;
+    }
+    .page-toolbar,
+    .patient-summary-card__head,
+    .summary-card__head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .patient-summary-card__body,
+    .summary-grid,
+    [data-measure-layout] {
+      grid-template-columns: 1fr;
+      display: grid;
+    }
+    .patient-photo {
+      width: 100%;
+    }
+    [data-measure-nav] {
+      width: auto;
+      max-height: 220px;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+  }
 `
