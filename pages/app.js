@@ -1,3 +1,4 @@
+import Head from 'next/head'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabase'
@@ -116,7 +117,11 @@ export default function App() {
       if (event === 'SIGNED_IN' && session?.user) {
         loadUserData(session.user)
       } else if (event === 'INITIAL_SESSION' && !session) {
-        router.replace('/login')
+        // Don't redirect during an OAuth callback — wait for SIGNED_IN instead
+        const isOAuthCallback =
+          typeof window !== 'undefined' &&
+          (window.location.search.includes('code=') || window.location.hash.includes('access_token='))
+        if (!isOAuthCallback) router.replace('/login')
       } else if (event === 'SIGNED_OUT') {
         router.replace('/login')
       }
@@ -185,6 +190,7 @@ export default function App() {
   if (loading) {
     return (
       <>
+        <AppHead />
         <style jsx global>{globalStyles}</style>
         <div className="loading-page"><p className="loading-text">Loading…</p></div>
       </>
@@ -194,6 +200,7 @@ export default function App() {
   if (!hasAccess) {
     return (
       <>
+        <AppHead />
         <style jsx global>{globalStyles}</style>
         <div className="page">
           <header className="header">
@@ -241,6 +248,7 @@ export default function App() {
 
   return (
     <>
+      <AppHead />
       <style jsx global>{globalStyles}</style>
       {showNewPatient && (
         <NewPatientModal
@@ -339,6 +347,18 @@ export default function App() {
   )
 }
 
+function AppHead() {
+  return (
+    <Head>
+      <title>RehabMetrics IQ</title>
+      <link rel="icon" href="/SquareLogo.png" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    </Head>
+  )
+}
+
 const globalStyles = `
   /* ── RESET & TOKENS ── */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -347,34 +367,36 @@ const globalStyles = `
     --color-primary:      #236499;
     --color-primary-dark: #17496F;
     --color-primary-soft: #EAF3FB;
-    --color-secondary:    #7FB3E6;
-    --color-ink:          #1F2933;
-    --color-muted:        #5F6B7A;
-    --color-subtle:       #8A96A3;
+    --color-secondary:    #1F8A8A;
+    --color-secondary-soft: #E1F5F3;
+    --color-ink:          #17212B;
+    --color-muted:        #526273;
+    --color-subtle:       #7B8794;
     --color-surface:      #FFFFFF;
-    --color-surface-soft: #f4f3f0;
-    --color-border:       #D8E2EC;
-    --shadow-sm:          0 1px 2px rgba(31,41,51,0.06);
-    --shadow-md:          0 6px 16px rgba(31,41,51,0.08);
+    --color-surface-soft: #F4F7FB;
+    --color-panel:        #EEF4FB;
+    --color-border:       #D2DCE8;
+    --shadow-sm:          0 1px 2px rgba(18,35,54,0.05);
+    --shadow-md:          0 14px 32px rgba(18,35,54,0.10);
     --radius-sm:          6px;
-    --radius-md:          10px;
-    --radius-lg:          16px;
+    --radius-md:          8px;
+    --radius-lg:          8px;
   }
 
-  body { font-family: 'Inter', sans-serif; }
+  body { font-family: 'Inter', sans-serif; color: var(--color-ink); font-variant-numeric: tabular-nums; }
 
   /* ── PAGE SHELL ── */
   .loading-page { min-height: 100vh; background: var(--color-surface-soft); display: flex; align-items: center; justify-content: center; }
   .loading-text { font-size: 14px; color: var(--color-subtle); }
   .page { min-height: 100vh; background: var(--color-surface-soft); }
 
-  .header { background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--color-border); position: sticky; top: 0; z-index: 10; }
-  .header-inner { height: 80px; max-width: 1300px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; gap: 16px; }
+  .header { background: rgba(255,255,255,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--color-border); position: sticky; top: 0; z-index: 10; }
+  .header-inner { height: 64px; max-width: 1360px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; gap: 14px; }
 
-  .wordmark { font-family: 'Source Serif 4', serif; font-size: 30px; font-weight: 400; color: var(--color-primary); letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .wordmark > img { height: 30px; width: 30px; object-fit: contain; flex-shrink: 0; }
-  .wordmark > span:first-of-type { font-weight: 700; color: var(--color-primary); }
-  .wordmark-iq { font-style: normal; font-weight: 600; color: var(--color-secondary); }
+  .wordmark { font-size: 18px; font-weight: 800; color: var(--color-primary); letter-spacing: 0; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .wordmark > img { height: 28px; width: 28px; object-fit: contain; flex-shrink: 0; }
+  .wordmark > span:first-of-type { font-weight: 800; color: var(--color-primary); }
+  .wordmark-iq { font-style: normal; font-weight: 800; color: var(--color-secondary); }
 
   [data-header-divider] { width: 1px; height: 28px; background: var(--color-border); flex-shrink: 0; }
   [data-header-subtitle] { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--color-subtle); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
@@ -392,7 +414,7 @@ const globalStyles = `
   .signout-btn { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--color-muted); background: none; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 14px; cursor: pointer; transition: color 0.15s, border-color 0.15s, background 0.15s; flex-shrink: 0; }
   .signout-btn:hover { color: var(--color-ink); border-color: var(--color-muted); background: rgba(255,255,255,0.8); }
 
-  .dashboard { max-width: 1300px; margin: 0 auto; padding: 24px 32px 60px; display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
+  .dashboard { max-width: 1360px; margin: 0 auto; padding: 20px 24px 56px; display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
   .sidebar { }
   .main { min-width: 0; }
 
@@ -400,7 +422,7 @@ const globalStyles = `
   .main-center { min-height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center; padding: 60px 32px; }
   .expired-card { max-width: 560px; width: 100%; }
   .tier-label { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--color-subtle); margin-bottom: 12px; }
-  .heading { font-family: 'Source Serif 4', serif; font-size: 32px; font-weight: 600; color: var(--color-ink); line-height: 1.2; margin-bottom: 12px; }
+  .heading { font-size: 30px; font-weight: 800; color: var(--color-ink); line-height: 1.15; margin-bottom: 12px; }
   .subtext { font-size: 15px; color: var(--color-muted); line-height: 1.6; }
 
   [data-plans] { display: flex; gap: 16px; margin-top: 28px; flex-wrap: wrap; }
@@ -437,8 +459,8 @@ const globalStyles = `
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    padding: 20px 24px;
-    margin-bottom: 20px;
+    padding: 16px;
+    margin-bottom: 16px;
     box-shadow: var(--shadow-sm);
   }
 
@@ -522,7 +544,7 @@ const globalStyles = `
   /* PatientList: list items inside patient-card */
   .patient-card ul {
     list-style: none;
-    margin: 8px -24px 0;
+    margin: 10px -16px 0;
     padding: 4px 0 0;
     border-top: 1px solid var(--color-border);
   }
@@ -531,7 +553,7 @@ const globalStyles = `
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 20px;
+    padding: 10px 14px;
     cursor: pointer;
     border-left: 3px solid transparent;
     transition: background 0.1s, border-color 0.1s;
@@ -624,9 +646,9 @@ const globalStyles = `
   /* New Patient button (after ul) */
   .patient-card > ul + button {
     display: block;
-    width: calc(100% + 48px);
-    margin-left: -24px;
-    padding: 12px 24px;
+    width: calc(100% + 32px);
+    margin-left: -16px;
+    padding: 12px 16px;
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
@@ -698,7 +720,7 @@ const globalStyles = `
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    padding: 20px 24px;
+    padding: 16px;
     margin-bottom: 16px;
     box-shadow: var(--shadow-sm);
   }
@@ -772,7 +794,7 @@ const globalStyles = `
 
   /* ── MEASURE HEADER ── */
   .measure-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-  .measure-title { font-family: 'Source Serif 4', serif; font-size: 22px; font-weight: 600; color: var(--color-ink); letter-spacing: -0.3px; }
+  .measure-title { font-size: 22px; font-weight: 800; color: var(--color-ink); letter-spacing: 0; }
   .measure-subtitle { font-size: 12px; color: var(--color-subtle); margin-top: 2px; }
 
   /* ── MODALS ── */
@@ -813,7 +835,6 @@ const globalStyles = `
     background: var(--color-surface-soft);
     margin-bottom: 0;
     font-size: 18px;
-    font-family: 'Source Serif 4', serif;
     font-weight: 600;
     letter-spacing: -0.2px;
     text-transform: none;
