@@ -359,7 +359,7 @@ function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, 
 
   return (
     <aside className="app-sidebar">
-      <LogoWordmark className="app-sidebar__logo" size="md" />
+      <LogoWordmark className="app-sidebar__logo" size="lg" />
       <nav className="app-nav" aria-label="Dashboard navigation">
         <button type="button" data-active={activeView === 'summary' ? '' : undefined} onClick={onDashboard}>
           <LayoutDashboard size={21} /> Dashboard
@@ -1331,7 +1331,9 @@ const globalStyles = `
   }
 
   .app-sidebar__logo {
-    margin: 0 16px 28px;
+    margin: 0 8px 34px;
+    font-size: 26px;
+    gap: 0.18em;
   }
 
   .app-nav {
