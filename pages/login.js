@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '../lib/supabase'
+import { getAppRedirectUrl, supabase } from '../lib/supabase'
 
 export async function getServerSideProps() { return { props: {} } }
 
@@ -23,7 +23,7 @@ export default function Login() {
     setError('')
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://rehabmetricsiq.com/app' }
+      options: { redirectTo: getAppRedirectUrl() }
     })
     if (oauthError) {
       setError(oauthError.message)
