@@ -109,7 +109,7 @@ export default function Landing() {
 
       <header className="site-header">
         <div className="site-header__inner">
-          <LogoWordmark href="/" size="lg" />
+          <LogoWordmark href="/" size="xl" />
           <a href="/login">Log in</a>
         </div>
       </header>
@@ -146,18 +146,46 @@ export default function Landing() {
         </section>
 
         <section id="workflow" className="section">
-          <div className="section-head">
-            <p className="eyebrow">CLINICAL WORKFLOW</p>
-            <h2>Outcome measures without the spreadsheet drift.</h2>
+          <div className="workflow-layout">
+            <div>
+              <div className="section-head">
+                <p className="eyebrow">CLINICAL WORKFLOW</p>
+                <h2>Outcome measures without the spreadsheet drift.</h2>
+              </div>
+              <div className="workflow-grid">
+                {WORKFLOW.map(({ Icon, title, text }) => (
+                  <article className="soft-card" key={title}>
+                    <Icon size={22} />
+                    <h3>{title}</h3>
+                    <p>{text}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+            <figure className="image-panel image-panel--workflow">
+              <img
+                src="https://images.pexels.com/photos/6111616/pexels-photo-6111616.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                alt="Physiotherapist reviewing rehabilitation progress with a patient"
+              />
+            </figure>
           </div>
-          <div className="workflow-grid">
-            {WORKFLOW.map(({ Icon, title, text }) => (
-              <article className="soft-card" key={title}>
-                <Icon size={22} />
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </article>
-            ))}
+        </section>
+
+        <section className="clinical-band">
+          <div className="clinical-band__inner">
+            <figure className="image-panel image-panel--wide">
+              <img
+                src="https://images.pexels.com/photos/7088530/pexels-photo-7088530.jpeg?auto=compress&cs=tinysrgb&w=1400"
+                alt="Rehabilitation clinician supporting a patient during therapy"
+              />
+            </figure>
+            <div className="clinical-band__copy">
+              <p className="eyebrow">DESIGNED FOR REHAB TEAMS</p>
+              <h2>Clinical data that still feels human.</h2>
+              <p>
+                RehabMetrics IQ keeps the interface quiet and structured, while giving clinicians enough context to discuss progress clearly with patients and care teams.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -168,30 +196,46 @@ export default function Landing() {
             <p>Start with a free trial. No credit card required.</p>
           </div>
 
-          <div className="billing-toggle" aria-label="Billing period">
-            <button type="button" data-active={billing === 'monthly' ? '' : undefined} onClick={() => setBilling('monthly')}>Monthly</button>
-            <button type="button" data-active={billing === 'yearly' ? '' : undefined} onClick={() => setBilling('yearly')}>Yearly <span>Save 30%</span></button>
-          </div>
+          <div className="pricing-layout">
+            <figure className="image-panel image-panel--pricing">
+              <img
+                src="https://images.pexels.com/photos/8376277/pexels-photo-8376277.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                alt="Clinician documenting patient outcomes on a tablet"
+              />
+            </figure>
+            <div className="pricing-controls">
+              <div className="billing-toggle" aria-label="Billing period">
+                <button type="button" data-active={billing === 'monthly' ? '' : undefined} onClick={() => setBilling('monthly')}>Monthly</button>
+                <button type="button" data-active={billing === 'yearly' ? '' : undefined} onClick={() => setBilling('yearly')}>Yearly <span>Save 30%</span></button>
+              </div>
 
-          <article className="pricing-card">
-            <div>
-              <span>{billing === 'monthly' ? 'Monthly' : 'Annual'}</span>
-              <strong><em>$</em>{price}</strong>
-              <p>{period}</p>
+              <article className="pricing-card">
+                <div>
+                  <span>{billing === 'monthly' ? 'Monthly' : 'Annual'}</span>
+                  <strong><em>$</em>{price}</strong>
+                  <p>{period}</p>
+                </div>
+                <ul>
+                  {['All outcome measures', 'Unlimited patients', 'MCID tracking', 'PDF export', 'Secure account access'].map(item => (
+                    <li key={item}><Check size={16} /> {item}</li>
+                  ))}
+                </ul>
+                <a href="/signup" className="primary-btn">Start free trial</a>
+              </article>
             </div>
-            <ul>
-              {['All outcome measures', 'Unlimited patients', 'MCID tracking', 'PDF export', 'Secure account access'].map(item => (
-                <li key={item}><Check size={16} /> {item}</li>
-              ))}
-            </ul>
-            <a href="/signup" className="primary-btn">Start free trial</a>
-          </article>
+          </div>
         </section>
 
         <section className="section faq-section">
           <div className="section-head">
             <p className="eyebrow">FAQ</p>
             <h2>Clear answers before you start.</h2>
+            <figure className="image-panel image-panel--faq">
+              <img
+                src="https://images.pexels.com/photos/7089401/pexels-photo-7089401.jpeg?auto=compress&cs=tinysrgb&w=900"
+                alt="Rehabilitation team discussing clinical notes"
+              />
+            </figure>
           </div>
           <div className="faq-list">
             {FAQS.map(([question, answer]) => (
@@ -362,7 +406,7 @@ const styles = `
   }
   .site-header__inner {
     max-width: 1088px;
-    min-height: 72px;
+    min-height: 86px;
     margin: 0 auto;
     padding: 0 24px;
     display: flex;
@@ -388,8 +432,8 @@ const styles = `
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(90deg, rgba(246,236,218,0.94) 0%, rgba(245,233,212,0.78) 44%, rgba(245,233,212,0.25) 74%),
-      linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16));
+      linear-gradient(90deg, rgba(246,236,218,0.78) 0%, rgba(245,233,212,0.52) 43%, rgba(245,233,212,0.1) 75%),
+      linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.05));
   }
   .hero__inner {
     position: relative;
@@ -614,6 +658,81 @@ const styles = `
     grid-template-columns: repeat(3, 1fr);
     gap: 18px;
   }
+
+  .workflow-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 34px;
+    align-items: stretch;
+  }
+
+  .image-panel {
+    position: relative;
+    overflow: hidden;
+    min-height: 280px;
+    border: 1px solid rgba(215,224,232,0.9);
+    border-radius: 18px;
+    background: #dfe8f1;
+    box-shadow: 0 18px 42px rgba(23,38,59,0.12);
+  }
+
+  .image-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgba(246,236,218,0.18), rgba(245,233,212,0.05) 48%, rgba(23,61,104,0.08)),
+      linear-gradient(180deg, rgba(255,255,255,0.01), rgba(23,34,56,0.1));
+    pointer-events: none;
+  }
+
+  .image-panel img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  .image-panel--workflow {
+    min-height: 100%;
+  }
+
+  .image-panel--wide {
+    min-height: 360px;
+  }
+
+  .clinical-band {
+    border-top: 1px solid rgba(215,224,232,0.72);
+    border-bottom: 1px solid rgba(215,224,232,0.72);
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.88), rgba(238,243,248,0.82)),
+      #eef3f8;
+  }
+
+  .clinical-band__inner {
+    max-width: 1088px;
+    margin: 0 auto;
+    padding: 76px 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+    gap: 38px;
+    align-items: center;
+  }
+
+  .clinical-band__copy h2 {
+    margin-top: 10px;
+    color: var(--ink);
+    font-size: clamp(30px, 3vw, 44px);
+    line-height: 1.08;
+  }
+
+  .clinical-band__copy p:not(.eyebrow) {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
   .soft-card, .pricing-card, details {
     border: 1px solid rgba(215,224,232,0.9);
     border-radius: 14px;
@@ -631,6 +750,25 @@ const styles = `
     display: grid;
     justify-items: center;
   }
+
+  .pricing-layout {
+    width: min(100%, 860px);
+    display: grid;
+    grid-template-columns: minmax(260px, 0.8fr) minmax(300px, 1fr);
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  .pricing-controls {
+    display: grid;
+    justify-items: center;
+    align-content: start;
+  }
+
+  .image-panel--pricing {
+    min-height: 430px;
+  }
+
   .billing-toggle {
     display: inline-flex;
     gap: 4px;
@@ -699,6 +837,12 @@ const styles = `
     grid-template-columns: 0.8fr 1.2fr;
     gap: 28px;
   }
+
+  .image-panel--faq {
+    min-height: 220px;
+    margin-top: 24px;
+  }
+
   .faq-list { display: grid; gap: 12px; }
   details { padding: 18px 20px; }
   summary { cursor: pointer; font-weight: 800; }
@@ -847,12 +991,21 @@ const styles = `
   }
 
   @media (max-width: 960px) {
-    .hero__inner, .faq-section { grid-template-columns: 1fr; }
+    .hero__inner,
+    .workflow-layout,
+    .clinical-band__inner,
+    .pricing-layout,
+    .faq-section { grid-template-columns: 1fr; }
     .preview-card { justify-self: start; }
     .workflow-grid { grid-template-columns: 1fr; }
+    .image-panel--workflow,
+    .image-panel--pricing {
+      min-height: 320px;
+    }
   }
   @media (max-width: 700px) {
     .site-header__inner, .hero__inner, .section, .measure-strip__inner { padding-left: 18px; padding-right: 18px; }
+    .site-header__inner { min-height: 74px; }
     .hero__inner { padding-top: 56px; }
     .hero__actions { align-items: stretch; flex-direction: column; gap: 16px; }
     .measure-strip__inner { grid-template-columns: 1fr; }
