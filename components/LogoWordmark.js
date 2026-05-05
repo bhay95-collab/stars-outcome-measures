@@ -35,7 +35,7 @@ export default function LogoWordmark({ href, className = '', size = 'md', spaceA
         .logo-wordmark--sm { font-size: 18px; }
         .logo-wordmark--md { font-size: 22px; }
         .logo-wordmark--lg { font-size: 32px; }
-        .logo-wordmark--xl { font-size: 42px; }
+        .logo-wordmark--xl { font-size: clamp(40px, 4.4vw, 58px); }
         .logo-wordmark--space-after { margin-bottom: 28px; }
 
         .logo-wordmark__iq {

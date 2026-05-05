@@ -164,8 +164,8 @@ export default function Landing() {
             </div>
             <figure className="image-panel image-panel--workflow">
               <img
-                src="https://images.pexels.com/photos/6111616/pexels-photo-6111616.jpeg?auto=compress&cs=tinysrgb&w=1200"
-                alt="Physiotherapist reviewing rehabilitation progress with a patient"
+                src="https://images.pexels.com/photos/7697827/pexels-photo-7697827.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                alt="Wheelchair user strength training with support from a rehabilitation trainer"
               />
             </figure>
           </div>
@@ -175,8 +175,8 @@ export default function Landing() {
           <div className="clinical-band__inner">
             <figure className="image-panel image-panel--wide">
               <img
-                src="https://images.pexels.com/photos/7088530/pexels-photo-7088530.jpeg?auto=compress&cs=tinysrgb&w=1400"
-                alt="Rehabilitation clinician supporting a patient during therapy"
+                src="https://images.pexels.com/photos/6111595/pexels-photo-6111595.jpeg?auto=compress&cs=tinysrgb&w=1400"
+                alt="Amputee patient using a prosthetic leg during rehabilitation therapy"
               />
             </figure>
             <div className="clinical-band__copy">
@@ -199,8 +199,8 @@ export default function Landing() {
           <div className="pricing-layout">
             <figure className="image-panel image-panel--pricing">
               <img
-                src="https://images.pexels.com/photos/8376277/pexels-photo-8376277.jpeg?auto=compress&cs=tinysrgb&w=1000"
-                alt="Clinician documenting patient outcomes on a tablet"
+                src="https://images.pexels.com/photos/20860624/pexels-photo-20860624.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                alt="Physiotherapist guiding a patient through a rehabilitation exercise"
               />
             </figure>
             <div className="pricing-controls">
@@ -232,8 +232,8 @@ export default function Landing() {
             <h2>Clear answers before you start.</h2>
             <figure className="image-panel image-panel--faq">
               <img
-                src="https://images.pexels.com/photos/7089401/pexels-photo-7089401.jpeg?auto=compress&cs=tinysrgb&w=900"
-                alt="Rehabilitation team discussing clinical notes"
+                src="https://images.pexels.com/photos/6111593/pexels-photo-6111593.jpeg?auto=compress&cs=tinysrgb&w=900"
+                alt="Therapist assisting a prosthetic leg rehabilitation session"
               />
             </figure>
           </div>
@@ -406,7 +406,7 @@ const styles = `
   }
   .site-header__inner {
     max-width: 1088px;
-    min-height: 86px;
+    min-height: 104px;
     margin: 0 auto;
     padding: 0 24px;
     display: flex;
@@ -424,7 +424,7 @@ const styles = `
     position: relative;
     min-height: 604px;
     overflow: hidden;
-    background-image: url('https://images.pexels.com/photos/20860617/pexels-photo-20860617.jpeg');
+    background-image: url('https://images.pexels.com/photos/20860617/pexels-photo-20860617.jpeg?auto=compress&cs=tinysrgb&w=1800');
     background-size: cover;
     background-position: center;
   }
@@ -432,8 +432,8 @@ const styles = `
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(90deg, rgba(246,236,218,0.78) 0%, rgba(245,233,212,0.52) 43%, rgba(245,233,212,0.1) 75%),
-      linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.05));
+      linear-gradient(90deg, rgba(246,236,218,0.66) 0%, rgba(245,233,212,0.42) 43%, rgba(245,233,212,0.06) 75%),
+      linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,0.03));
   }
   .hero__inner {
     position: relative;
@@ -681,8 +681,8 @@ const styles = `
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(90deg, rgba(246,236,218,0.18), rgba(245,233,212,0.05) 48%, rgba(23,61,104,0.08)),
-      linear-gradient(180deg, rgba(255,255,255,0.01), rgba(23,34,56,0.1));
+      linear-gradient(90deg, rgba(246,236,218,0.12), rgba(245,233,212,0.03) 48%, rgba(23,61,104,0.06)),
+      linear-gradient(180deg, rgba(255,255,255,0), rgba(23,34,56,0.08));
     pointer-events: none;
   }
 
@@ -1005,7 +1005,7 @@ const styles = `
   }
   @media (max-width: 700px) {
     .site-header__inner, .hero__inner, .section, .measure-strip__inner { padding-left: 18px; padding-right: 18px; }
-    .site-header__inner { min-height: 74px; }
+    .site-header__inner { min-height: 84px; }
     .hero__inner { padding-top: 56px; }
     .hero__actions { align-items: stretch; flex-direction: column; gap: 16px; }
     .measure-strip__inner { grid-template-columns: 1fr; }
