@@ -16,10 +16,29 @@ function groupByMeasure(assessments) {
   return groups
 }
 
+function toFiniteNumber(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
+}
+
 function formatPrimaryValue(value, measure) {
-  if (measure.primaryUnit === 'sec' || measure.primaryUnit === 'm/s') return value.toFixed(2)
-  if (Number.isInteger(value)) return String(value)
-  return value.toFixed(1)
+  if (value == null) return '—'
+
+  const numericValue = toFiniteNumber(value)
+  if (numericValue == null) return String(value)
+
+  if (measure?.primaryUnit === 'sec' || measure?.primaryUnit === 'm/s') return numericValue.toFixed(2)
+  if (Number.isInteger(numericValue)) return String(numericValue)
+  return numericValue.toFixed(1)
+}
+
+function formatFixed(value, digits = 2) {
+  const numericValue = toFiniteNumber(value)
+  return numericValue == null ? String(value ?? '—') : numericValue.toFixed(digits)
 }
 
 function getLatestAssessments(groups) {
@@ -226,11 +245,15 @@ function KeyDetails({ latestAssessments }) {
     ['Balance Score', '72.90', '149.33'],
   ]
   const rows = latestAssessments.length
-    ? latestAssessments.slice(0, 4).map(({ measureId, assessment }) => [
-        MEASURES[measureId]?.name ?? measureId,
-        formatPrimaryValue(assessment.results.primaryValue, MEASURES[measureId]),
-        `${Math.max(35, Math.round((assessment.results.primaryValue || 1) * 1.4))}.00`,
-      ])
+    ? latestAssessments.slice(0, 4).map(({ measureId, assessment }) => {
+        const primaryValue = assessment.results.primaryValue
+        const numericValue = toFiniteNumber(primaryValue)
+        return [
+          MEASURES[measureId]?.name ?? measureId,
+          formatPrimaryValue(primaryValue, MEASURES[measureId]),
+          numericValue == null ? '—' : `${Math.max(35, Math.round(numericValue * 1.4))}.00`,
+        ]
+      })
     : fallback
 
   return (
@@ -285,7 +308,7 @@ function AssessmentCard({ measure, assessment, mcid, label, dim, onDelete }) {
       </div>
 
       {r.meta?.fastSpeed != null && (
-        <p>Fast: {r.meta.fastSpeed.toFixed(2)} m/s{r.meta.fastPct != null && ` — ${r.meta.fastPct}% predicted`}</p>
+        <p>Fast: {formatFixed(r.meta.fastSpeed, 2)} m/s{r.meta.fastPct != null && ` — ${r.meta.fastPct}% predicted`}</p>
       )}
 
       {r.meta?.depressionScore != null && (
