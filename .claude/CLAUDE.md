@@ -1,140 +1,661 @@
-# RehabMetrics IQ - Project Context
+# RehabMetrics IQ — Claude Code Instructions
 
-## What This Project Is
-RehabMetrics IQ is a clinical SaaS landing page and product direction for physiotherapists and rehabilitation teams.
+## Project Identity
 
-Positioning:
+RehabMetrics IQ is a clinical SaaS product for physiotherapists and rehabilitation teams.
+
+Core positioning:
+
 **Data-driven outcomes. Better patient care.**
 
-The product helps clinicians capture, score, interpret, and report rehabilitation outcome measures with less manual work and clearer clinical insight.
+The product helps clinicians capture, score, interpret, track, and report rehabilitation outcome measures with less manual work and clearer clinical insight.
+
+This is not a generic startup dashboard.
+
+It should feel:
+- calm
+- clinical
+- precise
+- trustworthy
+- modern
+- structured
+- premium but restrained
+
+Avoid:
+- flashy SaaS styling
+- exaggerated marketing language
+- generic dashboards
+- harsh edges
+- browser-default forms
+- cluttered layouts
+- decorative UI without clinical purpose
 
 ---
 
-## My Situation
-- I am not a developer
-- Claude Code writes and edits the code for this project
-- Explain changes clearly in plain English
-- When giving instructions, be specific about what changed and why
-- Prefer direct, practical guidance over technical theory
+## User Context
+
+Ben is not a developer.
+
+Claude Code writes and edits the code.
+
+When explaining work:
+- Be specific
+- Use plain English
+- Say exactly which file changed
+- Say exactly what section changed
+- Say why the change was needed
+- Avoid technical theory unless asked
+- Provide copy/paste instructions when useful
 
 ---
 
 ## Development Workflow
-- Use `/plan` before any multi-step change
-- Wait for approval before making major edits
-- After changes, run `/code-review`
-- After visual changes, use Playwright to check the page renders correctly
-- If a change touches auth, payments, or sensitive data, run `/security-review`
-- If the code becomes bloated, use `/simplify`
+
+For any multi-step change, start with:
+
+/plan
+
+The plan must include:
+
+1. Goal  
+2. Files to edit  
+3. Constraints  
+4. Current UI patterns to preserve  
+5. Data, auth, payment, or clinical logic affected  
+6. What will NOT be touched  
+7. Verification steps  
+
+Do not write code during the plan.
+
+Wait for approval before major edits.
+
+After changes:
+- Run `/code-review`
+- For visual changes, use Playwright to open the page and check it renders correctly
+- For auth, payment, subscription, Supabase, or sensitive data changes, run `/security-review`
+- If code becomes bloated, run `/simplify`
+- If adding meaningful clinical functionality, consider `/tdd`
+- If unsure about a current library/API, use `context7`
 
 ---
 
-## Project Structure
+## Project Stack
+
 Main stack:
-- Next.js (pages router)
+- Next.js pages router
 - React with hooks
-- Single-page landing page in `pages/index.js`
-- Plain CSS inside the existing `<style>` tag
-- Supabase in `lib/supabase.js`
-- Stripe in `lib/stripe.js`
-- `lucide-react` for icons
+- Supabase auth/database
+- Stripe payments/subscriptions
+- lucide-react icons
+- Plain CSS inside page-level style blocks
+- No Tailwind
+- No CSS modules
+
+Main files:
+- `pages/index.js` — public landing page
+- `pages/app.js` — authenticated clinical app/dashboard
+- `components/` — reusable UI components
+- `lib/supabase.js` — Supabase client
+- `lib/stripe.js` — Stripe helpers
+- `lib/clinical/` — clinical scoring, interpretation, registry, reports
 
 ---
 
-## File Rules
-- Edit `pages/index.js` directly for landing page work
-- Application logic may create:
-  - `/lib/clinical/`
-  - `/components/`
-- Do not install packages without confirming first
-- Never hardcode secrets; use environment variables
-- Use proper error handling
-- No `console.log` in production code
-- Do not mutate arrays or objects
+## File Scope Rules
+
+### Landing page work
+
+Edit:
+
+`pages/index.js`
+
+The landing page currently includes:
+- public hero
+- background clinical imagery
+- blur/scrim overlay
+- product preview card
+- measure strip
+- workflow section
+- clinical image band
+- pricing section
+- FAQ
+- interactive 10MWT demo modal
+- SEO metadata and canonical URL
+
+Preserve:
+- public marketing purpose
+- redirect authenticated users to `/app`
+- signup/login routes
+- pricing toggle
+- demo modal
+- SEO metadata
+- responsive layout
+
+### App/dashboard work
+
+Edit:
+
+`pages/app.js`
+
+The authenticated app currently includes:
+- subscription gate
+- app shell
+- persistent sidebar navigation
+- patient workspace
+- patient overview
+- new assessment workflow
+- patient summary dashboard
+- profile modal
+- new patient modal
+- assessment dirty-state warning
+- PDF export
+- Supabase-backed patient and assessment state
+
+Preserve:
+- auth/session handling
+- subscription/trial access logic
+- patient selection flow
+- assessment sorting by newest first
+- unsaved assessment warning
+- report export
+- responsive sidebar behaviour
+
+### Component work
+
+Edit files in:
+
+`components/`
+
+Use components for display and workflow UI.
+
+Do not put clinical calculation logic inside components.
+
+### Clinical logic work
+
+Edit files in:
+
+`lib/clinical/`
+
+Use this area for:
+- outcome measure scoring
+- MCID logic
+- threshold logic
+- interpretation text
+- chart configuration
+- patient report generation
 
 ---
 
-## How To Communicate Changes
-When making changes:
-- Tell me exactly which file was edited
-- Tell me exactly what section was updated
-- Summarise the reason for the change in simple language
-- Keep explanations clear enough for a non-technical user
+## Brand Rules
+
+Brand name:
+
+**RehabMetrics IQ**
+
+Use as one name.
+
+Do not write:
+- RehabMetricsIQ
+- Rehab Metrics IQ
+- RehabMetrics + IQ badge
+- RM IQ unless referring to the logo mark only
+
+Primary positioning:
+
+**Data-driven outcomes. Better patient care.**
+
+Tone:
+- calm
+- precise
+- clinical
+- trustworthy
+- editorial
+- practical
+
+Avoid:
+- hype
+- “revolutionary”
+- “game-changing”
+- “AI-powered” unless actually implemented
+- vague claims
+- overpromising clinical impact
 
 ---
 
-## Brand Identity
+## Logo Rules
 
-### Brand
-- Name: **RehabMetrics IQ**
-- Tone: calm, precise, trustworthy
-- Style: editorial, clinical, minimal
-- Avoid startup-flashy language or styling
+Logo assets:
+- Square logo: `public/SquareLogo.png`
+- Wordmark component: `LogoWordmark`
 
-### Core Positioning
-- Primary message: **Data-driven outcomes. Better patient care.**
-- Product theme: standardised measures, automated scoring, clear clinical insight
+Use `LogoWordmark` where the product name is shown in navigation/header/sidebar.
+
+Use `SquareLogo.png` for:
+- favicon
+- email templates
+- small brand mark
+- app/profile contexts when needed
+
+The 3-bar data motif may be used as a supporting visual/data motif only.
+
+It must not replace the primary logo.
 
 ---
 
-## Locked Design Tokens
-Do not deviate from these tokens.
+## Current Visual Direction
+
+The current UI has moved away from the older strict “clinical document only” interface.
+
+The current direction is:
+
+**Modern clinical intelligence dashboard with quiet premium styling.**
+
+It should combine:
+- clinical clarity
+- soft dashboard surfaces
+- strong information hierarchy
+- restrained gradients
+- translucent panels where already established
+- rounded cards
+- soft shadows
+- clear data presentation
+- high readability
+- minimal visual noise
+
+It should not revert to the old rigid document-only system.
+
+---
+
+## Landing Page Visual System
+
+The landing page should feel editorial, clinical, and public-facing.
+
+Preserve these patterns:
+- large calm hero
+- clinical rehabilitation imagery
+- left-side hero readability through blur/scrim
+- `Source Serif 4` for major landing-page hero typography
+- `Inter` for interface and body text
+- soft cards
+- product preview card
+- measure pills
+- calm clinical photography
+- restrained navy/mint/coral accents
+- generous spacing
+- responsive grid layout
+
+Landing page CSS lives in:
+
+`pages/index.js`
+
+Inside:
+
+`const styles = \`...\``
+
+Landing tokens currently include:
 
 ```css
-:root {
-  --color-primary: #236499;
-  --color-primary-dark: #17496F;
-  --color-primary-soft: #EAF3FB;
-  --color-secondary: #7FB3E6;
-  --color-ink: #1F2933;
-  --color-muted: #5F6B7A;
-  --color-subtle: #8A96A3;
-  --color-surface: #FFFFFF;
-  --color-surface-soft: #F7FAFC;
-  --color-border: #D8E2EC;
+--navy: #173d68;
+--navy-dark: #102947;
+--ink: #172238;
+--muted: #566271;
+--soft: #eef3f8;
+--line: #d7e0e8;
+--mint: #77c7bd;
+--coral: #ee896f;
+--violet: #8c83c8;
+--amber: #c47b43;
+--danger: #b42318;
+--shadow: 0 18px 36px rgba(23, 38, 59, 0.18);
 
-  --shadow-sm: 0 1px 2px rgba(31,41,51,0.06);
-  --shadow-md: 0 6px 16px rgba(31,41,51,0.08);
+When changing landing visuals:
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-}
+use existing tokens first
+do not introduce random colours
+do not remove clinical imagery unless replacing with equivalent clinical imagery
+keep the page calm and credible
+keep CTA buttons clear
+keep demo modal functional
+preserve mobile behaviour
+App Visual System
 
-## Clinical Architecture (Non-Negotiable)
+The authenticated app uses a modern app-shell layout.
 
-RehabMetrics IQ is a clinical interpretation tool. The architecture must remain strictly separated.
+Preserve these core patterns:
 
-### 1. Clinical Logic (`/lib/clinical/`)
-- All calculations, thresholds, MCID logic, and interpretation text live here
-- Pure JavaScript only (no React, no DOM)
-- Interpretation text must remain verbatim from source material
-- Each measure has its own file (e.g. `10mwt.js`, `tug.js`)
+.app-shell
+.app-sidebar
+.app-main
+.page-toolbar
+.patient-summary-card
+.summary-card
+.patient-directory-card
+.patient-workspace-panel
+.domain-card
+.result-box
+[data-measure-panel]
+[data-measure-layout]
+[data-measure-nav]
+[data-measure-form]
+[data-measure-tabs]
 
-### 2. Measure Registry (`/lib/clinical/measures.js`)
-- Single source of truth for:
-  - measure name
-  - category (`performance` | `questionnaire`)
-  - unit
-  - `higherIsBetter`
-  - chart config (`yMin`, `yMax`, `thresholds`)
-  - `mcidKey`
-- Components must never hardcode these values
+The app should feel like a clinical dashboard, not a plain HTML form.
 
-### 3. UI Components (`/components/`)
-- Responsible for display only
-- Must not contain calculation logic
-- Must consume data from clinical functions
+Dashboard visual traits:
 
-### 4. Page Layer (`pages/`)
-- Handles state, layout, and orchestration
-- Must not contain clinical logic
+pale blue/white background
+soft radial/linear background accents
+glass-like white panels where already used
+subtle borders
+soft shadows
+8–16px radii
+clear left navigation
+strong page title
+card-based clinical summaries
+colour used for meaning, not decoration
+charts with clinical context
+no harsh rectangular blocks
 
----
+App global styles live in:
 
-## Data Contracts (Strict)
+pages/app.js
 
-All clinical calculation functions must return:
+Inside:
+
+const globalStyles = \...``
+
+The current app visual direction uses these effective tokens:
+
+--color-primary: #173d68;
+--color-primary-dark: #102947;
+--color-primary-soft: #e8f1fb;
+--color-secondary: #78c8bd;
+--color-secondary-soft: #e4f6f3;
+--color-coral: #ee8a70;
+--color-violet: #8b82c6;
+--color-ink: #152238;
+--color-muted: #5b6674;
+--color-subtle: #8a96a3;
+--color-surface: #FFFFFF;
+--color-surface-soft: #eff4f9;
+--color-panel: #f7fafc;
+--color-border: #d8e1ea;
+--shadow-sm: 0 6px 18px rgba(21,34,56,0.08);
+--shadow-md: 0 18px 42px rgba(21,34,56,0.12);
+--radius-sm: 6px;
+--radius-md: 8px;
+--radius-lg: 16px;
+
+Use these tokens before adding any new value.
+
+If a new semantic colour is required:
+
+add a named token
+explain why
+keep it clinically meaningful
+
+Examples:
+
+improvement / safe / met threshold
+amber caution
+red concern / decline
+neutral inactive state
+Class Naming Rules
+
+Do not use the old rule that only a tiny set of class names is allowed.
+
+That rule is obsolete.
+
+Use existing class systems and naming patterns.
+
+Allowed patterns:
+
+app-*
+patient-*
+summary-*
+domain-*
+measure-*
+pricing-*
+preview-*
+hero-*
+image-panel*
+data-* attributes for state, tone, and behaviour
+
+Prefer:
+
+reusable class names
+semantic names
+names tied to actual UI structure
+
+Avoid:
+
+random one-off names
+unclear abbreviations
+np-*
+mwt-* unless scoped to a genuine measure-specific component and necessary
+generic names like .box1, .blue-card, .thing
+creating new classes when an existing pattern already works
+
+State should usually use data attributes:
+
+data-active
+data-tone
+data-mcid
+data-measure-panel
+data-measure-layout
+
+Use class names for layout and reusable visual structure.
+
+Use data attributes for state and variants.
+
+Styling Rules
+
+Use existing style blocks:
+
+landing page: const styles in pages/index.js
+app: const globalStyles in pages/app.js
+
+Do not add:
+
+Tailwind
+CSS modules
+new styling libraries
+scattered inline styles
+duplicate style systems
+
+Inline styles are allowed only when value is genuinely dynamic, such as:
+
+chart coordinates
+calculated progress width
+data-driven marker position
+runtime colour from clinical classification
+
+When doing visual work:
+
+preserve the current system
+do not patch randomly
+update the relevant style section cleanly
+remove obsolete styles if they are no longer used
+check mobile breakpoints
+
+For large visual rebuilds:
+
+define the visual target before coding
+update JSX and CSS together
+avoid half-old / half-new UI
+Typography
+
+Use:
+
+Inter for app UI, body text, controls, data labels
+Source Serif 4 for landing page hero/editorial headings where already used
+monospace only for clinical numeric values, scores, abbreviations, or compact data displays
+
+Avoid:
+
+mixing too many fonts
+browser-default form typography
+tiny unreadable text
+decorative typography
+
+Numeric clinical data should be easy to scan.
+
+Use tabular/monospace styles where useful.
+
+Layout Rules
+Landing page
+
+Keep:
+
+clear hero
+public marketing flow
+clinical credibility
+strong CTA
+realistic product preview
+responsive single-column behaviour on smaller screens
+
+Do not turn the landing page into:
+
+a dashboard
+a dense documentation page
+a generic SaaS template
+App dashboard
+
+Keep:
+
+sidebar-first app shell on desktop
+content-first dashboard cards
+patient overview as the main clinical landing state
+assessment workflow as a focused work area
+patient list/workspace separation
+summary cards and trends readable at a glance
+
+Do not revert to:
+
+old top-header plus small sidebar layout
+plain document UI only
+table-only dashboard
+generic form stack
+Forms and Inputs
+
+All inputs must look styled.
+
+No browser-default input appearance.
+
+Use existing patterns:
+
+.field-group
+.field-label
+.field-input
+.input-narrow
+table inputs where clinically useful
+styled select controls
+
+For measure forms:
+
+keep inputs compact but readable
+use table format where it improves clinical scanning
+use cards/panels where it improves workflow clarity
+do not force every measure into the same layout if the measure needs a different clinical structure
+
+10MWT can use table-style input where useful, but do not force all future measures into the 10MWT structure.
+
+Clinical Architecture
+
+RehabMetrics IQ is a clinical interpretation tool.
+
+Clinical architecture must remain separated.
+
+Clinical logic
+
+Use:
+
+/lib/clinical/
+
+For:
+
+calculations
+thresholds
+MCID logic
+interpretation logic
+reference values
+measure-specific helper functions
+
+Rules:
+
+pure JavaScript only
+no React
+no DOM
+no styling
+no component state
+no Supabase calls inside clinical calculation files
+
+Each measure should have its own clinical logic where appropriate.
+
+Example:
+
+lib/clinical/10mwt.js
+
+Measure registry
+
+Use:
+
+lib/clinical/measures.js
+
+The registry should be the source of truth for:
+
+measure name
+abbreviation
+category
+units
+directionality
+chart configuration
+thresholds
+MCID keys
+availability/status
+
+Components must not hardcode registry-owned values.
+
+UI components
+
+Use:
+
+components/
+
+For:
+
+rendering forms
+rendering cards
+rendering summaries
+rendering charts
+user interactions
+
+Components consume clinical functions.
+
+Components do not own clinical rules.
+
+Page layer
+
+Use:
+
+pages/
+
+For:
+
+routing
+state orchestration
+auth checks
+data fetching
+view selection
+layout composition
+
+Pages should not become clinical calculation files.
+
+Clinical Data Contract
+
+Clinical calculation functions should return a predictable object.
+
+Preferred shape:
 
 {
   primaryValue: number,
@@ -144,183 +665,418 @@ All clinical calculation functions must return:
 }
 
 Rules:
-- `primaryValue` is used for charts and MCID
-- `interpretation` must NOT be rewritten or simplified
-- `meta` contains measure-specific outputs
 
----
+primaryValue feeds charts, comparison, and MCID logic
+primaryUnit displays the score unit
+interpretation must be clinically accurate
+meta holds measure-specific outputs
 
-## Clinical Integrity Rules
+Do not rewrite clinical interpretation casually.
 
-- Do NOT simplify or generalise measure logic
-- Do NOT create generic summaries across measures
-- Each measure defines its own:
-  - inputs
-  - outputs
-  - interpretation
-- Condition must influence:
-  - MCID thresholds
-  - interpretation logic
+Do not invent unsupported clinical claims.
 
----
+Do not simplify clinical rules to make UI easier.
 
-## Development Rules (Clinical App)
+Clinical Integrity Rules
 
-- Implement ONE measure at a time
-- Fully validate before adding another
-- Do NOT batch-build multiple measures
-- ISNCSCI must only be implemented after at least 3 measures are fully working
+Clinical rules are more important than visual convenience.
 
----
+Do not:
 
-## Charts
+generalise one measure’s logic across all measures
+invent thresholds
+invent MCID values
+remove clinically relevant context
+auto-scale charts without clinical reasoning
+hide uncertainty
+present calculated insight as diagnosis
+imply the app replaces clinical judgement
 
-- Must use clinically accurate scales
-- Must include threshold reference lines
-- Must not auto-scale without clinical reasoning
-- Chart config must come from `MEASURES` registry only
+Do:
 
----
+implement one measure at a time
+validate calculation outputs
+keep reference values traceable in code comments where needed
+show meaningful change clearly
+distinguish score, interpretation, and clinical implication
+preserve previous-vs-current comparison
+make MCID status obvious but not exaggerated
 
-## Patient Data
+ISNCSCI is complex.
 
-- Use `date_of_birth`, not stored age
-- Age calculated at runtime
-- Condition must be selected from controlled list (`CONDITION_OPTIONS`)
-- No free text condition input
+Only modify ISNCSCI carefully and separately.
 
----
+Do not batch ISNCSCI changes with unrelated UI work.
 
-## Supabase
+Charts
 
-- `patients` table is source of truth for patient data
-- `assessments` table stores:
-  - inputs (JSONB)
-  - results (JSONB)
-  - created_at
+Charts must be clinically meaningful.
 
-- Always sort assessments by `created_at DESC`
-  - latest = first
-  - previous = second
+Rules:
 
-- Never rely on localStorage for clinical data
+use clinically appropriate scales
+include threshold/reference context where relevant
+avoid arbitrary max values
+do not auto-scale if that hides clinical meaning
+clearly label units
+show direction of change where relevant
+visually distinguish current, previous, threshold, and MCID where applicable
+chart config should come from clinical registry/config, not random component values
 
-UI SYSTEM (MANDATORY — NO DEVIATION)
+Charts should help the clinician answer:
 
-The dashboard UI must NOT be designed freely.
+“What changed, and does it matter?”
 
-It must strictly follow the index.html reference system.
+Patient Data Rules
 
-This is a class-based system, not component styling.
+Use Supabase as source of truth.
 
-REQUIRED CLASS SYSTEM
+Do not rely on localStorage for clinical data.
 
-All UI must use ONLY these classes:
+Patient data:
 
-.page
-.header
-.header-inner
-.dashboard
-.sidebar
-.main
+patients table is source of truth
+use date_of_birth rather than stored age where available
+calculate age at runtime
+diagnosis/condition fields must match the actual Supabase schema
+do not assume column names
+check existing queries before changing schema or UI fields
 
-.patient-card
-.section-label
-.patient-grid
+Assessment data:
 
-.field-group
-.field-label
-.field-input
+assessments table stores measure results
+keep inputs as JSONB where used
+keep results as JSONB where used
+always sort by created_at DESC
+latest assessment = first item
+previous assessment = second item
 
-.data-table
-.input-narrow
+Before changing patient or assessment fields:
 
-.info-panel
+map Supabase schema to UI fields
+confirm exact column names
+list every affected file
+avoid silent field renames
+Supabase Rules
+
+Never hardcode secrets.
+
+Never expose service role keys in frontend code.
+
+For auth/session work:
+
+preserve current session flow
+preserve OAuth callback handling
+preserve sign-out behaviour
+preserve redirect to /login when required
+preserve redirect to /app for authenticated landing-page users
+
+For profile work:
+
+preserve profiles lookup
+preserve avatar/profile behaviour
+check column names before editing
+
+For subscription work:
+
+preserve trial and active subscription access logic
+preserve Stripe redirect handling
+preserve subscription wall behaviour
+
+Run /security-review before auth, payment, subscription, RLS, or sensitive data changes.
+
+Stripe Rules
+
+Stripe changes are sensitive.
+
+Before changing Stripe:
+
+identify exact file
+identify client vs server code
+confirm webhook route if involved
+confirm environment variable names
+do not hardcode keys
+preserve existing subscription logic
+
+Run /security-review.
+
+Landing Page Functional Rules
+
+Preserve:
+
+SEO title and description
+canonical URL
+favicon
+signup link
+login link
+pricing toggle
+free trial language
+FAQ
+demo modal
+authenticated user redirect to /app
+
+Do not:
+
+remove clinical product positioning
+make claims beyond current product
+add unsupported features
+make the page visually louder
+remove accessibility labels/alt text without replacement
+App Functional Rules
+
+Preserve:
+
+subscription wall
+patient creation
+patient selection
+assessment creation
+assessment save
+summary view
+patients view
+unsaved assessment warning
+PDF report export
+profile modal
+sign out
+
+Do not:
+
+break view switching
+break selected patient state
+save assessments locally only
+remove assessment history
+remove MCID/trend context
+make assessment workflow harder to use
+change data shape without checking every consumer
+Outcome Measure Workflow
+
+Build one measure at a time.
+
+For each measure:
+
+Define clinical inputs
+Define calculation logic
+Define interpretation outputs
+Define MCID/threshold logic where available
+Define chart config
+Build UI
+Save to Supabase
+Display in summary
+Test previous/current comparison
+Verify report export if relevant
+
+Do not batch multiple new measures unless explicitly requested.
+
+UI Change Format
+
+For bug fixes, use:
+
+BUG FIX
+
+File: [file path]
+
+Problem:
+[plain English]
+
+BEFORE:
+[code]
+
+AFTER:
+[code]
+
+Why:
+[plain English]
+
+For visual changes, use:
+
+VISUAL TARGET
+
+Current pattern to preserve:
+[describe current RehabMetrics IQ pattern]
+
+Change:
+[describe intended change]
+
+Must avoid:
+[risks]
+
+Then provide exact file edits.
+
+For JSX changes, list exact replacements where practical:
+
+CHANGE:
+
+[old JSX]
+→
+[new JSX]
+
+For style changes:
+
+identify the exact style section
+prefer replacing the relevant complete section
+do not randomly sprinkle overrides at the bottom unless intentionally overriding legacy styles
+Current UI Patterns To Preserve
+Landing
+
+Preserve:
+
+.site-header
+.hero
+.hero__focus-blur
+.hero__scrim
+.hero__inner
+.preview-card
+.measure-strip
+.workflow-layout
+.image-panel
+.clinical-band
+.pricing-layout
+.demo-modal
+App
+
+Preserve:
+
+.app-shell
+.app-sidebar
+.app-nav
+.app-main
+.page-toolbar
+.new-assessment-btn
+.patient-summary-card
+.summary-card
+.summary-dashboard
+.domain-grid
+.domain-card
+.patients-workspace
+.patient-workspace-panel
 .result-box
-
 .modal
 .modal-content
-FORBIDDEN
+[data-measure-panel]
+[data-measure-layout]
+[data-measure-nav]
+[data-measure-form]
+[data-measure-tabs]
 
-DO NOT create new class names.
+Do not remove these patterns unless doing an approved full redesign.
 
-Examples of forbidden patterns:
+Responsive Rules
 
-np-*
-mwt-*
-card-*
-modal-wide
-any custom naming
+Every visual change must be checked at:
 
-FAIL if any appear.
+desktop
+tablet/narrow desktop
+mobile
 
-STYLE SYSTEM
-ALL styles must live in ONE global style block (pages/app.js)
-NO component-level styles
-NO <style jsx> inside components
-NO inline styles
-INPUT SYSTEM (MANDATORY)
+Preserve current behaviour:
 
-ALL inputs must use:
+app sidebar collapses at narrower widths
+mobile app shell becomes stacked
+landing grids collapse cleanly
+cards remain readable
+tables do not break layout
+modals remain scrollable
+Accessibility Rules
 
-className="field-input"
+Keep:
 
-Narrow inputs:
+semantic buttons for actions
+links for navigation
+labels for inputs
+alt text for images
+readable contrast
+visible focus states
+keyboard-accessible modals where possible
 
-className="input-narrow"
+Do not use clickable <div> when a button or link is correct.
 
-FAIL if any <input> lacks these
+Verification Steps
 
-10MWT UI STRUCTURE (NON-NEGOTIABLE)
+After changes, verify:
 
-The 10MWT must be rendered as:
+npm run dev
 
-<table className="data-table">
+Then use Playwright for visual changes.
 
-NOT:
+Check landing page:
 
-stacked inputs
-vertical form
-LAYOUT STRUCTURE
+page loads
+hero renders correctly
+product preview renders correctly
+pricing toggle works
+demo modal opens/closes
+mobile layout does not break
+no browser-default buttons/inputs visible
 
-Must follow:
+Check app:
 
-Header (top)
-Sidebar (patients)
-Main content
+login/session flow still works
+subscription wall still works when access is invalid
+app shell renders
+sidebar navigation works
+patient list renders
+create patient works
+select patient works
+new assessment opens
+assessment save works
+summary updates after save
+previous/current comparison still works
+PDF export button still works
+sign out works
+mobile layout remains usable
 
-Main content must use:
+For data changes, also verify:
 
-.patient-card
-MODAL SYSTEM
+Supabase column names match exactly
+no console errors
+no failed Supabase queries
+no broken RLS assumptions
+no localStorage clinical data dependency
 
-Only allowed:
+For clinical changes, also verify:
 
-.modal
-.modal-content
+calculation output
+interpretation output
+MCID logic
+threshold logic
+chart scale
+report output if relevant
+Failure Conditions
 
-No variants.
+Reject or revise the work if:
 
-VISUAL INTENT
+app looks like plain HTML
+inputs look browser-default
+clinical dashboard reverts to old document-only UI
+landing page becomes generic SaaS
+auth or subscription flow breaks
+patient data stops saving
+assessments stop sorting newest first
+clinical calculations are hardcoded into UI components
+chart scales are arbitrary
+colours are added without purpose
+styles are scattered across multiple systems
+mobile layout is broken
+code introduces secrets
+code removes existing functionality without approval
+Default Claude Code Behaviour
 
-This is NOT a SaaS UI.
+Before editing:
 
-This is a:
+inspect current file
+understand existing pattern
+preserve working logic
+avoid broad rewrites unless requested
 
-clinical document interface
+During editing:
 
-Must feel like:
+make the smallest safe change that preserves the current visual system
+keep clinical and UI logic separated
+keep code readable
+remove obsolete code if replacing a section
 
-structured
-quiet
-typographic
-not component-heavy
-FAILURE CONDITIONS
+After editing:
 
-Reject output if:
-
-any custom class names exist
-UI looks like generic form
-inputs look browser default
-10MWT not table-based
-multiple style systems exist
+state exactly what changed
+state what was preserved
+run appropriate checks
+recommend /code-review
