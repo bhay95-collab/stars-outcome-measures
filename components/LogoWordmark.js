@@ -10,7 +10,7 @@ export default function LogoWordmark({ href, className = '', size = 'md', spaceA
       {showMark && <img className="logo-wordmark__mark" src="/SquareLogo.png" alt="" aria-hidden="true" />}
       <span>RehabMetrics</span>
       <span className="logo-wordmark__iq">IQ</span>
-      <style jsx>{`
+      <style jsx global>{`
         .logo-wordmark {
           display: inline-flex;
           align-items: center;
@@ -35,7 +35,7 @@ export default function LogoWordmark({ href, className = '', size = 'md', spaceA
         .logo-wordmark--sm { font-size: 18px; }
         .logo-wordmark--md { font-size: 22px; }
         .logo-wordmark--lg { font-size: 32px; }
-        .logo-wordmark--xl { font-size: clamp(40px, 4.4vw, 58px); }
+        .logo-wordmark--xl { font-size: clamp(36px, 3vw, 48px); }
         .logo-wordmark--space-after { margin-bottom: 28px; }
 
         .logo-wordmark__iq {
