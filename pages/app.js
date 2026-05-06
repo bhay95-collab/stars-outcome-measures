@@ -28,14 +28,29 @@ export default function App() {
   const [showNewPatient, setShowNewPatient] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [profileData, setProfileData] = useState({ firstName: '', lastName: '', avatarUrl: null })
-  const [view, setView] = useState('summary')
+  const [view, setView] = useState('assessment')
   const [notification, setNotification] = useState(null)
   const [reportLoading, setReportLoading] = useState(false)
+  const [assessmentDirty, setAssessmentDirty] = useState(false)
 
   const handleAssessmentSaved = useCallback((assessment) => {
-    if (assessment) setAssessments(prev => [assessment, ...prev])
+    if (Array.isArray(assessment)) {
+      setAssessments(prev => [...assessment, ...prev])
+    } else if (assessment) {
+      setAssessments(prev => [assessment, ...prev])
+    }
+    setAssessmentDirty(false)
     setView('summary')
   }, [])
+
+  const requestViewChange = useCallback((nextView) => {
+    if (assessmentDirty && view === 'assessment') {
+      const ok = window.confirm('You have unsaved assessments in this encounter. Leave without saving?')
+      if (!ok) return
+      setAssessmentDirty(false)
+    }
+    setView(nextView)
+  }, [assessmentDirty, view])
 
   const handleDeleteAssessment = useCallback(async (assessmentId) => {
     if (!window.confirm('Delete this assessment? This cannot be undone.')) return
@@ -179,7 +194,7 @@ export default function App() {
 
   const handlePatientSelect = useCallback(async (patient) => {
     setSelectedPatient(patient)
-    setView('summary')
+    setView(prev => prev === 'assessment' ? 'assessment' : 'summary')
     const { data } = await supabase
       .from('assessments')
       .select('*')
@@ -189,10 +204,20 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (view !== 'patients' && !selectedPatient && patients.length > 0) {
+    if (view === 'summary' && !selectedPatient && patients.length > 0) {
       handlePatientSelect(patients[0])
     }
   }, [patients, selectedPatient, view, handlePatientSelect])
+
+  useEffect(() => {
+    if (!assessmentDirty) return
+    const handleBeforeUnload = (event) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [assessmentDirty])
 
   const handlePatientCreated = useCallback((patient) => {
     setPatients(prev =>
@@ -287,9 +312,9 @@ export default function App() {
           activeView={view}
           profileData={profileData}
           user={user}
-          onDashboard={() => setView('summary')}
-          onAssessment={() => selectedPatient ? setView('assessment') : setShowNewPatient(true)}
-          onPatients={() => setView('patients')}
+          onDashboard={() => requestViewChange('summary')}
+          onAssessment={() => selectedPatient ? requestViewChange('assessment') : requestViewChange('assessment')}
+          onPatients={() => requestViewChange('patients')}
           onProfile={() => setShowProfile(true)}
           onSignOut={handleSignOut}
         />
@@ -299,7 +324,7 @@ export default function App() {
             <button
               type="button"
               className="new-assessment-btn"
-              onClick={() => selectedPatient ? setView('assessment') : setShowNewPatient(true)}
+              onClick={() => selectedPatient ? requestViewChange('assessment') : requestViewChange('assessment')}
             >
               <Plus size={17} />
               New Assessment
@@ -345,7 +370,8 @@ export default function App() {
                   patient={selectedPatient}
                   userId={user.id}
                   onSaved={handleAssessmentSaved}
-                  onDone={() => setView('summary')}
+                  onDone={() => requestViewChange('summary')}
+                  onDirtyChange={setAssessmentDirty}
                 />
               )}
             </>
@@ -1325,7 +1351,7 @@ const globalStyles = `
   .app-shell {
     min-height: 100vh;
     display: grid;
-    grid-template-columns: 250px minmax(0, 1fr);
+    grid-template-columns: 270px minmax(0, 1fr);
     background:
       radial-gradient(circle at 86% 0%, rgba(120,200,189,0.14), transparent 34%),
       linear-gradient(135deg, #f7fbff 0%, #eaf1f8 100%);
@@ -1346,8 +1372,9 @@ const globalStyles = `
 
   .app-sidebar__logo {
     margin: 0 8px 34px;
-    font-size: 26px;
-    gap: 0.18em;
+    max-width: 228px;
+    font-size: 24px;
+    gap: 0.16em;
   }
 
   .app-nav {
@@ -1636,6 +1663,19 @@ const globalStyles = `
     gap: 14px;
   }
 
+  .summary-card__head select {
+    min-width: 260px;
+    min-height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.86);
+    color: var(--color-ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
   .chart-legend {
     display: flex;
     flex-wrap: wrap;
@@ -1692,6 +1732,12 @@ const globalStyles = `
   .trajectory-chart path[data-line="progress"] { stroke: var(--color-secondary); }
   .trajectory-chart path[data-line="coral"] { stroke: var(--color-coral); }
   .trajectory-chart path[data-line="mist"] { stroke: var(--color-violet); }
+  .trajectory-chart polyline[data-line="progress"] { fill: none; stroke: var(--color-secondary); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .trajectory-chart [data-series="1"] polyline[data-line="progress"] { stroke: var(--color-coral); }
+  .trajectory-chart [data-series="2"] polyline[data-line="progress"] { stroke: var(--color-violet); }
+  .trajectory-chart [data-series="1"] circle { fill: var(--color-coral); }
+  .trajectory-chart [data-series="2"] circle { fill: var(--color-violet); }
+  .trajectory-chart circle[data-mcid] { stroke: #2d6a4f; stroke-width: 3; }
 
   .summary-grid {
     display: grid;
@@ -1931,9 +1977,13 @@ const globalStyles = `
 
   .domain-card strong {
     color: var(--color-ink);
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 800;
   }
+
+  .domain-card[data-tone="green"] strong { color: #2d6a4f; }
+  .domain-card[data-tone="amber"] strong { color: #a05c00; }
+  .domain-card[data-tone="red"] strong { color: #b5451b; }
 
   .domain-card p {
     color: var(--color-muted);
@@ -2063,6 +2113,88 @@ const globalStyles = `
     margin-top: 6px;
     color: var(--color-muted);
     font-size: 13px;
+  }
+
+  .today-assessment-card {
+    overflow-x: auto;
+  }
+
+  .copy-summary-btn,
+  [data-save-encounter] {
+    min-height: 38px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--color-primary);
+    box-shadow: 0 8px 18px rgba(23,61,104,0.18);
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .copy-summary-btn:disabled,
+  [data-save-encounter]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .today-summary-table {
+    width: 100%;
+    min-width: 720px;
+    margin-top: 16px;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .today-summary-table th {
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--color-border);
+    color: var(--color-subtle);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .today-summary-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-muted);
+    vertical-align: top;
+  }
+
+  .today-summary-table td:first-child,
+  .today-summary-table td:nth-child(2) {
+    color: var(--color-ink);
+    font-weight: 800;
+  }
+
+  [data-encounter-draft] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    border: 1px solid rgba(120,200,189,0.38);
+    border-radius: 10px;
+    background: rgba(228,246,243,0.62);
+    color: var(--color-primary-dark);
+    font-size: 13px;
+  }
+
+  [data-encounter-draft] span {
+    display: inline-flex;
+    min-height: 24px;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.82);
+    color: var(--color-primary);
+    font-weight: 800;
   }
 
   .patient-directory-card > .patient-card {

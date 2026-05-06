@@ -28,9 +28,10 @@ export default function PatientHeader({ patient, assessments, onViewReport, repo
       </div>
 
       <div className="patient-summary-card__body patient-summary-card__body--real">
-        <div className="patient-identity">
-          <h3>{patient.initials || 'Unnamed patient'}</h3>
-          <p>{patient.diagnosis || 'Diagnosis not recorded'}</p>
+        <div className="summary-block">
+          <span>Diagnosis</span>
+          <strong>{patient.diagnosis || 'Not recorded'}</strong>
+          <small>Primary clinical context</small>
         </div>
         <div className="summary-block">
           <span>Demographics</span>

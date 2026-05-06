@@ -1,6 +1,9 @@
-import { getMCIDContext } from '../lib/clinical'
+import { useMemo, useState } from 'react'
+import { getMCIDContext, getMCIDStatus } from '../lib/clinical'
 import {
+  buildMeasureTrendSeries,
   buildPatientSummary,
+  buildTodayAssessmentRows,
   fmtDate,
   formatPrimaryValue,
   formatResultValue,
@@ -23,17 +26,34 @@ function trendLabel(entry) {
 export default function SummaryTab({ patient, assessments, onDeleteAssessment, onDeletePatient }) {
   const summary = buildPatientSummary(patient, assessments)
   const mcidContext = patient.diagnosis ? getMCIDContext(patient.diagnosis) : null
+  const selectableMeasures = summary.entries.filter(entry => summary.groups[entry.measureId]?.some(a => toFiniteNumber(a.results?.primaryValue) != null))
+  const [selectedMeasureId, setSelectedMeasureId] = useState(selectableMeasures[0]?.measureId ?? '')
+  const activeMeasureId = selectableMeasures.some(entry => entry.measureId === selectedMeasureId)
+    ? selectedMeasureId
+    : selectableMeasures[0]?.measureId ?? ''
+  const trendSeries = useMemo(
+    () => activeMeasureId ? buildMeasureTrendSeries(summary.groups, activeMeasureId) : [],
+    [summary.groups, activeMeasureId],
+  )
+  const todayRows = buildTodayAssessmentRows(patient, assessments)
 
   return (
     <section className="summary-dashboard">
       <div className="summary-card summary-card--wide">
         <div className="summary-card__head">
           <div>
-            <h3>Performance Across Domains</h3>
-            <p>Normalised from recorded outcome measures. No benchmark or chart is shown unless the underlying measure exists.</p>
+            <h3>Outcome Measure Trend</h3>
+            <p>Select a recorded measure to review change over time. Where MCID thresholds exist, clinically meaningful improvements are highlighted.</p>
           </div>
+          {selectableMeasures.length > 0 && (
+            <select value={activeMeasureId} onChange={event => setSelectedMeasureId(event.target.value)} aria-label="Select outcome measure trend">
+              {selectableMeasures.map(entry => (
+                <option key={entry.measureId} value={entry.measureId}>{entry.measure.id} - {entry.measure.name}</option>
+              ))}
+            </select>
+          )}
         </div>
-        <DomainTrajectory timeline={summary.timeline} />
+        <MeasureTrendChart series={trendSeries} measureId={activeMeasureId} />
       </div>
 
       <div className="domain-grid">
@@ -60,6 +80,8 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
           <LatestMeasures entries={summary.entries} />
         </div>
       </div>
+
+      <TodayAssessmentTable rows={todayRows} />
 
       <div className="summary-card assessment-history">
         <h3>Assessment History</h3>
@@ -100,11 +122,12 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
   )
 }
 
-function DomainTrajectory({ timeline }) {
-  if (!timeline.length) {
+function MeasureTrendChart({ series, measureId }) {
+  const points = series.flatMap(item => item.values.map(point => point.value))
+  if (!points.length) {
     return (
       <div className="empty-chart">
-        Record a numeric outcome measure to generate a longitudinal performance view.
+        Record this measure on at least one date to generate a trend.
       </div>
     )
   }
@@ -114,46 +137,132 @@ function DomainTrajectory({ timeline }) {
   const pad = { left: 46, right: 24, top: 20, bottom: 42 }
   const innerW = W - pad.left - pad.right
   const innerH = H - pad.top - pad.bottom
-  const toX = index => timeline.length === 1
+  const dates = Array.from(new Set(series.flatMap(item => item.values.map(point => point.date)))).sort((a, b) => new Date(a) - new Date(b))
+  const min = Math.min(...points)
+  const max = Math.max(...points)
+  const range = max === min ? Math.max(1, max || 1) : max - min
+  const yMin = Math.max(0, min - range * 0.18)
+  const yMax = max + range * 0.18
+  const toX = date => dates.length === 1
     ? pad.left + innerW / 2
-    : pad.left + (index / (timeline.length - 1)) * innerW
-  const toY = score => pad.top + innerH - (score / 100) * innerH
-  const points = timeline.map((point, index) => `${toX(index)},${toY(point.score)}`).join(' ')
+    : pad.left + (dates.indexOf(date) / (dates.length - 1)) * innerW
+  const toY = value => pad.top + innerH - ((value - yMin) / (yMax - yMin)) * innerH
 
   return (
-    <svg className="trajectory-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Normalised patient performance over time">
-      {[0, 25, 50, 75, 100].map(tick => (
+    <svg className="trajectory-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${measureId} trend over time`}>
+      {[0, 0.25, 0.5, 0.75, 1].map(position => {
+        const tick = yMin + (yMax - yMin) * position
+        return (
         <g key={tick}>
           <line x1={pad.left} x2={W - pad.right} y1={toY(tick)} y2={toY(tick)} />
-          <text x="10" y={toY(tick) + 4}>{tick}</text>
+          <text x="10" y={toY(tick) + 4}>{formatPrimaryValue(tick, {})}</text>
         </g>
-      ))}
-      <path d={`M${pad.left} ${toY(75)} L${W - pad.right} ${toY(75)} L${W - pad.right} ${toY(100)} L${pad.left} ${toY(100)} Z`} data-zone="good" />
-      {timeline.length > 1 && <polyline points={points} data-line="progress" />}
-      {timeline.map((point, index) => (
-        <g key={`${point.measureId}-${point.date}-${index}`}>
-          <circle cx={toX(index)} cy={toY(point.score)} r="5" />
-          <text x={toX(index)} y={toY(point.score) - 11} textAnchor="middle">{point.measureId}</text>
-          <text x={toX(index)} y={H - 16} textAnchor="middle">{fmtDate(point.date).replace(' 20', ' ')}</text>
-        </g>
-      ))}
-      <text x={pad.left} y={H - 2}>0-100 normalised score, oriented so higher is better</text>
+      )})}
+      {series.map((item, seriesIndex) => {
+        const linePoints = item.values.map(point => `${toX(point.date)},${toY(point.value)}`).join(' ')
+        return (
+          <g key={item.key} data-series={seriesIndex}>
+            {item.values.length > 1 && <polyline points={linePoints} data-line="progress" />}
+            {item.values.map((point, index) => {
+              const previous = index > 0 ? item.values[index - 1] : null
+              const mcid = item.mcidKey && previous ? getMCIDStatus(item.mcidKey, point.value, previous.value) : null
+              return (
+                <g key={`${item.key}-${point.date}`}>
+                  <circle cx={toX(point.date)} cy={toY(point.value)} r={mcid?.meetsThreshold ? 7 : 5} data-mcid={mcid?.meetsThreshold ? '' : undefined} />
+                  <text x={toX(point.date)} y={toY(point.value) - 12} textAnchor="middle">{formatPrimaryValue(point.value, { primaryUnit: item.unit })}</text>
+                </g>
+              )
+            })}
+          </g>
+        )
+      })}
+      {dates.map(date => <text key={date} x={toX(date)} y={H - 16} textAnchor="middle">{fmtDate(date).replace(' 20', ' ')}</text>)}
+      <text x={pad.left} y={H - 2}>{series.map(item => `${item.label}${item.unit ? ` (${item.unit})` : ''}`).join('   |   ')}</text>
     </svg>
   )
 }
 
 function DomainCard({ domain }) {
   const assessed = domain.entries.length > 0
+  const statusLabel = !assessed
+    ? 'Not assessed'
+    : domain.tone === 'red'
+      ? 'Needs attention'
+      : domain.tone === 'amber'
+        ? 'Monitor'
+        : 'On track'
   return (
     <article className="summary-card domain-card" data-tone={toneClass(domain.tone)}>
       <div className="domain-card__top">
         <h3>{domain.label}</h3>
         <span>{assessed ? `${domain.entries.length} measure${domain.entries.length === 1 ? '' : 's'}` : 'No data'}</span>
       </div>
-      <strong>{domain.score == null ? '-' : `${domain.score}/100`}</strong>
+      <strong>{statusLabel}</strong>
       <p>{assessed ? domain.status : 'Not assessed with the currently recorded measures.'}</p>
-      <small>{assessed ? domain.trend : 'Record a relevant measure to populate this domain.'}</small>
+      <small>{assessed ? `${domain.trend}. Based on: ${domain.entries.map(entry => entry.measureId).join(', ')}.` : 'Record a relevant measure to populate this domain.'}</small>
     </article>
+  )
+}
+
+function TodayAssessmentTable({ rows }) {
+  const [copied, setCopied] = useState(false)
+
+  async function copyRows() {
+    const headers = ['Measure', 'Score', 'Interpretation', 'Change']
+    const text = [
+      'Today\'s Assessment',
+      headers.join('\t'),
+      ...rows.map(row => [row.measure, row.score, row.interpretation, row.change].join('\t')),
+    ].join('\n')
+    const html = `
+      <table style="width:100%;border-collapse:collapse;font-family:Inter,Arial,sans-serif;font-size:13px">
+        <thead><tr>${headers.map(h => `<th style="padding:6px 10px;border:1px solid #c8c5be;text-align:left;background:#f9f8f6">${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map(row => `<tr><td style="padding:6px 10px;border:1px solid #c8c5be">${row.measure}</td><td style="padding:6px 10px;border:1px solid #c8c5be">${row.score}</td><td style="padding:6px 10px;border:1px solid #c8c5be">${row.interpretation}</td><td style="padding:6px 10px;border:1px solid #c8c5be">${row.change}</td></tr>`).join('')}</tbody>
+      </table>
+    `
+    if (window.ClipboardItem) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/plain': new Blob([text], { type: 'text/plain' }),
+          'text/html': new Blob([html], { type: 'text/html' }),
+        }),
+      ])
+    } else {
+      await navigator.clipboard.writeText(text)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1800)
+  }
+
+  return (
+    <div className="summary-card today-assessment-card">
+      <div className="summary-card__head">
+        <div>
+          <h3>Today&apos;s Assessment</h3>
+          <p>Formatted for clinical notes. Includes measures saved today or in the latest saved encounter.</p>
+        </div>
+        <button type="button" className="copy-summary-btn" onClick={copyRows} disabled={!rows.length}>
+          {copied ? 'Copied' : 'Copy to Clipboard'}
+        </button>
+      </div>
+      <table className="today-summary-table">
+        <thead>
+          <tr><th>Measure</th><th>Score</th><th>Interpretation</th><th>Change</th></tr>
+        </thead>
+        <tbody>
+          {rows.length ? rows.map(row => (
+            <tr key={row.measureId}>
+              <td>{row.measure}</td>
+              <td>{row.score}</td>
+              <td>{row.interpretation}</td>
+              <td>{row.change}</td>
+            </tr>
+          )) : (
+            <tr><td colSpan="4">No assessments saved today.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }
 

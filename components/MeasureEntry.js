@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { MEASURES } from '../lib/clinical'
 import Form10MWT from './Form10MWT'
@@ -38,29 +38,59 @@ function measuresInCat(cat) {
   return Object.values(MEASURES).filter(m => m.category === cat)
 }
 
-export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
+function makeEncounterId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  return `encounter-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+export default function MeasureEntry({ patient, userId, onSaved, onDone, onDirtyChange }) {
   const [activeMeasure, setActiveMeasure] = useState('10MWT')
   const [activeCategory, setActiveCategory] = useState('performance')
   const [completed, setCompleted] = useState(new Set())
+  const [drafts, setDrafts] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [navCollapsed, setNavCollapsed] = useState(false)
 
-  async function handleSubmit(inputs, results) {
+  useEffect(() => {
+    onDirtyChange?.(drafts.length > 0)
+  }, [drafts.length, onDirtyChange])
+
+  function handleSubmit(inputs, results) {
+    setError('')
+    setDrafts(prev => {
+      const next = prev.filter(item => item.measure !== activeMeasure)
+      return [...next, { measure: activeMeasure, inputs, results }]
+    })
+    setCompleted(prev => new Set([...prev, activeMeasure]))
+  }
+
+  async function saveEncounter() {
+    if (!drafts.length || loading) return
     setLoading(true)
     setError('')
 
+    const encounterId = makeEncounterId()
+    const encounterDate = new Date().toISOString()
+    const rows = drafts.map(item => ({
+      user_id: userId,
+      patient_id: patient.id,
+      measure: item.measure,
+      inputs: item.inputs,
+      results: {
+        ...item.results,
+        meta: {
+          ...(item.results?.meta ?? {}),
+          encounterId,
+          encounterDate,
+        },
+      },
+    }))
+
     const { data, error: insertError } = await supabase
       .from('assessments')
-      .insert({
-        user_id: userId,
-        patient_id: patient.id,
-        measure: activeMeasure,
-        inputs,
-        results,
-      })
+      .insert(rows)
       .select()
-      .single()
 
     if (insertError) {
       setError(insertError.message)
@@ -68,17 +98,26 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
       return
     }
 
-    setCompleted(prev => new Set([...prev, activeMeasure]))
+    setDrafts([])
+    setCompleted(new Set())
     setLoading(false)
-    onSaved(data)
+    onSaved(data ?? [])
+  }
+
+  function handleDone() {
+    if (drafts.length && !window.confirm('You have unsaved assessments in this encounter. Leave without saving?')) return
+    setDrafts([])
+    onDone()
   }
 
   return (
     <div data-measure-panel="">
       <div className="measure-header">
         <div>
-          <div className="measure-title">New Assessment</div>
-          <div className="measure-subtitle">{patient.initials}</div>
+          <div className="measure-title">New Encounter</div>
+          <div className="measure-subtitle">
+            {patient.initials} · Add one or more measures, then save the encounter.
+          </div>
         </div>
       </div>
 
@@ -131,6 +170,12 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
         </nav>
 
         <div data-measure-form="">
+          {drafts.length > 0 && (
+            <div data-encounter-draft="">
+              <strong>Pending in this encounter:</strong>
+              {drafts.map(item => <span key={item.measure}>{item.measure}</span>)}
+            </div>
+          )}
           {activeMeasure === '10MWT'   && <Form10MWT   patient={patient} onSubmit={handleSubmit} loading={loading} />}
           {activeMeasure === 'TUG'     && <FormTUG     onSubmit={handleSubmit} loading={loading} />}
           {activeMeasure === 'BBS'     && <FormBBS     onSubmit={handleSubmit} loading={loading} />}
@@ -161,7 +206,10 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone }) {
       </div>
 
       <div data-measure-footer="">
-        <button type="button" data-secondary="" onClick={onDone}>Done</button>
+        <button type="button" data-secondary="" onClick={handleDone}>Done</button>
+        <button type="button" data-save-encounter="" disabled={!drafts.length || loading} onClick={saveEncounter}>
+          {loading ? 'Saving…' : `Save Encounter${drafts.length ? ` (${drafts.length})` : ''}`}
+        </button>
       </div>
     </div>
   )
