@@ -23,6 +23,22 @@ function trendLabel(entry) {
   return `${entry.trend.label} (${sign}${formatPrimaryValue(delta, entry.measure)}${unit})`
 }
 
+function interpretationMeta(text, index) {
+  if (text.startsWith('Current priority signal')) {
+    return { label: 'Priority Signal', tone: 'priority' }
+  }
+  if (text.startsWith('ISNCSCI prognosis')) {
+    return { label: 'ISNCSCI Prognosis', tone: 'neuro' }
+  }
+  if (text.includes('improved') || text.includes('Repeat data')) {
+    return { label: 'Trend Context', tone: 'trend' }
+  }
+  if (text.includes('not currently flagging')) {
+    return { label: 'Clinical Signal', tone: 'steady' }
+  }
+  return { label: index === 0 ? 'Overview' : 'Clinical Note', tone: 'overview' }
+}
+
 export default function SummaryTab({ patient, assessments, onDeleteAssessment, onDeletePatient }) {
   const summary = buildPatientSummary(patient, assessments)
   const mcidContext = patient.diagnosis ? getMCIDContext(patient.diagnosis) : null
@@ -36,6 +52,7 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
     [summary.groups, activeMeasureId],
   )
   const todayRows = buildTodayAssessmentRows(patient, assessments)
+  const isncsciTodayRows = todayRows.find(row => row.measureId === 'ISNCSCI')?.isncsciRows ?? []
 
   return (
     <section className="summary-dashboard">
@@ -66,22 +83,30 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
         <div className="summary-card insight-card">
           <h3>Clinical Interpretation</h3>
           <div className="interpretation-list">
-            {summary.interpretation.map((text, index) => <p key={index}>{text}</p>)}
+            {summary.interpretation.map((text, index) => {
+              const meta = interpretationMeta(text, index)
+              return (
+                <article key={index} data-tone={meta.tone}>
+                  <span>{meta.label}</span>
+                  <p>{text}</p>
+                </article>
+              )
+            })}
           </div>
         </div>
 
         <div className="summary-card signal-card">
           <h3>Current Clinical Signals</h3>
-          <ClinicalSignals flags={summary.flags} />
+          <ClinicalSignals flags={summary.flags} onSelectMeasure={setSelectedMeasureId} />
         </div>
 
         <div className="summary-card latest-card">
           <h3>Latest Recorded Measures</h3>
-          <LatestMeasures entries={summary.entries} />
+          <LatestMeasures entries={summary.entries} onSelectMeasure={setSelectedMeasureId} />
         </div>
       </div>
 
-      <TodayAssessmentTable rows={todayRows} />
+      <TodayAssessmentTable rows={todayRows} isncsciRows={isncsciTodayRows} />
 
       <div className="summary-card assessment-history">
         <h3>Assessment History</h3>
@@ -204,7 +229,7 @@ function DomainCard({ domain }) {
   )
 }
 
-function TodayAssessmentTable({ rows }) {
+function TodayAssessmentTable({ rows, isncsciRows }) {
   const [copied, setCopied] = useState(false)
 
   async function copyRows() {
@@ -213,12 +238,14 @@ function TodayAssessmentTable({ rows }) {
       'Today\'s Assessment',
       headers.join('\t'),
       ...rows.map(row => [row.measure, row.score, row.interpretation, row.change].join('\t')),
+      ...(isncsciRows.length ? ['', 'ISNCSCI Summary', ...isncsciRows.map(([label, value]) => `${label}\t${value}`)] : []),
     ].join('\n')
     const html = `
       <table style="width:100%;border-collapse:collapse;font-family:Inter,Arial,sans-serif;font-size:13px">
         <thead><tr>${headers.map(h => `<th style="padding:6px 10px;border:1px solid #c8c5be;text-align:left;background:#f9f8f6">${h}</th>`).join('')}</tr></thead>
         <tbody>${rows.map(row => `<tr><td style="padding:6px 10px;border:1px solid #c8c5be">${row.measure}</td><td style="padding:6px 10px;border:1px solid #c8c5be">${row.score}</td><td style="padding:6px 10px;border:1px solid #c8c5be">${row.interpretation}</td><td style="padding:6px 10px;border:1px solid #c8c5be">${row.change}</td></tr>`).join('')}</tbody>
       </table>
+      ${isncsciRows.length ? `<div style="margin-top:16px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280">ISNCSCI Summary</div><table style="width:100%;border-collapse:collapse;font-family:Inter,Arial,sans-serif;font-size:13px">${isncsciRows.map(([label, value]) => `<tr><td style="padding:6px 10px;border:1px solid #c8c5be;font-weight:700;background:#f9f8f6">${label}</td><td style="padding:6px 10px;border:1px solid #c8c5be">${value}</td></tr>`).join('')}</table>` : ''}
     `
     if (window.ClipboardItem) {
       await navigator.clipboard.write([
@@ -262,11 +289,26 @@ function TodayAssessmentTable({ rows }) {
           )}
         </tbody>
       </table>
+      {isncsciRows.length > 0 && (
+        <div className="isncsci-summary-table">
+          <h4>ISNCSCI Summary</h4>
+          <table className="today-summary-table">
+            <tbody>
+              {isncsciRows.map(([label, value]) => (
+                <tr key={label}>
+                  <td>{label}</td>
+                  <td>{value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
 
-function ClinicalSignals({ flags }) {
+function ClinicalSignals({ flags, onSelectMeasure }) {
   if (!flags.length) {
     return <p className="empty-hint">No amber or red clinical signals in the latest recorded measures.</p>
   }
@@ -274,17 +316,17 @@ function ClinicalSignals({ flags }) {
   return (
     <div className="signal-list">
       {flags.map(flag => (
-        <div key={`${flag.title}-${flag.text}`} data-tone={toneClass(flag.tone)}>
+        <button type="button" key={`${flag.title}-${flag.text}`} data-tone={toneClass(flag.tone)} onClick={() => onSelectMeasure?.(flag.title)}>
           <strong>{flag.title}</strong>
           <span>{flag.value}</span>
           <p>{flag.text}</p>
-        </div>
+        </button>
       ))}
     </div>
   )
 }
 
-function LatestMeasures({ entries }) {
+function LatestMeasures({ entries, onSelectMeasure }) {
   if (!entries.length) {
     return <p className="empty-hint">No measures recorded yet.</p>
   }
@@ -292,11 +334,11 @@ function LatestMeasures({ entries }) {
   return (
     <div className="latest-list">
       {entries.slice(0, 8).map(entry => (
-        <div key={entry.measureId}>
+        <button type="button" key={entry.measureId} onClick={() => onSelectMeasure?.(entry.measureId)}>
           <strong>{entry.measureId}</strong>
           <span>{entry.valueLabel}</span>
           <small>{fmtDate(entry.latest.created_at)}</small>
-        </div>
+        </button>
       ))}
     </div>
   )

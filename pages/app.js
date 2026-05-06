@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { BarChart3, ChevronDown, ClipboardList, LayoutDashboard, Plus, Settings, Users } from 'lucide-react'
+import { ChevronDown, ClipboardList, LayoutDashboard, Plus, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
@@ -340,14 +340,15 @@ export default function App() {
           )}
 
           {view === 'patients' ? (
-            <div className="patient-directory-card">
-              <PatientList
-                patients={patients}
-                selectedId={selectedPatient?.id ?? null}
-                onSelect={handlePatientSelect}
-                onNew={() => setShowNewPatient(true)}
-              />
-            </div>
+            <PatientsWorkspace
+              patients={patients}
+              selectedPatient={selectedPatient}
+              selectedAssessments={assessments}
+              onSelect={handlePatientSelect}
+              onNew={() => setShowNewPatient(true)}
+              onNewAssessment={() => selectedPatient ? requestViewChange('assessment') : setShowNewPatient(true)}
+              onDashboard={() => selectedPatient ? requestViewChange('summary') : null}
+            />
           ) : selectedPatient ? (
             <>
               {view === 'summary' && (
@@ -399,7 +400,7 @@ function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, 
 
   return (
     <aside className="app-sidebar">
-      <LogoWordmark className="app-sidebar__logo" size="lg" />
+      <LogoWordmark className="app-sidebar__logo" size="md" />
       <nav className="app-nav" aria-label="Dashboard navigation">
         <button type="button" data-active={activeView === 'summary' ? '' : undefined} onClick={onDashboard}>
           <LayoutDashboard size={21} /> Dashboard
@@ -409,12 +410,6 @@ function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, 
         </button>
         <button type="button" data-active={activeView === 'assessment' ? '' : undefined} onClick={onAssessment}>
           <ClipboardList size={21} /> Assessments
-        </button>
-        <button type="button">
-          <BarChart3 size={21} /> Analytics
-        </button>
-        <button type="button" onClick={onProfile}>
-          <Settings size={21} /> Settings
         </button>
       </nav>
       <div className="app-sidebar__bottom">
@@ -428,6 +423,63 @@ function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, 
         <button type="button" className="sidebar-signout" onClick={onSignOut}>Sign out</button>
       </div>
     </aside>
+  )
+}
+
+function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onSelect, onNew, onNewAssessment, onDashboard }) {
+  const latestAssessment = selectedAssessments?.[0] ?? null
+  const measureCount = new Set((selectedAssessments ?? []).map(a => a.measure)).size
+  const latestDate = latestAssessment?.created_at
+    ? new Date(latestAssessment.created_at).toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' })
+    : 'No assessments'
+
+  return (
+    <div className="patients-workspace">
+      <div className="patient-directory-card">
+        <PatientList
+          patients={patients}
+          selectedId={selectedPatient?.id ?? null}
+          onSelect={onSelect}
+          onNew={onNew}
+        />
+      </div>
+
+      <section className="patient-workspace-panel">
+        {selectedPatient ? (
+          <>
+            <div>
+              <span className="section-label">Selected Patient</span>
+              <h2>{selectedPatient.initials}</h2>
+              <p>{selectedPatient.diagnosis || 'Diagnosis not recorded'}</p>
+            </div>
+            <div className="patient-workspace-stats">
+              <div><strong>{selectedAssessments.length}</strong><span>Total assessments</span></div>
+              <div><strong>{measureCount}</strong><span>Measure types</span></div>
+              <div><strong>{latestDate}</strong><span>Latest assessment</span></div>
+            </div>
+            <div className="patient-workspace-actions">
+              <button type="button" onClick={onNewAssessment}>New Assessment</button>
+              <button type="button" onClick={onDashboard}>Open Dashboard</button>
+            </div>
+            <div className="patient-workspace-recent">
+              <h3>Recent Measures</h3>
+              {selectedAssessments.slice(0, 6).length ? selectedAssessments.slice(0, 6).map(assessment => (
+                <div key={assessment.id}>
+                  <strong>{assessment.measure}</strong>
+                  <span>{assessment.results?.interpretation ?? 'Saved assessment'}</span>
+                </div>
+              )) : <p>No assessments recorded yet.</p>}
+            </div>
+          </>
+        ) : (
+          <div className="patient-workspace-empty">
+            <h2>Select or add a patient</h2>
+            <p>Choose a patient to see recent measures, dashboard access, and assessment actions.</p>
+            <button type="button" onClick={onNew}>Add New Patient</button>
+          </div>
+        )}
+      </section>
+    </div>
   )
 }
 
@@ -1351,7 +1403,7 @@ const globalStyles = `
   .app-shell {
     min-height: 100vh;
     display: grid;
-    grid-template-columns: 270px minmax(0, 1fr);
+    grid-template-columns: 286px minmax(0, 1fr);
     background:
       radial-gradient(circle at 86% 0%, rgba(120,200,189,0.14), transparent 34%),
       linear-gradient(135deg, #f7fbff 0%, #eaf1f8 100%);
@@ -1372,8 +1424,9 @@ const globalStyles = `
 
   .app-sidebar__logo {
     margin: 0 8px 34px;
-    max-width: 228px;
-    font-size: 24px;
+    max-width: 238px;
+    overflow: hidden;
+    font-size: 23px !important;
     gap: 0.16em;
   }
 
@@ -1921,8 +1974,9 @@ const globalStyles = `
 
   .patient-summary-card__head p {
     margin-top: 4px;
-    color: var(--color-muted);
-    font-size: 14px;
+    color: var(--color-ink);
+    font-size: 22px;
+    font-weight: 800;
   }
 
   .patient-summary-card__head button:disabled {
@@ -2011,13 +2065,74 @@ const globalStyles = `
     grid-template-columns: 1.35fr 1fr 1fr;
   }
 
+  .insight-card {
+    position: relative;
+    overflow: hidden;
+    border-top: 4px solid rgba(23,61,104,0.78);
+    background:
+      linear-gradient(135deg, rgba(232,241,251,0.9), rgba(255,255,255,0.74) 46%, rgba(228,246,243,0.54)),
+      rgba(255,255,255,0.78);
+  }
+
+  .insight-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(23,61,104,0.06), transparent 42%);
+  }
+
+  .insight-card > * {
+    position: relative;
+  }
+
   .interpretation-list {
     display: grid;
     gap: 12px;
     margin-top: 16px;
   }
 
+  .interpretation-list article {
+    padding: 14px 16px;
+    border: 1px solid rgba(216,225,234,0.94);
+    border-left: 4px solid var(--color-primary);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.72);
+    box-shadow: 0 8px 20px rgba(21,34,56,0.05);
+  }
+
+  .interpretation-list article[data-tone="priority"] {
+    border-left-color: #b5451b;
+    background: linear-gradient(90deg, rgba(253,240,236,0.92), rgba(255,255,255,0.76));
+  }
+
+  .interpretation-list article[data-tone="trend"] {
+    border-left-color: var(--color-secondary);
+    background: linear-gradient(90deg, rgba(228,246,243,0.9), rgba(255,255,255,0.76));
+  }
+
+  .interpretation-list article[data-tone="neuro"] {
+    border-left-color: var(--color-violet);
+    background: linear-gradient(90deg, rgba(244,242,255,0.92), rgba(255,255,255,0.76));
+  }
+
+  .interpretation-list article[data-tone="steady"] {
+    border-left-color: #3f7b5f;
+    background: linear-gradient(90deg, rgba(236,247,241,0.9), rgba(255,255,255,0.76));
+  }
+
+  .interpretation-list span {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--color-subtle);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+
   .interpretation-list p {
+    margin: 0;
     color: var(--color-muted);
     font-size: 14px;
     line-height: 1.6;
@@ -2032,19 +2147,38 @@ const globalStyles = `
   }
 
   .signal-list div,
-  .latest-list div {
+  .signal-list button,
+  .latest-list div,
+  .latest-list button {
     padding: 12px;
     border: 1px solid var(--color-border);
     border-radius: 10px;
     background: rgba(247,250,252,0.82);
   }
 
-  .signal-list div {
+  .signal-list button,
+  .latest-list button {
+    width: 100%;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+  }
+
+  .signal-list button:hover,
+  .latest-list button:hover {
+    border-color: rgba(23,61,104,0.3);
+    background: rgba(232,241,251,0.7);
+  }
+
+  .signal-list div,
+  .signal-list button {
     border-left: 4px solid var(--color-border);
   }
 
-  .signal-list div[data-tone="amber"] { border-left-color: var(--color-coral); }
-  .signal-list div[data-tone="red"] { border-left-color: #b5451b; }
+  .signal-list div[data-tone="amber"],
+  .signal-list button[data-tone="amber"] { border-left-color: var(--color-coral); }
+  .signal-list div[data-tone="red"],
+  .signal-list button[data-tone="red"] { border-left-color: #b5451b; }
 
   .signal-list strong,
   .latest-list strong {
@@ -2197,12 +2331,137 @@ const globalStyles = `
     font-weight: 800;
   }
 
+  .isncsci-summary-table {
+    margin-top: 18px;
+  }
+
+  .isncsci-summary-table h4 {
+    color: var(--color-ink);
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .patients-workspace {
+    display: grid;
+    grid-template-columns: minmax(360px, 520px) minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+  }
+
+  .patients-workspace .patient-directory-card > .patient-card {
+    max-width: none;
+  }
+
+  .patient-workspace-panel {
+    min-height: 360px;
+    padding: 24px;
+    border: 1px solid rgba(216,225,234,0.9);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.72);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(16px);
+  }
+
+  .patient-workspace-panel h2 {
+    color: var(--color-ink);
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .patient-workspace-panel p {
+    margin-top: 8px;
+    color: var(--color-muted);
+    font-size: 14px;
+  }
+
+  .patient-workspace-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .patient-workspace-stats div,
+  .patient-workspace-recent div {
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: rgba(247,250,252,0.82);
+  }
+
+  .patient-workspace-stats strong {
+    display: block;
+    color: var(--color-ink);
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .patient-workspace-stats span,
+  .patient-workspace-recent span {
+    display: block;
+    margin-top: 4px;
+    color: var(--color-muted);
+    font-size: 12px;
+  }
+
+  .patient-workspace-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .patient-workspace-actions button,
+  .patient-workspace-empty button {
+    min-height: 38px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--color-primary);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 800;
+  }
+
+  .patient-workspace-actions button + button {
+    border: 1px solid var(--color-border);
+    background: rgba(255,255,255,0.8);
+    color: var(--color-primary);
+  }
+
+  .patient-workspace-recent {
+    display: grid;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .patient-workspace-recent h3 {
+    color: var(--color-ink);
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .patient-workspace-recent strong {
+    color: var(--color-ink);
+    font-size: 13px;
+  }
+
+  .patient-workspace-empty {
+    min-height: 300px;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    text-align: center;
+  }
+
   .patient-directory-card > .patient-card {
     max-width: 520px;
   }
 
   [data-measure-panel] {
-    max-width: 960px;
+    width: min(100%, 1320px);
+    max-width: none;
     margin: 0 auto;
     border-radius: 18px;
     background: rgba(255,255,255,0.72);
@@ -2242,12 +2501,12 @@ const globalStyles = `
   }
 
   [data-measure-layout] {
-    min-height: 440px;
+    min-height: 620px;
     border-top: 1px solid rgba(216,225,234,0.74);
   }
 
   [data-measure-nav] {
-    width: 210px;
+    width: 250px;
     background: rgba(239,244,249,0.74);
   }
 
@@ -2261,10 +2520,11 @@ const globalStyles = `
   }
 
   [data-measure-form] {
-    padding: 26px 32px;
+    padding: 32px;
   }
 
   [data-measure-footer] {
+    gap: 10px;
     background: rgba(247,250,252,0.74);
   }
 
@@ -2291,7 +2551,8 @@ const globalStyles = `
       grid-template-columns: repeat(2, 1fr);
     }
     .summary-grid--real,
-    .domain-grid {
+    .domain-grid,
+    .patients-workspace {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .patient-summary-card__body {
@@ -2341,6 +2602,7 @@ const globalStyles = `
     .summary-grid,
     .summary-grid--real,
     .domain-grid,
+    .patients-workspace,
     [data-measure-layout] {
       grid-template-columns: 1fr;
       display: grid;
