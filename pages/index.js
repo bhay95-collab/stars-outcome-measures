@@ -61,6 +61,7 @@ const MCID_STANDARD = 0.10
 const MCID_STROKE = 0.06
 const PATIENT_AGE = 68
 const PREV_TIME = 12.9
+const CANONICAL_HOME = 'https://www.rehabmetricsiq.com/'
 
 function getClassificationColor(s) {
   if (s < 0.4) return 'var(--danger)'
@@ -99,6 +100,12 @@ export default function Landing() {
       <Head>
         <title>RehabMetrics IQ | Clinical Outcome Measures</title>
         <meta name="description" content="Clinical outcome measures for physiotherapists. Automated scoring, MCID tracking, and clinical-grade reports." />
+        <meta name="robots" content="index,follow" />
+        <link rel="canonical" href={CANONICAL_HOME} />
+        <meta property="og:url" content={CANONICAL_HOME} />
+        <meta property="og:title" content="RehabMetrics IQ | Clinical Outcome Measures" />
+        <meta property="og:description" content="Clinical outcome measures for physiotherapists. Automated scoring, MCID tracking, and clinical-grade reports." />
+        <meta property="og:type" content="website" />
         <link rel="icon" href="/SquareLogo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

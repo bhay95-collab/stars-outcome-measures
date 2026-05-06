@@ -487,6 +487,7 @@ function AppHead() {
   return (
     <Head>
       <title>RehabMetrics IQ</title>
+      <meta name="robots" content="noindex,nofollow" />
       <link rel="icon" href="/SquareLogo.png" />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
