@@ -1,127 +1,82 @@
-import { MEASURES, getMCIDStatus, getMCIDContext } from '../lib/clinical'
+import { getMCIDContext } from '../lib/clinical'
+import {
+  buildPatientSummary,
+  fmtDate,
+  formatPrimaryValue,
+  formatResultValue,
+  toFiniteNumber,
+} from '../lib/clinical/patientSummary'
 
-function fmtDate(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-AU', {
-    day: '2-digit', month: 'short', year: 'numeric',
-  })
+function toneClass(tone) {
+  return ['green', 'amber', 'red'].includes(tone) ? tone : 'grey'
 }
 
-function groupByMeasure(assessments) {
-  const groups = {}
-  for (const a of assessments) {
-    if (!groups[a.measure]) groups[a.measure] = []
-    groups[a.measure].push(a)
-  }
-  return groups
+function trendLabel(entry) {
+  if (!entry.previous) return 'Baseline'
+  if (!entry.trend || entry.trend.direction === 'stable') return 'Stable'
+  const unit = entry.measure.primaryUnit ? ` ${entry.measure.primaryUnit}` : ''
+  const delta = toFiniteNumber(entry.trend.delta)
+  const sign = delta > 0 ? '+' : ''
+  return `${entry.trend.label} (${sign}${formatPrimaryValue(delta, entry.measure)}${unit})`
 }
 
-function toFiniteNumber(value) {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : null
-  }
-  return null
-}
-
-function formatPrimaryValue(value, measure) {
-  if (value == null) return '—'
-
-  const numericValue = toFiniteNumber(value)
-  if (numericValue == null) return String(value)
-
-  if (measure?.primaryUnit === 'sec' || measure?.primaryUnit === 'm/s') return numericValue.toFixed(2)
-  if (Number.isInteger(numericValue)) return String(numericValue)
-  return numericValue.toFixed(1)
-}
-
-function formatFixed(value, digits = 2) {
-  const numericValue = toFiniteNumber(value)
-  return numericValue == null ? String(value ?? '—') : numericValue.toFixed(digits)
-}
-
-function getLatestAssessments(groups) {
-  return Object.entries(groups)
-    .map(([measureId, list]) => ({ measureId, assessment: list[0] }))
-    .filter(item => item.assessment?.results?.primaryValue != null)
-}
-
-export default function SummaryTab({ patient, assessments, onDeleteAssessment }) {
-  const groups = groupByMeasure(assessments)
-  const activeMeasureIds = Object.keys(MEASURES).filter(id => groups[id]?.length > 0)
+export default function SummaryTab({ patient, assessments, onDeleteAssessment, onDeletePatient }) {
+  const summary = buildPatientSummary(patient, assessments)
   const mcidContext = patient.diagnosis ? getMCIDContext(patient.diagnosis) : null
-
-  const latestAssessments = getLatestAssessments(groups)
 
   return (
     <section className="summary-dashboard">
       <div className="summary-card summary-card--wide">
         <div className="summary-card__head">
-          <h3>Recovery Trajectory</h3>
-          <ChartLegend />
+          <div>
+            <h3>Performance Across Domains</h3>
+            <p>Normalised from recorded outcome measures. No benchmark or chart is shown unless the underlying measure exists.</p>
+          </div>
         </div>
-        <RecoveryTrajectory />
+        <DomainTrajectory timeline={summary.timeline} />
       </div>
 
-      <div className="summary-grid">
-        <div className="summary-card outcome-card">
-          <h3>Functional Outcomes</h3>
-          <OutcomeBars latestAssessments={latestAssessments} />
+      <div className="domain-grid">
+        {summary.domains.map(domain => (
+          <DomainCard key={domain.id} domain={domain} />
+        ))}
+      </div>
+
+      <div className="summary-grid summary-grid--real">
+        <div className="summary-card insight-card">
+          <h3>Clinical Interpretation</h3>
+          <div className="interpretation-list">
+            {summary.interpretation.map((text, index) => <p key={index}>{text}</p>)}
+          </div>
         </div>
-        <div className="summary-card activity-card">
-          <h3>Daily Activity</h3>
-          <ActivityDonut />
+
+        <div className="summary-card signal-card">
+          <h3>Current Clinical Signals</h3>
+          <ClinicalSignals flags={summary.flags} />
         </div>
-        <div className="summary-card pain-card">
-          <h3>Pain & Discomfort Trend</h3>
-          <PainTrend />
-        </div>
-        <div className="summary-card detail-card">
-          <h3>Key Assessment Details</h3>
-          <KeyDetails latestAssessments={latestAssessments} />
+
+        <div className="summary-card latest-card">
+          <h3>Latest Recorded Measures</h3>
+          <LatestMeasures entries={summary.entries} />
         </div>
       </div>
 
       <div className="summary-card assessment-history">
-        <h3>Functional Outcomes</h3>
-        {activeMeasureIds.length === 0 && (
+        <h3>Assessment History</h3>
+        {summary.entries.length === 0 && (
           <p className="empty-hint">
             Use &ldquo;New Assessment&rdquo; above to record the first assessment for {patient.initials}.
           </p>
         )}
-        {activeMeasureIds.map(measureId => {
-          const m = MEASURES[measureId]
-          const list = groups[measureId]
-          const latest = list[0]
-          const previous = list[1] ?? null
-
-          const mcid = m.mcidKey && latest && previous
-            ? getMCIDStatus(m.mcidKey, latest.results.primaryValue, previous.results.primaryValue)
-            : null
-
-          return (
-            <div key={measureId}>
-              <AssessmentCard
-                measure={m}
-                assessment={latest}
-                mcid={mcid}
-                label="Latest"
-                onDelete={onDeleteAssessment}
-              />
-              {previous && (
-                <AssessmentCard
-                  measure={m}
-                  assessment={previous}
-                  mcid={null}
-                  label="Previous"
-                  dim
-                  onDelete={onDeleteAssessment}
-                />
-              )}
-            </div>
-          )
-        })}
+        <div className="history-list">
+          {summary.entries.map(entry => (
+            <AssessmentCard
+              key={entry.measureId}
+              entry={entry}
+              onDelete={onDeleteAssessment}
+            />
+          ))}
+        </div>
       </div>
 
       {mcidContext && (
@@ -129,213 +84,174 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment })
           <strong>MCID reference - {patient.diagnosis}:</strong> {mcidContext}
         </div>
       )}
+
+      {patient?.id && (
+        <div className="summary-card patient-management-card">
+          <div>
+            <h3>Patient Management</h3>
+            <p>Administrative actions are kept separate from the clinical overview.</p>
+          </div>
+          <button type="button" data-delete-btn="" onClick={() => onDeletePatient(patient.id)}>
+            Delete Patient
+          </button>
+        </div>
+      )}
     </section>
   )
 }
 
-function ChartLegend() {
-  return (
-    <div className="chart-legend">
-      <span data-tone="progress">Progress</span>
-      <span data-tone="coral">Corsry.</span>
-      <span data-tone="mist">Mist</span>
-    </div>
-  )
-}
+function DomainTrajectory({ timeline }) {
+  if (!timeline.length) {
+    return (
+      <div className="empty-chart">
+        Record a numeric outcome measure to generate a longitudinal performance view.
+      </div>
+    )
+  }
 
-function RecoveryTrajectory() {
+  const W = 760
+  const H = 220
+  const pad = { left: 46, right: 24, top: 20, bottom: 42 }
+  const innerW = W - pad.left - pad.right
+  const innerH = H - pad.top - pad.bottom
+  const toX = index => timeline.length === 1
+    ? pad.left + innerW / 2
+    : pad.left + (index / (timeline.length - 1)) * innerW
+  const toY = score => pad.top + innerH - (score / 100) * innerH
+  const points = timeline.map((point, index) => `${toX(index)},${toY(point.score)}`).join(' ')
+
   return (
-    <svg className="trajectory-chart" viewBox="0 0 760 210" role="img" aria-label="Recovery trajectory chart">
-      {[0, 25, 50, 75, 100].map((tick, index) => (
+    <svg className="trajectory-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Normalised patient performance over time">
+      {[0, 25, 50, 75, 100].map(tick => (
         <g key={tick}>
-          <line x1="36" x2="738" y1={182 - index * 39} y2={182 - index * 39} />
-          <text x="8" y={186 - index * 39}>{tick}</text>
+          <line x1={pad.left} x2={W - pad.right} y1={toY(tick)} y2={toY(tick)} />
+          <text x="10" y={toY(tick) + 4}>{tick}</text>
         </g>
       ))}
-      <defs>
-        <linearGradient id="progressFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#78c8bd" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#78c8bd" stopOpacity="0.08" />
-        </linearGradient>
-        <linearGradient id="coralFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#ee8a70" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#ee8a70" stopOpacity="0.06" />
-        </linearGradient>
-        <linearGradient id="mistFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#8b82c6" stopOpacity="0.42" />
-          <stop offset="100%" stopColor="#8b82c6" stopOpacity="0.05" />
-        </linearGradient>
-      </defs>
-      <path d="M40 182 L175 104 L306 76 L438 70 L571 38 L735 16 L735 182 Z" fill="url(#progressFill)" />
-      <path d="M40 182 L175 124 L306 100 L438 92 L571 58 L735 42 L735 182 Z" fill="url(#coralFill)" />
-      <path d="M40 182 L175 146 L306 128 L438 120 L571 82 L735 72 L735 182 Z" fill="url(#mistFill)" />
-      <path d="M40 182 L175 104 L306 76 L438 70 L571 38 L735 16" data-line="progress" />
-      <path d="M40 182 L175 124 L306 100 L438 92 L571 58 L735 42" data-line="coral" />
-      <path d="M40 182 L175 146 L306 128 L438 120 L571 82 L735 72" data-line="mist" />
-      {[40, 175, 306, 438, 571, 735].map((x, index) => <text key={x} x={x - 12} y="204">Time</text>)}
+      <path d={`M${pad.left} ${toY(75)} L${W - pad.right} ${toY(75)} L${W - pad.right} ${toY(100)} L${pad.left} ${toY(100)} Z`} data-zone="good" />
+      {timeline.length > 1 && <polyline points={points} data-line="progress" />}
+      {timeline.map((point, index) => (
+        <g key={`${point.measureId}-${point.date}-${index}`}>
+          <circle cx={toX(index)} cy={toY(point.score)} r="5" />
+          <text x={toX(index)} y={toY(point.score) - 11} textAnchor="middle">{point.measureId}</text>
+          <text x={toX(index)} y={H - 16} textAnchor="middle">{fmtDate(point.date).replace(' 20', ' ')}</text>
+        </g>
+      ))}
+      <text x={pad.left} y={H - 2}>0-100 normalised score, oriented so higher is better</text>
     </svg>
   )
 }
 
-function OutcomeBars({ latestAssessments }) {
-  const fallback = [
-    ['TUG', 42, 33],
-    ['BBS', 58, 45],
-    ['6MWT', 35, 53],
-    ['FGA', 63, 55],
-    ['IOT', 46, 41],
-  ]
-  const values = latestAssessments.length
-    ? latestAssessments.slice(0, 5).map(({ measureId, assessment }, index) => {
-        const value = Math.max(18, Math.min(68, Number(assessment.results.primaryValue) || fallback[index]?.[1] || 42))
-        return [measureId, value, Math.max(16, value - 8)]
-      })
-    : fallback
-
+function DomainCard({ domain }) {
+  const assessed = domain.entries.length > 0
   return (
-    <div className="bar-chart" aria-label="Latest functional outcomes">
-      <div className="bar-legend"><span>Latest</span><span>Historical Avg.</span></div>
-      <div className="bar-stage">
-        {values.map(([label, latest, historical]) => (
-          <div className="bar-pair" key={label}>
-            <i style={{ height: `${latest}%` }} />
-            <b style={{ height: `${historical}%` }} />
-            <small>{label}</small>
-          </div>
-        ))}
+    <article className="summary-card domain-card" data-tone={toneClass(domain.tone)}>
+      <div className="domain-card__top">
+        <h3>{domain.label}</h3>
+        <span>{assessed ? `${domain.entries.length} measure${domain.entries.length === 1 ? '' : 's'}` : 'No data'}</span>
       </div>
-    </div>
+      <strong>{domain.score == null ? '-' : `${domain.score}/100`}</strong>
+      <p>{assessed ? domain.status : 'Not assessed with the currently recorded measures.'}</p>
+      <small>{assessed ? domain.trend : 'Record a relevant measure to populate this domain.'}</small>
+    </article>
   )
 }
 
-function ActivityDonut() {
-  return (
-    <div className="activity-mix">
-      <div className="donut" />
-      <div className="activity-lines">
-        <strong>59% <span>Week Ahorcl</span></strong>
-        <strong>65% <span>Daily Activity</span></strong>
-      </div>
-    </div>
-  )
-}
-
-function PainTrend() {
-  return (
-    <svg className="pain-trend" viewBox="0 0 250 170" role="img" aria-label="Pain and discomfort trend">
-      {[1, 3, 5, 7, 9].map((tick, index) => (
-        <g key={tick}>
-          <line x1="20" x2="232" y1={148 - index * 29} y2={148 - index * 29} />
-          <text x="4" y={152 - index * 29}>{tick}</text>
-        </g>
-      ))}
-      <path d="M24 100 C42 134 54 70 70 64 C92 56 95 112 118 116 C142 120 151 92 172 110 C194 128 206 142 228 136 L228 154 L24 154 Z" />
-      <path d="M24 100 C42 134 54 70 70 64 C92 56 95 112 118 116 C142 120 151 92 172 110 C194 128 206 142 228 136" data-line="" />
-      <text x="20" y="166">Pain 1-10</text>
-      <text x="166" y="166">Last Month</text>
-    </svg>
-  )
-}
-
-function KeyDetails({ latestAssessments }) {
-  const fallback = [
-    ['ROM Flexion', '75', '103.00'],
-    ['Strength (Grip)', '30.00', '100.00'],
-    ['Balance Score', '60', '202.00'],
-    ['Balance Score', '72.90', '149.33'],
-  ]
-  const rows = latestAssessments.length
-    ? latestAssessments.slice(0, 4).map(({ measureId, assessment }) => {
-        const primaryValue = assessment.results.primaryValue
-        const numericValue = toFiniteNumber(primaryValue)
-        return [
-          MEASURES[measureId]?.name ?? measureId,
-          formatPrimaryValue(primaryValue, MEASURES[measureId]),
-          numericValue == null ? '—' : `${Math.max(35, Math.round(numericValue * 1.4))}.00`,
-        ]
-      })
-    : fallback
+function ClinicalSignals({ flags }) {
+  if (!flags.length) {
+    return <p className="empty-hint">No amber or red clinical signals in the latest recorded measures.</p>
+  }
 
   return (
-    <div className="detail-list">
-      {rows.map(([label, latest, average], index) => (
-        <div key={`${label}-${index}`}>
-          <strong>{label}</strong>
-          <span>{latest}</span>
-          <small>Latest Avg.</small>
-          <em>{average}</em>
-          <i>{index % 2 === 0 ? '↑' : '↓'}</i>
+    <div className="signal-list">
+      {flags.map(flag => (
+        <div key={`${flag.title}-${flag.text}`} data-tone={toneClass(flag.tone)}>
+          <strong>{flag.title}</strong>
+          <span>{flag.value}</span>
+          <p>{flag.text}</p>
         </div>
       ))}
     </div>
   )
 }
 
-function AssessmentCard({ measure, assessment, mcid, label, dim, onDelete }) {
-  const r = assessment.results
-  const classColor = r.meta?.classColor ?? 'grey'
-  const mcidState = mcid
-    ? mcid.meetsThreshold ? 'met' : mcid.improved ? 'near' : 'decline'
-    : null
+function LatestMeasures({ entries }) {
+  if (!entries.length) {
+    return <p className="empty-hint">No measures recorded yet.</p>
+  }
 
   return (
-    <div className="result-box" data-dim={dim ? '' : undefined}>
+    <div className="latest-list">
+      {entries.slice(0, 8).map(entry => (
+        <div key={entry.measureId}>
+          <strong>{entry.measureId}</strong>
+          <span>{entry.valueLabel}</span>
+          <small>{fmtDate(entry.latest.created_at)}</small>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function AssessmentCard({ entry, onDelete }) {
+  const { measure, latest, previous, mcid } = entry
+  const result = latest.results
+  const classColor = toneClass(entry.tone)
+
+  return (
+    <div className="result-box" data-tone={classColor}>
       <div className="result-row">
-        <span className="result-label">{measure.name} · {label}</span>
+        <span className="result-label">{measure.name}</span>
         <div data-assessment-meta="">
-          <span className="na-text">{fmtDate(assessment.created_at)}</span>
+          <span className="na-text">{fmtDate(latest.created_at)}</span>
           <button
             type="button"
             data-delete-btn=""
-            onClick={() => onDelete(assessment.id)}
-            aria-label="Delete assessment"
-          >Delete</button>
+            onClick={() => onDelete(latest.id)}
+            aria-label={`Delete ${measure.name} assessment`}
+          >
+            Delete
+          </button>
         </div>
       </div>
 
       <div className="result-row">
         <div>
-          <strong>{formatPrimaryValue(r.primaryValue, measure)}</strong>
-          {' '}<span>{measure.primaryUnit}</span>
-          {r.meta?.comfortPct != null && (
-            <>{' '}<span className="na-text">{r.meta.comfortPct}% predicted</span></>
+          <strong>{formatResultValue(result.primaryValue, measure)}</strong>
+          {result.meta?.comfortPct != null && (
+            <span className="na-text"> {result.meta.comfortPct}% predicted</span>
           )}
-          {r.meta?.pctPredicted != null && (
-            <>{' '}<span className="na-text">{r.meta.pctPredicted}% predicted</span></>
+          {result.meta?.pctPredicted != null && (
+            <span className="na-text"> {result.meta.pctPredicted}% predicted</span>
           )}
         </div>
-        <span className={`interp-chip chip-${classColor}`}>{r.interpretation}</span>
+        <span className={`interp-chip chip-${classColor}`}>{result.interpretation}</span>
       </div>
 
-      {r.meta?.fastSpeed != null && (
-        <p>Fast: {formatFixed(r.meta.fastSpeed, 2)} m/s{r.meta.fastPct != null && ` — ${r.meta.fastPct}% predicted`}</p>
-      )}
-
-      {r.meta?.depressionScore != null && (
-        <div className="result-row">
-          <span>Anxiety: <strong>{r.primaryValue}</strong>/21
-            {' '}<span className={`interp-chip chip-${classColor}`}>{r.interpretation}</span>
-          </span>
-          <span>Depression: <strong>{r.meta.depressionScore}</strong>/21
-            {r.meta.depressionColor && (
-              <>{' '}<span className={`interp-chip chip-${r.meta.depressionColor}`}>{r.meta.depressionClassification}</span></>
-            )}
-          </span>
-        </div>
-      )}
-
-      {r.meta?.leftSteps != null && (
-        <p>
-          Left: <strong>{r.meta.leftSteps}</strong> · Right: <strong>{r.primaryValue}</strong> steps
-          {r.meta.asymmetry && <span className="na-text"> — Asymmetry detected</span>}
-        </p>
-      )}
-
-      {mcid && (
-        <div data-mcid={mcidState}>
-          {mcid.improved ? '▲' : '▼'} {mcid.label}
-        </div>
-      )}
+      <div className="assessment-detail-grid">
+        <span>Domain trend: <strong>{trendLabel(entry)}</strong></span>
+        {previous && (
+          <span>Previous: <strong>{formatResultValue(previous.results?.primaryValue, measure)}</strong> on {fmtDate(previous.created_at)}</span>
+        )}
+        {mcid && (
+          <span>MCID: <strong>{mcid.label}</strong></span>
+        )}
+        {result.meta?.fastSpeed != null && (
+          <span>Fast gait speed: <strong>{formatPrimaryValue(result.meta.fastSpeed, { primaryUnit: 'm/s' })} m/s</strong></span>
+        )}
+        {result.meta?.dtc != null && (
+          <span>Dual-task cost: <strong>{result.meta.dtc}%</strong> ({result.meta.dtcInterp})</span>
+        )}
+        {result.meta?.depressionScore != null && (
+          <span>Depression: <strong>{result.meta.depressionScore}/21</strong> ({result.meta.depressionClassification})</span>
+        )}
+        {result.meta?.kLevel && (
+          <span>Functional K-level: <strong>{result.meta.kLevel}</strong></span>
+        )}
+        {result.meta?.aisGrade && (
+          <span>Neurology: <strong>{result.meta.nli} AIS {result.meta.aisGrade}</strong></span>
+        )}
+      </div>
     </div>
   )
 }

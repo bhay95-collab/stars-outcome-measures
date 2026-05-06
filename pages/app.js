@@ -11,6 +11,7 @@ import SummaryTab from '../components/SummaryTab'
 import MeasureEntry from '../components/MeasureEntry'
 import SubscriptionWall from '../components/SubscriptionWall'
 import LogoWordmark from '../components/LogoWordmark'
+import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
 
 export async function getServerSideProps() { return { props: {} } }
 
@@ -29,6 +30,7 @@ export default function App() {
   const [profileData, setProfileData] = useState({ firstName: '', lastName: '', avatarUrl: null })
   const [view, setView] = useState('summary')
   const [notification, setNotification] = useState(null)
+  const [reportLoading, setReportLoading] = useState(false)
 
   const handleAssessmentSaved = useCallback((assessment) => {
     if (assessment) setAssessments(prev => [assessment, ...prev])
@@ -51,6 +53,18 @@ export default function App() {
       setAssessments([])
     }
   }, [])
+
+  const handleExportFullReport = useCallback(async () => {
+    if (!selectedPatient || reportLoading) return
+    setReportLoading(true)
+    try {
+      await exportPatientSummaryPdf({ patient: selectedPatient, assessments })
+    } catch (error) {
+      alert(`Report export failed: ${error.message}`)
+    } finally {
+      setReportLoading(false)
+    }
+  }, [selectedPatient, assessments, reportLoading])
 
   useEffect(() => {
     let loaded = false
@@ -315,9 +329,8 @@ export default function App() {
                 <PatientHeader
                   patient={selectedPatient}
                   assessments={assessments}
-                  onViewChange={setView}
-                  activeView={view}
-                  onDeletePatient={handleDeletePatient}
+                  onViewReport={handleExportFullReport}
+                  reportLoading={reportLoading}
                 />
               )}
               {view === 'summary' ? (
@@ -325,6 +338,7 @@ export default function App() {
                   patient={selectedPatient}
                   assessments={assessments}
                   onDeleteAssessment={handleDeleteAssessment}
+                  onDeletePatient={handleDeletePatient}
                 />
               ) : (
                 <MeasureEntry
@@ -1855,6 +1869,202 @@ const globalStyles = `
     box-shadow: none;
   }
 
+  .patient-summary-card__head > div {
+    min-width: 0;
+  }
+
+  .patient-summary-card__head p {
+    margin-top: 4px;
+    color: var(--color-muted);
+    font-size: 14px;
+  }
+
+  .patient-summary-card__head button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .patient-summary-card__body--real {
+    grid-template-columns: minmax(190px, 1.5fr) repeat(3, minmax(150px, 1fr));
+    gap: 18px;
+  }
+
+  .patient-summary-card__body--real .patient-identity,
+  .patient-summary-card__body--real .summary-block {
+    min-height: 88px;
+    padding: 16px;
+    border: 1px solid rgba(216,225,234,0.85);
+    border-radius: 12px;
+    background: rgba(247,250,252,0.72);
+  }
+
+  .domain-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .domain-card {
+    min-height: 184px;
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    border-top: 4px solid var(--color-border);
+  }
+
+  .domain-card[data-tone="green"] { border-top-color: var(--color-secondary); }
+  .domain-card[data-tone="amber"] { border-top-color: var(--color-coral); }
+  .domain-card[data-tone="red"] { border-top-color: #b5451b; }
+
+  .domain-card__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .domain-card__top span,
+  .domain-card small {
+    color: var(--color-muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .domain-card strong {
+    color: var(--color-ink);
+    font-size: 28px;
+    font-weight: 800;
+  }
+
+  .domain-card p {
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .summary-card__head p {
+    margin-top: 4px;
+    color: var(--color-muted);
+    font-size: 13px;
+  }
+
+  .trajectory-chart path[data-zone="good"] {
+    fill: rgba(120,200,189,0.12);
+  }
+
+  .trajectory-chart circle {
+    fill: var(--color-primary);
+    stroke: #fff;
+    stroke-width: 2;
+  }
+
+  .summary-grid--real {
+    grid-template-columns: 1.35fr 1fr 1fr;
+  }
+
+  .interpretation-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .interpretation-list p {
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .signal-list,
+  .latest-list,
+  .history-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .signal-list div,
+  .latest-list div {
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: rgba(247,250,252,0.82);
+  }
+
+  .signal-list div {
+    border-left: 4px solid var(--color-border);
+  }
+
+  .signal-list div[data-tone="amber"] { border-left-color: var(--color-coral); }
+  .signal-list div[data-tone="red"] { border-left-color: #b5451b; }
+
+  .signal-list strong,
+  .latest-list strong {
+    color: var(--color-ink);
+    font-size: 13px;
+  }
+
+  .signal-list span,
+  .latest-list span {
+    float: right;
+    color: var(--color-ink);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .signal-list p,
+  .latest-list small {
+    display: block;
+    clear: both;
+    margin-top: 6px;
+    color: var(--color-muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .assessment-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 18px;
+    margin-top: 12px;
+    color: var(--color-muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .assessment-detail-grid strong {
+    color: var(--color-ink);
+    font-size: 12px;
+  }
+
+  .result-box[data-tone="green"] { border-left: 4px solid var(--color-secondary); }
+  .result-box[data-tone="amber"] { border-left: 4px solid var(--color-coral); }
+  .result-box[data-tone="red"] { border-left: 4px solid #b5451b; }
+
+  .empty-chart {
+    min-height: 224px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+    border: 1px dashed var(--color-border);
+    border-radius: 12px;
+    color: var(--color-muted);
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .patient-management-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .patient-management-card p {
+    margin-top: 6px;
+    color: var(--color-muted);
+    font-size: 13px;
+  }
+
   .patient-directory-card > .patient-card {
     max-width: 520px;
   }
@@ -1948,8 +2158,15 @@ const globalStyles = `
     .summary-grid {
       grid-template-columns: repeat(2, 1fr);
     }
+    .summary-grid--real,
+    .domain-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
     .patient-summary-card__body {
       grid-template-columns: 130px 1fr;
+    }
+    .patient-summary-card__body--real {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .summary-divider {
       display: none;
@@ -1990,12 +2207,19 @@ const globalStyles = `
     }
     .patient-summary-card__body,
     .summary-grid,
+    .summary-grid--real,
+    .domain-grid,
     [data-measure-layout] {
       grid-template-columns: 1fr;
       display: grid;
     }
-    .patient-photo {
-      width: 100%;
+    .assessment-detail-grid,
+    .patient-summary-card__body--real {
+      grid-template-columns: 1fr;
+    }
+    .patient-management-card {
+      align-items: flex-start;
+      flex-direction: column;
     }
     [data-measure-nav] {
       width: auto;
