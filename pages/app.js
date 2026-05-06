@@ -1760,8 +1760,55 @@ const globalStyles = `
   .trajectory-chart {
     width: 100%;
     height: 224px;
-    margin-top: 10px;
+    margin-top: 6px;
     display: block;
+  }
+
+  .trend-chart-panel {
+    margin-top: 12px;
+  }
+
+  .trend-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid rgba(216,225,234,0.82);
+    border-radius: var(--radius-md);
+    background: rgba(247,250,252,0.74);
+    color: var(--color-muted);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .trend-chart-legend__title {
+    color: var(--color-ink);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .trend-chart-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+  }
+
+  .trend-chart-legend i {
+    width: 24px;
+    height: 4px;
+    border-radius: 999px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.86);
+  }
+
+  .trend-chart-legend i[data-mcid-marker] {
+    width: 13px;
+    height: 13px;
+    border: 3px solid #2d6a4f;
+    background: #fff;
+    border-radius: 50%;
   }
 
   .trajectory-chart line,
@@ -1786,11 +1833,7 @@ const globalStyles = `
   .trajectory-chart path[data-line="progress"] { stroke: var(--color-secondary); }
   .trajectory-chart path[data-line="coral"] { stroke: var(--color-coral); }
   .trajectory-chart path[data-line="mist"] { stroke: var(--color-violet); }
-  .trajectory-chart polyline[data-line="progress"] { fill: none; stroke: var(--color-secondary); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-  .trajectory-chart [data-series="1"] polyline[data-line="progress"] { stroke: var(--color-coral); }
-  .trajectory-chart [data-series="2"] polyline[data-line="progress"] { stroke: var(--color-violet); }
-  .trajectory-chart [data-series="1"] circle { fill: var(--color-coral); }
-  .trajectory-chart [data-series="2"] circle { fill: var(--color-violet); }
+  .trajectory-chart polyline[data-line="progress"] { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
   .trajectory-chart circle[data-mcid] { stroke: #2d6a4f; stroke-width: 3; }
 
   .summary-grid {
@@ -2057,7 +2100,6 @@ const globalStyles = `
   }
 
   .trajectory-chart circle {
-    fill: var(--color-primary);
     stroke: #fff;
     stroke-width: 2;
   }

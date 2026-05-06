@@ -39,6 +39,12 @@ function interpretationMeta(text, index) {
   return { label: index === 0 ? 'Overview' : 'Clinical Note', tone: 'overview' }
 }
 
+const TREND_SERIES_COLORS = ['#78c8bd', '#ee8a70', '#8b82c6', '#173d68', '#3f7b5f']
+
+function trendSeriesColor(index) {
+  return TREND_SERIES_COLORS[index % TREND_SERIES_COLORS.length]
+}
+
 export default function SummaryTab({ patient, assessments, onDeleteAssessment, onDeletePatient }) {
   const summary = buildPatientSummary(patient, assessments)
   const mcidContext = patient.diagnosis ? getMCIDContext(patient.diagnosis) : null
@@ -172,38 +178,56 @@ function MeasureTrendChart({ series, measureId }) {
     ? pad.left + innerW / 2
     : pad.left + (dates.indexOf(date) / (dates.length - 1)) * innerW
   const toY = value => pad.top + innerH - ((value - yMin) / (yMax - yMin)) * innerH
+  const legendId = `trend-legend-${measureId || 'measure'}`
 
   return (
-    <svg className="trajectory-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${measureId} trend over time`}>
-      {[0, 0.25, 0.5, 0.75, 1].map(position => {
-        const tick = yMin + (yMax - yMin) * position
-        return (
-        <g key={tick}>
-          <line x1={pad.left} x2={W - pad.right} y1={toY(tick)} y2={toY(tick)} />
-          <text x="10" y={toY(tick) + 4}>{formatPrimaryValue(tick, {})}</text>
-        </g>
-      )})}
-      {series.map((item, seriesIndex) => {
-        const linePoints = item.values.map(point => `${toX(point.date)},${toY(point.value)}`).join(' ')
-        return (
-          <g key={item.key} data-series={seriesIndex}>
-            {item.values.length > 1 && <polyline points={linePoints} data-line="progress" />}
-            {item.values.map((point, index) => {
-              const previous = index > 0 ? item.values[index - 1] : null
-              const mcid = item.mcidKey && previous ? getMCIDStatus(item.mcidKey, point.value, previous.value) : null
-              return (
-                <g key={`${item.key}-${point.date}`}>
-                  <circle cx={toX(point.date)} cy={toY(point.value)} r={mcid?.meetsThreshold ? 7 : 5} data-mcid={mcid?.meetsThreshold ? '' : undefined} />
-                  <text x={toX(point.date)} y={toY(point.value) - 12} textAnchor="middle">{formatPrimaryValue(point.value, { primaryUnit: item.unit })}</text>
-                </g>
-              )
-            })}
+    <div className="trend-chart-panel">
+      <div className="trend-chart-legend" id={legendId}>
+        <span className="trend-chart-legend__title">Legend</span>
+        {series.map((item, index) => (
+          <span key={item.key}>
+            <i style={{ backgroundColor: trendSeriesColor(index) }} />
+            {item.label}{item.unit ? ` (${item.unit})` : ''}
+          </span>
+        ))}
+        {series.some(item => item.mcidKey) && (
+          <span>
+            <i data-mcid-marker="" />
+            MCID met
+          </span>
+        )}
+      </div>
+      <svg className="trajectory-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${measureId} trend over time`} aria-describedby={legendId}>
+        {[0, 0.25, 0.5, 0.75, 1].map(position => {
+          const tick = yMin + (yMax - yMin) * position
+          return (
+          <g key={tick}>
+            <line x1={pad.left} x2={W - pad.right} y1={toY(tick)} y2={toY(tick)} />
+            <text x="10" y={toY(tick) + 4}>{formatPrimaryValue(tick, {})}</text>
           </g>
-        )
-      })}
-      {dates.map(date => <text key={date} x={toX(date)} y={H - 16} textAnchor="middle">{fmtDate(date).replace(' 20', ' ')}</text>)}
-      <text x={pad.left} y={H - 2}>{series.map(item => `${item.label}${item.unit ? ` (${item.unit})` : ''}`).join('   |   ')}</text>
-    </svg>
+        )})}
+        {series.map((item, seriesIndex) => {
+          const color = trendSeriesColor(seriesIndex)
+          const linePoints = item.values.map(point => `${toX(point.date)},${toY(point.value)}`).join(' ')
+          return (
+            <g key={item.key} data-series={seriesIndex}>
+              {item.values.length > 1 && <polyline points={linePoints} data-line="progress" style={{ stroke: color }} />}
+              {item.values.map((point, index) => {
+                const previous = index > 0 ? item.values[index - 1] : null
+                const mcid = item.mcidKey && previous ? getMCIDStatus(item.mcidKey, point.value, previous.value) : null
+                return (
+                  <g key={`${item.key}-${point.date}`}>
+                    <circle cx={toX(point.date)} cy={toY(point.value)} r={mcid?.meetsThreshold ? 7 : 5} style={{ fill: color }} data-mcid={mcid?.meetsThreshold ? '' : undefined} />
+                    <text x={toX(point.date)} y={toY(point.value) - 12} textAnchor="middle">{formatPrimaryValue(point.value, { primaryUnit: item.unit })}</text>
+                  </g>
+                )
+              })}
+            </g>
+          )
+        })}
+        {dates.map(date => <text key={date} x={toX(date)} y={H - 16} textAnchor="middle">{fmtDate(date).replace(' 20', ' ')}</text>)}
+      </svg>
+    </div>
   )
 }
 
