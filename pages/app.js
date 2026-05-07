@@ -194,7 +194,10 @@ export default function App() {
 
   const handlePatientSelect = useCallback(async (patient) => {
     setSelectedPatient(patient)
-    setView(prev => prev === 'assessment' ? 'assessment' : 'summary')
+    setView(prev => {
+      if (prev === 'assessment' || prev === 'patients') return prev
+      return 'summary'
+    })
     const { data } = await supabase
       .from('assessments')
       .select('*')
