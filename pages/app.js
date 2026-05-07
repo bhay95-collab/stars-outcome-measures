@@ -44,6 +44,11 @@ export default function App() {
     setView('summary')
   }, [])
 
+  const handleWheelchairPrescriptionSaved = useCallback((assessment) => {
+    if (!assessment) return
+    setAssessments(prev => [assessment, ...prev.filter(item => item.id !== assessment.id)])
+  }, [])
+
   const requestViewChange = useCallback((nextView) => {
     if (assessmentDirty && view === 'assessment') {
       const ok = window.confirm('You have unsaved assessments in this encounter. Leave without saving?')
@@ -353,7 +358,12 @@ export default function App() {
           )}
 
           {view === 'wheelchair' ? (
-            <WheelchairPrescriptionTool patient={selectedPatient} />
+            <WheelchairPrescriptionTool
+              patient={selectedPatient}
+              userId={user?.id}
+              assessments={assessments}
+              onSaved={handleWheelchairPrescriptionSaved}
+            />
           ) : view === 'patients' ? (
             <PatientsWorkspace
               patients={patients}

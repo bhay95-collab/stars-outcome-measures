@@ -1,12 +1,306 @@
-import { ClipboardCopy, FileText, Printer, RotateCcw } from 'lucide-react'
-import { useEffect, useMemo, useRef } from 'react'
+import { ClipboardCopy, FileText, Printer, RotateCcw, Save } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { supabase } from '../lib/supabase'
 
-export default function WheelchairPrescriptionTool({ patient }) {
+const WHEELCHAIR_PRESCRIPTION_MEASURE = 'Wheelchair Prescription'
+const WHEELCHAIR_PRESCRIPTION_TOOL = 'wheelchair-prescription'
+const WHEELCHAIR_PRESCRIPTION_SCHEMA_VERSION = 1
+
+function isWheelchairPrescriptionRecord(record) {
+  return record?.measure === WHEELCHAIR_PRESCRIPTION_MEASURE ||
+    record?.results?.meta?.tool === WHEELCHAIR_PRESCRIPTION_TOOL
+}
+
+function cssEscape(value) {
+  if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(value)
+  return String(value).replace(/["\\]/g, '\\$&')
+}
+
+function collectFormStateFromRoot(root) {
+  const fields = {}
+  const radios = {}
+  const checkboxGroups = {}
+  if (!root) return { fields, radios, checkboxGroups }
+
+  root.querySelectorAll('input, textarea, select').forEach(el => {
+    if (el.type === 'radio') {
+      if (el.checked) radios[el.name] = el.value
+    } else if (el.type === 'checkbox') {
+      if (!checkboxGroups[el.name]) checkboxGroups[el.name] = []
+      if (el.checked) checkboxGroups[el.name].push(el.value)
+    } else if (el.id) {
+      fields[el.id] = el.value
+    }
+  })
+
+  return { fields, radios, checkboxGroups }
+}
+
+function applyFormStateToRoot(root, data) {
+  if (!root || !data) return false
+  const $ = id => root.querySelector(`#${id}`)
+
+  Object.entries(data.fields || {}).forEach(([id, value]) => {
+    const el = $(id)
+    if (el) el.value = value
+  })
+  Object.entries(data.radios || {}).forEach(([name, value]) => {
+    const el = root.querySelector(`input[type="radio"][name="${cssEscape(name)}"][value="${cssEscape(value)}"]`)
+    if (el) el.checked = true
+  })
+  Object.entries(data.checkboxGroups || {}).forEach(([name, values]) => {
+    const selected = new Set(values)
+    root.querySelectorAll(`input[type="checkbox"][name="${cssEscape(name)}"]`).forEach(el => {
+      el.checked = selected.has(el.value)
+    })
+  })
+
+  return true
+}
+
+function readPersistentDraft(storageKey) {
+  if (typeof window === 'undefined') return null
+  const stores = [window.localStorage, window.sessionStorage].filter(Boolean)
+  for (const store of stores) {
+    try {
+      const raw = store.getItem(storageKey)
+      if (!raw) continue
+      return JSON.parse(raw)
+    } catch {
+      // Local persistence is an enhancement; ignore malformed browser state.
+    }
+  }
+  return null
+}
+
+function writePersistentDraft(storageKey, formState) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(formState))
+    window.sessionStorage.removeItem(storageKey)
+  } catch {
+    // The tool still works when browser storage is unavailable.
+  }
+}
+
+function removePersistentDraft(storageKey) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(storageKey)
+    window.sessionStorage.removeItem(storageKey)
+  } catch {}
+}
+
+function getFormStateFromAssessment(record) {
+  return record?.inputs?.formState || record?.results?.meta?.formState || null
+}
+
+function getRecordSavedAt(record) {
+  return record?.results?.meta?.savedAt || record?.created_at || ''
+}
+
+function getFormStateUpdatedAt(formState) {
+  return formState?.meta?.updatedAt || formState?.updatedAt || ''
+}
+
+function formatDateTime(value) {
+  if (!value) return 'Not saved'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Not saved'
+  return date.toLocaleString([], {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+function summarizePrescriptionState(formState) {
+  const fields = formState?.fields || {}
+  const radios = formState?.radios || {}
+  const checkboxGroups = formState?.checkboxGroups || {}
+  const hasChecks = name => (checkboxGroups[name] || []).length > 0
+  const hasMeasurement = ['A', 'B', 'M'].some(code => fields[`meas${code}_L`] || fields[`meas${code}_R`])
+  const domains = [
+    !!fields.mobilityGoals,
+    !!fields.fundingBody,
+    !!fields.weight,
+    !!(radios.historyPI && radios.sensation),
+    hasMeasurement,
+    !!(radios.propulsion || radios.proposedPathway),
+    !!(fields.doorWidths || fields.communityEnvironment || hasChecks('externalTerrain')),
+    !!(fields.reqSeatWidth || fields.reqSeatDepth || fields.reqSeatHeight),
+    !!fields.trialEquipment,
+    !!(fields.proposedCushion || fields.proposedBackrest || fields.selectedEquipment),
+  ]
+  const completed = domains.filter(Boolean).length
+  const completionPercent = Math.round((completed / domains.length) * 100)
+  const statusLabel = completionPercent >= 80
+    ? 'Supplier-ready draft'
+    : completionPercent >= 50
+      ? 'Developing prescription'
+      : 'Early information gathering'
+
+  return {
+    completionPercent,
+    statusLabel,
+    completedDomains: completed,
+    totalDomains: domains.length,
+    pathway: radios.proposedPathway || '',
+    selectedEquipment: fields.selectedEquipment || '',
+  }
+}
+
+export default function WheelchairPrescriptionTool({ patient, userId, assessments = [], onSaved }) {
   const rootRef = useRef(null)
+  const activeVersionIdRef = useRef(null)
+  const [draftStatus, setDraftStatus] = useState({
+    tone: 'muted',
+    title: 'Local draft ready',
+    detail: 'Progress autosaves on this device while you work.',
+  })
+  const [saveState, setSaveState] = useState('idle')
+  const [saveError, setSaveError] = useState('')
+  const [activeVersionId, setActiveVersionId] = useState(null)
   const storageKey = useMemo(
     () => `rehabmetrics:wheelchair-prescription:${patient?.id ?? 'standalone'}`,
     [patient?.id]
   )
+  const savedVersions = useMemo(
+    () => assessments
+      .filter(record => record.patient_id === patient?.id && isWheelchairPrescriptionRecord(record))
+      .sort((a, b) => new Date(getRecordSavedAt(b)) - new Date(getRecordSavedAt(a))),
+    [assessments, patient?.id]
+  )
+  const latestSavedVersion = savedVersions[0] ?? null
+
+  useEffect(() => {
+    activeVersionIdRef.current = activeVersionId
+  }, [activeVersionId])
+
+  const canSaveToPatient = !!(patient?.id && userId)
+
+  const handleLoadVersion = useCallback((version) => {
+    const formState = getFormStateFromAssessment(version)
+    const root = rootRef.current
+    if (!root || !formState) return
+    if (!window.confirm('Load this saved wheelchair prescription version into the workspace? Current unsaved local edits will be replaced.')) return
+    root.querySelector('#wcForm')?.reset()
+    applyFormStateToRoot(root, formState)
+    setActiveVersionId(version.id)
+    const updatedAt = new Date().toISOString()
+    writePersistentDraft(storageKey, {
+      ...formState,
+      meta: {
+        ...(formState.meta || {}),
+        updatedAt,
+        savedAt: getRecordSavedAt(version),
+        sourceVersionId: version.id,
+      },
+    })
+    window.refreshWheelchairPrescription?.(false)
+    setDraftStatus({
+      tone: 'success',
+      title: 'Saved version loaded',
+      detail: `Loaded ${formatDateTime(getRecordSavedAt(version))}. Continue editing, then save a new version when ready.`,
+    })
+  }, [storageKey])
+
+  const handleSaveVersion = useCallback(async () => {
+    const root = rootRef.current
+    if (!root) return
+    if (!canSaveToPatient) {
+      setSaveError('Select a patient before saving prescription versions to the record.')
+      setDraftStatus({
+        tone: 'warning',
+        title: 'Local draft only',
+        detail: 'Select a patient to save longitudinal prescription versions.',
+      })
+      return
+    }
+
+    setSaveState('saving')
+    setSaveError('')
+
+    const now = new Date().toISOString()
+    const baseState = collectFormStateFromRoot(root)
+    const formState = {
+      ...baseState,
+      meta: {
+        ...(baseState.meta || {}),
+        schemaVersion: WHEELCHAIR_PRESCRIPTION_SCHEMA_VERSION,
+        updatedAt: now,
+        sourceVersionId: activeVersionIdRef.current,
+      },
+    }
+    const summary = summarizePrescriptionState(formState)
+    const supplierBrief = window.getWheelchairSupplierBrief?.() || ''
+    const reasoning = root.querySelector('#guidanceOutput')?.innerText?.trim() || ''
+
+    const row = {
+      user_id: userId,
+      patient_id: patient.id,
+      measure: WHEELCHAIR_PRESCRIPTION_MEASURE,
+      inputs: { formState },
+      results: {
+        primaryValue: summary.completionPercent,
+        interpretation: summary.statusLabel,
+        meta: {
+          tool: WHEELCHAIR_PRESCRIPTION_TOOL,
+          schemaVersion: WHEELCHAIR_PRESCRIPTION_SCHEMA_VERSION,
+          savedAt: now,
+          completionPercent: summary.completionPercent,
+          statusLabel: summary.statusLabel,
+          completedDomains: summary.completedDomains,
+          totalDomains: summary.totalDomains,
+          pathway: summary.pathway,
+          selectedEquipment: summary.selectedEquipment,
+          supplierBrief,
+          reasoning,
+        },
+      },
+    }
+
+    const { data, error } = await supabase
+      .from('assessments')
+      .insert(row)
+      .select()
+      .single()
+
+    const savedRecord = Array.isArray(data) ? data[0] : data
+
+    if (error || !savedRecord) {
+      setSaveState('idle')
+      setSaveError(error?.message || 'The prescription version could not be saved.')
+      setDraftStatus({
+        tone: 'warning',
+        title: 'Local draft saved',
+        detail: 'Could not save a patient-record version. Your local autosave is still available on this device.',
+      })
+      writePersistentDraft(storageKey, formState)
+      return
+    }
+
+    const savedFormState = {
+      ...formState,
+      meta: {
+        ...formState.meta,
+        savedAt: now,
+        sourceVersionId: savedRecord.id,
+      },
+    }
+    writePersistentDraft(storageKey, savedFormState)
+    setActiveVersionId(savedRecord.id)
+    setSaveState('saved')
+    setDraftStatus({
+      tone: 'success',
+      title: 'Version saved to patient record',
+      detail: `Saved ${formatDateTime(now)}. Continue refining and save another version when new information arrives.`,
+    })
+    onSaved?.(savedRecord)
+    window.setTimeout(() => setSaveState('idle'), 1800)
+  }, [canSaveToPatient, onSaved, patient?.id, storageKey, userId])
 
   useEffect(() => {
     const root = rootRef.current
@@ -526,56 +820,66 @@ export default function WheelchairPrescriptionTool({ patient }) {
     }
 
     function saveFormState() {
-      const form = $('wcForm')
-      if (!form) return
-      const fields = {}
-      const radios = {}
-      const checkboxGroups = {}
-      qsa('input, textarea, select').forEach(el => {
-        if (el.type === 'radio') {
-          if (el.checked) radios[el.name] = el.value
-        } else if (el.type === 'checkbox') {
-          if (!checkboxGroups[el.name]) checkboxGroups[el.name] = []
-          if (el.checked) checkboxGroups[el.name].push(el.value)
-        } else if (el.id) {
-          fields[el.id] = el.value
-        }
+      const formState = collectFormStateFromRoot(root)
+      const updatedAt = new Date().toISOString()
+      const existing = readPersistentDraft(storageKey)
+      writePersistentDraft(storageKey, {
+        ...formState,
+        meta: {
+          ...(existing?.meta || {}),
+          schemaVersion: WHEELCHAIR_PRESCRIPTION_SCHEMA_VERSION,
+          updatedAt,
+          sourceVersionId: activeVersionIdRef.current,
+        },
       })
-      try {
-        window.sessionStorage.setItem(storageKey, JSON.stringify({ fields, radios, checkboxGroups }))
-      } catch {
-        // Session storage is an enhancement; the tool still works without it.
-      }
+      setDraftStatus({
+        tone: activeVersionIdRef.current ? 'muted' : 'warning',
+        title: 'Local autosave current',
+        detail: activeVersionIdRef.current
+          ? `Local edits saved ${formatDateTime(updatedAt)}. Save a new version when the script reaches a useful checkpoint.`
+          : `Local draft saved ${formatDateTime(updatedAt)}. Save a patient-record version when ready.`,
+      })
     }
 
     function restoreFormState() {
-      let raw = null
-      try {
-        raw = window.sessionStorage.getItem(storageKey)
-      } catch {
-        return false
-      }
-      if (!raw) return false
-      try {
-        const data = JSON.parse(raw)
-        Object.entries(data.fields || {}).forEach(([id, value]) => {
-          const el = $(id)
-          if (el) el.value = value
-        })
-        Object.entries(data.radios || {}).forEach(([name, value]) => {
-          const el = root.querySelector(`input[type="radio"][name="${name}"][value="${CSS.escape(value)}"]`)
-          if (el) el.checked = true
-        })
-        Object.entries(data.checkboxGroups || {}).forEach(([name, values]) => {
-          const selected = new Set(values)
-          qsa(`input[type="checkbox"][name="${name}"]`).forEach(el => {
-            el.checked = selected.has(el.value)
+      const localDraft = readPersistentDraft(storageKey)
+      const savedFormState = getFormStateFromAssessment(latestSavedVersion)
+      const localAt = getFormStateUpdatedAt(localDraft)
+      const savedAt = getRecordSavedAt(latestSavedVersion)
+      const localSavedCheckpoint = localDraft?.meta?.savedAt || ''
+      const localMatchesLatestVersion = !!(localDraft?.meta?.sourceVersionId && localDraft.meta.sourceVersionId === latestSavedVersion?.id)
+      const localHasNewerEdits = !!(localAt && localSavedCheckpoint && new Date(localAt) > new Date(localSavedCheckpoint))
+      const useLocal = !!localDraft && (
+        !savedFormState ||
+        (
+          new Date(localAt || 0) >= new Date(savedAt || 0) &&
+          (!localMatchesLatestVersion || localHasNewerEdits)
+        )
+      )
+      const selectedState = useLocal ? localDraft : savedFormState
+      if (!selectedState) return false
+
+      const restored = applyFormStateToRoot(root, selectedState)
+      if (!restored) return false
+
+      const sourceVersionId = useLocal
+        ? selectedState?.meta?.sourceVersionId || null
+        : latestSavedVersion?.id || null
+      setActiveVersionId(sourceVersionId)
+      setDraftStatus(useLocal
+        ? {
+            tone: sourceVersionId ? 'muted' : 'warning',
+            title: 'Local draft restored',
+            detail: localAt
+              ? `Restored local autosave from ${formatDateTime(localAt)}. Save a new patient-record version when ready.`
+              : 'Restored local autosave. Save a patient-record version when ready.',
+          }
+        : {
+            tone: 'success',
+            title: 'Latest patient version restored',
+            detail: `Loaded saved version from ${formatDateTime(savedAt)}. Continue refining from here.`,
           })
-        })
-        return true
-      } catch {
-        return false
-      }
+      return true
     }
 
     function prefillFromPatient() {
@@ -644,8 +948,14 @@ export default function WheelchairPrescriptionTool({ patient }) {
         }
       })
       try {
-        window.sessionStorage.removeItem(storageKey)
+        removePersistentDraft(storageKey)
       } catch {}
+      setActiveVersionId(null)
+      setDraftStatus({
+        tone: 'warning',
+        title: 'Draft cleared',
+        detail: 'The local workspace is empty. Saved patient-record versions remain available in the progress panel.',
+      })
       updateAll(false)
     }
 
@@ -668,7 +978,19 @@ export default function WheelchairPrescriptionTool({ patient }) {
     form?.addEventListener('change', handleFormChange)
     window.addEventListener('afterprint', handleAfterPrint)
 
-    const globals = { toggleSection, toggleBariatricPanel, reapplyAutoCalculations, copySupplierBrief, copyClinicalReasoningGuide, printSupplierBrief, printAssessmentForm, clearForm }
+    const globals = {
+      toggleSection,
+      toggleBariatricPanel,
+      reapplyAutoCalculations,
+      copySupplierBrief,
+      copyClinicalReasoningGuide,
+      printSupplierBrief,
+      printAssessmentForm,
+      clearForm,
+      refreshWheelchairPrescription: updateAll,
+      getWheelchairSupplierBrief: buildSupplierBriefText,
+      getWheelchairFormState: () => collectFormStateFromRoot(root),
+    }
     Object.assign(window, globals)
     initialiseFormState()
 
@@ -680,7 +1002,7 @@ export default function WheelchairPrescriptionTool({ patient }) {
         if (window[key] === fn) delete window[key]
       })
     }
-  }, [patient?.diagnosis, patient?.initials, storageKey])
+  }, [latestSavedVersion, patient?.diagnosis, patient?.initials, storageKey])
 
   return (
     <section className="wc-tool" ref={rootRef}>
@@ -692,7 +1014,16 @@ export default function WheelchairPrescriptionTool({ patient }) {
           <p>Decision support only. Confirm recommendations through trial, clinical review, supplier specifications and local funding requirements.</p>
         </div>
         <div className="wc-tool__actions">
-          <button type="button" data-primary="" onClick={() => window.copySupplierBrief?.()}>
+          <button
+            type="button"
+            data-primary=""
+            disabled={!canSaveToPatient || saveState === 'saving'}
+            onClick={handleSaveVersion}
+            title={canSaveToPatient ? 'Save this workspace as a new patient-record version' : 'Select a patient to save versions'}
+          >
+            <Save size={15} /> {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved' : 'Save progress'}
+          </button>
+          <button type="button" onClick={() => window.copySupplierBrief?.()}>
             <ClipboardCopy size={15} /> Supplier brief
           </button>
           <button type="button" onClick={() => window.copyClinicalReasoningGuide?.()}>
@@ -709,13 +1040,21 @@ export default function WheelchairPrescriptionTool({ patient }) {
           </button>
         </div>
       </div>
-      <WheelchairPrescriptionForm />
+      <WheelchairPrescriptionForm
+        activeVersionId={activeVersionId}
+        canSaveToPatient={canSaveToPatient}
+        draftStatus={draftStatus}
+        latestSavedVersion={latestSavedVersion}
+        onLoadVersion={handleLoadVersion}
+        saveError={saveError}
+        savedVersions={savedVersions}
+      />
       <div className="wc-tool__print-supplier" id="printSupplier" />
     </section>
   )
 }
 
-function WheelchairPrescriptionForm() {
+function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftStatus, latestSavedVersion, onLoadVersion, saveError, savedVersions }) {
   return (
     <div className="wc-tool__content">
       <form autoComplete="off" className="main-panel" id="wcForm">
@@ -997,6 +1336,45 @@ function WheelchairPrescriptionForm() {
       </form>
 
       <aside className="sidebar">
+        <div className="side-card progress-card">
+          <h3>Prescription progress</h3>
+          <div className="side-body">
+            <div className="progress-status" data-tone={draftStatus.tone}>
+              <strong>{draftStatus.title}</strong>
+              <p>{draftStatus.detail}</p>
+            </div>
+            {!canSaveToPatient && (
+              <div className="progress-note">
+                Select a patient before saving longitudinal prescription versions. The current workspace still autosaves locally on this device.
+              </div>
+            )}
+            {saveError && <div className="progress-error">{saveError}</div>}
+            <div className="version-summary">
+              <span>Latest patient version</span>
+              <strong>{latestSavedVersion ? formatDateTime(getRecordSavedAt(latestSavedVersion)) : 'None saved yet'}</strong>
+            </div>
+            <div className="version-list">
+              {savedVersions.length > 0 ? savedVersions.slice(0, 6).map((version, index) => {
+                const meta = version.results?.meta || {}
+                return (
+                  <button
+                    className="version-item"
+                    data-active={activeVersionId === version.id ? '' : undefined}
+                    key={version.id}
+                    onClick={() => onLoadVersion(version)}
+                    type="button"
+                  >
+                    <span>Version {savedVersions.length - index}</span>
+                    <strong>{formatDateTime(getRecordSavedAt(version))}</strong>
+                    <small>{meta.statusLabel || version.results?.interpretation || 'Wheelchair prescription draft'}{typeof meta.completionPercent === 'number' ? ` - ${meta.completionPercent}%` : ''}</small>
+                  </button>
+                )
+              }) : (
+                <p className="empty-progress">No patient-record versions yet. Save progress when the draft reaches a useful clinical checkpoint.</p>
+              )}
+            </div>
+          </div>
+        </div>
         <div className="side-card">
           <h3>Live clinical reasoning guidance</h3>
           <div className="side-body" id="guidanceOutput" />
@@ -1402,6 +1780,12 @@ const wheelchairToolStyles = `
     color: var(--wc-danger);
   }
 
+  .wc-tool__actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    box-shadow: none;
+  }
+
   .wc-tool__content {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
@@ -1494,6 +1878,118 @@ const wheelchairToolStyles = `
 
   .wc-tool .side-body {
     padding: 14px 15px;
+  }
+
+  .wc-tool .progress-status,
+  .wc-tool .progress-note,
+  .wc-tool .progress-error,
+  .wc-tool .version-summary,
+  .wc-tool .empty-progress {
+    border: 1px solid var(--wc-line);
+    border-radius: 8px;
+    background: rgba(247,250,252,0.88);
+    padding: 10px 12px;
+  }
+
+  .wc-tool .progress-status {
+    margin-bottom: 10px;
+  }
+
+  .wc-tool .progress-status[data-tone="success"] {
+    border-color: #b7dfc9;
+    background: #e8f4ef;
+  }
+
+  .wc-tool .progress-status[data-tone="warning"],
+  .wc-tool .progress-error {
+    border-color: #f5d49a;
+    background: #fef3e2;
+  }
+
+  .wc-tool .progress-status strong,
+  .wc-tool .version-summary strong {
+    display: block;
+    color: var(--wc-primary);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+
+  .wc-tool .progress-status p,
+  .wc-tool .progress-note,
+  .wc-tool .progress-error,
+  .wc-tool .empty-progress {
+    margin: 6px 0 0;
+    color: #3b4b5d;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .wc-tool .progress-note,
+  .wc-tool .progress-error {
+    margin-bottom: 10px;
+  }
+
+  .wc-tool .version-summary {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .wc-tool .version-summary span {
+    color: var(--wc-subtle);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+  }
+
+  .wc-tool .version-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .wc-tool .version-item {
+    display: grid;
+    gap: 3px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--wc-line);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.88);
+    color: #334155;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .wc-tool .version-item:hover {
+    border-color: rgba(23,61,104,0.28);
+    background: #fff;
+  }
+
+  .wc-tool .version-item[data-active] {
+    border-color: rgba(23,61,104,0.42);
+    background: var(--wc-primary-soft);
+  }
+
+  .wc-tool .version-item span {
+    color: var(--wc-subtle);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .wc-tool .version-item strong {
+    color: var(--wc-primary);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .wc-tool .version-item small {
+    color: var(--wc-muted);
+    font-size: 11px;
+    line-height: 1.35;
   }
 
   .wc-tool .grid {
