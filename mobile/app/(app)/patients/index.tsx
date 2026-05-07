@@ -12,6 +12,18 @@ import { colors, spacing, typography } from '../../../src/theme/tokens';
 
 const PATIENT_AVATAR_SIZE = 44;
 
+function getInitials(raw: string): string {
+  const parts = raw.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function formatDOB(iso: string): string {
+  const [year, month, day] = iso.split('-');
+  return `${day}/${month}/${year}`;
+}
+
 function PatientCard({ patient }: { patient: Patient }) {
   return (
     <TouchableOpacity
@@ -22,10 +34,13 @@ function PatientCard({ patient }: { patient: Patient }) {
     >
       <Card style={styles.patientCard}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{patient.initials}</Text>
+          <Text style={styles.avatarText}>{getInitials(patient.initials)}</Text>
         </View>
         <View style={styles.cardBody}>
           <Text style={styles.initials}>{patient.initials}</Text>
+          {patient.dob ? (
+            <Text style={styles.dob}>{formatDOB(patient.dob)}</Text>
+          ) : null}
           {patient.condition ? (
             <Text style={styles.condition} numberOfLines={1}>
               {patient.condition}
@@ -166,6 +181,11 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeMd,
     fontWeight: typography.weightSemibold,
     color: colors.ink,
+  },
+  dob: {
+    fontSize: typography.sizeSm,
+    color: colors.muted,
+    marginTop: spacing.xs,
   },
   condition: {
     fontSize: typography.sizeSm,

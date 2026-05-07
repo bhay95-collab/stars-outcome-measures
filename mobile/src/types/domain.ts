@@ -2,7 +2,7 @@ export interface Patient {
   id: string;
   user_id: string;
   initials: string;
-  date_of_birth: string | null;
+  dob: string | null;
   condition: string | null;
 }
 

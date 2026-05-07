@@ -52,6 +52,13 @@ function MeasureRow({ assessment }: { assessment: Assessment }) {
 
 const PATIENT_AVATAR_SIZE = 52;
 
+function getInitials(raw: string): string {
+  const parts = raw.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export default function PatientSummaryScreen() {
   const params = useLocalSearchParams<{ patientId: string }>();
   const patientId = Array.isArray(params.patientId) ? params.patientId[0] : params.patientId;
@@ -99,7 +106,7 @@ export default function PatientSummaryScreen() {
 
       <View style={styles.patientHeader}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{patient.initials}</Text>
+          <Text style={styles.avatarText}>{getInitials(patient.initials)}</Text>
         </View>
         <View>
           <Text style={styles.initials}>{patient.initials}</Text>
