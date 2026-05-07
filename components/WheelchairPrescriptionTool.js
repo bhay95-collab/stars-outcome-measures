@@ -1,3 +1,4 @@
+import { ClipboardCopy, FileText, Printer, RotateCcw } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
 import wheelchairPrescriptionMarkup from './wheelchairPrescriptionMarkup'
 
@@ -675,19 +676,29 @@ export default function WheelchairPrescriptionTool({ patient }) {
 
   return (
     <section className="wc-tool" ref={rootRef}>
-      <style jsx global>{wheelchairToolStyles}</style>
+      <style>{wheelchairToolStyles}</style>
       <div className="wc-tool__header">
         <div>
           <span className="wc-tool__eyebrow">Clinical Support Tool</span>
-          <h2>Wheelchair Prescription</h2>
+          <h2>Prescription Workspace</h2>
           <p>Decision support only. Confirm recommendations through trial, clinical review, supplier specifications and local funding requirements.</p>
         </div>
         <div className="wc-tool__actions">
-          <button type="button" data-primary="" onClick={() => window.copySupplierBrief?.()}>Copy supplier brief</button>
-          <button type="button" onClick={() => window.copyClinicalReasoningGuide?.()}>Copy reasoning guide</button>
-          <button type="button" onClick={() => window.printSupplierBrief?.()}>Print supplier brief</button>
-          <button type="button" onClick={() => window.printAssessmentForm?.()}>Print form</button>
-          <button type="button" data-danger="" onClick={() => window.clearForm?.()}>Clear</button>
+          <button type="button" data-primary="" onClick={() => window.copySupplierBrief?.()}>
+            <ClipboardCopy size={15} /> Supplier brief
+          </button>
+          <button type="button" onClick={() => window.copyClinicalReasoningGuide?.()}>
+            <FileText size={15} /> Reasoning guide
+          </button>
+          <button type="button" onClick={() => window.printSupplierBrief?.()}>
+            <Printer size={15} /> Brief
+          </button>
+          <button type="button" onClick={() => window.printAssessmentForm?.()}>
+            <Printer size={15} /> Form
+          </button>
+          <button type="button" data-danger="" onClick={() => window.clearForm?.()}>
+            <RotateCcw size={15} /> Clear
+          </button>
         </div>
       </div>
       <div className="wc-tool__content" dangerouslySetInnerHTML={{ __html: wheelchairPrescriptionMarkup }} />
@@ -702,11 +713,12 @@ const wheelchairToolStyles = `
     --wc-muted: var(--color-muted);
     --wc-subtle: var(--color-subtle);
     --wc-line: var(--color-border);
-    --wc-surface: rgba(255,255,255,0.78);
+    --wc-surface: rgba(255,255,255,0.74);
     --wc-soft: var(--color-surface-soft);
     --wc-primary: var(--color-primary);
     --wc-primary-dark: var(--color-primary-dark);
     --wc-primary-soft: var(--color-primary-soft);
+    --wc-secondary: var(--color-secondary);
     --wc-danger: #b5451b;
     color: var(--wc-ink);
   }
@@ -715,12 +727,14 @@ const wheelchairToolStyles = `
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 22px;
+    gap: 24px;
     margin-bottom: 18px;
-    padding: 18px 20px;
+    padding: 20px 22px;
     border: 1px solid rgba(216,225,234,0.9);
     border-radius: 16px;
-    background: rgba(255,255,255,0.72);
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.84), rgba(247,250,252,0.72)),
+      radial-gradient(circle at 100% 0%, rgba(120,200,189,0.14), transparent 34%);
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(16px);
   }
@@ -752,16 +766,20 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool__actions {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
     justify-content: flex-end;
     gap: 8px;
-    min-width: 310px;
+    min-width: 330px;
   }
 
   .wc-tool__actions button,
   .wc-tool .btn,
   .wc-tool .section-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
     min-height: 36px;
     padding: 0 13px;
     border: 1px solid var(--wc-line);
@@ -772,6 +790,7 @@ const wheelchairToolStyles = `
     font-family: 'Inter', sans-serif;
     font-size: 12px;
     font-weight: 700;
+    white-space: nowrap;
   }
 
   .wc-tool__actions button:hover,
@@ -794,7 +813,7 @@ const wheelchairToolStyles = `
 
   .wc-tool__content {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
     gap: 18px;
     align-items: start;
   }
@@ -811,6 +830,7 @@ const wheelchairToolStyles = `
     gap: 14px;
     max-height: calc(100vh - 36px);
     overflow-y: auto;
+    padding-right: 4px;
     scrollbar-gutter: stable;
   }
 
@@ -831,9 +851,11 @@ const wheelchairToolStyles = `
 
   .wc-tool .section-header {
     position: relative;
+    min-height: 72px;
     padding: 18px 132px 16px 20px;
     border-bottom: 1px solid var(--wc-line);
-    background: rgba(247,250,252,0.78);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.82), rgba(247,250,252,0.74));
   }
 
   .wc-tool .section-header h2 {
@@ -855,6 +877,7 @@ const wheelchairToolStyles = `
     position: absolute;
     top: 16px;
     right: 18px;
+    min-width: 88px;
   }
 
   .wc-tool .section.is-collapsed .section-body {
@@ -873,8 +896,8 @@ const wheelchairToolStyles = `
     margin: 0;
     padding: 13px 15px;
     border-bottom: 1px solid var(--wc-line);
-    background: var(--wc-primary);
-    color: #fff;
+    background: rgba(247,250,252,0.84);
+    color: var(--wc-primary);
     font-size: 13px;
     font-weight: 800;
   }
@@ -886,7 +909,7 @@ const wheelchairToolStyles = `
   .wc-tool .grid {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 12px;
+    gap: 14px;
   }
 
   .wc-tool .span-12 { grid-column: span 12; }
@@ -909,6 +932,23 @@ const wheelchairToolStyles = `
     line-height: 1.35;
   }
 
+  .wc-tool .span-12 > strong,
+  .wc-tool .span-9 > strong,
+  .wc-tool .span-8 > strong,
+  .wc-tool .span-6 > strong,
+  .wc-tool .span-5 > strong,
+  .wc-tool .span-4 > strong,
+  .wc-tool .span-3 > strong,
+  .wc-tool .span-2 > strong,
+  .wc-tool .option-panel > strong {
+    display: block;
+    margin-bottom: 7px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+
   .wc-tool label.field .hint {
     color: var(--wc-muted);
     font-size: 11px;
@@ -924,7 +964,7 @@ const wheelchairToolStyles = `
     min-height: 38px;
     border: 1px solid var(--wc-line);
     border-radius: 8px;
-    background: rgba(255,255,255,0.92);
+    background: rgba(255,255,255,0.94);
     color: var(--wc-ink);
     font-family: 'Inter', sans-serif;
     font-size: 13px;
@@ -950,10 +990,11 @@ const wheelchairToolStyles = `
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 18px 0 10px;
+    margin: 22px 0 12px;
     color: var(--wc-primary);
     font-size: 13px;
     font-weight: 800;
+    letter-spacing: 0;
   }
 
   .wc-tool .subhead:first-child {
@@ -965,14 +1006,13 @@ const wheelchairToolStyles = `
     width: 4px;
     height: 16px;
     border-radius: 99px;
-    background: var(--wc-secondary, var(--color-secondary));
+    background: var(--wc-secondary);
   }
 
   .wc-tool .check-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 8px;
+    gap: 9px;
   }
 
   .wc-tool .check-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -983,14 +1023,27 @@ const wheelchairToolStyles = `
     display: flex;
     align-items: flex-start;
     gap: 7px;
-    min-height: 36px;
-    padding: 8px 9px;
+    min-height: 38px;
+    padding: 9px 10px;
     border: 1px solid rgba(216,225,234,0.95);
     border-radius: 8px;
     background: rgba(247,250,252,0.82);
     color: #334155;
     font-size: 12px;
     line-height: 1.3;
+  }
+
+  .wc-tool .check:hover,
+  .wc-tool .radio:hover {
+    border-color: rgba(23,61,104,0.26);
+    background: rgba(255,255,255,0.96);
+  }
+
+  .wc-tool .check:has(input:checked),
+  .wc-tool .radio:has(input:checked) {
+    border-color: rgba(23,61,104,0.36);
+    background: var(--wc-primary-soft);
+    color: var(--wc-primary);
   }
 
   .wc-tool .check input,
@@ -1004,7 +1057,7 @@ const wheelchairToolStyles = `
   .wc-tool .guidance-line {
     border: 1px solid #d7e4ef;
     border-radius: 8px;
-    background: var(--wc-primary-soft);
+    background: rgba(232,241,251,0.82);
     color: #284b63;
     font-size: 12px;
     line-height: 1.5;
@@ -1025,7 +1078,7 @@ const wheelchairToolStyles = `
 
   .wc-tool .measurement-layout {
     display: grid;
-    grid-template-columns: minmax(360px, 1fr) minmax(320px, 0.75fr);
+    grid-template-columns: minmax(420px, 1.05fr) minmax(320px, 0.8fr);
     gap: 16px;
     align-items: start;
   }
@@ -1038,29 +1091,32 @@ const wheelchairToolStyles = `
     border-radius: 8px;
     border-collapse: separate;
     border-spacing: 0;
-    background: #fff;
+    background: rgba(255,255,255,0.92);
     font-size: 12px;
   }
 
   .wc-tool .measurement-table th,
   .wc-tool .activity-table th {
-    padding: 8px;
-    background: var(--wc-primary);
-    color: #fff;
-    font-size: 11px;
-    text-align: left;
-  }
-
-  .wc-tool .activity-table th {
-    background: #eef4fb;
+    padding: 9px;
+    background: rgba(239,244,249,0.96);
     color: var(--wc-primary);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-align: left;
   }
 
   .wc-tool .measurement-table td,
   .wc-tool .activity-table td {
-    padding: 7px;
+    padding: 7px 9px;
     border-top: 1px solid var(--wc-line);
     vertical-align: middle;
+  }
+
+  .wc-tool .measurement-table tr:hover td,
+  .wc-tool .activity-table tr:hover td {
+    background: rgba(247,250,252,0.72);
   }
 
   .wc-tool .measurement-table input,
@@ -1094,7 +1150,7 @@ const wheelchairToolStyles = `
   .wc-tool .conditional-panel {
     border: 1px solid var(--wc-line);
     border-radius: 8px;
-    background: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.88);
     padding: 12px;
   }
 
@@ -1132,6 +1188,11 @@ const wheelchairToolStyles = `
     display: flex;
     flex-direction: column;
     gap: 9px;
+  }
+
+  .wc-tool .selection-card:hover {
+    border-color: rgba(23,61,104,0.26);
+    box-shadow: 0 10px 24px rgba(21,34,56,0.08);
   }
 
   .wc-tool .selection-card img {
@@ -1203,7 +1264,7 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .brief-preview {
-    min-height: 560px;
+    min-height: 520px;
     max-height: calc(100vh - 310px);
     overflow: auto;
     white-space: pre-wrap;
@@ -1329,8 +1390,9 @@ const wheelchairToolStyles = `
     }
 
     .wc-tool__actions {
-      justify-content: flex-start;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       min-width: 0;
+      width: 100%;
     }
 
     .wc-tool .grid,

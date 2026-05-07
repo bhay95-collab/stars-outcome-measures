@@ -2509,11 +2509,30 @@ const globalStyles = `
   }
 
   .patient-workspace-empty {
-    min-height: 300px;
+    min-height: 260px;
     display: grid;
+    gap: 12px;
     place-content: center;
     justify-items: center;
+    padding: 38px 24px;
     text-align: center;
+  }
+
+  .patient-workspace-empty h2 {
+    max-width: 680px;
+    margin: 0;
+    font-size: clamp(30px, 3.2vw, 40px);
+    line-height: 1.08;
+  }
+
+  .patient-workspace-empty p {
+    max-width: 560px;
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .patient-workspace-empty button {
+    margin-top: 2px;
   }
 
   .patient-directory-card > .patient-card {
@@ -2641,7 +2660,7 @@ const globalStyles = `
       margin: 0 0 14px;
     }
     .app-nav {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
     }
     .app-nav button {
       justify-content: center;
