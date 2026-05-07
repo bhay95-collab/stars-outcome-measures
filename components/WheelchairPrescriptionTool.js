@@ -507,6 +507,15 @@ export default function WheelchairPrescriptionTool({ patient }) {
       })
     }
 
+    function setInitialSectionState() {
+      qsa('.section').forEach((section, index) => {
+        const collapsed = index !== 0
+        section.classList.toggle('is-collapsed', collapsed)
+        const btn = section.querySelector('.section-toggle')
+        if (btn) btn.textContent = collapsed ? 'Expand' : 'Minimise'
+      })
+    }
+
     function toggleBariatricPanel() {
       const panel = $('bariatricPanel')
       const flag = $('bariatricFlag')
@@ -645,7 +654,7 @@ export default function WheelchairPrescriptionTool({ patient }) {
       $('wcForm')?.reset()
       const restored = restoreFormState()
       if (!restored) prefillFromPatient()
-      setAllSectionsCollapsed(true)
+      setInitialSectionState()
       updateAll(!restored)
     }
 
@@ -676,7 +685,7 @@ export default function WheelchairPrescriptionTool({ patient }) {
 
   return (
     <section className="wc-tool" ref={rootRef}>
-      <style>{wheelchairToolStyles}</style>
+      <style dangerouslySetInnerHTML={{ __html: wheelchairToolStyles }} />
       <div className="wc-tool__header">
         <div>
           <span className="wc-tool__eyebrow">Clinical Support Tool</span>
@@ -721,6 +730,30 @@ const wheelchairToolStyles = `
     --wc-secondary: var(--color-secondary);
     --wc-danger: #b5451b;
     color: var(--wc-ink);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .wc-tool,
+  .wc-tool * {
+    box-sizing: border-box;
+  }
+
+  .wc-tool h2,
+  .wc-tool h3,
+  .wc-tool h4,
+  .wc-tool p,
+  .wc-tool ul,
+  .wc-tool ol,
+  .wc-tool figure {
+    margin: 0;
+    padding: 0;
+  }
+
+  .wc-tool button,
+  .wc-tool input,
+  .wc-tool textarea,
+  .wc-tool select {
+    font: inherit;
   }
 
   .wc-tool__header {
@@ -728,13 +761,11 @@ const wheelchairToolStyles = `
     align-items: flex-start;
     justify-content: space-between;
     gap: 24px;
-    margin-bottom: 18px;
-    padding: 20px 22px;
+    margin-bottom: 16px;
+    padding: 18px 20px;
     border: 1px solid rgba(216,225,234,0.9);
-    border-radius: 16px;
-    background:
-      linear-gradient(135deg, rgba(255,255,255,0.84), rgba(247,250,252,0.72)),
-      radial-gradient(circle at 100% 0%, rgba(120,200,189,0.14), transparent 34%);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.74);
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(16px);
   }
@@ -752,8 +783,8 @@ const wheelchairToolStyles = `
   .wc-tool__header h2 {
     margin: 0;
     color: var(--wc-ink);
-    font-size: 24px;
-    line-height: 1.1;
+    font-size: 22px;
+    line-height: 1.15;
     font-weight: 800;
   }
 
@@ -780,7 +811,7 @@ const wheelchairToolStyles = `
     align-items: center;
     justify-content: center;
     gap: 7px;
-    min-height: 36px;
+    min-height: 38px;
     padding: 0 13px;
     border: 1px solid var(--wc-line);
     border-radius: 8px;
@@ -813,8 +844,8 @@ const wheelchairToolStyles = `
 
   .wc-tool__content {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
-    gap: 18px;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
+    gap: 16px;
     align-items: start;
   }
 
@@ -839,7 +870,7 @@ const wheelchairToolStyles = `
     overflow: hidden;
     margin-bottom: 16px;
     border: 1px solid rgba(216,225,234,0.95);
-    border-radius: 16px;
+    border-radius: 8px;
     background: var(--wc-surface);
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(16px);
@@ -851,11 +882,10 @@ const wheelchairToolStyles = `
 
   .wc-tool .section-header {
     position: relative;
-    min-height: 72px;
-    padding: 18px 132px 16px 20px;
+    min-height: 70px;
+    padding: 18px 120px 16px 20px;
     border-bottom: 1px solid var(--wc-line);
-    background:
-      linear-gradient(180deg, rgba(255,255,255,0.82), rgba(247,250,252,0.74));
+    background: rgba(247,250,252,0.72);
   }
 
   .wc-tool .section-header h2 {
