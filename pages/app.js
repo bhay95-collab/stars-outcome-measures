@@ -11,7 +11,7 @@ import SummaryTab from '../components/SummaryTab'
 import MeasureEntry from '../components/MeasureEntry'
 import SubscriptionWall from '../components/SubscriptionWall'
 import LogoWordmark from '../components/LogoWordmark'
-import WheelchairPrescriptionTool, { wheelchairToolStyles } from '../components/WheelchairPrescriptionTool'
+import WheelchairPrescriptionTool from '../components/WheelchairPrescriptionTool'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
 
 export async function getServerSideProps() { return { props: {} } }
@@ -302,7 +302,7 @@ export default function App() {
   return (
     <>
       <AppHead />
-      <style jsx global>{`${globalStyles}\n${wheelchairToolStyles}`}</style>
+      <style jsx global>{globalStyles}</style>
       {showNewPatient && (
         <NewPatientModal
           userId={user.id}
@@ -462,7 +462,7 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
         />
       </div>
 
-      <section className={`patient-workspace-panel${selectedPatient ? '' : ' patient-workspace-panel--empty'}`}>
+      <section className="patient-workspace-panel">
         {selectedPatient ? (
           <>
             <div>
@@ -2423,13 +2423,6 @@ const globalStyles = `
     backdrop-filter: blur(16px);
   }
 
-  .patient-workspace-panel--empty {
-    display: grid;
-    align-items: center;
-    min-height: clamp(360px, 42vh, 520px);
-    padding: clamp(42px, 6vh, 72px) 28px;
-  }
-
   .patient-workspace-panel h2 {
     color: var(--color-ink);
     font-size: clamp(28px, 3vw, 40px);
@@ -2516,13 +2509,12 @@ const globalStyles = `
   }
 
   .patient-workspace-empty {
+    min-height: 260px;
     display: grid;
-    gap: 16px;
-    align-content: center;
+    gap: 12px;
+    place-content: center;
     justify-items: center;
-    width: 100%;
-    max-width: 720px;
-    margin: 0 auto;
+    padding: 38px 24px;
     text-align: center;
   }
 
@@ -2536,13 +2528,11 @@ const globalStyles = `
   .patient-workspace-empty p {
     max-width: 560px;
     margin: 0;
-    font-size: 15px;
-    line-height: 1.6;
+    line-height: 1.55;
   }
 
   .patient-workspace-empty button {
-    min-width: 138px;
-    margin-top: 0;
+    margin-top: 2px;
   }
 
   .patient-directory-card > .patient-card {

@@ -676,7 +676,7 @@ export default function WheelchairPrescriptionTool({ patient }) {
 
   return (
     <section className="wc-tool" ref={rootRef}>
-      <style dangerouslySetInnerHTML={{ __html: wheelchairToolStyles }} />
+      <style>{wheelchairToolStyles}</style>
       <div className="wc-tool__header">
         <div>
           <span className="wc-tool__eyebrow">Clinical Support Tool</span>
@@ -707,7 +707,7 @@ export default function WheelchairPrescriptionTool({ patient }) {
   )
 }
 
-export const wheelchairToolStyles = `
+const wheelchairToolStyles = `
   .wc-tool {
     --wc-ink: var(--color-ink);
     --wc-muted: var(--color-muted);
@@ -721,30 +721,6 @@ export const wheelchairToolStyles = `
     --wc-secondary: var(--color-secondary);
     --wc-danger: #b5451b;
     color: var(--wc-ink);
-    font-family: 'Inter', sans-serif;
-  }
-
-  .wc-tool,
-  .wc-tool * {
-    box-sizing: border-box;
-  }
-
-  .wc-tool h2,
-  .wc-tool h3,
-  .wc-tool h4,
-  .wc-tool p,
-  .wc-tool ul,
-  .wc-tool ol,
-  .wc-tool figure {
-    margin: 0;
-    padding: 0;
-  }
-
-  .wc-tool button,
-  .wc-tool input,
-  .wc-tool textarea,
-  .wc-tool select {
-    font: inherit;
   }
 
   .wc-tool__header {
