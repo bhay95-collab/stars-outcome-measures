@@ -3,10 +3,8 @@ import { makeRedirectUri } from 'expo-auth-session';
 import * as Linking from 'expo-linking';
 import { supabase } from '../supabase/client';
 
-const PKCE_CODE_PATTERN = /^[A-Za-z0-9_\-]{40,256}$/;
-
 export async function signInWithGoogle(): Promise<boolean> {
-  const redirectTo = makeRedirectUri({ scheme: 'rehabmetricsiq' });
+  const redirectTo = makeRedirectUri({ scheme: 'rehabmetricsiq', path: 'auth/callback' });
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -32,8 +30,8 @@ export async function signInWithGoogle(): Promise<boolean> {
 
   const code = parsed.queryParams?.code;
 
-  if (typeof code !== 'string' || !PKCE_CODE_PATTERN.test(code)) {
-    throw new Error('Sign-in could not be completed. Please try again.');
+  if (typeof code !== 'string' || code.length === 0) {
+    throw new Error('Sign-in could not be completed. No authorisation code was returned.');
   }
 
   const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
