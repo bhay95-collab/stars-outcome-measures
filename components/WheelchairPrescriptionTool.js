@@ -1,6 +1,5 @@
 import { ClipboardCopy, FileText, Printer, RotateCcw } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
-import wheelchairPrescriptionMarkup from './wheelchairPrescriptionMarkup'
 
 export default function WheelchairPrescriptionTool({ patient }) {
   const rootRef = useRef(null)
@@ -685,7 +684,7 @@ export default function WheelchairPrescriptionTool({ patient }) {
 
   return (
     <section className="wc-tool" ref={rootRef}>
-      <style dangerouslySetInnerHTML={{ __html: wheelchairToolStyles }} />
+      <style>{wheelchairToolStyles}</style>
       <div className="wc-tool__header">
         <div>
           <span className="wc-tool__eyebrow">Clinical Support Tool</span>
@@ -710,10 +709,571 @@ export default function WheelchairPrescriptionTool({ patient }) {
           </button>
         </div>
       </div>
-      <div className="wc-tool__content" dangerouslySetInnerHTML={{ __html: wheelchairPrescriptionMarkup }} />
+      <WheelchairPrescriptionForm />
       <div className="wc-tool__print-supplier" id="printSupplier" />
     </section>
   )
+}
+
+function WheelchairPrescriptionForm() {
+  return (
+    <div className="wc-tool__content">
+      <form autoComplete="off" className="main-panel" id="wcForm">
+        <FormSection
+          id="section1"
+          title="Section 1: Client profile, medical background and goals"
+          description="Captures the reason for referral, person-context and clinical risks that must shape any equipment direction."
+        >
+          <Grid>
+            <TextField id="clientName" label="Client name" span="span-4" />
+            <TextField id="assessmentDate" label="Date of assessment" type="date" span="span-4" />
+            <TextField id="dob" label="DOB" type="date" span="span-2" />
+            <TextField id="weight" label="Weight kg" type="number" min="0" step="0.1" span="span-2" />
+            <TextField id="primaryDx" label="Primary diagnosis" span="span-6" />
+            <TextField id="otherDx" label="Other relevant diagnosis" span="span-6" />
+            <TextField id="fundingBody" label="Funding body / pathway" placeholder="public program, insurance, hospital, private, other" span="span-4" />
+            <TextField id="reasonReferral" label="Reason for referral" placeholder="New prescription, replacement, review, pressure/posture concern, discharge planning" span="span-8" />
+            <TextAreaField id="mobilityGoals" label="Mobility and seating related goals" placeholder="What must the wheelchair enable? Include home, community, care, work/education, transport and discharge goals." span="span-12" />
+          </Grid>
+
+          <Subhead>Client context</Subhead>
+          <Grid compact>
+            <TextField id="productivity" label="Productivity roles" placeholder="work / volunteering / education / caring" span="span-4" />
+            <TextField id="recreation" label="Recreation and community interests" span="span-4" />
+            <TextField id="carerComments" label="Carer comments" span="span-4" />
+            <OptionGroup title="Remoteness" name="remoteness" options={OPTIONS.remoteness} span="span-4" columns="two" />
+            <OptionGroup title="Amount of time in wheelchair" name="wcTime" options={OPTIONS.wcTime} span="span-4" columns="two" />
+            <OptionGroup title="Carer/s" name="carers" type="checkbox" options={OPTIONS.carers} span="span-4" columns="two" />
+          </Grid>
+
+          <Subhead>Medical background</Subhead>
+          <Grid compact>
+            <OptionGroup title="Cause" name="cause" options={OPTIONS.cause} span="span-4" columns="two" />
+            <OptionGroup title="Impairment" name="impairment" type="checkbox" options={OPTIONS.impairment} span="span-4" columns="two" />
+            <OptionGroup title="Condition" name="conditionStatus" options={OPTIONS.conditionStatus} span="span-4" columns="two" />
+            <TextAreaField id="historyOnset" label="History / onset" span="span-6" />
+            <TextAreaField id="medicalPrecautions" label="Medication / precautions / other related assessments" placeholder="Include hip precautions, epilepsy, pain, home mods, FIM/FCA, gait/transfer assessment, behavioural support etc." span="span-6" />
+          </Grid>
+
+          <Subhead>Pressure injury history and skin risk</Subhead>
+          <Grid compact>
+            <OptionGroup title="History of pressure injury" name="historyPI" options={OPTIONS.yesNo} span="span-3" columns="two" />
+            <OptionGroup title="Sensation" name="sensation" options={OPTIONS.sensation} span="span-3" />
+            <OptionGroup title="Current pressure injury" name="currentPI" options={OPTIONS.yesNo} span="span-3" columns="two" />
+            <OptionGroup title="Requires wound care referral" name="woundReferral" options={OPTIONS.yesNo} span="span-3" columns="two" />
+            <TextField id="piStage" label="PI stage / staged by" span="span-3" />
+            <TextField id="piLocation" label="Location" span="span-3" />
+            <SelectField id="seatingRelated" label="Seating related?" options={OPTIONS.yesNoUnknown} span="span-3" />
+            <SelectField id="seatingRiskFactors" label="Risk factors related to seating?" options={OPTIONS.yesNoUnknown} span="span-3" />
+            <TextAreaField id="pressureManagement" label="Current management strategies and AT" placeholder="Cushion, repositioning routine, wound plan, skin checks, hoist/transfer approach, tilt/recline use, bed surfaces." span="span-12" />
+            <div className="span-12 pressure-actions">
+              <label className="check bariatric-flag">
+                <input id="bariatricFlag" name="bariatricFlag" type="checkbox" value="Bariatric flag" />
+                Flag bariatric considerations
+              </label>
+            </div>
+            <div className="span-12 conditional-panel" hidden id="bariatricPanel">
+              <Subhead inline>Bariatric features</Subhead>
+              <Grid compact className="wc-tool__nested-grid">
+                <OptionGroup title="Bariatric features" name="bariatricFeatures" type="checkbox" options={OPTIONS.bariatricFeatures} span="span-12" />
+              </Grid>
+            </div>
+          </Grid>
+        </FormSection>
+
+        <FormSection
+          id="section2"
+          defaultCollapsed
+          title="Section 2: Proposed-position measurements and current seating/mobility base"
+          description="Measurements are placed first so the supplier-ready output starts with what suppliers most need to size and shortlist trial equipment."
+        >
+          <Subhead>Client measurements in proposed position</Subhead>
+          <div className="measurement-layout">
+            <div>
+              <MeasurementTable />
+              <TextAreaField id="overallWidthNotes" label="Overall width / asymmetrical width notes" placeholder="Include windswept legs, scoliosis, thigh position, abducted/adducted posture, pannus/gluteal shelf implications." className="wc-tool__field-offset" />
+            </div>
+            <div className="measurement-side">
+              <div className="visual-card body-chart-card">
+                <img alt="Body landmark reference chart for A-P seating measurements" className="body-chart-img" src="/assets/wheelchair-prescription/body-landmark-reference.png" />
+                <div className="visual-caption">Body landmark reference for A-P measurements. Use the proposed seated posture for dimensions and document accommodated overall width where posture or tissue shape changes fit.</div>
+              </div>
+              <div className="note">Use the proposed seated posture for measurements before sending through seat width, seat depth, back height and support requirements. If posture is asymmetrical, document the accommodated overall width in the notes.</div>
+            </div>
+          </div>
+
+          <Subhead>Current seating base</Subhead>
+          <Grid compact>
+            <OptionGroup title="Seating base" name="seatingBase" options={['Manual', 'Power']} span="span-3" columns="two" />
+            <TextField id="currentModel" label="Current manufacturer/model" span="span-5" />
+            <TextField id="baseAge" label="Age of base" span="span-2" />
+            <TextField id="baseCondition" label="Condition" span="span-2" />
+            <OptionGroup title="Current wheelchair base" name="currentBaseMeets" options={['Meets needs', 'No longer meets needs']} span="span-3" columns="two" />
+            <TextAreaField id="currentBaseComments" label="Client comments about current base" span="span-9" />
+          </Grid>
+
+          <Subhead>Current seating and mobility base - manual</Subhead>
+          <div className="selection-cards">
+            {MANUAL_SELECTIONS.map(card => <SelectionCard key={card.value} {...card} type="checkbox" name="manualCurrentType" />)}
+          </div>
+
+          <div className="manual-propulsion-layout manual-power-notes">
+            <OptionPanel title="Propulsion">
+              <OptionChoices name="propulsion" options={OPTIONS.propulsion} columns="two" />
+            </OptionPanel>
+            <OptionPanel title="Power add-on / assist">
+              <OptionChoices name="powerAddon" type="checkbox" options={OPTIONS.powerAddon} columns="four" />
+              <TextField id="powerAddonOther" label="Other power add-on details" className="manual-power-notes" />
+            </OptionPanel>
+          </div>
+
+          <Subhead>Current seating and mobility base - power</Subhead>
+          <div className="selection-cards">
+            {POWER_DRIVE_SELECTIONS.map(card => <SelectionCard key={card.value} {...card} type="radio" name="driveConfig" />)}
+          </div>
+          <Grid compact className="manual-power-notes">
+            <TextField id="currentSeatWidth" label="Current seat width mm" type="number" min="0" step="1" span="span-3" />
+            <TextField id="currentSeatDepth" label="Current seat depth mm" type="number" min="0" step="1" span="span-3" />
+            <OptionGroup title="Current power seat functions" name="currentSeatFunctions" type="checkbox" options={OPTIONS.currentSeatFunctions} span="span-6" columns="four" />
+          </Grid>
+
+          <Subhead>Current seating system and accessories</Subhead>
+          <Grid compact>
+            <TextField id="currentCushion" label="Current cushion" span="span-4" />
+            <TextField id="currentCushionSize" label="Cushion size" span="span-3" />
+            <SelectField id="currentCushionMeets" label="Cushion meets needs?" options={OPTIONS.meetsNeeds} span="span-3" />
+            <TextField id="currentCushionNotes" label="Cushion notes" span="span-2" />
+            <TextField id="currentBackrest" label="Current backrest" span="span-4" />
+            <TextField id="currentBackrestSize" label="Backrest size" span="span-3" />
+            <SelectField id="backrestHardware" label="Backrest hardware" options={OPTIONS.backrestHardware} span="span-2" />
+            <SelectField id="currentBackrestMeets" label="Backrest meets needs?" options={OPTIONS.meetsNeeds} span="span-3" />
+            <OptionGroup title="Current accessories" name="currentAccessories" type="checkbox" options={OPTIONS.currentAccessories} span="span-12" columns="four" />
+            <TextAreaField id="currentSeatingInfo" label="Current seating information / issues" span="span-12" />
+          </Grid>
+        </FormSection>
+
+        <FormSection
+          id="section3"
+          defaultCollapsed
+          title="Section 3: Functional assessment, seated posture and MAT"
+          description="Records what the client can do, how they sit now, what is reducible, and what the proposed posture needs to accommodate or support."
+        >
+          <Subhead>Current seated position</Subhead>
+          <Grid compact className="mat-grid">
+            <OptionGroup title="Pelvis sagittal" name="pelvisSag" options={OPTIONS.pelvisSag} span="span-4" />
+            <OptionGroup title="Pelvis frontal" name="pelvisFront" options={OPTIONS.pelvisFront} span="span-4" />
+            <OptionGroup title="Pelvis transverse" name="pelvisTrans" options={OPTIONS.pelvisTrans} span="span-4" />
+            <TextAreaField id="pelvisNotes" label="Pelvic position notes" span="span-12" />
+            <OptionGroup title="Lower extremity / foot posture" name="lowerExt" type="checkbox" options={OPTIONS.lowerExt} span="span-6" columns="four" />
+            <OptionGroup title="Spine, cervical and shoulder posture" name="spineCervical" type="checkbox" options={OPTIONS.spineCervical} span="span-6" columns="four" />
+            <TextAreaField id="postureImpactNotes" label="Impact on pressure, function, comfort or equipment fit" span="span-12" />
+          </Grid>
+
+          <Subhead>Functional activities</Subhead>
+          <ActivityTable />
+
+          <Subhead>Home, community and transport environment</Subhead>
+          <Grid compact>
+            <OptionGroup title="Household" name="household" options={OPTIONS.household} span="span-3" columns="two" />
+            <OptionGroup title="Support" name="support" options={OPTIONS.support} span="span-5" />
+            <TextField id="formalSupport" label="Formal support details" span="span-4" />
+            <TextField id="doorWidths" label="Door widths / clear openings" span="span-3" />
+            <TextField id="thresholds" label="Thresholds / steps" span="span-3" />
+            <TextField id="turningCircles" label="Turning circles / tight spaces" span="span-3" />
+            <TextField id="surfaceHeights" label="Bed/chair/toilet heights" span="span-3" />
+            <OptionGroup title="Internal surfaces" name="internalSurfaces" type="checkbox" options={OPTIONS.internalSurfaces} span="span-4" columns="two" />
+            <OptionGroup title="External terrain" name="externalTerrain" type="checkbox" options={OPTIONS.externalTerrain} span="span-8" columns="four" />
+            <TextField id="steepestSlope" label="Steepest ramp / slope" span="span-4" />
+            <TextAreaField id="communityEnvironment" label="Community environment notes" span="span-8" />
+            <OptionGroup title="Transport" name="transport" type="checkbox" options={OPTIONS.transport} span="span-6" columns="three" />
+            <OptionGroup title="Travel position" name="travelPosition" options={OPTIONS.travelPosition} span="span-6" />
+            <TextAreaField id="transportDetails" label="Transport details / restraints / vehicle access" span="span-12" />
+          </Grid>
+
+          <Subhead>Supine MAT evaluation and sitting balance</Subhead>
+          <Grid compact className="mat-grid">
+            <OptionGroup title="MAT completed on plinth" name="matCompleted" options={OPTIONS.yesNo} span="span-3" columns="two" />
+            <OptionGroup title="Supine pelvic tilt" name="supinePelvicTilt" options={OPTIONS.supinePelvicTilt} span="span-3" />
+            <OptionGroup title="Tilt flexibility" name="tiltFlex" options={OPTIONS.flexibility} span="span-3" columns="two" />
+            <OptionGroup title="Sitting balance" name="sittingBalance" options={OPTIONS.sittingBalance} span="span-3" />
+            <OptionGroup title="Supine pelvic rotation" name="supineRotation" options={OPTIONS.supineRotation} span="span-3" />
+            <OptionGroup title="Rotation flexibility" name="rotationFlex" options={OPTIONS.flexibility} span="span-3" columns="two" />
+            <OptionGroup title="Supine pelvic obliquity" name="supineObliquity" options={OPTIONS.supineObliquity} span="span-3" />
+            <OptionGroup title="Obliquity flexibility" name="obliquityFlex" options={OPTIONS.flexibility} span="span-3" columns="two" />
+            <OptionGroup title="Tone / movement" name="toneMovement" type="checkbox" options={OPTIONS.toneMovement} span="span-12" columns="four" />
+            <TextAreaField id="romNotes" label="ROM notes" span="span-6" />
+            <TextAreaField id="simulationFindings" label="Simulation findings / proposed posture" span="span-6" />
+          </Grid>
+        </FormSection>
+
+        <FormSection
+          id="section4"
+          defaultCollapsed
+          title="Section 4: Proposed product parameters"
+          description="This is the supplier-facing prescription frame. Complete as a proposed trial direction first; finalise after trial, fitting and review."
+        >
+          <Subhead>Base direction and trial class</Subhead>
+          <Grid compact>
+            <OptionGroup title="Likely prescription pathway" name="proposedPathway" options={OPTIONS.proposedPathway} span="span-12" columns="four" />
+            <TextField id="supplierPreference" label="Preferred suppliers to contact" span="span-4" />
+            <TextAreaField id="baseDirectionReason" label="Reason for base direction" span="span-8" />
+            <div className="note span-12 wc-tool__auto-note">
+              <span>Dimension fields are auto-starting points only. Overwrite them when posture, pressure care, transfers, supplier measurement conventions or trial outcomes indicate a better fit.</span>
+              <button className="btn" type="button" onClick={() => window.reapplyAutoCalculations?.()}>Re-apply auto-calculations</button>
+            </div>
+          </Grid>
+
+          <Subhead>Key seating dimensions and seating system</Subhead>
+          <Grid compact>
+            <div className="dimension-grid span-12">
+              <DimensionField id="reqSeatWidth" label="Required seat width mm" type="number" />
+              <DimensionField id="proposedOverallWidth" label="Estimated / proposed overall wheelchair width mm" type="number" placeholder="Auto-estimates seat width + 200 mm; overwrite with supplier total width" />
+              <DimensionField id="reqSeatDepth" label="Required seat depth mm" type="number" />
+              <DimensionField id="reqSeatHeight" label="Required front seat height mm" type="number" />
+              <DimensionField id="reqBackHeight" label="Required backrest height" textarea placeholder="e.g. 400 mm to inferior scapula, or shoulder/head level where clinically indicated." />
+              <DimensionField id="cushionProfile" label="Cushion profile" select options={OPTIONS.cushionProfile} />
+              <DimensionField id="headSupport" label="Head support" select options={OPTIONS.yesNo} />
+              <DimensionField id="proposedCushion" label="Cushion recommendation" textarea placeholder="Describe cushion type, contour, pressure rationale, transfer impact and skin follow-up." />
+              <DimensionField id="proposedBackrest" label="Backrest recommendation" textarea placeholder="Describe backrest style, height, contour, laterals and correction/accommodation rationale." />
+              <DimensionField id="seatAngleTilt" label="Seat angle / tilt" textarea placeholder="Describe fixed seat angle, tilt-in-space, anterior tilt, pressure/posture rationale and transfer impact." />
+              <DimensionField id="backrestRecline" label="Backrest recline" textarea placeholder="Describe recline angle/function, care/rest rationale, shear/sliding considerations and belt position." />
+              <DimensionField id="legrestAngle" label="Legrest angle / support" textarea placeholder="Describe hanger/legrest angle, footplate setup, calf/heel support, ROM and swelling/tone considerations." />
+              <DimensionField id="armSupport" label="Arm support" textarea placeholder="Describe armrest/arm trough height, length, padding, swing-away/flip-back needs and transfer/reach impact." />
+            </div>
+            <OptionGroup title="Postural supports" name="posturalSupports" type="checkbox" options={OPTIONS.posturalSupports} span="span-12" columns="four" />
+            <OptionGroup title="Belts / secondary supports" name="beltsSupports" type="checkbox" options={OPTIONS.beltsSupports} span="span-12" columns="four" />
+            <TextAreaField id="posturalSupportDescriptors" label="Postural support descriptors / mounting notes" span="span-12" />
+          </Grid>
+
+          <Subhead>Manual wheelchair parameters</Subhead>
+          <Grid compact>
+            <div className="note span-12 manual-source-note" id="manualSourceSummary">Manual type and frame are not repeated here. Use the prescription pathway above and manual chair selection in Section 2, then record any proposed frame/configuration changes in the notes below.</div>
+            <OptionGroup title="Frame material" name="frameMaterial" type="checkbox" options={OPTIONS.frameMaterial} span="span-4" columns="two" />
+            <OptionGroup title="Wheels / drive" name="manualWheels" type="checkbox" options={OPTIONS.manualWheels} span="span-6" columns="two" />
+            <OptionGroup title="Manual accessories" name="manualAccessories" type="checkbox" options={OPTIONS.manualAccessories} span="span-6" columns="two" />
+            <TextAreaField id="manualConfigNotes" label="Manual wheelchair configuration notes" placeholder="Rear axle position, centre of gravity, seat-to-floor height, foot propulsion needs, shoulder preservation, carer handling, transport/storage." span="span-12" />
+          </Grid>
+
+          <Subhead>Power wheelchair parameters</Subhead>
+          <Grid compact>
+            <OptionGroup title="Drive configuration to trial" name="proposedDrive" options={OPTIONS.proposedDrive} span="span-4" />
+            <OptionGroup title="Power seat functions requested for trial" name="proposedSeatFunctions" type="checkbox" options={OPTIONS.proposedSeatFunctions} span="span-8" columns="four" />
+            <TextField id="powerControls" label="Controls" placeholder="Joystick, attendant control, alternate drive control, tray mount, swing-away" span="span-4" />
+            <TextField id="powerBaseNotes" label="Power base / seating notes" span="span-4" />
+            <TextField id="powerChargingNotes" label="Battery/charging/storage considerations" span="span-4" />
+          </Grid>
+        </FormSection>
+
+        <FormSection
+          id="section5"
+          defaultCollapsed
+          title="Section 5: Trial plan, supplier handover, fitting and training"
+          description="Turns assessment findings into a practical trial and quote request, then captures what must be checked at delivery."
+        >
+          <Subhead>Trial and quote request</Subhead>
+          <Grid compact>
+            <OptionGroup title="Suppliers to consider" name="suppliers" type="checkbox" options={OPTIONS.suppliers} span="span-12" columns="four" />
+            <OptionGroup title="Trial completed / planned location" name="trialLocations" type="checkbox" options={OPTIONS.trialLocations} span="span-6" columns="two" />
+            <TextAreaField id="trialEquipment" label="Potential trial equipment to meet goals and needs" placeholder="List product classes/models, alternatives and features that must be trialled." span="span-6" />
+            <TextAreaField id="productsTrialled" label="Products trialled / outcomes" span="span-6" />
+            <TextAreaField id="selectedEquipment" label="Selected wheelchair, seating and accessories" span="span-6" />
+            <TextAreaField id="quoteInstructions" label="Supplier quote instructions" placeholder="Request itemised quote with base, seating, cushion, accessories, mounting hardware, delivery/setup, training, freight, warranty, maintenance/repair pathway and expected lead time." span="span-12" />
+          </Grid>
+
+          <Subhead>Fitting, training and follow-up checklist</Subhead>
+          <Grid compact>
+            <OptionGroup name="trainingChecklist" type="checkbox" options={OPTIONS.trainingChecklist} span="span-12" columns="four" />
+            <TextAreaField id="trainingNotes" label="Training / follow-up notes" span="span-12" />
+          </Grid>
+
+          <Subhead>Final supplier handover comments</Subhead>
+          <Grid compact>
+            <TextAreaField id="barriersToGoals" label="Identified barriers to goals" span="span-4" />
+            <TextAreaField id="identifiedIssues" label="Identified postural / mobility issues" span="span-4" />
+            <TextAreaField id="productParametersSummary" label="Potential product parameters summary" span="span-4" />
+          </Grid>
+          <div className="note wc-tool__field-offset">Supplier output is generated from the fields above. It deliberately leaves live clinical guidance out of the copied brief, while retaining risk flags and trial requirements relevant to supplier shortlisting.</div>
+        </FormSection>
+      </form>
+
+      <aside className="sidebar">
+        <div className="side-card">
+          <h3>Live clinical reasoning guidance</h3>
+          <div className="side-body" id="guidanceOutput" />
+        </div>
+        <div className="side-card">
+          <h3>Supplier brief preview</h3>
+          <div className="side-body">
+            <div className="brief-preview" id="supplierBrief" />
+            <div className="footer-note">Use "Copy supplier brief" for email handover or "Print supplier brief" for PDF/printing.</div>
+          </div>
+        </div>
+        <div className="side-card">
+          <h3>Reference basis</h3>
+          <div className="side-body wc-tool__reference-body">
+            <ul className="links-list">
+              <li><a href="https://www.who.int/publications/i/item/9789240074521" rel="noreferrer" target="_blank">WHO Wheelchair provision guidelines, 2023</a></li>
+              <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK143782/" rel="noreferrer" target="_blank">WHO manual wheelchair guideline definition of appropriate wheelchair</a></li>
+              <li><a href="https://www.resna.org/Resources/Position-Papers-and-Service-Provision-Guidelines" rel="noreferrer" target="_blank">RESNA service provision framework</a></li>
+              <li><a href="https://wheelchairskillsprogram.ca/" rel="noreferrer" target="_blank">Wheelchair Skills Program</a></li>
+            </ul>
+            <div className="footer-note">Use these as the guidance basis only. The tool still requires clinical judgement, trial confirmation, supplier specification checks and local funding review.</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  )
+}
+
+function FormSection({ id, title, description, defaultCollapsed = false, children }) {
+  const toggle = event => window.toggleSection?.(id, event.currentTarget)
+  return (
+    <section className={`card section${defaultCollapsed ? ' is-collapsed' : ''}`} id={id}>
+      <div className="section-header">
+        <h2>{title}</h2>
+        <p>{description}</p>
+        <button className="section-toggle" onClick={toggle} type="button">{defaultCollapsed ? 'Expand' : 'Minimise'}</button>
+      </div>
+      <div className="section-body">{children}</div>
+    </section>
+  )
+}
+
+function Grid({ children, compact = false, className = '' }) {
+  return <div className={`grid${compact ? ' compact' : ''}${className ? ` ${className}` : ''}`}>{children}</div>
+}
+
+function Subhead({ children, inline = false }) {
+  return <div className={`subhead${inline ? ' inline-subhead' : ''}`}>{children}</div>
+}
+
+function TextField({ id, label, span = '', className = '', type = 'text', ...props }) {
+  return (
+    <label className={`field${span ? ` ${span}` : ''}${className ? ` ${className}` : ''}`}>
+      {label}
+      <input id={id} type={type} {...props} />
+    </label>
+  )
+}
+
+function TextAreaField({ id, label, span = '', className = '', ...props }) {
+  return (
+    <label className={`field${span ? ` ${span}` : ''}${className ? ` ${className}` : ''}`}>
+      {label}
+      <textarea id={id} {...props} />
+    </label>
+  )
+}
+
+function SelectField({ id, label, options, span = '', className = '' }) {
+  return (
+    <label className={`field${span ? ` ${span}` : ''}${className ? ` ${className}` : ''}`}>
+      {label}
+      <select id={id}>
+        <option value="" />
+        {options.map(option => <option key={optionValue(option)} value={optionValue(option)}>{optionLabel(option)}</option>)}
+      </select>
+    </label>
+  )
+}
+
+function OptionGroup({ title, name, options, type = 'radio', span = '', columns = '', className = '' }) {
+  return (
+    <div className={`${span || ''}${className ? ` ${className}` : ''}`}>
+      {title && <strong>{title}</strong>}
+      <OptionChoices name={name} options={options} type={type} columns={columns} />
+    </div>
+  )
+}
+
+function OptionPanel({ title, children }) {
+  return (
+    <div className="option-panel">
+      <strong>{title}</strong>
+      {children}
+    </div>
+  )
+}
+
+function OptionChoices({ name, options, type = 'radio', columns = '' }) {
+  return (
+    <div className={`check-grid${columns ? ` ${columns}` : ''}`}>
+      {options.map(option => (
+        <label className={type === 'checkbox' ? 'check' : 'radio'} key={`${name}-${optionValue(option)}`}>
+          <input name={name} type={type} value={optionValue(option)} />
+          {optionLabel(option)}
+        </label>
+      ))}
+    </div>
+  )
+}
+
+function SelectionCard({ title, value, label, caption, src, type, name }) {
+  return (
+    <div className="selection-card">
+      <img alt="" src={src} />
+      <h4>{title}</h4>
+      <label className={type === 'checkbox' ? 'check' : 'radio'}>
+        <input name={name} type={type} value={value} />
+        {label}
+      </label>
+      <div className="card-caption">{caption}</div>
+    </div>
+  )
+}
+
+function MeasurementTable() {
+  return (
+    <table className="measurement-table">
+      <thead>
+        <tr><th>Measurement</th><th>Left / value mm</th><th>Right mm</th></tr>
+      </thead>
+      <tbody>
+        {MEASUREMENT_ROWS.map(row => (
+          <tr key={row.code}>
+            <td><span className="measure-label"><span className="measure-code">{row.code}</span><span className="measure-desc">{row.label}</span></span></td>
+            <td><input id={`meas${row.code}_L`} min="0" step="1" type="number" /></td>
+            <td><input id={`meas${row.code}_R`} min="0" step="1" type="number" /></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+function ActivityTable() {
+  return (
+    <table className="activity-table">
+      <thead>
+        <tr><th>Activity</th><th>Performance</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        {ACTIVITY_ROWS.map((activity, index) => (
+          <tr key={activity}>
+            <td>{activity}</td>
+            <td>
+              <select id={`act_${index}`}>
+                <option value="" />
+                {OPTIONS.activityLevels.map(level => <option key={level} value={level}>{level}</option>)}
+              </select>
+            </td>
+            <td><input id={`actNote_${index}`} type="text" /></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+function DimensionField({ id, label, textarea = false, select = false, options = [], type = 'text', ...props }) {
+  return (
+    <label className="field">
+      {label}
+      {textarea ? (
+        <textarea id={id} {...props} />
+      ) : select ? (
+        <select id={id}>
+          <option value="" />
+          {options.map(option => <option key={optionValue(option)} value={optionValue(option)}>{optionLabel(option)}</option>)}
+        </select>
+      ) : (
+        <input id={id} min="0" step="1" type={type} {...props} />
+      )}
+      <div className="guidance-line" id={`guide_${id}`} />
+    </label>
+  )
+}
+
+function optionValue(option) {
+  return typeof option === 'string' ? option : option.value
+}
+
+function optionLabel(option) {
+  return typeof option === 'string' ? option : option.label
+}
+
+const ASSET_BASE = '/assets/wheelchair-prescription'
+
+const MEASUREMENT_ROWS = [
+  ['A', 'Buttock/thigh depth'],
+  ['B', 'Lower leg length'],
+  ['C', 'Foot length'],
+  ['D', 'Ischial well length'],
+  ['E', 'Seat to elbow'],
+  ['F', 'PSIS'],
+  ['G', 'Inferior scapula'],
+  ['H', 'Axilla'],
+  ['I', 'Top of shoulder'],
+  ['J', 'Top of head'],
+  ['K', 'Shoulder width'],
+  ['L', 'Chest width'],
+  ['M', 'Hip width'],
+  ['N', 'External knee width'],
+  ['O', 'Internal knee width'],
+  ['P', 'External ankle/foot at widest point'],
+].map(([code, label]) => ({ code, label }))
+
+const ACTIVITY_ROWS = ['Eating', 'Grooming', 'Bathing', 'Dressing - upper body', 'Dressing - lower body', 'Toileting', 'Bed/chair/wheelchair transfer', 'Toilet transfer', 'Shower/bath transfer', 'Propel', 'Reposition / pressure relieve', 'Reach / pick up objects', 'Navigate tight spaces', 'Manage ramps / inclines / curbs', 'Cross streets / community safety']
+
+const MANUAL_SELECTIONS = [
+  { title: 'Folding manual', value: 'Folding', label: 'Select folding manual', caption: 'Useful when transport/storage and simpler handling are priorities.', src: `${ASSET_BASE}/folding-manual-wheelchair.jpg` },
+  { title: 'Rigid manual', value: 'Rigid', label: 'Select rigid manual', caption: 'Useful when propulsion efficiency, performance and reduced flex are priorities.', src: `${ASSET_BASE}/rigid-manual-wheelchair.jpg` },
+  { title: 'Tilt in space', value: 'Tilt in space', label: 'Select tilt in space', caption: 'Useful when posture support, pressure management and caregiver handling are priorities.', src: `${ASSET_BASE}/tilt-in-space-manual-wheelchair.jpg` },
+]
+
+const POWER_DRIVE_SELECTIONS = [
+  { title: 'Front wheel drive', value: 'Front wheel drive', label: 'Select front wheel drive', caption: 'Often prioritised where climbing obstacles and more direct obstacle approach are important.', src: `${ASSET_BASE}/front-wheel-drive-power-wheelchair.jpg` },
+  { title: 'Mid wheel drive', value: 'Mid wheel drive', label: 'Select mid wheel drive', caption: 'Often prioritised for tighter indoor turning and central drive feel.', src: `${ASSET_BASE}/mid-wheel-drive-power-wheelchair.jpg` },
+  { title: 'Rear wheel drive', value: 'Rear wheel drive', label: 'Select rear wheel drive', caption: 'Often prioritised for directional stability and outdoor tracking.', src: `${ASSET_BASE}/rear-wheel-drive-power-wheelchair.jpg` },
+]
+
+const OPTIONS = {
+  yesNo: ['Yes', 'No'],
+  yesNoUnknown: ['Yes', 'No', 'Unknown'],
+  remoteness: ['Metropolitan', 'Regional', 'Rural', 'Remote', 'Very remote'],
+  wcTime: ['Community access only', 'Outdoor home access only', 'Indoor transit only', 'Full-time use'],
+  carers: ['None', 'Informal', 'Formal'],
+  cause: ['Injury', 'Health condition', 'Other'],
+  impairment: ['Physical', 'Neurological', 'Cognitive', 'Psychosomatic', 'Sensory'],
+  conditionStatus: ['Stable', 'Deteriorating', 'Fluctuating'],
+  sensation: ['Intact', 'Impaired', 'Absent'],
+  bariatricFeatures: ['Apple ascites', 'Apple pannus', 'Pear abduction', 'Pear adduction', 'Gluteal shelf'],
+  propulsion: ['Independent full-time', 'Independent part-time', 'Requires assistance', 'Dependent'],
+  powerAddon: ['Front attached', 'Push-rim activated', 'SmartDrive', 'Other'],
+  currentSeatFunctions: ['Tilt', 'Recline - power', 'Recline - manual', 'Elevating leg rests - power', 'Elevating leg rests - manual', 'Seat elevate', 'Anterior tilt', 'Active reach', 'Stand'],
+  currentAccessories: ['Headrest', 'Laterals', 'Postural hip belt', 'Shoulder harness', 'Ankle huggers', 'Foot cups', 'Tray', 'Other'],
+  meetsNeeds: ['Meets needs', 'Does not meet needs', 'Unknown'],
+  backrestHardware: ['Removable', 'Fixed', 'Integrated'],
+  pelvisSag: ['Neutral', 'Posterior pelvic tilt', 'Anterior pelvic tilt'],
+  pelvisFront: ['Neutral', 'Right obliquity', 'Left obliquity'],
+  pelvisTrans: ['Neutral', 'Right rotation', 'Left rotation'],
+  lowerExt: ['Hip neutral', 'Hip abducted R', 'Hip abducted L', 'Hip adducted R', 'Hip adducted L', 'Externally rotated R', 'Externally rotated L', 'Internally rotated R', 'Internally rotated L', 'Wind sweeping R', 'Wind sweeping L', 'Foot eversion', 'Foot inversion', 'Plantarflexed', 'Dorsiflexed'],
+  spineCervical: ['Scoliosis convex right', 'Scoliosis convex left', 'Thoracic kyphosis', 'Lumbar lordosis', 'Spinal rotation R', 'Spinal rotation L', 'Cervical flexed', 'Cervical extended', 'Cervical lateral flexion L', 'Cervical lateral flexion R', 'Cervical rotation L', 'Cervical rotation R', 'Shoulder protracted L', 'Shoulder protracted R', 'Shoulder low L', 'Shoulder low R'],
+  household: ['Lives alone', 'Lives with others'],
+  support: ['Independent', 'Family support', 'Carer support'],
+  internalSurfaces: ['Tiles/vinyl/wood', 'Carpet/rugs', 'Tight spaces', 'Narrow doors'],
+  externalTerrain: ['Concrete/paver/tile', 'Gravel/dirt', 'Grass/soft ground', 'Uneven terrain', 'Hills', 'Steep ramps', 'Curbs'],
+  transport: ['Modified vehicle', 'Standard vehicle', 'Taxi', 'Bus', 'Train', 'Other'],
+  travelPosition: ['In wheelchair', 'In vehicle seat', 'Further assessment required'],
+  supinePelvicTilt: [{ value: 'NAD', label: 'NAD' }, { value: 'Anterior pelvic tilt', label: 'Anterior' }, { value: 'Posterior pelvic tilt', label: 'Posterior' }],
+  flexibility: ['Reducible', 'Non-reducible'],
+  sittingBalance: [{ value: 'Independent sitting', label: 'Independent' }, { value: 'Sitting with propping', label: 'Propping' }, { value: 'Unable to sit without support', label: 'Unable' }],
+  supineRotation: [{ value: 'NAD', label: 'NAD' }, { value: 'Right rotation', label: 'Right' }, { value: 'Left rotation', label: 'Left' }],
+  supineObliquity: [{ value: 'NAD', label: 'NAD' }, { value: 'Right obliquity', label: 'Right' }, { value: 'Left obliquity', label: 'Left' }],
+  toneMovement: ['Hypertonic', 'Hypotonic', 'Mixed tone', 'Ataxia', 'Athetosis', 'Spasm/reflex triggers'],
+  activityLevels: ['Independent', 'Partial assistance', 'Dependent', 'Not applicable'],
+  proposedPathway: ['Basic manual / transit', 'Highly adjustable manual', 'Scripted/custom manual', 'Manual tilt-in-space', 'Power wheelchair', 'Manual chair plus power assist', 'Further specialist assessment before product direction'],
+  cushionProfile: ['Low profile 1-2 inch', 'High profile 3 inch +'],
+  posturalSupports: ['Pre-ischial contour / ridge', 'Cushion build-up', 'Cushion wedge', 'Thigh guide', 'Pommel', 'Lateral supports', 'Deep contour backrest', 'Lumbar support', 'Pelvic pad PSIS-level', 'Tray', 'Footrest build-up', 'Angle adjustable footrest / wedge', 'Calf strap', 'Heel strap'],
+  beltsSupports: ['Pelvic belt', 'Four-point pelvic belt', 'Chest belt', 'Shoulder harness', 'Calf strap', 'Ankle huggers', 'Foot box', 'Head strap'],
+  frameMaterial: ['Aluminium', 'Steel', 'Carbon fibre', 'Titanium'],
+  manualWheels: ['Attendant/transit', 'Large rear wheel', 'One arm drive - level', 'One arm drive - through axle', 'Solid tyres', 'Pneumatic tyres', 'High tread tyres', 'Spoke wheels', 'Mag wheels', 'Spoke guard'],
+  manualAccessories: ['Wheel camber', 'Aluminium rims', 'Plastic rims', 'High friction rims', 'Ergonomic rims', 'Castors <6 inch', 'Castors 6 inch', 'Castors 8 inch', 'Castors >8 inch', 'Brake extensions', 'Scissor brakes', 'Attendant drum brakes', 'Anti-tips', 'Tip-assist', 'Extended push handles', 'Stroller handles', 'Lightweight', 'Foldable', 'Dismantleable', 'Robust', 'Power assist required'],
+  proposedDrive: ['Front wheel drive', 'Mid wheel drive', 'Rear wheel drive', 'To trial / compare'],
+  proposedSeatFunctions: ['Power tilt', 'Power recline', 'Power elevating legrests', 'Seat elevate', 'Anterior tilt', 'Active reach', 'Standing', 'Manual recline/ELR only'],
+  suppliers: ['Primary wheelchair supplier', 'Custom seating supplier', 'Power mobility supplier', 'Manual wheelchair supplier', 'Local service/repair provider', 'Other supplier', 'Specialist custom fabrication', 'Engineering / technical input'],
+  trialLocations: ['Hospital', 'Home', 'Showroom', 'Community', 'Vehicle/transport', 'Work/school'],
+  trainingChecklist: ['Product review after delivery/setup', 'Propulsion training', 'Navigating tight spaces', 'Doors and thresholds', 'Curbs', 'Ramps/inclines', 'Wheelie/manual wheelchair skill', 'Pressure relieving routine', 'Repositioning in chair', 'Folding/dismantling/transport', 'Power mobility controls and safe use', 'Charging and storage routine', 'Manual freewheel / motor disengagement', 'Cleaning', 'Device inspection/common issues', 'Backup plans for breakdown', 'Maintenance/repair process', 'Replacement schedule - device/seating', 'Caregiver training'],
 }
 
 const wheelchairToolStyles = `
@@ -1046,6 +1606,7 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .check-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wc-tool .check-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .wc-tool .check-grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
   .wc-tool .check,
@@ -1182,6 +1743,32 @@ const wheelchairToolStyles = `
     border-radius: 8px;
     background: rgba(255,255,255,0.88);
     padding: 12px;
+  }
+
+  .wc-tool .conditional-panel[hidden] {
+    display: none !important;
+  }
+
+  .wc-tool .inline-subhead {
+    margin-top: 0;
+  }
+
+  .wc-tool .wc-tool__nested-grid,
+  .wc-tool .wc-tool__field-offset,
+  .wc-tool .manual-power-notes {
+    margin-top: 12px;
+  }
+
+  .wc-tool .wc-tool__auto-note {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .wc-tool .wc-tool__reference-body {
+    color: #3b4b5d;
+    font-size: 13px;
   }
 
   .wc-tool .visual-card img,
