@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { ChevronDown, ClipboardList, LayoutDashboard, Plus, Users } from 'lucide-react'
+import { Accessibility, ChevronDown, ClipboardList, LayoutDashboard, Plus, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
@@ -11,6 +11,7 @@ import SummaryTab from '../components/SummaryTab'
 import MeasureEntry from '../components/MeasureEntry'
 import SubscriptionWall from '../components/SubscriptionWall'
 import LogoWordmark from '../components/LogoWordmark'
+import WheelchairPrescriptionTool from '../components/WheelchairPrescriptionTool'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
 
 export async function getServerSideProps() { return { props: {} } }
@@ -237,6 +238,12 @@ export default function App() {
     router.push('/')
   }
 
+  const viewTitle =
+    view === 'assessment' ? 'New Assessment'
+    : view === 'patients' ? 'Patients'
+    : view === 'wheelchair' ? 'Wheelchair Prescription'
+    : 'Patient Overview'
+
   if (loading) {
     return (
       <>
@@ -318,20 +325,23 @@ export default function App() {
           onDashboard={() => requestViewChange('summary')}
           onAssessment={() => selectedPatient ? requestViewChange('assessment') : requestViewChange('assessment')}
           onPatients={() => requestViewChange('patients')}
+          onWheelchair={() => requestViewChange('wheelchair')}
           onProfile={() => setShowProfile(true)}
           onSignOut={handleSignOut}
         />
         <main className="app-main">
           <div className="page-toolbar">
-            <h1>{view === 'assessment' ? 'New Assessment' : view === 'patients' ? 'Patients' : 'Patient Overview'}</h1>
-            <button
-              type="button"
-              className="new-assessment-btn"
-              onClick={() => selectedPatient ? requestViewChange('assessment') : requestViewChange('assessment')}
-            >
-              <Plus size={17} />
-              New Assessment
-            </button>
+            <h1>{viewTitle}</h1>
+            {view !== 'wheelchair' && (
+              <button
+                type="button"
+                className="new-assessment-btn"
+                onClick={() => selectedPatient ? requestViewChange('assessment') : requestViewChange('assessment')}
+              >
+                <Plus size={17} />
+                New Assessment
+              </button>
+            )}
           </div>
 
           {notification && (
@@ -342,7 +352,9 @@ export default function App() {
             </div>
           )}
 
-          {view === 'patients' ? (
+          {view === 'wheelchair' ? (
+            <WheelchairPrescriptionTool patient={selectedPatient} />
+          ) : view === 'patients' ? (
             <PatientsWorkspace
               patients={patients}
               selectedPatient={selectedPatient}
@@ -395,7 +407,7 @@ export default function App() {
   )
 }
 
-function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, onPatients, onProfile, onSignOut }) {
+function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, onPatients, onWheelchair, onProfile, onSignOut }) {
   const displayName = profileData.firstName
     ? `${profileData.firstName} ${profileData.lastName}`.trim()
     : user?.email ?? 'User Profile'
@@ -413,6 +425,9 @@ function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, 
         </button>
         <button type="button" data-active={activeView === 'assessment' ? '' : undefined} onClick={onAssessment}>
           <ClipboardList size={21} /> Assessments
+        </button>
+        <button type="button" data-active={activeView === 'wheelchair' ? '' : undefined} onClick={onWheelchair}>
+          <Accessibility size={21} /> Wheelchair Prescription
         </button>
       </nav>
       <div className="app-sidebar__bottom">
