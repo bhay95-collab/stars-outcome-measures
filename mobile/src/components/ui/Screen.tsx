@@ -11,7 +11,7 @@ interface ScreenProps {
 
 export function Screen({ children, scrollable = false, style }: ScreenProps) {
   const inner = scrollable ? (
-    <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, style]}>
+    <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, style]}>
       {children}
     </ScrollView>
   ) : (
@@ -28,6 +28,10 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: spacing.md,
   },
   content: {
     flex: 1,

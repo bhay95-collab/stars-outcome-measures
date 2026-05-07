@@ -37,9 +37,6 @@ function MeasureRow({
     >
       <View style={styles.measureInfo}>
         <Text style={styles.measureName}>{measure.name}</Text>
-        {measure.primaryUnit ? (
-          <Text style={styles.measureUnit}>{measure.primaryUnit}</Text>
-        ) : null}
       </View>
       <Text style={styles.chevron}>›</Text>
     </TouchableOpacity>
@@ -137,11 +134,6 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeMd,
     color: colors.ink,
     fontWeight: typography.weightMedium,
-  },
-  measureUnit: {
-    fontSize: typography.sizeSm,
-    color: colors.muted,
-    marginTop: spacing.xs,
   },
   chevron: {
     fontSize: typography.sizeLg,
