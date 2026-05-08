@@ -12,6 +12,7 @@ import { TISForm } from '../../../../../src/components/forms/TISForm';
 import { MASForm }  from '../../../../../src/components/forms/MASForm';
 import { COVSForm } from '../../../../../src/components/forms/COVSForm';
 import { FGAForm }  from '../../../../../src/components/forms/FGAForm';
+import { HiMATForm } from '../../../../../src/components/forms/HiMAT';
 import { MEASURES } from '../../../../../src/clinical/adapter';
 import { getPatient } from '../../../../../src/supabase/patients';
 import type { Patient } from '../../../../../src/types/domain';
@@ -722,6 +723,10 @@ export default function AssessScreen() {
 
   if (measureId === FGA_ID) {
     return <FGAForm patientId={patientId} />;
+  }
+
+  if (measureId === HIMAT_ID) {
+    return <HiMATForm patientId={patientId} />;
   }
 
   const measure = MEASURES[measureId];
