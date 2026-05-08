@@ -438,18 +438,18 @@ const styles = `
     content: '';
     position: absolute;
     inset: 0;
-    background-image: url('https://images.pexels.com/photos/20860617/pexels-photo-20860617.jpeg?auto=compress&cs=tinysrgb&w=1800');
+    background-image: url('https://images.pexels.com/photos/5793792/pexels-photo-5793792.jpeg?auto=compress&cs=tinysrgb&w=1800');
     background-size: cover;
-    background-position: center;
-    filter: saturate(0.82) hue-rotate(7deg) brightness(1.02) contrast(0.96);
+    background-position: 62% center;
+    filter: saturate(0.92) sepia(0.06) brightness(1.04) contrast(0.95);
     transform: scale(1.01);
   }
   .hero__focus-blur {
     position: absolute;
     inset: 0 auto 0 0;
-    width: 67%;
+    width: 60%;
     background:
-      linear-gradient(90deg, rgba(248,244,237,0.7) 0%, rgba(244,238,229,0.52) 48%, rgba(244,238,229,0) 100%);
+      linear-gradient(90deg, rgba(234,243,251,0.76) 0%, rgba(247,250,252,0.58) 52%, rgba(247,250,252,0) 100%);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     mask-image: linear-gradient(90deg, #000 0%, #000 48%, rgba(0,0,0,0) 100%);
@@ -459,8 +459,8 @@ const styles = `
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(90deg, rgba(249,246,240,0.72) 0%, rgba(239,233,224,0.4) 44%, rgba(239,233,224,0.06) 76%),
-      linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04));
+      linear-gradient(90deg, rgba(247,250,252,0.82) 0%, rgba(234,243,251,0.48) 44%, rgba(255,255,255,0.08) 76%),
+      linear-gradient(180deg, rgba(255,255,255,0.08), rgba(23,73,111,0.08));
   }
   .hero__inner {
     position: relative;
@@ -482,13 +482,13 @@ const styles = `
   .hero h1 {
     max-width: 560px;
     margin-top: 18px;
-    color: #16223c;
+    color: var(--navy-dark);
     font-family: 'Source Serif 4', Georgia, serif;
     font-size: clamp(48px, 6vw, 74px);
     font-weight: 700;
     line-height: 1.05;
   }
-  .hero h1 span { color: #7a8492; }
+  .hero h1 span { color: var(--navy); }
   .hero__sub {
     max-width: 520px;
     margin-top: 24px;

@@ -1624,13 +1624,20 @@ const globalStyles = `
     position: absolute;
     top: 22px;
     right: 24px;
+    z-index: 0;
     width: 92px;
     height: 58px;
     opacity: 0.2;
+    pointer-events: none;
     background:
       linear-gradient(to top, var(--color-primary) 0 48%, transparent 48%) 0 100% / 18px 100% no-repeat,
       linear-gradient(to top, #5a98da 0 70%, transparent 70%) 36px 100% / 18px 100% no-repeat,
       linear-gradient(to top, var(--color-secondary) 0 94%, transparent 94%) 72px 100% / 18px 100% no-repeat;
+  }
+
+  .patient-summary-card > * {
+    position: relative;
+    z-index: 1;
   }
 
   .patient-summary-card__head {
