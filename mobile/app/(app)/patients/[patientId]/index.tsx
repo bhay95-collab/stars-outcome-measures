@@ -72,36 +72,43 @@ export default function PatientSummaryScreen() {
 
   if (isLoading) {
     return (
-      <Screen padded={false}>
+      <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
         <NavyHeader leftLabel="← Patients" onLeft={() => router.back()} />
-        <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>
+        <View style={styles.panel}>
+          <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>
+        </View>
       </Screen>
     );
   }
 
   if (error || !patient) {
     return (
-      <Screen padded={false}>
+      <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
         <NavyHeader leftLabel="← Patients" onLeft={() => router.back()} />
-        <View style={styles.center}>
-          <Text style={styles.errorText}>{error ?? 'Patient not found.'}</Text>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backLink}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Text style={styles.backLinkText}>← Back</Text>
-          </TouchableOpacity>
+        <View style={styles.panel}>
+          <View style={styles.center}>
+            <Text style={styles.errorText}>{error ?? 'Patient not found.'}</Text>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backLink}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <Text style={styles.backLinkText}>← Back</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Screen>
     );
   }
 
   return (
-    <Screen padded={false}>
+    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
       <NavyHeader leftLabel="← Patients" onLeft={() => router.back()} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        style={styles.panel}
+        contentContainerStyle={styles.scroll}
+      >
         <Card style={styles.patientCard}>
           <PatientAvatar name={patient.initials} size="md" />
           <View style={styles.patientInfo}>
@@ -137,6 +144,13 @@ export default function PatientSummaryScreen() {
 }
 
 const styles = StyleSheet.create({
+  panel: {
+    flex: 1,
+    backgroundColor: colors.surfaceSoft,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: 'hidden',
+  },
   center: {
     flex: 1,
     alignItems: 'center',
@@ -158,6 +172,7 @@ const styles = StyleSheet.create({
   scroll: {
     padding: spacing.md,
     gap: spacing.md,
+    paddingBottom: spacing.xl,
   },
   patientCard: {
     flexDirection: 'row',

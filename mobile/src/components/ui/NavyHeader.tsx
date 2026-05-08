@@ -11,9 +11,14 @@ interface NavyHeaderProps {
   onLeft?: () => void;
   rightLabel?: string;
   onRight?: () => void;
+  rightElement?: React.ReactNode;
 }
 
-function BrandHeader({ rightLabel, onRight }: Pick<NavyHeaderProps, 'rightLabel' | 'onRight'>) {
+function BrandHeader({
+  rightLabel,
+  onRight,
+  rightElement,
+}: Pick<NavyHeaderProps, 'rightLabel' | 'onRight' | 'rightElement'>) {
   return (
     <View style={styles.container}>
       <View style={styles.brandLeft}>
@@ -24,7 +29,7 @@ function BrandHeader({ rightLabel, onRight }: Pick<NavyHeaderProps, 'rightLabel'
         </Text>
       </View>
       <View style={styles.brandRight}>
-        {rightLabel && onRight ? (
+        {rightElement ?? (rightLabel && onRight ? (
           <Pressable
             onPress={onRight}
             style={styles.action}
@@ -33,7 +38,7 @@ function BrandHeader({ rightLabel, onRight }: Pick<NavyHeaderProps, 'rightLabel'
           >
             <Text style={styles.actionText}>{rightLabel}</Text>
           </Pressable>
-        ) : null}
+        ) : null)}
       </View>
     </View>
   );
@@ -45,6 +50,7 @@ function NavHeader({
   onLeft,
   rightLabel,
   onRight,
+  rightElement,
 }: Omit<NavyHeaderProps, 'mode'>) {
   return (
     <View style={styles.container}>
@@ -70,7 +76,7 @@ function NavHeader({
       )}
 
       <View style={[styles.side, styles.sideRight]}>
-        {rightLabel && onRight ? (
+        {rightElement ?? (rightLabel && onRight ? (
           <Pressable
             onPress={onRight}
             style={styles.action}
@@ -79,7 +85,7 @@ function NavHeader({
           >
             <Text style={styles.actionText}>{rightLabel}</Text>
           </Pressable>
-        ) : null}
+        ) : null)}
       </View>
     </View>
   );
@@ -92,9 +98,10 @@ export function NavyHeader({
   onLeft,
   rightLabel,
   onRight,
+  rightElement,
 }: NavyHeaderProps) {
   if (mode === 'brand') {
-    return <BrandHeader rightLabel={rightLabel} onRight={onRight} />;
+    return <BrandHeader rightLabel={rightLabel} onRight={onRight} rightElement={rightElement} />;
   }
   return (
     <NavHeader
@@ -103,6 +110,7 @@ export function NavyHeader({
       onLeft={onLeft}
       rightLabel={rightLabel}
       onRight={onRight}
+      rightElement={rightElement}
     />
   );
 }

@@ -58,13 +58,13 @@ export default function MeasureSelectorScreen() {
   }, []);
 
   return (
-    <Screen padded={false}>
+    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         leftLabel="← Back"
         onLeft={() => router.back()}
         title="Select Measure"
       />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView style={styles.panel} contentContainerStyle={styles.content}>
         {GROUPS.map(group => {
           const measures = measuresByCategory.get(group.category) ?? [];
           return (
@@ -89,6 +89,13 @@ export default function MeasureSelectorScreen() {
 }
 
 const styles = StyleSheet.create({
+  panel: {
+    flex: 1,
+    backgroundColor: colors.surfaceSoft,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: 'hidden',
+  },
   content: {
     padding: spacing.md,
     gap: spacing.md,
