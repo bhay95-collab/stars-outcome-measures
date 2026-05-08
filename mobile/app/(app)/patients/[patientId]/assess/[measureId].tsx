@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // @ts-ignore — JS clinical module, no type declarations
@@ -15,14 +15,19 @@ import { NumericClinicalInput } from '../../../../../src/components/forms/Numeri
 import { ResultPreviewCard } from '../../../../../src/components/forms/ResultPreviewCard';
 import { SegmentedControl } from '../../../../../src/components/forms/SegmentedControl';
 import { ClinicalTimer } from '../../../../../src/components/forms/ClinicalTimer';
+import { SixMinuteCountdown } from '../../../../../src/components/forms/SixMinuteCountdown';
+import type { SixMWTTimerStatus } from '../../../../../src/components/forms/SixMinuteCountdown';
 import { colors, spacing, typography, radii } from '../../../../../src/theme/tokens';
 
 const TUG_ID = 'TUG';
 const HIMAT_ID = 'HiMAT';
 const MWT_ID = '10MWT';
+const SMWT_ID = '6MWT';
 
 const TUG_VARIANTS = ['TUG', 'TUG Fast', 'TUG Dual'];
 const MWT_PACES = ['Comfortable', 'Fast'] as const;
+const LAP_LENGTHS = [10, 20, 25, 30, 50] as const;
+const ASSISTIVE_DEVICES = ['None', 'Cane', 'Walker', 'Crutches', 'Other'] as const;
 
 // --- TUG types ---
 
@@ -379,6 +384,157 @@ function MWTForm({ patientId }: { patientId: string }) {
   );
 }
 
+// --- 6MWT form ---
+
+function SixMWTForm({ patientId }: { patientId: string }) {
+  const insets = useSafeAreaInsets();
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [timerStatus, setTimerStatus] = useState<SixMWTTimerStatus>('idle');
+  const [lapLengthIndex, setLapLengthIndex] = useState(2); // default 25 m
+  const [lapCount, setLapCount] = useState(0);
+  const [manualDistance, setManualDistance] = useState('');
+  const [deviceIndex, setDeviceIndex] = useState(0);
+
+  useEffect(() => {
+    getPatient(patientId).then(p => setPatient(p)).catch(() => null);
+  }, [patientId]);
+
+  const lapLength = LAP_LENGTHS[lapLengthIndex] ?? LAP_LENGTHS[2];
+  const lapDerived = lapCount * lapLength;
+
+  const validManualDistance = (() => {
+    const n = Number(manualDistance.trim());
+    return manualDistance.trim() && isFinite(n) && n > 0 ? n : null;
+  })();
+
+  const recordedDistance = validManualDistance ?? lapDerived;
+  const speedMps =
+    recordedDistance > 0 ? parseFloat((recordedDistance / 360).toFixed(3)) : null;
+  const showResult = timerStatus !== 'idle' && recordedDistance > 0;
+
+  return (
+    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+      <NavyHeader
+        mode="nav"
+        leftLabel="← Back"
+        onLeft={() => router.back()}
+        title="6 Minute Walk Test"
+      />
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + spacing.xl },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Card style={styles.patientCard}>
+          <PatientAvatar name={patient?.initials ?? '?'} size="sm" />
+          <View style={styles.patientInfo}>
+            <Text style={styles.patientName}>{patient?.initials ?? '…'}</Text>
+            {patient?.condition ? (
+              <Text style={styles.patientSub} numberOfLines={1}>{patient.condition}</Text>
+            ) : null}
+          </View>
+        </Card>
+
+        <Card>
+          <Text style={styles.trialHeading}>Timer</Text>
+          <SixMinuteCountdown onStatusChange={setTimerStatus} />
+        </Card>
+
+        <Card>
+          <Text style={styles.trialHeading}>Laps</Text>
+          <Text style={styles.mwtFieldLabel}>LAP LENGTH</Text>
+          <SegmentedControl
+            options={LAP_LENGTHS.map(l => `${l}m`)}
+            selectedIndex={lapLengthIndex}
+            onSelect={setLapLengthIndex}
+          />
+          <View style={styles.divider} />
+          <Text style={styles.mwtFieldLabel}>LAP COUNT</Text>
+          <View style={styles.smwtStepper}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.smwtStepBtn,
+                lapCount === 0 && styles.smwtStepBtnDisabled,
+                pressed && styles.smwtStepBtnPressed,
+              ]}
+              onPress={() => setLapCount(c => Math.max(0, c - 1))}
+              disabled={lapCount === 0}
+              accessibilityRole="button"
+              accessibilityLabel="Decrease lap count"
+            >
+              <Text style={styles.smwtStepBtnText}>−</Text>
+            </Pressable>
+            <Text style={styles.smwtStepValue}>{lapCount}</Text>
+            <Pressable
+              style={({ pressed }) => [styles.smwtStepBtn, pressed && styles.smwtStepBtnPressed]}
+              onPress={() => setLapCount(c => c + 1)}
+              accessibilityRole="button"
+              accessibilityLabel="Increase lap count"
+            >
+              <Text style={styles.smwtStepBtnText}>+</Text>
+            </Pressable>
+          </View>
+          {lapCount > 0 ? (
+            <Text style={styles.smwtDerivedLabel}>{lapDerived} m calculated</Text>
+          ) : null}
+        </Card>
+
+        <Card>
+          <Text style={styles.trialHeading}>Optional</Text>
+          <NumericClinicalInput
+            label="MANUAL DISTANCE (OVERRIDES LAPS)"
+            value={manualDistance}
+            onChangeText={setManualDistance}
+            unit="m"
+          />
+          <View style={styles.divider} />
+          <Text style={styles.mwtFieldLabel}>ASSISTIVE DEVICE</Text>
+          <SegmentedControl
+            options={[...ASSISTIVE_DEVICES]}
+            selectedIndex={deviceIndex}
+            onSelect={setDeviceIndex}
+          />
+        </Card>
+
+        {showResult ? (
+          <View style={styles.mwtPreviewCard}>
+            <Text style={styles.mwtMicroLabel}>6MWT RESULT</Text>
+            <View style={styles.mwtValueRow}>
+              <Text style={styles.mwtPrimaryValue}>{recordedDistance}</Text>
+              <Text style={styles.mwtPrimaryUnit}>m</Text>
+            </View>
+            <View style={styles.mwtDivider} />
+            <View style={styles.mwtMetaGrid}>
+              <View style={styles.mwtMetaCell}>
+                <Text style={styles.mwtMetaLabel}>SPEED</Text>
+                <Text style={styles.mwtMetaValue}>
+                  {speedMps !== null ? `${speedMps.toFixed(2)} m/s` : '—'}
+                </Text>
+              </View>
+              <View style={styles.mwtMetaCell}>
+                <Text style={styles.mwtMetaLabel}>LAPS</Text>
+                <Text style={styles.mwtMetaValue}>
+                  {lapCount > 0 ? `${lapCount} × ${lapLength}m` : '—'}
+                </Text>
+              </View>
+              {deviceIndex > 0 ? (
+                <View style={styles.mwtMetaCell}>
+                  <Text style={styles.mwtMetaLabel}>AID</Text>
+                  <Text style={styles.mwtMetaValue}>{ASSISTIVE_DEVICES[deviceIndex]}</Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
+      </ScrollView>
+    </Screen>
+  );
+}
+
 // --- route dispatcher ---
 
 export default function AssessScreen() {
@@ -392,6 +548,10 @@ export default function AssessScreen() {
 
   if (measureId === MWT_ID) {
     return <MWTForm patientId={patientId} />;
+  }
+
+  if (measureId === SMWT_ID) {
+    return <SixMWTForm patientId={patientId} />;
   }
 
   const measure = MEASURES[measureId];
@@ -558,5 +718,43 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeMd,
     fontWeight: typography.weightSemibold,
     color: colors.ink,
+  },
+  // 6MWT lap stepper
+  smwtStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  smwtStepBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.button,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  smwtStepBtnDisabled: {
+    opacity: 0.35,
+  },
+  smwtStepBtnPressed: {
+    opacity: 0.65,
+  },
+  smwtStepBtnText: {
+    fontSize: typography.sizeXl,
+    fontWeight: typography.weightBold,
+    color: colors.actionBlue,
+    lineHeight: 26,
+  },
+  smwtStepValue: {
+    fontSize: typography.size2xl,
+    fontWeight: typography.weightBold,
+    color: colors.ink,
+    minWidth: 48,
+    textAlign: 'center',
+  },
+  smwtDerivedLabel: {
+    fontSize: typography.sizeSm,
+    color: colors.muted,
+    marginTop: spacing.xs,
   },
 });
