@@ -13,8 +13,6 @@ import { colors, spacing, typography, radii } from '../../../theme/tokens';
 
 interface TimeScreenProps {
   title: string;
-  instruction: string;
-  note: string;
   hasFail?: boolean;
   failLabel?: string;
   input: TimeInput;
@@ -27,7 +25,7 @@ interface TimeScreenProps {
 }
 
 export function TimeScreen({
-  title, instruction, note, hasFail, failLabel, input, onChange,
+  title, hasFail, failLabel, input, onChange,
   onNext, onBack, stepLabel, canProceed, patient,
 }: TimeScreenProps) {
   const insets = useSafeAreaInsets();
@@ -75,13 +73,8 @@ export function TimeScreen({
 
         <View style={styles.instructionCard}>
           <Text style={styles.instructionLabel}>WHAT TO TIME</Text>
-          <Text style={styles.instructionText}>{instruction}</Text>
+          <Text style={styles.instructionText}>{title}</Text>
         </View>
-
-        <Card style={styles.noteCard}>
-          <Text style={styles.noteLabel}>SCORING NOTE</Text>
-          <Text style={styles.noteText}>{note}</Text>
-        </Card>
 
         <Card style={[styles.timerCard, input.unable && styles.disabledCard]}>
           <ClinicalTimer onUseTime={handleUseTime} />
@@ -203,20 +196,6 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold,
     color: '#FFFFFF',
     lineHeight: 24,
-  },
-  noteCard: {
-    gap: spacing.xs,
-  },
-  noteLabel: {
-    fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
-  },
-  noteText: {
-    fontSize: typography.sizeSm,
-    color: colors.ink,
-    fontStyle: 'italic',
-    lineHeight: 20,
   },
   timerCard: {
     gap: spacing.sm,
