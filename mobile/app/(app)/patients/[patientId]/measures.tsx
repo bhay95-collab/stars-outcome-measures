@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MEASURES } from '../../../../src/clinical/adapter';
@@ -8,6 +8,7 @@ import type { MeasureDefinition } from '../../../../src/clinical/adapter';
 import { Screen } from '../../../../src/components/ui/Screen';
 import { Card } from '../../../../src/components/ui/Card';
 import { SectionLabel } from '../../../../src/components/ui/SectionLabel';
+import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
 import { colors, spacing, typography } from '../../../../src/theme/tokens';
 
 type Category = 'performance' | 'independence' | 'questionnaire';
@@ -35,9 +36,7 @@ function MeasureRow({
       accessibilityLabel={measure.name}
       activeOpacity={0.6}
     >
-      <View style={styles.measureInfo}>
-        <Text style={styles.measureName}>{measure.name}</Text>
-      </View>
+      <Text style={styles.measureName}>{measure.name}</Text>
       <Text style={styles.chevron}>›</Text>
     </TouchableOpacity>
   );
@@ -59,62 +58,47 @@ export default function MeasureSelectorScreen() {
   }, []);
 
   return (
-    <Screen scrollable>
-      <TouchableOpacity
-        onPress={() => router.back()}
-        style={styles.backButton}
-        accessibilityRole="button"
-        accessibilityLabel="Go back"
-      >
-        <Text style={styles.backButtonText}>← Back</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.screenTitle}>Select Measure</Text>
-
-      {GROUPS.map(group => {
-        const measures = measuresByCategory.get(group.category) ?? [];
-        return (
-          <View key={group.category} style={styles.group}>
-            <SectionLabel>{group.label}</SectionLabel>
-            <Card style={styles.groupCard}>
-              {measures.map((m, idx) => (
-                <MeasureRow
-                  key={m.id}
-                  measure={m}
-                  patientId={patientId}
-                  hasBorder={idx < measures.length - 1}
-                />
-              ))}
-            </Card>
-          </View>
-        );
-      })}
+    <Screen padded={false}>
+      <NavyHeader
+        leftLabel="← Back"
+        onLeft={() => router.back()}
+        title="Select Measure"
+      />
+      <ScrollView contentContainerStyle={styles.content}>
+        {GROUPS.map(group => {
+          const measures = measuresByCategory.get(group.category) ?? [];
+          return (
+            <View key={group.category} style={styles.group}>
+              <SectionLabel>{group.label}</SectionLabel>
+              <Card style={styles.groupCard}>
+                {measures.map((m, idx) => (
+                  <MeasureRow
+                    key={m.id}
+                    measure={m}
+                    patientId={patientId}
+                    hasBorder={idx < measures.length - 1}
+                  />
+                ))}
+              </Card>
+            </View>
+          );
+        })}
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    minHeight: 48,
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  backButtonText: {
-    fontSize: typography.sizeSm,
-    color: colors.primary,
-    fontWeight: typography.weightMedium,
-  },
-  screenTitle: {
-    fontSize: typography.sizeXl,
-    fontWeight: typography.weightBold,
-    color: colors.ink,
-    marginBottom: spacing.lg,
+  content: {
+    padding: spacing.md,
+    gap: spacing.md,
   },
   group: {
-    marginBottom: spacing.lg,
+    gap: spacing.xs,
   },
   groupCard: {
     padding: 0,
+    overflow: 'hidden',
   },
   measureRow: {
     flexDirection: 'row',
@@ -127,10 +111,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  measureInfo: {
-    flex: 1,
-  },
   measureName: {
+    flex: 1,
     fontSize: typography.sizeMd,
     color: colors.ink,
     fontWeight: typography.weightMedium,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, StyleSheet,
+  View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, ScrollView,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { getPatient } from '../../../../src/supabase/patients';
@@ -10,6 +10,8 @@ import { Screen } from '../../../../src/components/ui/Screen';
 import { Card } from '../../../../src/components/ui/Card';
 import { SectionLabel } from '../../../../src/components/ui/SectionLabel';
 import { Button } from '../../../../src/components/ui/Button';
+import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
+import { PatientAvatar } from '../../../../src/components/ui/PatientAvatar';
 import { MEASURES } from '../../../../src/clinical/adapter';
 import { colors, spacing, typography } from '../../../../src/theme/tokens';
 
@@ -50,15 +52,6 @@ function MeasureRow({ assessment }: { assessment: Assessment }) {
   );
 }
 
-const PATIENT_AVATAR_SIZE = 52;
-
-function getInitials(raw: string): string {
-  const parts = raw.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 export default function PatientSummaryScreen() {
   const params = useLocalSearchParams<{ patientId: string }>();
   const patientId = Array.isArray(params.patientId) ? params.patientId[0] : params.patientId;
@@ -79,7 +72,8 @@ export default function PatientSummaryScreen() {
 
   if (isLoading) {
     return (
-      <Screen>
+      <Screen padded={false}>
+        <NavyHeader leftLabel="← Patients" onLeft={() => router.back()} />
         <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>
       </Screen>
     );
@@ -87,10 +81,16 @@ export default function PatientSummaryScreen() {
 
   if (error || !patient) {
     return (
-      <Screen>
+      <Screen padded={false}>
+        <NavyHeader leftLabel="← Patients" onLeft={() => router.back()} />
         <View style={styles.center}>
           <Text style={styles.errorText}>{error ?? 'Patient not found.'}</Text>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backLink} accessibilityRole="button" accessibilityLabel="Go back">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backLink}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.backLinkText}>← Back</Text>
           </TouchableOpacity>
         </View>
@@ -99,40 +99,39 @@ export default function PatientSummaryScreen() {
   }
 
   return (
-    <Screen scrollable>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back to patients">
-        <Text style={styles.backButtonText}>← Patients</Text>
-      </TouchableOpacity>
-
-      <View style={styles.patientHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(patient.initials)}</Text>
-        </View>
-        <View>
-          <Text style={styles.initials}>{patient.initials}</Text>
-          {patient.condition ? <Text style={styles.condition}>{patient.condition}</Text> : null}
-        </View>
-      </View>
-
-      <SectionLabel>Recorded Measures</SectionLabel>
-
-      {latest.length === 0 ? (
-        <Card style={styles.emptyCard}>
-          <Text style={styles.emptyText}>No measures recorded yet.</Text>
-          <Text style={styles.emptyHint}>Tap New Assessment to record the first measure.</Text>
+    <Screen padded={false}>
+      <NavyHeader leftLabel="← Patients" onLeft={() => router.back()} />
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <Card style={styles.patientCard}>
+          <PatientAvatar name={patient.initials} size="md" />
+          <View style={styles.patientInfo}>
+            <Text style={styles.patientName}>{patient.initials}</Text>
+            {patient.condition ? (
+              <Text style={styles.condition}>{patient.condition}</Text>
+            ) : null}
+          </View>
         </Card>
-      ) : (
-        <View style={styles.measureList}>
-          {latest.map(a => <MeasureRow key={a.id} assessment={a} />)}
-        </View>
-      )}
 
-      <View style={styles.actions}>
-        <Button
-          label="New Assessment"
-          onPress={() => router.push(`/(app)/patients/${patientId}/measures`)}
-        />
-      </View>
+        <SectionLabel>Recorded Measures</SectionLabel>
+
+        {latest.length === 0 ? (
+          <Card style={styles.emptyCard}>
+            <Text style={styles.emptyText}>No measures recorded yet.</Text>
+            <Text style={styles.emptyHint}>Tap New Assessment to record the first measure.</Text>
+          </Card>
+        ) : (
+          <View style={styles.measureList}>
+            {latest.map(a => <MeasureRow key={a.id} assessment={a} />)}
+          </View>
+        )}
+
+        <View style={styles.actions}>
+          <Button
+            label="New Assessment"
+            onPress={() => router.push(`/(app)/patients/${patientId}/measures`)}
+          />
+        </View>
+      </ScrollView>
     </Screen>
   );
 }
@@ -156,37 +155,19 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeSm,
     color: colors.primary,
   },
-  backButton: {
-    minHeight: 48,
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
+  scroll: {
+    padding: spacing.md,
+    gap: spacing.md,
   },
-  backButtonText: {
-    fontSize: typography.sizeSm,
-    color: colors.primary,
-    fontWeight: typography.weightMedium,
-  },
-  patientHeader: {
+  patientCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    marginBottom: spacing.lg,
   },
-  avatar: {
-    width: PATIENT_AVATAR_SIZE,
-    height: PATIENT_AVATAR_SIZE,
-    borderRadius: PATIENT_AVATAR_SIZE / 2,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+  patientInfo: {
+    flex: 1,
   },
-  avatarText: {
-    fontSize: typography.sizeMd,
-    fontWeight: typography.weightBold,
-    color: colors.primary,
-    textTransform: 'uppercase',
-  },
-  initials: {
+  patientName: {
     fontSize: typography.sizeLg,
     fontWeight: typography.weightBold,
     color: colors.ink,
@@ -198,7 +179,6 @@ const styles = StyleSheet.create({
   },
   measureList: {
     gap: spacing.sm,
-    marginBottom: spacing.lg,
   },
   measureCard: {
     gap: spacing.xs,
@@ -225,7 +205,6 @@ const styles = StyleSheet.create({
   emptyCard: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
-    marginBottom: spacing.lg,
   },
   emptyText: {
     fontSize: typography.sizeMd,
@@ -238,6 +217,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   actions: {
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
 });

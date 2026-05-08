@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View, Text, Image, StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
+} from 'react-native';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { supabase } from '../src/supabase/client';
 import { Screen } from '../src/components/ui/Screen';
 import { Button } from '../src/components/ui/Button';
 import { TextInput } from '../src/components/ui/TextInput';
-import { colors, spacing, typography } from '../src/theme/tokens';
+import { colors, fonts, spacing, typography } from '../src/theme/tokens';
 import { signInWithGoogle } from '../src/auth/googleAuth';
 
 WebBrowser.maybeCompleteAuthSession();
+
+const squareLogo = require('../assets/SquareLogo.png');
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -71,35 +75,43 @@ export default function SignInScreen() {
   }
 
   return (
-    <Screen>
+    <Screen padded={false} style={styles.navyRoot} rootBackground={colors.primary}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.appName}>RehabMetrics IQ</Text>
-            <Text style={styles.tagline}>Sign in to continue</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.hero}>
+            <Image source={squareLogo} style={styles.logo} resizeMode="contain" />
+            <Text style={styles.brandName}>RehabMetrics IQ</Text>
+            <Text style={styles.tagline}>Data-driven outcomes. Better patient care.</Text>
           </View>
 
-          <View style={styles.form}>
-            <TextInput
-              label="Email"
-              value={email}
-              onChangeText={handleEmailChange}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              textContentType="emailAddress"
-            />
-            <TextInput
-              label="Password"
-              value={password}
-              onChangeText={handlePasswordChange}
-              secureTextEntry
-              autoComplete="password"
-              textContentType="password"
-            />
+          <View style={styles.formPanel}>
+            <Text style={styles.formHeading}>Sign in</Text>
+
+            <View style={styles.fields}>
+              <TextInput
+                label="Email"
+                value={email}
+                onChangeText={handleEmailChange}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                textContentType="emailAddress"
+              />
+              <TextInput
+                label="Password"
+                value={password}
+                onChangeText={handlePasswordChange}
+                secureTextEntry
+                autoComplete="password"
+                textContentType="password"
+              />
+            </View>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -124,39 +136,67 @@ export default function SignInScreen() {
               disabled={isLoading || isGoogleLoading}
             />
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  navyRoot: {
+    backgroundColor: colors.primary,
+  },
   flex: {
     flex: 1,
   },
-  container: {
+  scrollContent: {
+    flexGrow: 1,
+  },
+  hero: {
     flex: 1,
+    minHeight: 260,
+    alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+    gap: spacing.sm,
   },
-  header: {
-    marginBottom: spacing.xl,
-    alignItems: 'center',
+  logo: {
+    width: 80,
+    height: 80,
+    borderRadius: 18,
+    marginBottom: spacing.xs,
   },
-  appName: {
+  brandName: {
+    fontFamily: fonts.serif,
     fontSize: typography.size2xl,
     fontWeight: typography.weightBold,
-    color: colors.primary,
-    marginBottom: spacing.xs,
+    color: '#FFFFFF',
+    textAlign: 'center',
     letterSpacing: typography.trackingTight,
   },
   tagline: {
-    fontSize: typography.sizeMd,
-    color: colors.muted,
+    fontSize: typography.sizeSm,
+    color: 'rgba(255,255,255,0.70)',
+    textAlign: 'center',
   },
-  form: {
+  formPanel: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: spacing.lg,
+    paddingBottom: spacing.xl,
     gap: spacing.md,
+  },
+  formHeading: {
+    fontSize: typography.sizeLg,
+    fontWeight: typography.weightSemibold,
+    color: colors.ink,
+    marginBottom: spacing.xs,
+  },
+  fields: {
+    gap: spacing.sm,
   },
   errorText: {
     fontSize: typography.sizeSm,

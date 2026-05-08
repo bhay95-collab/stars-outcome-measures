@@ -1,40 +1,46 @@
+import { Platform } from 'react-native';
+
 export const colors = {
-  primary:       '#173d68',
-  primaryDark:   '#102947',
-  primarySoft:   '#e8f1fb',
+  primary:       '#002D72',  // Brand Navy
+  primaryDark:   '#0045A5',
+  primarySoft:   '#E8F1FB',
+  actionBlue:    '#0056D2',  // Primary interaction colour
   secondary:     '#78c8bd',
   secondarySoft: '#e4f6f3',
-  coral:         '#ee8a70',
+  success:       '#107C10',  // Clinical success
+  coral:         '#ee8a70',  // Error / warning
   violet:        '#8b82c6',
-  ink:           '#152238',
-  muted:         '#5b6674',
+  ink:           '#0A1B33',
+  muted:         '#5E718D',  // Muted Navy
   subtle:        '#8a96a3',
   surface:       '#FFFFFF',
-  surfaceSoft:   '#eff4f9',
+  surfaceSoft:   '#F8F9FA',  // Clinical Surface
   panel:         '#f7fafc',
-  border:        '#d8e1ea',
+  border:        '#E1E8F0',  // Border Blue
 } as const;
 
 export const radii = {
-  sm: 6,
-  md: 8,
-  lg: 16,
+  sm:     6,
+  md:     8,
+  lg:     16,
+  card:   24,  // Card corner radius (Stitch)
+  button: 20,  // Button corner radius (Stitch)
 } as const;
 
 export const shadows = {
   sm: {
-    shadowColor: '#152238',
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    shadowColor:   '#002D72',
+    shadowOpacity: 0.05,
+    shadowRadius:  12,
+    shadowOffset:  { width: 0, height: 4 },
+    elevation:     2,
   },
   md: {
-    shadowColor: '#152238',
-    shadowOpacity: 0.12,
-    shadowRadius: 42,
-    shadowOffset: { width: 0, height: 18 },
-    elevation: 5,
+    shadowColor:   '#002D72',
+    shadowOpacity: 0.10,
+    shadowRadius:  24,
+    shadowOffset:  { width: 0, height: 8 },
+    elevation:     5,
   },
 } as const;
 
@@ -47,16 +53,21 @@ export const spacing = {
 } as const;
 
 export const typography = {
-  sizeXs:   11,
-  sizeSm:   13,
-  sizeMd:   15,
-  sizeLg:   17,
-  sizeXl:   22,
-  size2xl:  28,
+  sizeXs:         11,
+  sizeSm:         13,
+  sizeMd:         15,
+  sizeLg:         17,
+  sizeXl:         22,
+  size2xl:        28,
   weightRegular:  '400' as const,
   weightMedium:   '500' as const,
   weightSemibold: '600' as const,
   weightBold:     '700' as const,
   trackingWide:   0.8,
-  trackingTight: -0.5,
+  trackingTight:  -0.5,
+} as const;
+
+export const fonts = {
+  serif: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+  sans:  undefined as string | undefined,
 } as const;

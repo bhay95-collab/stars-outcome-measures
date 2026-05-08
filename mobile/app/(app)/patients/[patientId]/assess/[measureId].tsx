@@ -1,16 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MEASURES } from '../../../../../src/clinical/adapter';
 import { Screen } from '../../../../../src/components/ui/Screen';
 import { Card } from '../../../../../src/components/ui/Card';
+import { NavyHeader } from '../../../../../src/components/ui/NavyHeader';
 import { colors, spacing, typography } from '../../../../../src/theme/tokens';
 
 const HIMAT_ID = 'HiMAT';
-
-function capitalise(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 
 export default function AssessStubScreen() {
   const params = useLocalSearchParams<{ patientId: string; measureId: string }>();
@@ -19,48 +16,35 @@ export default function AssessStubScreen() {
   const measure = MEASURES[measureId];
 
   return (
-    <Screen>
-      <TouchableOpacity
-        onPress={() => router.back()}
-        style={styles.backButton}
-        accessibilityRole="button"
-        accessibilityLabel="Go back"
-      >
-        <Text style={styles.backButtonText}>← Back</Text>
-      </TouchableOpacity>
-
-      {measure ? (
-        <>
-          <Text style={styles.measureName}>{measure.name}</Text>
-          <Text style={styles.measureCategory}>{capitalise(measure.category)}</Text>
-
+    <Screen padded={false}>
+      <NavyHeader leftLabel="← Back" onLeft={() => router.back()} />
+      <View style={styles.content}>
+        {measure ? (
+          <>
+            <Text style={styles.measureName}>{measure.name}</Text>
+            <Text style={styles.measureCategory}>{measure.category.toUpperCase()}</Text>
+            <Card style={styles.messageCard}>
+              <Text style={styles.messageText}>
+                {measureId === HIMAT_ID
+                  ? 'HiMAT is not yet available on mobile.'
+                  : 'Assessment form coming soon.'}
+              </Text>
+            </Card>
+          </>
+        ) : (
           <Card style={styles.messageCard}>
-            <Text style={styles.messageText}>
-              {measureId === HIMAT_ID
-                ? 'HiMAT is not yet available on mobile.'
-                : 'Assessment form coming soon.'}
-            </Text>
+            <Text style={styles.messageText}>Measure not found.</Text>
           </Card>
-        </>
-      ) : (
-        <Card style={styles.messageCard}>
-          <Text style={styles.messageText}>Measure not found.</Text>
-        </Card>
-      )}
+        )}
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    minHeight: 48,
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  backButtonText: {
-    fontSize: typography.sizeSm,
-    color: colors.primary,
-    fontWeight: typography.weightMedium,
+  content: {
+    flex: 1,
+    padding: spacing.md,
   },
   measureName: {
     fontSize: typography.sizeXl,
@@ -69,8 +53,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   measureCategory: {
-    fontSize: typography.sizeSm,
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
     color: colors.muted,
+    letterSpacing: 1,
     marginBottom: spacing.lg,
   },
   messageCard: {

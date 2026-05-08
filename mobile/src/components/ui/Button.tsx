@@ -13,14 +13,14 @@ interface ButtonProps {
 }
 
 const variantContainerStyles = {
-  primary:   { backgroundColor: colors.primary },
-  secondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.primary },
+  primary:   { backgroundColor: colors.actionBlue },
+  secondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.actionBlue },
   ghost:     { backgroundColor: 'transparent' },
 } as const;
 
 const variantLabelStyles = {
   primary:   { color: colors.surface },
-  secondary: { color: colors.primary },
+  secondary: { color: colors.actionBlue },
   ghost:     { color: colors.muted },
 } as const;
 
@@ -55,7 +55,7 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     height: 48,
-    borderRadius: radii.md,
+    borderRadius: radii.button,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',

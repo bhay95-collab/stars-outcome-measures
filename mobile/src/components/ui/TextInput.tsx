@@ -68,10 +68,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   input: {
-    height: 48,
+    height: 52,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.sm,
+    borderRadius: radii.lg,
     paddingHorizontal: spacing.sm,
     fontSize: typography.sizeMd,
     color: colors.ink,

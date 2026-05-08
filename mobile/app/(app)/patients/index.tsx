@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, StyleSheet,
+  View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../../src/auth/AuthProvider';
@@ -8,16 +8,9 @@ import { listPatients } from '../../../src/supabase/patients';
 import type { Patient } from '../../../src/types/domain';
 import { Screen } from '../../../src/components/ui/Screen';
 import { Card } from '../../../src/components/ui/Card';
-import { colors, spacing, typography } from '../../../src/theme/tokens';
-
-const PATIENT_AVATAR_SIZE = 44;
-
-function getInitials(raw: string): string {
-  const parts = raw.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
+import { NavyHeader } from '../../../src/components/ui/NavyHeader';
+import { PatientAvatar } from '../../../src/components/ui/PatientAvatar';
+import { colors, fonts, spacing, typography } from '../../../src/theme/tokens';
 
 function formatDOB(iso: string): string {
   const [year, month, day] = iso.split('-');
@@ -33,11 +26,9 @@ function PatientCard({ patient }: { patient: Patient }) {
       accessibilityLabel={`Open patient ${patient.initials}`}
     >
       <Card style={styles.patientCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(patient.initials)}</Text>
-        </View>
+        <PatientAvatar name={patient.initials} size="sm" />
         <View style={styles.cardBody}>
-          <Text style={styles.initials}>{patient.initials}</Text>
+          <Text style={styles.name}>{patient.initials}</Text>
           {patient.dob ? (
             <Text style={styles.dob}>{formatDOB(patient.dob)}</Text>
           ) : null}
@@ -66,118 +57,92 @@ export default function PatientsScreen() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  if (isLoading) {
-    return (
-      <Screen>
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
-      </Screen>
-    );
-  }
-
   return (
-    <Screen scrollable>
-      <View style={styles.header}>
-        <Text style={styles.title}>Patients</Text>
-        <TouchableOpacity
-          onPress={signOut}
-          accessibilityRole="button"
-          accessibilityLabel="Sign out"
-        >
-          <Text style={styles.signOutText}>Sign out</Text>
-        </TouchableOpacity>
-      </View>
+    <Screen padded={false} style={styles.navyBg} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+      <NavyHeader mode="brand" rightLabel="Sign out" onRight={signOut} />
 
-      {error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : patients.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No patients found.</Text>
-          <Text style={styles.emptyHint}>
-            Patients you add in the web app will appear here.
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.list}>
-          {patients.map(p => (
-            <PatientCard key={p.id} patient={p} />
-          ))}
-        </View>
-      )}
+      <View style={styles.panel}>
+        <Text style={styles.heading}>Patient Directory</Text>
+        <Text style={styles.subtitle}>Manage and monitor patient progress.</Text>
+
+        {isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : (
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+          >
+            {patients.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No patients found.</Text>
+                <Text style={styles.emptyHint}>
+                  Patients you add in the web app will appear here.
+                </Text>
+              </View>
+            ) : (
+              patients.map(p => <PatientCard key={p.id} patient={p} />)
+            )}
+          </ScrollView>
+        )}
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  navyBg: {
+    backgroundColor: colors.primary,
+  },
+  panel: {
+    flex: 1,
+    backgroundColor: colors.surfaceSoft,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: spacing.lg,
+    overflow: 'hidden',
+  },
+  heading: {
+    fontFamily: fonts.serif,
+    fontSize: typography.size2xl,
+    fontWeight: typography.weightBold,
+    color: colors.ink,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    fontSize: typography.sizeSm,
+    color: colors.muted,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  scroll: {
+    flex: 1,
+  },
+  list: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
+    gap: spacing.sm,
+  },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  title: {
-    fontSize: typography.sizeXl,
-    fontWeight: typography.weightBold,
-    color: colors.ink,
-  },
-  signOutText: {
-    fontSize: typography.sizeSm,
-    color: colors.muted,
-  },
-  errorText: {
-    fontSize: typography.sizeMd,
-    color: colors.coral,
-    textAlign: 'center',
-    marginTop: spacing.xl,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingTop: spacing.xl,
-  },
-  emptyText: {
-    fontSize: typography.sizeMd,
-    color: colors.muted,
-    marginBottom: spacing.xs,
-  },
-  emptyHint: {
-    fontSize: typography.sizeSm,
-    color: colors.subtle,
-    textAlign: 'center',
-  },
-  list: {
-    gap: spacing.sm,
   },
   patientCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
-  avatar: {
-    width: PATIENT_AVATAR_SIZE,
-    height: PATIENT_AVATAR_SIZE,
-    borderRadius: PATIENT_AVATAR_SIZE / 2,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: typography.sizeSm,
-    fontWeight: typography.weightBold,
-    color: colors.primary,
-    textTransform: 'uppercase',
-  },
   cardBody: {
     flex: 1,
   },
-  initials: {
+  name: {
     fontSize: typography.sizeMd,
     fontWeight: typography.weightSemibold,
     color: colors.ink,
@@ -195,5 +160,27 @@ const styles = StyleSheet.create({
   chevron: {
     fontSize: typography.sizeLg,
     color: colors.subtle,
+  },
+  errorText: {
+    fontSize: typography.sizeMd,
+    color: colors.coral,
+    textAlign: 'center',
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.md,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: spacing.xl,
+  },
+  emptyText: {
+    fontSize: typography.sizeMd,
+    color: colors.muted,
+    marginBottom: spacing.xs,
+  },
+  emptyHint: {
+    fontSize: typography.sizeSm,
+    color: colors.subtle,
+    textAlign: 'center',
   },
 });
