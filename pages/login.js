@@ -1,3 +1,4 @@
+import Head from 'next/head'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { getAppRedirectUrl, supabase } from '../lib/supabase'
@@ -50,58 +51,81 @@ export default function Login() {
 
   return (
     <>
+      <Head>
+        <title>Log in | RehabMetrics IQ</title>
+        <meta name="robots" content="noindex,nofollow" />
+        <link rel="icon" href="/SquareLogo.png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet" />
+      </Head>
       <style jsx>{pageStyles}</style>
-      <div className="page">
-        <div className="card">
-          <LogoWordmark size="md" spaceAfter />
-          <h1 className="heading">Welcome back</h1>
-          <p className="subtext">Log in to your RehabMetrics IQ account.</p>
-
-          <button type="button" className="btn-google" onClick={signInWithGoogle} disabled={googleLoading || loading}>
-            <GoogleIcon />
-            {googleLoading ? 'Redirecting…' : 'Continue with Google'}
-          </button>
-
-          <div className="divider"><span>or</span></div>
-
-          <form onSubmit={handleSubmit}>
-            <div className="field">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                placeholder="you@clinic.com"
-              />
+      <main className="page">
+        <section className="login-shell">
+          <div className="login-visual">
+            <div className="login-visual__content">
+              <LogoWordmark size="lg" showMark={false} />
+              <p className="eyebrow">CLINICAL OUTCOMES WORKSPACE</p>
+              <h1>Progress data with the clinical context still attached.</h1>
+              <div className="login-visual__metrics" aria-label="Example outcome indicators">
+                <div><strong>84%</strong><span>MCID tracked</span></div>
+                <div><strong>22</strong><span>Measures ready</span></div>
+                <div className="data-bars" aria-hidden="true"><i /><i /><i /></div>
+              </div>
             </div>
-            <div className="field">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                placeholder="Your password"
-              />
-            </div>
+          </div>
 
-            {error && <p className="error">{error}</p>}
+          <div className="card">
+            <LogoWordmark size="md" spaceAfter />
+            <h2 className="heading">Welcome back</h2>
+            <p className="subtext">Log in to your RehabMetrics IQ account.</p>
 
-            <button type="submit" className="btn" disabled={loading}>
-              {loading ? 'Logging in…' : 'Log in'}
+            <button type="button" className="btn-google" onClick={signInWithGoogle} disabled={googleLoading || loading}>
+              <GoogleIcon />
+              {googleLoading ? 'Redirecting…' : 'Continue with Google'}
             </button>
-          </form>
 
-          <p className="footer">
-            Don&apos;t have an account? <a href="/signup">Start your free trial</a>
-          </p>
-        </div>
-      </div>
+            <div className="divider"><span>or</span></div>
+
+            <form onSubmit={handleSubmit}>
+              <div className="field">
+                <label htmlFor="email">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  placeholder="you@clinic.com"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="password">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  placeholder="Your password"
+                />
+              </div>
+
+              {error && <p className="error">{error}</p>}
+
+              <button type="submit" className="btn" disabled={loading}>
+                {loading ? 'Logging in…' : 'Log in'}
+              </button>
+            </form>
+
+            <p className="footer">
+              Don&apos;t have an account? <a href="/signup">Start your free trial</a>
+            </p>
+          </div>
+        </section>
+      </main>
     </>
   )
 }
@@ -122,40 +146,167 @@ const pageStyles = `
 
   :root {
     --color-primary:      #236499;
+    --color-primary-dark: #17496F;
+    --color-primary-soft: #EAF3FB;
+    --color-secondary:    #7FB3E6;
+    --color-secondary-soft: #DCEEFF;
     --color-ink:          #1F2933;
     --color-muted:        #5F6B7A;
     --color-subtle:       #8A96A3;
     --color-surface:      #FFFFFF;
     --color-surface-soft: #F7FAFC;
     --color-border:       #D8E2EC;
-    --shadow-md:          0 6px 16px rgba(31,41,51,0.08);
+    --shadow-md:          0 18px 42px rgba(21,34,56,0.12);
   }
 
   body { font-family: 'Inter', sans-serif; }
 
   .page {
     min-height: 100vh;
-    background: var(--color-surface-soft);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 16px;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+    background:
+      linear-gradient(135deg, rgba(234,243,251,0.92), rgba(247,250,252,0.98)),
+      linear-gradient(135deg, #f7fbff 0%, #eaf1f8 100%);
   }
+
+  .login-shell {
+    width: min(100%, 1040px);
+    min-height: min(680px, calc(100vh - 64px));
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(380px, 0.82fr);
+    overflow: hidden;
+    border: 1px solid rgba(216,226,236,0.95);
+    border-radius: 24px;
+    background: rgba(255,255,255,0.74);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(18px);
+  }
+
+  .login-visual {
+    position: relative;
+    min-height: 560px;
+    isolation: isolate;
+    overflow: hidden;
+    background:
+      linear-gradient(90deg, rgba(23,73,111,0.92), rgba(35,100,153,0.52)),
+      url('https://images.pexels.com/photos/6111595/pexels-photo-6111595.jpeg?auto=compress&cs=tinysrgb&w=1400') center / cover;
+  }
+
+  .login-visual::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.18), transparent 38%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 92px);
+  }
+
+  .login-visual__content {
+    position: relative;
+    z-index: 1;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 46px;
+    color: #fff;
+  }
+
+  .login-visual__content .logo-wordmark {
+    margin-bottom: auto;
+    color: #fff;
+  }
+
+  .login-visual__content .logo-wordmark__iq {
+    color: var(--color-secondary);
+  }
+
+  .eyebrow {
+    margin-bottom: 12px;
+    color: rgba(255,255,255,0.76);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+  }
+
+  .login-visual h1 {
+    max-width: 520px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(34px, 4vw, 54px);
+    font-weight: 700;
+    line-height: 1.04;
+  }
+
+  .login-visual__metrics {
+    width: min(100%, 520px);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .login-visual__metrics > div {
+    min-height: 94px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.24);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.15);
+    box-shadow: inset 0 1px rgba(255,255,255,0.16);
+    backdrop-filter: blur(12px);
+  }
+
+  .login-visual__metrics strong {
+    display: block;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .login-visual__metrics span {
+    display: block;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.74);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .data-bars {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: end;
+    gap: 8px;
+  }
+
+  .data-bars i {
+    display: block;
+    border-radius: 5px 5px 3px 3px;
+    background: var(--color-secondary);
+  }
+
+  .data-bars i:nth-child(1) { height: 34px; background: rgba(255,255,255,0.72); }
+  .data-bars i:nth-child(2) { height: 54px; background: #5a98da; }
+  .data-bars i:nth-child(3) { height: 76px; background: var(--color-secondary); }
 
   .card {
     width: 100%;
-    max-width: 420px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 16px;
-    padding: 40px;
-    box-shadow: var(--shadow-md);
+    align-self: center;
+    max-width: none;
+    padding: 46px;
+    background: rgba(255,255,255,0.9);
+  }
+
+  .card .logo-wordmark {
+    margin-bottom: 32px;
   }
 
   .heading {
     font-family: 'Source Serif 4', serif;
     font-size: 26px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--color-ink);
     line-height: 1.2;
     margin-bottom: 8px;
@@ -185,7 +336,7 @@ const pageStyles = `
     font-family: 'Inter', sans-serif;
     font-size: 15px;
     color: var(--color-ink);
-    background: var(--color-surface);
+    background: var(--color-surface-soft);
     border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 10px 14px;
@@ -217,10 +368,11 @@ const pageStyles = `
     font-weight: 600;
     cursor: pointer;
     margin-top: 8px;
-    transition: opacity 0.15s;
+    box-shadow: 0 10px 22px rgba(35,100,153,0.24);
+    transition: background 0.15s, opacity 0.15s;
   }
 
-  .btn:hover { opacity: 0.9; }
+  .btn:hover { background: var(--color-primary-dark); }
   .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
   .footer {
@@ -275,5 +427,40 @@ const pageStyles = `
     flex: 1;
     height: 1px;
     background: var(--color-border);
+  }
+
+  @media (max-width: 860px) {
+    .page {
+      padding: 18px;
+    }
+
+    .login-shell {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+
+    .login-visual {
+      min-height: 320px;
+    }
+
+    .login-visual__content,
+    .card {
+      padding: 30px;
+    }
+
+    .login-visual__metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .login-visual__metrics .data-bars {
+      grid-column: 1 / -1;
+      min-height: 84px;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .login-visual__metrics {
+      grid-template-columns: 1fr;
+    }
   }
 `

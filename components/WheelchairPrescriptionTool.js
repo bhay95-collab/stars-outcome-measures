@@ -1777,6 +1777,9 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool__header {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -1785,9 +1788,32 @@ const wheelchairToolStyles = `
     padding: 20px 24px;
     border: 1px solid var(--wc-card-border);
     border-radius: var(--wc-radius-panel);
-    background: var(--wc-surface);
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.86) 58%, rgba(234,243,251,0.82) 100%),
+      url('/assets/wheelchair-prescription/mid-wheel-drive-power-wheelchair.jpg') right center / 330px auto no-repeat,
+      var(--wc-surface);
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(16px);
+  }
+
+  .wc-tool__header::after {
+    content: '';
+    position: absolute;
+    right: 24px;
+    bottom: 18px;
+    z-index: 0;
+    width: 92px;
+    height: 64px;
+    opacity: 0.22;
+    background:
+      linear-gradient(to top, var(--wc-primary) 0 42%, transparent 42%) 0 100% / 18px 100% no-repeat,
+      linear-gradient(to top, #5a98da 0 67%, transparent 67%) 36px 100% / 18px 100% no-repeat,
+      linear-gradient(to top, var(--wc-secondary) 0 92%, transparent 92%) 72px 100% / 18px 100% no-repeat;
+  }
+
+  .wc-tool__header > * {
+    position: relative;
+    z-index: 1;
   }
 
   .wc-tool__header-main {
@@ -1814,7 +1840,7 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool__header p {
-    max-width: 820px;
+    max-width: 680px;
     margin-top: 6px;
     color: var(--wc-muted);
     font-size: 13px;

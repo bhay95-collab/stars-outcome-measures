@@ -15,8 +15,8 @@ export default function LogoWordmark({ href, className = '', size = 'md', spaceA
           display: inline-flex;
           align-items: center;
           gap: 0.28em;
-          color: #1f3045;
-          font-family: Georgia, 'Times New Roman', serif;
+          color: #236499;
+          font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
           font-weight: 700;
           line-height: 0.95;
           letter-spacing: 0;
@@ -39,8 +39,8 @@ export default function LogoWordmark({ href, className = '', size = 'md', spaceA
         .logo-wordmark--space-after { margin-bottom: 28px; }
 
         .logo-wordmark__iq {
-          color: #8da4b6;
-          font-style: italic;
+          color: #7FB3E6;
+          font-style: normal;
           font-weight: 600;
         }
       `}</style>

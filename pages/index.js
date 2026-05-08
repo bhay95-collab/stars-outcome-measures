@@ -388,13 +388,13 @@ function Metric({ label, value, unit }) {
 const styles = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --navy: #173d68;
-    --navy-dark: #102947;
+    --navy: #236499;
+    --navy-dark: #17496F;
     --ink: #172238;
     --muted: #566271;
     --soft: #eef3f8;
     --line: #d7e0e8;
-    --mint: #77c7bd;
+    --mint: #7FB3E6;
     --coral: #ee896f;
     --violet: #8c83c8;
     --amber: #c47b43;

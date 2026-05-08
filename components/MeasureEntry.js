@@ -110,14 +110,32 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone, onDirty
     onDone()
   }
 
+  const activeMeasureInfo = MEASURES[activeMeasure]
+
   return (
     <div data-measure-panel="">
       <div className="measure-header">
-        <div>
+        <div className="measure-header__copy">
+          <span className="section-label">Assessment Workspace</span>
           <div className="measure-title">New Encounter</div>
           <div className="measure-subtitle">
             {patient.initials} · Add one or more measures, then save the encounter.
           </div>
+        </div>
+        <div className="measure-header__stats" aria-label="Encounter status">
+          <div>
+            <span>Active measure</span>
+            <strong>{activeMeasureInfo?.id || activeMeasure}</strong>
+          </div>
+          <div>
+            <span>Category</span>
+            <strong>{CATEGORY_LABELS[activeCategory]}</strong>
+          </div>
+          <div>
+            <span>Pending</span>
+            <strong>{drafts.length}</strong>
+          </div>
+          <div className="measure-header__motif" aria-hidden="true"><i /><i /><i /></div>
         </div>
       </div>
 
