@@ -201,7 +201,7 @@ export default function App() {
   const handlePatientSelect = useCallback(async (patient) => {
     setSelectedPatient(patient)
     setView(prev => {
-      if (prev === 'assessment' || prev === 'patients') return prev
+      if (prev === 'assessment' || prev === 'patients' || prev === 'wheelchair') return prev
       return 'summary'
     })
     const { data } = await supabase
@@ -350,6 +350,8 @@ export default function App() {
           {view === 'wheelchair' ? (
             <WheelchairPrescriptionTool
               patient={selectedPatient}
+              patients={patients}
+              onPatientSelect={handlePatientSelect}
               userId={user?.id}
               assessments={assessments}
               onSaved={handleWheelchairPrescriptionSaved}

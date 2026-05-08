@@ -22,7 +22,7 @@ function collectFormStateFromRoot(root) {
   const checkboxGroups = {}
   if (!root) return { fields, radios, checkboxGroups }
 
-  root.querySelectorAll('input, textarea, select').forEach(el => {
+  root.querySelectorAll('#wcForm input, #wcForm textarea, #wcForm select').forEach(el => {
     if (el.type === 'radio') {
       if (el.checked) radios[el.name] = el.value
     } else if (el.type === 'checkbox') {
@@ -116,6 +116,50 @@ function formatDateTime(value) {
   })
 }
 
+function patientDobForField(patient) {
+  return patient?.dob ? String(patient.dob).slice(0, 10) : ''
+}
+
+function formatPatientDob(patient) {
+  const dob = patientDobForField(patient)
+  if (dob) {
+    const [year, month, day] = dob.split('-')
+    if (year && month && day) return `${day}/${month}/${year}`
+  }
+  return patient?.dob_year ? `b. ${patient.dob_year}` : ''
+}
+
+function formatPatientOption(patient) {
+  return [patient?.initials || 'Unnamed patient', patient?.diagnosis, formatPatientDob(patient)]
+    .filter(Boolean)
+    .join(' - ')
+}
+
+function getPatientPrefillFields(patient) {
+  if (!patient) return {}
+  return {
+    ...(patient.initials ? { clientName: patient.initials } : {}),
+    ...(patientDobForField(patient) ? { dob: patientDobForField(patient) } : {}),
+    ...(patient.diagnosis ? { primaryDx: patient.diagnosis } : {}),
+  }
+}
+
+function applyPatientDetailsToForm(root, patient, { overwrite = false } = {}) {
+  if (!root || !patient) return false
+  let changed = false
+  Object.entries(getPatientPrefillFields(patient)).forEach(([id, value]) => {
+    const el = root.querySelector(`#${id}`)
+    if (!el) return
+    if (overwrite || !String(el.value || '').trim()) {
+      if (el.value !== value) {
+        el.value = value
+        changed = true
+      }
+    }
+  })
+  return changed
+}
+
 function summarizePrescriptionState(formState) {
   const fields = formState?.fields || {}
   const radios = formState?.radios || {}
@@ -152,7 +196,7 @@ function summarizePrescriptionState(formState) {
   }
 }
 
-export default function WheelchairPrescriptionTool({ patient, userId, assessments = [], onSaved }) {
+export default function WheelchairPrescriptionTool({ patient, patients = [], onPatientSelect, userId, assessments = [], onSaved }) {
   const rootRef = useRef(null)
   const activeVersionIdRef = useRef(null)
   const [draftStatus, setDraftStatus] = useState({
@@ -174,6 +218,13 @@ export default function WheelchairPrescriptionTool({ patient, userId, assessment
     [assessments, patient?.id]
   )
   const latestSavedVersion = savedVersions[0] ?? null
+  const selectedPatientId = patient?.id != null ? String(patient.id) : ''
+
+  const handlePatientChange = useCallback((event) => {
+    const nextPatient = patients.find(item => String(item.id) === event.target.value)
+    if (!nextPatient || String(nextPatient.id) === selectedPatientId) return
+    onPatientSelect?.(nextPatient)
+  }, [onPatientSelect, patients, selectedPatientId])
 
   useEffect(() => {
     activeVersionIdRef.current = activeVersionId
@@ -188,10 +239,13 @@ export default function WheelchairPrescriptionTool({ patient, userId, assessment
     if (!window.confirm('Load this saved wheelchair prescription version into the workspace? Current unsaved local edits will be replaced.')) return
     root.querySelector('#wcForm')?.reset()
     applyFormStateToRoot(root, formState)
+    const patientPrefilled = applyPatientDetailsToForm(root, patient, { overwrite: true })
+    const restoredState = patientPrefilled ? collectFormStateFromRoot(root) : formState
     setActiveVersionId(version.id)
+    activeVersionIdRef.current = version.id
     const updatedAt = new Date().toISOString()
     writePersistentDraft(storageKey, {
-      ...formState,
+      ...restoredState,
       meta: {
         ...(formState.meta || {}),
         updatedAt,
@@ -205,7 +259,7 @@ export default function WheelchairPrescriptionTool({ patient, userId, assessment
       title: 'Saved version loaded',
       detail: `Loaded ${formatDateTime(getRecordSavedAt(version))}. Continue editing, then save a new version when ready.`,
     })
-  }, [storageKey])
+  }, [patient, storageKey])
 
   const handleSaveVersion = useCallback(async () => {
     const root = rootRef.current
@@ -866,6 +920,7 @@ export default function WheelchairPrescriptionTool({ patient, userId, assessment
         ? selectedState?.meta?.sourceVersionId || null
         : latestSavedVersion?.id || null
       setActiveVersionId(sourceVersionId)
+      activeVersionIdRef.current = sourceVersionId
       setDraftStatus(useLocal
         ? {
             tone: sourceVersionId ? 'muted' : 'warning',
@@ -883,8 +938,7 @@ export default function WheelchairPrescriptionTool({ patient, userId, assessment
     }
 
     function prefillFromPatient() {
-      if (patient?.initials && $('clientName')) $('clientName').value = patient.initials
-      if (patient?.diagnosis && $('primaryDx')) $('primaryDx').value = patient.diagnosis
+      return applyPatientDetailsToForm(root, patient, { overwrite: true })
     }
 
     function updateAll(shouldSave = true) {
@@ -962,9 +1016,9 @@ export default function WheelchairPrescriptionTool({ patient, userId, assessment
     function initialiseFormState() {
       $('wcForm')?.reset()
       const restored = restoreFormState()
-      if (!restored) prefillFromPatient()
+      const prefilled = prefillFromPatient()
       setInitialSectionState()
-      updateAll(!restored)
+      updateAll(!restored || prefilled)
     }
 
     const form = $('wcForm')
@@ -1002,16 +1056,38 @@ export default function WheelchairPrescriptionTool({ patient, userId, assessment
         if (window[key] === fn) delete window[key]
       })
     }
-  }, [latestSavedVersion, patient?.diagnosis, patient?.initials, storageKey])
+  }, [latestSavedVersion, patient?.diagnosis, patient?.dob, patient?.initials, storageKey])
 
   return (
     <section className="wc-tool" ref={rootRef}>
       <style>{wheelchairToolStyles}</style>
       <div className="wc-tool__header">
-        <div>
+        <div className="wc-tool__header-main">
           <span className="wc-tool__eyebrow">Clinical Support Tool</span>
           <h2>Prescription Workspace</h2>
           <p>Decision support only. Confirm recommendations through trial, clinical review, supplier specifications and local funding requirements.</p>
+          <div className="wc-tool__patient-picker">
+            <label className="wc-tool__patient-field" htmlFor="wcPatientSelect">
+              <span>Patient</span>
+              <select
+                id="wcPatientSelect"
+                value={selectedPatientId}
+                onChange={handlePatientChange}
+                disabled={patients.length === 0}
+              >
+                <option value="" disabled>{patients.length ? 'Select patient' : 'No patients available'}</option>
+                {patients.map(item => (
+                  <option key={item.id} value={item.id}>{formatPatientOption(item)}</option>
+                ))}
+              </select>
+            </label>
+            {patient && (
+              <div className="wc-tool__patient-meta" aria-live="polite">
+                <span>{patient.diagnosis || 'Diagnosis not recorded'}</span>
+                <span>{formatPatientDob(patient) || 'DOB not recorded'}</span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="wc-tool__actions">
           <button
@@ -1714,6 +1790,11 @@ const wheelchairToolStyles = `
     backdrop-filter: blur(16px);
   }
 
+  .wc-tool__header-main {
+    flex: 1;
+    min-width: 0;
+  }
+
   .wc-tool__eyebrow {
     display: block;
     margin-bottom: 6px;
@@ -1738,6 +1819,54 @@ const wheelchairToolStyles = `
     color: var(--wc-muted);
     font-size: 13px;
     line-height: 1.55;
+  }
+
+  .wc-tool__patient-picker {
+    display: grid;
+    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+    gap: 12px;
+    align-items: end;
+    max-width: 760px;
+    margin-top: 14px;
+  }
+
+  .wc-tool__patient-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .wc-tool__patient-field > span {
+    color: var(--wc-muted);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+
+  .wc-tool__patient-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 38px;
+    align-items: center;
+  }
+
+  .wc-tool__patient-meta span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    max-width: 100%;
+    padding: 0 10px;
+    border: 1px solid var(--wc-line);
+    border-radius: 999px;
+    background: var(--wc-nested-surface);
+    color: var(--wc-muted);
+    font-size: 12px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .wc-tool__actions {
@@ -2506,6 +2635,12 @@ const wheelchairToolStyles = `
   @media (max-width: 960px) {
     .wc-tool__header {
       flex-direction: column;
+    }
+
+    .wc-tool__patient-picker {
+      grid-template-columns: 1fr;
+      max-width: none;
+      width: 100%;
     }
 
     .wc-tool__actions {
