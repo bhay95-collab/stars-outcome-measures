@@ -11,13 +11,48 @@ import { ResultScreen } from './ResultScreen';
 import type { TimeInput, DistInput, StairsInput, HiMATResult } from './types';
 
 const TIMED_STEPS = [
-  { title: 'Walk',               note: 'Time middle 10m of 20m walk. Unable = score 0.',              hasFail: true, failLabel: 'Unable to walk' },
-  { title: 'Walk Backward',      note: 'Time middle 10m, performed backwards.',                        hasFail: true, failLabel: 'Unable to walk backward' },
-  { title: 'Walk on Toes',       note: 'Time middle 10m. Fail: heel contact in middle 10m.',           hasFail: true, failLabel: 'Fail: heel contact in middle 10m' },
-  { title: 'Walk over Obstacle', note: 'Step over house brick. Fail: stepping around the obstacle.',  hasFail: true, failLabel: 'Fail: stepped around obstacle' },
-  { title: 'Run',                note: 'Time middle 10m. Fail: no flight phase achieved.',             hasFail: true, failLabel: 'Fail: no flight phase' },
-  { title: 'Skip',               note: 'Time middle 10m. Fail: no flight phase achieved.',             hasFail: true, failLabel: 'Fail: no flight phase' },
-  { title: 'Hop Forward',        note: 'Time 10m on the more-affected leg. Unable = score 0.',         hasFail: true, failLabel: 'Unable to hop' },
+  {
+    title: 'Walk',
+    instruction: 'Middle 10m of a 20m track\nStart timing at the 5m mark — stop at the 15m mark.',
+    note: 'Unable to perform = score 0.',
+    hasFail: true, failLabel: 'Unable to walk',
+  },
+  {
+    title: 'Walk Backward',
+    instruction: 'Middle 10m of a 20m track\nPatient walks backwards. Start at the 5m mark — stop at the 15m mark.',
+    note: 'Unable to perform = score 0.',
+    hasFail: true, failLabel: 'Unable to walk backward',
+  },
+  {
+    title: 'Walk on Toes',
+    instruction: 'Middle 10m of a 20m track\nStart at the 5m mark — stop at the 15m mark.',
+    note: 'Fail: heel contact made in the middle 10m.',
+    hasFail: true, failLabel: 'Fail: heel contact in middle 10m',
+  },
+  {
+    title: 'Walk over Obstacle',
+    instruction: 'Middle 10m of a 20m track\nPlace a house brick in the middle 10m. Start at the 5m mark — stop at the 15m mark.',
+    note: 'Fail: patient steps around (not over) the obstacle.',
+    hasFail: true, failLabel: 'Fail: stepped around obstacle',
+  },
+  {
+    title: 'Run',
+    instruction: 'Middle 10m of a 20m track\nStart at the 5m mark — stop at the 15m mark.',
+    note: 'Fail: no flight phase achieved (jogging only).',
+    hasFail: true, failLabel: 'Fail: no flight phase',
+  },
+  {
+    title: 'Skip',
+    instruction: 'Middle 10m of a 20m track\nStart at the 5m mark — stop at the 15m mark.',
+    note: 'Fail: no flight phase achieved.',
+    hasFail: true, failLabel: 'Fail: no flight phase',
+  },
+  {
+    title: 'Hop Forward',
+    instruction: '10m on the more-affected leg\nHopping on one leg for the full 10m distance.',
+    note: 'Unable to perform = score 0.',
+    hasFail: true, failLabel: 'Unable to hop',
+  },
 ] as const;
 
 const DIST_STEPS = [
@@ -126,6 +161,7 @@ export function HiMATForm({ patientId }: { patientId: string }) {
     return (
       <TimeScreen
         title={cfg.title}
+        instruction={cfg.instruction}
         note={cfg.note}
         hasFail={cfg.hasFail}
         failLabel={cfg.failLabel}

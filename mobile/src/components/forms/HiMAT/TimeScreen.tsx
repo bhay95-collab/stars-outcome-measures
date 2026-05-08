@@ -13,6 +13,7 @@ import { colors, spacing, typography, radii } from '../../../theme/tokens';
 
 interface TimeScreenProps {
   title: string;
+  instruction: string;
   note: string;
   hasFail?: boolean;
   failLabel?: string;
@@ -26,7 +27,7 @@ interface TimeScreenProps {
 }
 
 export function TimeScreen({
-  title, note, hasFail, failLabel, input, onChange,
+  title, instruction, note, hasFail, failLabel, input, onChange,
   onNext, onBack, stepLabel, canProceed, patient,
 }: TimeScreenProps) {
   const insets = useSafeAreaInsets();
@@ -72,8 +73,13 @@ export function TimeScreen({
           </View>
         </Card>
 
+        <View style={styles.instructionCard}>
+          <Text style={styles.instructionLabel}>WHAT TO TIME</Text>
+          <Text style={styles.instructionText}>{instruction}</Text>
+        </View>
+
         <Card style={styles.noteCard}>
-          <Text style={styles.noteLabel}>CLINICAL NOTE</Text>
+          <Text style={styles.noteLabel}>SCORING NOTE</Text>
           <Text style={styles.noteText}>{note}</Text>
         </Card>
 
@@ -179,6 +185,24 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold,
     color: colors.actionBlue,
     letterSpacing: 0.5,
+  },
+  instructionCard: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  instructionLabel: {
+    fontSize: typography.sizeXs,
+    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 1,
+    fontWeight: typography.weightSemibold,
+  },
+  instructionText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: '#FFFFFF',
+    lineHeight: 24,
   },
   noteCard: {
     gap: spacing.xs,
