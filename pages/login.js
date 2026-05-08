@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { getAppRedirectUrl, supabase } from '../lib/supabase'
 import LogoWordmark from '../components/LogoWordmark'
+import ThreeBarMotif from '../components/ThreeBarMotif'
 
 export async function getServerSideProps() { return { props: {} } }
 
@@ -68,9 +69,9 @@ export default function Login() {
               <p className="eyebrow">CLINICAL OUTCOMES WORKSPACE</p>
               <h1>Progress data with the clinical context still attached.</h1>
               <div className="login-visual__metrics" aria-label="Example outcome indicators">
-                <div><strong>84%</strong><span>MCID tracked</span></div>
+                <div><strong>84%</strong><span>Minimally Clinically Important Difference tracked</span></div>
                 <div><strong>22</strong><span>Measures ready</span></div>
-                <div className="data-bars" aria-hidden="true"><i /><i /><i /></div>
+                <div className="data-bars"><ThreeBarMotif size="lg" tone="light" /></div>
               </div>
             </div>
           </div>
@@ -82,7 +83,12 @@ export default function Login() {
 
             <button type="button" className="btn-google" onClick={signInWithGoogle} disabled={googleLoading || loading}>
               <GoogleIcon />
-              {googleLoading ? 'Redirecting…' : 'Continue with Google'}
+              {googleLoading ? (
+                <span className="button-loading">
+                  <ThreeBarMotif size="xs" loading label="Redirecting to Google" />
+                  Redirecting…
+                </span>
+              ) : 'Continue with Google'}
             </button>
 
             <div className="divider"><span>or</span></div>
@@ -116,7 +122,12 @@ export default function Login() {
               {error && <p className="error">{error}</p>}
 
               <button type="submit" className="btn" disabled={loading}>
-                {loading ? 'Logging in…' : 'Log in'}
+                {loading ? (
+                  <span className="button-loading">
+                    <ThreeBarMotif size="xs" tone="light" loading label="Logging in" />
+                    Logging in…
+                  </span>
+                ) : 'Log in'}
               </button>
             </form>
 
@@ -275,21 +286,17 @@ const pageStyles = `
   }
 
   .data-bars {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr);
-    align-items: end;
-    gap: 8px;
+    display: flex !important;
+    align-items: flex-end;
+    justify-content: center;
   }
 
-  .data-bars i {
-    display: block;
-    border-radius: 5px 5px 3px 3px;
-    background: var(--color-secondary);
+  .button-loading {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
   }
-
-  .data-bars i:nth-child(1) { height: 34px; background: rgba(255,255,255,0.72); }
-  .data-bars i:nth-child(2) { height: 54px; background: #5a98da; }
-  .data-bars i:nth-child(3) { height: 76px; background: var(--color-secondary); }
 
   .card {
     width: 100%;

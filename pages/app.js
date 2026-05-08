@@ -12,6 +12,7 @@ import MeasureEntry from '../components/MeasureEntry'
 import SubscriptionWall from '../components/SubscriptionWall'
 import LogoWordmark from '../components/LogoWordmark'
 import WheelchairPrescriptionTool from '../components/WheelchairPrescriptionTool'
+import ThreeBarMotif from '../components/ThreeBarMotif'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
 
 export async function getServerSideProps() { return { props: {} } }
@@ -254,7 +255,10 @@ export default function App() {
       <>
         <AppHead />
         <style jsx global>{globalStyles}</style>
-        <div className="loading-page"><p className="loading-text">Loading…</p></div>
+        <div className="loading-page">
+          <ThreeBarMotif size="lg" loading label="Loading RehabMetrics IQ" />
+          <p className="loading-text">Loading RehabMetrics IQ…</p>
+        </div>
       </>
     )
   }
@@ -476,7 +480,7 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
                 <h2>{selectedPatient.initials}</h2>
                 <p>{selectedPatient.diagnosis || 'Diagnosis not recorded'}</p>
               </div>
-              <div className="patient-workspace-motif" aria-hidden="true"><i /><i /><i /></div>
+              <ThreeBarMotif className="patient-workspace-motif" size="lg" />
             </div>
             <div className="patient-workspace-stats">
               <div><span>Total assessments</span><strong>{selectedAssessments.length}</strong></div>
@@ -499,7 +503,7 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
           </>
         ) : (
           <div className="patient-workspace-empty">
-            <div className="patient-workspace-empty__motif" aria-hidden="true"><i /><i /><i /></div>
+            <ThreeBarMotif className="patient-workspace-empty__motif" size="lg" tone="muted" />
             <h2>Select or add a patient</h2>
             <p>Choose a patient to see recent measures, dashboard access, and assessment actions.</p>
             <button type="button" onClick={onNew}>Add New Patient</button>
@@ -550,8 +554,9 @@ const globalStyles = `
   body { font-family: 'Inter', sans-serif; color: var(--color-ink); font-variant-numeric: tabular-nums; }
 
   /* ── PAGE SHELL ── */
-  .loading-page { min-height: 100vh; background: var(--color-surface-soft); display: flex; align-items: center; justify-content: center; }
+  .loading-page { min-height: 100vh; background: var(--color-surface-soft); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
   .loading-text { font-size: 14px; color: var(--color-subtle); }
+  .button-loading { display: inline-flex; align-items: center; justify-content: center; gap: 9px; }
   .page { min-height: 100vh; background: var(--color-surface-soft); }
 
   .header { background: rgba(255,255,255,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--color-border); position: sticky; top: 0; z-index: 10; }
@@ -1573,10 +1578,7 @@ const globalStyles = `
     height: 98px;
     pointer-events: none;
     opacity: 0.18;
-    background:
-      linear-gradient(to top, var(--color-primary) 0 42%, transparent 42%) 0 100% / 28px 100% no-repeat,
-      linear-gradient(to top, #5a98da 0 66%, transparent 66%) 52px 100% / 28px 100% no-repeat,
-      linear-gradient(to top, var(--color-secondary) 0 88%, transparent 88%) 104px 100% / 28px 100% no-repeat;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 64'%3E%3Crect x='0' y='34' width='22' height='30' rx='5' fill='%230D5C95'/%3E%3Crect x='34' y='18' width='22' height='46' rx='5' fill='%234A9DE8'/%3E%3Crect x='68' y='0' width='22' height='64' rx='5' fill='%239BC7F2'/%3E%3C/svg%3E") center / contain no-repeat;
   }
 
   .app-main > * {
@@ -1629,10 +1631,7 @@ const globalStyles = `
     height: 58px;
     opacity: 0.2;
     pointer-events: none;
-    background:
-      linear-gradient(to top, var(--color-primary) 0 48%, transparent 48%) 0 100% / 18px 100% no-repeat,
-      linear-gradient(to top, #5a98da 0 70%, transparent 70%) 36px 100% / 18px 100% no-repeat,
-      linear-gradient(to top, var(--color-secondary) 0 94%, transparent 94%) 72px 100% / 18px 100% no-repeat;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 64'%3E%3Crect x='0' y='34' width='22' height='30' rx='5' fill='%230D5C95'/%3E%3Crect x='34' y='18' width='22' height='46' rx='5' fill='%234A9DE8'/%3E%3Crect x='68' y='0' width='22' height='64' rx='5' fill='%239BC7F2'/%3E%3C/svg%3E") center / contain no-repeat;
   }
 
   .patient-summary-card > * {
@@ -1674,6 +1673,9 @@ const globalStyles = `
   }
 
   .patient-summary-card__head button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 38px;
     padding: 0 16px;
     border: 0;
@@ -2184,17 +2186,6 @@ const globalStyles = `
     font-weight: 800;
   }
 
-  .patient-identity__mark i {
-    display: block;
-    width: 8px;
-    border-radius: 4px 4px 2px 2px;
-    background: var(--color-secondary);
-  }
-
-  .patient-identity__mark i:nth-child(2) { height: 18px; background: var(--color-primary); }
-  .patient-identity__mark i:nth-child(3) { height: 26px; background: #5a98da; }
-  .patient-identity__mark i:nth-child(4) { height: 34px; }
-
   .patient-identity > strong {
     color: var(--color-ink);
     font-size: 16px;
@@ -2592,25 +2583,8 @@ const globalStyles = `
 
   .patient-workspace-motif,
   .patient-workspace-empty__motif {
-    display: grid;
-    grid-template-columns: repeat(3, 14px);
-    align-items: end;
-    gap: 7px;
-    min-height: 70px;
+    justify-self: end;
   }
-
-  .patient-workspace-motif i,
-  .patient-workspace-empty__motif i {
-    display: block;
-    border-radius: 7px 7px 4px 4px;
-  }
-
-  .patient-workspace-motif i:nth-child(1),
-  .patient-workspace-empty__motif i:nth-child(1) { height: 32px; background: var(--color-primary); }
-  .patient-workspace-motif i:nth-child(2),
-  .patient-workspace-empty__motif i:nth-child(2) { height: 48px; background: #5a98da; }
-  .patient-workspace-motif i:nth-child(3),
-  .patient-workspace-empty__motif i:nth-child(3) { height: 68px; background: var(--color-secondary); }
 
   .patient-workspace-panel h2 {
     color: var(--color-ink);
@@ -2766,10 +2740,7 @@ const globalStyles = `
     width: 82px;
     height: 58px;
     opacity: 0.16;
-    background:
-      linear-gradient(to top, var(--color-primary) 0 42%, transparent 42%) 0 100% / 16px 100% no-repeat,
-      linear-gradient(to top, #5a98da 0 65%, transparent 65%) 33px 100% / 16px 100% no-repeat,
-      linear-gradient(to top, var(--color-secondary) 0 92%, transparent 92%) 66px 100% / 16px 100% no-repeat;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 64'%3E%3Crect x='0' y='34' width='22' height='30' rx='5' fill='%230D5C95'/%3E%3Crect x='34' y='18' width='22' height='46' rx='5' fill='%234A9DE8'/%3E%3Crect x='68' y='0' width='22' height='64' rx='5' fill='%239BC7F2'/%3E%3C/svg%3E") center / contain no-repeat;
   }
 
   .measure-header__copy {
@@ -2815,20 +2786,10 @@ const globalStyles = `
   }
 
   .measure-header__motif {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr);
-    align-items: end;
-    gap: 6px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
   }
-
-  .measure-header__motif i {
-    display: block;
-    border-radius: 5px 5px 3px 3px;
-  }
-
-  .measure-header__motif i:nth-child(1) { height: 28px; background: var(--color-primary); }
-  .measure-header__motif i:nth-child(2) { height: 42px; background: #5a98da; }
-  .measure-header__motif i:nth-child(3) { height: 58px; background: var(--color-secondary); }
 
   [data-measure-panel] .section-label {
     margin-bottom: 8px;

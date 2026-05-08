@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import ThreeBarMotif from './ThreeBarMotif'
 
 export default function SubscriptionWall({ user, subscription, onSignOut }) {
   const [checkoutLoading, setCheckoutLoading] = useState(null)
@@ -112,7 +113,12 @@ export default function SubscriptionWall({ user, subscription, onSignOut }) {
                 onClick={() => handleSubscribe('monthly')}
                 disabled={isWorking}
               >
-                {checkoutLoading === 'monthly' ? 'Redirecting…' : 'Subscribe monthly'}
+                {checkoutLoading === 'monthly' ? (
+                  <span className="button-loading">
+                    <ThreeBarMotif size="xs" tone="light" loading label="Redirecting to checkout" />
+                    Redirecting…
+                  </span>
+                ) : 'Subscribe monthly'}
               </button>
             </div>
 
@@ -125,7 +131,12 @@ export default function SubscriptionWall({ user, subscription, onSignOut }) {
                 onClick={() => handleSubscribe('annual')}
                 disabled={isWorking}
               >
-                {checkoutLoading === 'annual' ? 'Redirecting…' : 'Subscribe annually'}
+                {checkoutLoading === 'annual' ? (
+                  <span className="button-loading">
+                    <ThreeBarMotif size="xs" tone="light" loading label="Redirecting to checkout" />
+                    Redirecting…
+                  </span>
+                ) : 'Subscribe annually'}
               </button>
             </div>
           </div>
@@ -137,7 +148,12 @@ export default function SubscriptionWall({ user, subscription, onSignOut }) {
                 onClick={handleManageBilling}
                 disabled={isWorking}
               >
-                {portalLoading ? 'Opening…' : 'Manage billing'}
+                {portalLoading ? (
+                  <span className="button-loading">
+                    <ThreeBarMotif size="xs" loading label="Opening billing portal" />
+                    Opening…
+                  </span>
+                ) : 'Manage billing'}
               </button>
             )}
             <button data-wall-link="signout" onClick={onSignOut}>

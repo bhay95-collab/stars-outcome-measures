@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { CONDITION_OPTIONS } from '../lib/clinical'
+import ThreeBarMotif from './ThreeBarMotif'
 
 export default function NewPatientModal({ userId, onCreated, onClose }) {
   const [form, setForm] = useState({
@@ -141,7 +142,12 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
           <div>
             <button type="button" onClick={onClose}>Cancel</button>
             <button type="submit" disabled={loading}>
-              {loading ? 'Creating…' : 'Create patient'}
+              {loading ? (
+                <span className="button-loading">
+                  <ThreeBarMotif size="xs" tone="light" loading label="Creating patient" />
+                  Creating…
+                </span>
+              ) : 'Create patient'}
             </button>
           </div>
         </form>

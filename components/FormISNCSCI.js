@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { calcISNCSCI, ISNCSCI_LEVELS, ISNCSCI_MOTOR_LEVELS, ISNCSCI_KEY_MUSCLES, ISNCSCI_AIS_DETAIL } from '../lib/clinical'
 import { exportISNCSCIPdf } from '../lib/clinical/isncsciPdfExport'
+import ThreeBarMotif from './ThreeBarMotif'
 
 const DermatomeMap = dynamic(() => import('./DermatomeMap'), { ssr: false })
 
@@ -150,7 +151,12 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
           </button>
           <button type="button" onClick={handleExport} disabled={exporting}
             style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, background: '#236499', color: '#fff', border: 'none', borderRadius: 6, cursor: exporting ? 'default' : 'pointer', opacity: exporting ? 0.7 : 1 }}>
-            {exporting ? 'Generating…' : '⬇ Export ASIA PDF'}
+            {exporting ? (
+              <span className="button-loading">
+                <ThreeBarMotif size="xs" tone="light" loading label="Generating ASIA PDF" />
+                Generating…
+              </span>
+            ) : '⬇ Export ASIA PDF'}
           </button>
         </div>
       </div>
@@ -351,7 +357,12 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
           : <em>Enter motor and sensory scores to generate classification.</em>
         }
         <button type="submit" disabled={!preview?.primaryValue || loading}>
-          {loading ? 'Saving…' : 'Save assessment'}
+          {loading ? (
+            <span className="button-loading">
+              <ThreeBarMotif size="xs" tone="light" loading label="Saving assessment" />
+              Saving…
+            </span>
+          ) : 'Save assessment'}
         </button>
       </div>
 

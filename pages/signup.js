@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { getAppRedirectUrl, supabase } from '../lib/supabase'
 import LogoWordmark from '../components/LogoWordmark'
+import ThreeBarMotif from '../components/ThreeBarMotif'
 
 export async function getServerSideProps() { return { props: {} } }
 
@@ -107,7 +108,12 @@ export default function Signup() {
 
           <button type="button" className="btn-google" onClick={signInWithGoogle} disabled={googleLoading || loading}>
             <GoogleIcon />
-            {googleLoading ? 'Redirecting…' : 'Continue with Google'}
+            {googleLoading ? (
+              <span className="button-loading">
+                <ThreeBarMotif size="xs" loading label="Redirecting to Google" />
+                Redirecting…
+              </span>
+            ) : 'Continue with Google'}
           </button>
 
           <div className="divider"><span>or</span></div>
@@ -142,7 +148,12 @@ export default function Signup() {
             {error && <p className="error">{error}</p>}
 
             <button type="submit" className="btn" disabled={loading}>
-              {loading ? 'Creating account…' : 'Create account'}
+              {loading ? (
+                <span className="button-loading">
+                  <ThreeBarMotif size="xs" tone="light" loading label="Creating account" />
+                  Creating account…
+                </span>
+              ) : 'Create account'}
             </button>
           </form>
 
@@ -271,6 +282,13 @@ const pageStyles = `
 
   .btn:hover { opacity: 0.9; }
   .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .button-loading {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+  }
 
   .footer {
     font-size: 13px;

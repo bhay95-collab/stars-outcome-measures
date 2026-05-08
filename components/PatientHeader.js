@@ -1,4 +1,5 @@
 import { buildPatientSummary, fmtDate } from '../lib/clinical/patientSummary'
+import ThreeBarMotif from './ThreeBarMotif'
 
 function calculateAge(dobYear) {
   if (!dobYear) return null
@@ -25,7 +26,12 @@ export default function PatientHeader({ patient, assessments, onViewReport, repo
           <p>{patient.diagnosis || 'Diagnosis not recorded'}</p>
         </div>
         <button type="button" onClick={onViewReport} disabled={reportLoading || assessments.length === 0}>
-          {reportLoading ? 'Generating…' : 'View Full Report'}
+          {reportLoading ? (
+            <span className="button-loading">
+              <ThreeBarMotif size="xs" tone="light" loading label="Generating report" />
+              Generating…
+            </span>
+          ) : 'View Full Report'}
         </button>
       </div>
 
@@ -33,7 +39,7 @@ export default function PatientHeader({ patient, assessments, onViewReport, repo
         <div className="patient-identity">
           <div className="patient-identity__mark" aria-hidden="true">
             <span>{patient.initials?.charAt(0) || '?'}</span>
-            <i /><i /><i />
+            <ThreeBarMotif size="sm" />
           </div>
           <small>Clinical snapshot</small>
           <strong>{coverage}% domain coverage</strong>

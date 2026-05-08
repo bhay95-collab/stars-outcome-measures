@@ -1,6 +1,7 @@
 import { ClipboardCopy, FileText, Printer, RotateCcw, Save } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import ThreeBarMotif from './ThreeBarMotif'
 
 const WHEELCHAIR_PRESCRIPTION_MEASURE = 'Wheelchair Prescription'
 const WHEELCHAIR_PRESCRIPTION_TOOL = 'wheelchair-prescription'
@@ -1089,6 +1090,7 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
             )}
           </div>
         </div>
+        <ThreeBarMotif className="wc-tool__motif" size="lg" tone="muted" />
         <div className="wc-tool__actions">
           <button
             type="button"
@@ -1097,7 +1099,12 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
             onClick={handleSaveVersion}
             title={canSaveToPatient ? 'Save this workspace as a new patient-record version' : 'Select a patient to save versions'}
           >
-            <Save size={15} /> {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved' : 'Save progress'}
+            <Save size={15} /> {saveState === 'saving' ? (
+              <span className="button-loading">
+                <ThreeBarMotif size="xs" tone="light" loading label="Saving wheelchair prescription" />
+                Saving...
+              </span>
+            ) : saveState === 'saved' ? 'Saved' : 'Save progress'}
           </button>
           <button type="button" onClick={() => window.copySupplierBrief?.()}>
             <ClipboardCopy size={15} /> Supplier brief
@@ -1796,24 +1803,25 @@ const wheelchairToolStyles = `
     backdrop-filter: blur(16px);
   }
 
-  .wc-tool__header::after {
-    content: '';
-    position: absolute;
-    right: 24px;
-    bottom: 18px;
-    z-index: 0;
-    width: 92px;
-    height: 64px;
-    opacity: 0.22;
-    background:
-      linear-gradient(to top, var(--wc-primary) 0 42%, transparent 42%) 0 100% / 18px 100% no-repeat,
-      linear-gradient(to top, #5a98da 0 67%, transparent 67%) 36px 100% / 18px 100% no-repeat,
-      linear-gradient(to top, var(--wc-secondary) 0 92%, transparent 92%) 72px 100% / 18px 100% no-repeat;
-  }
-
   .wc-tool__header > * {
     position: relative;
     z-index: 1;
+  }
+
+  .wc-tool__motif {
+    position: absolute !important;
+    right: 28px;
+    bottom: 18px;
+    z-index: 0 !important;
+    opacity: 0.32;
+    pointer-events: none;
+  }
+
+  .button-loading {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
   }
 
   .wc-tool__header-main {

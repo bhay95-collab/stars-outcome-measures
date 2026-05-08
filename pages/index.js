@@ -28,7 +28,7 @@ const WORKFLOW = [
   {
     Icon: LineChart,
     title: 'Progress visibility',
-    text: 'Track meaningful change over time with MCID context and patient-level trends.',
+    text: 'Track meaningful change over time with Minimally Clinically Important Difference context and patient-level trends.',
   },
   {
     Icon: FileText,
@@ -99,12 +99,12 @@ export default function Landing() {
     <>
       <Head>
         <title>RehabMetrics IQ | Clinical Outcome Measures</title>
-        <meta name="description" content="Clinical outcome measures for physiotherapists. Automated scoring, MCID tracking, and clinical-grade reports." />
+        <meta name="description" content="Clinical outcome measures for physiotherapists. Automated scoring, Minimally Clinically Important Difference tracking, and clinical-grade reports." />
         <meta name="robots" content="index,follow" />
         <link rel="canonical" href={CANONICAL_HOME} />
         <meta property="og:url" content={CANONICAL_HOME} />
         <meta property="og:title" content="RehabMetrics IQ | Clinical Outcome Measures" />
-        <meta property="og:description" content="Clinical outcome measures for physiotherapists. Automated scoring, MCID tracking, and clinical-grade reports." />
+        <meta property="og:description" content="Clinical outcome measures for physiotherapists. Automated scoring, Minimally Clinically Important Difference tracking, and clinical-grade reports." />
         <meta property="og:type" content="website" />
         <link rel="icon" href="/SquareLogo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -130,7 +130,7 @@ export default function Landing() {
               <p className="eyebrow">AUTOMATED SCORING. CLINICAL-GRADE REPORTING.</p>
               <h1>Data-driven outcomes. <span>Better patient care.</span></h1>
               <p className="hero__sub">
-                RehabMetrics helps physiotherapists track what matters most with automated scoring, MCID tracking, and clinical-grade reports—so you can focus on your patients.
+                RehabMetrics helps physiotherapists track what matters most with automated scoring, Minimally Clinically Important Difference tracking, and clinical-grade reports—so you can focus on your patients.
               </p>
               <div className="hero__actions">
                 <a className="primary-btn" href="/signup">Start 14-day free trial</a>
@@ -224,7 +224,7 @@ export default function Landing() {
                   <p>{period}</p>
                 </div>
                 <ul>
-                  {['All outcome measures', 'Unlimited patients', 'MCID tracking', 'PDF export', 'Secure account access'].map(item => (
+                  {['All outcome measures', 'Unlimited patients', 'Minimally Clinically Important Difference tracking', 'PDF export', 'Secure account access'].map(item => (
                     <li key={item}><Check size={16} /> {item}</li>
                   ))}
                 </ul>
@@ -289,7 +289,7 @@ function ProductPreview() {
   const rows = [
     ['10MWT', '10 Metre Walk Test', '0.94 m/s', 'Community', 'green'],
     ['TUG', 'Timed Up and Go', '11.2 sec', 'Mild risk', 'amber'],
-    ['BBS', 'Berg Balance Scale', '42/56', 'MCID met', 'blue'],
+    ['BBS', 'Berg Balance Scale', '42/56', 'Minimally Clinically Important Difference met', 'blue'],
     ['6MWT', '6 Minute Walk Test', '387 m', 'Community', 'green'],
     ['FGA', 'Functional Gait Assessment', '21/30', 'Low risk', 'green'],
   ]
@@ -369,7 +369,7 @@ function DemoModal({
           <div><small>Percent</small>{speed > 0 ? `${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(0)}%` : '-'}</div>
         </div>
         <p className="reference-note">
-          {meetsMCID ? 'Change exceeds MCID.' : 'Change does not exceed MCID.'} MCID: {MCID_STANDARD} m/s general / {MCID_STROKE} m/s stroke.
+          {meetsMCID ? 'Change exceeds the Minimally Clinically Important Difference.' : 'Change does not exceed the Minimally Clinically Important Difference.'} Minimally Clinically Important Difference: {MCID_STANDARD} m/s general / {MCID_STROKE} m/s stroke.
         </p>
       </div>
     </div>
@@ -611,10 +611,13 @@ const styles = `
     font-weight: 700;
   }
   .preview-row span {
+    max-width: 170px;
     padding: 5px 10px;
     border-radius: 999px;
     font-size: 11px;
     font-weight: 700;
+    line-height: 1.15;
+    text-align: center;
   }
   .preview-row span[data-tone="green"] { background: #e8f4ec; color: #2b6842; }
   .preview-row span[data-tone="amber"] { background: #fff0d9; color: #8a5718; }

@@ -84,7 +84,7 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
         <div className="summary-card__head">
           <div>
             <h3>Outcome Measure Trend</h3>
-            <p>Select a recorded measure to review change over time. Where MCID thresholds exist, clinically meaningful improvements are highlighted.</p>
+            <p>Select a recorded measure to review change over time. Where Minimally Clinically Important Difference thresholds exist, clinically meaningful improvements are highlighted.</p>
           </div>
           {selectableMeasures.length > 0 && (
             <select value={activeMeasureId} onChange={event => setSelectedMeasureId(event.target.value)} aria-label="Select outcome measure trend">
@@ -165,7 +165,7 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
 
       {mcidContext && (
         <div className="info-panel">
-          <strong>MCID reference - {patient.diagnosis}:</strong> {mcidContext}
+          <strong>Minimally Clinically Important Difference reference - {patient.diagnosis}:</strong> {mcidContext}
         </div>
       )}
 
@@ -224,7 +224,7 @@ function MeasureTrendChart({ series, measureId }) {
         {series.some(item => item.mcidKey) && (
           <span>
             <i data-mcid-marker="" />
-            MCID met
+            Minimally Clinically Important Difference met
           </span>
         )}
       </div>
@@ -440,7 +440,7 @@ function AssessmentCard({ entry, onDelete }) {
           <span>Previous: <strong>{formatResultValue(previous.results?.primaryValue, measure)}</strong> on {fmtDate(previous.created_at)}</span>
         )}
         {mcid && (
-          <span>MCID: <strong>{mcid.label}</strong></span>
+          <span>Minimally Clinically Important Difference: <strong>{mcid.label}</strong></span>
         )}
         {result.meta?.fastSpeed != null && (
           <span>Fast gait speed: <strong>{formatPrimaryValue(result.meta.fastSpeed, { primaryUnit: 'm/s' })} m/s</strong></span>

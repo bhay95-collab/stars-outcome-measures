@@ -25,6 +25,7 @@ import FormSCIM from './FormSCIM'
 import FormRPQ from './FormRPQ'
 import FormBIVI from './FormBIVI'
 import FormISNCSCI from './FormISNCSCI'
+import ThreeBarMotif from './ThreeBarMotif'
 
 const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
@@ -135,7 +136,7 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone, onDirty
             <span>Pending</span>
             <strong>{drafts.length}</strong>
           </div>
-          <div className="measure-header__motif" aria-hidden="true"><i /><i /><i /></div>
+          <div className="measure-header__motif"><ThreeBarMotif size="sm" /></div>
         </div>
       </div>
 
@@ -226,7 +227,12 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone, onDirty
       <div data-measure-footer="">
         <button type="button" data-secondary="" onClick={handleDone}>Done</button>
         <button type="button" data-save-encounter="" disabled={!drafts.length || loading} onClick={saveEncounter}>
-          {loading ? 'Saving…' : `Save Encounter${drafts.length ? ` (${drafts.length})` : ''}`}
+          {loading ? (
+            <span className="button-loading">
+              <ThreeBarMotif size="xs" tone="light" loading label="Saving encounter" />
+              Saving…
+            </span>
+          ) : `Save Encounter${drafts.length ? ` (${drafts.length})` : ''}`}
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import ThreeBarMotif from './ThreeBarMotif'
 
 export default function ProfileModal({ user, onClose, onProfileUpdated }) {
   const [firstName, setFirstName] = useState('')
@@ -236,7 +237,12 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
             disabled={saving}
             style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 600, color: 'var(--color-surface)', background: 'var(--color-primary)', border: 'none', borderRadius: 'var(--radius-sm)', padding: '8px 18px', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? (
+              <span className="button-loading">
+                <ThreeBarMotif size="xs" tone="light" loading label="Saving profile" />
+                Saving…
+              </span>
+            ) : 'Save'}
           </button>
         </div>
 
