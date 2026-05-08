@@ -13,8 +13,6 @@ import { colors, spacing, typography, radii } from '../../../theme/tokens';
 
 interface StairsScreenProps {
   title: string;
-  depNote: string;
-  indNote: string;
   input: StairsInput;
   onChange: (input: StairsInput) => void;
   onNext: () => void;
@@ -25,7 +23,7 @@ interface StairsScreenProps {
 }
 
 export function StairsScreen({
-  title, depNote, indNote, input, onChange, onNext, onBack, stepLabel, canProceed, patient,
+  title, input, onChange, onNext, onBack, stepLabel, canProceed, patient,
 }: StairsScreenProps) {
   const insets = useSafeAreaInsets();
   const [depText, setDepText] = useState(
@@ -35,11 +33,11 @@ export function StairsScreen({
     () => input.indVal !== null ? input.indVal.toFixed(1) : ''
   );
 
-  const isInd = input.mode === 'IND';
   const isDep = input.mode === 'DEP';
+  const isInd = input.mode === 'IND';
 
-  function handleToggle() {
-    onChange({ ...input, mode: isInd ? 'DEP' : 'IND' });
+  function selectMode(mode: 'DEP' | 'IND') {
+    onChange({ ...input, mode });
   }
 
   function handleDepUseTime(seconds: number) {
@@ -88,32 +86,51 @@ export function StairsScreen({
           </View>
         </Card>
 
-        <Pressable
-          onPress={handleToggle}
-          style={({ pressed }) => [
-            styles.toggleRow,
-            isInd && styles.toggleRowActive,
-            pressed && styles.toggleRowPressed,
-          ]}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: isInd }}
-          accessibilityLabel="Independent: reciprocal pattern, no rail"
-        >
-          <View style={[styles.toggleCheckbox, isInd && styles.toggleCheckboxActive]}>
-            {isInd ? <Text style={styles.toggleCheckmark}>✓</Text> : null}
+        <View style={styles.instructionCard}>
+          <Text style={styles.instructionLabel}>WHAT TO TIME</Text>
+          <Text style={styles.instructionText}>{title}</Text>
+        </View>
+
+        <Card style={styles.modeCard}>
+          <Text style={styles.modeHeading}>INDEPENDENCE STATUS</Text>
+          <Text style={styles.modeSub}>Select before timing — this affects the score.</Text>
+          <View style={styles.modeTileRow}>
+            <Pressable
+              onPress={() => selectMode('DEP')}
+              style={[styles.modeTile, isDep && styles.modeTileActive]}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: isDep }}
+              accessibilityLabel="Dependent"
+            >
+              <Text style={[styles.modeTileTitle, isDep && styles.modeTileTitleActive]}>
+                Dependent
+              </Text>
+              <Text style={[styles.modeTileSub, isDep && styles.modeTileSubActive]}>
+                Rail or non-reciprocal
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => selectMode('IND')}
+              style={[styles.modeTile, isInd && styles.modeTileActiveGreen]}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: isInd }}
+              accessibilityLabel="Independent"
+            >
+              <Text style={[styles.modeTileTitle, isInd && styles.modeTileTitleActiveGreen]}>
+                Independent
+              </Text>
+              <Text style={[styles.modeTileSub, isInd && styles.modeTileSubActiveGreen]}>
+                No rail, reciprocal
+              </Text>
+            </Pressable>
           </View>
-          <View style={styles.toggleTextGroup}>
-            <Text style={[styles.toggleLabel, isInd && styles.toggleLabelActive]}>
-              Independent: reciprocal pattern, no rail
-            </Text>
-            <Text style={styles.toggleSub}>{isInd ? indNote : depNote}</Text>
-          </View>
-        </Pressable>
+        </Card>
 
         {input.mode === null ? (
-          <Card style={styles.modePromptCard}>
-            <Text style={styles.modePromptText}>
-              Select independence status above, then time the patient.
+          <Card style={styles.promptCard}>
+            <Text style={styles.promptText}>
+              Select Dependent or Independent above, then time the patient.
             </Text>
           </Card>
         ) : null}
@@ -121,7 +138,7 @@ export function StairsScreen({
         {isDep ? (
           <>
             <Card style={styles.timerCard}>
-              <ClinicalTimer onUseTime={handleDepUseTime} />
+              <ClinicalTimer key="dep" onUseTime={handleDepUseTime} />
             </Card>
             <Card>
               <NumericClinicalInput
@@ -142,7 +159,7 @@ export function StairsScreen({
         {isInd ? (
           <>
             <Card style={styles.timerCard}>
-              <ClinicalTimer onUseTime={handleIndUseTime} />
+              <ClinicalTimer key="ind" onUseTime={handleIndUseTime} />
             </Card>
             <Card>
               <NumericClinicalInput
@@ -220,65 +237,89 @@ const styles = StyleSheet.create({
     color: colors.actionBlue,
     letterSpacing: 0.5,
   },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-  },
-  toggleRowActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
-  },
-  toggleRowPressed: {
-    opacity: 0.75,
-  },
-  toggleCheckbox: {
-    width: 22,
-    height: 22,
-    borderRadius: radii.sm,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    marginTop: 1,
-  },
-  toggleCheckboxActive: {
+  instructionCard: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    gap: spacing.xs,
   },
-  toggleCheckmark: {
+  instructionLabel: {
     fontSize: typography.sizeXs,
-    fontWeight: typography.weightBold,
-    color: '#FFFFFF',
-  },
-  toggleTextGroup: {
-    flex: 1,
-    gap: 4,
-  },
-  toggleLabel: {
-    fontSize: typography.sizeMd,
-    color: colors.ink,
-  },
-  toggleLabelActive: {
-    color: colors.primary,
+    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 1,
     fontWeight: typography.weightSemibold,
   },
-  toggleSub: {
+  instructionText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: '#FFFFFF',
+    lineHeight: 24,
+  },
+  modeCard: {
+    gap: spacing.sm,
+  },
+  modeHeading: {
+    fontSize: typography.sizeXs,
+    color: colors.muted,
+    letterSpacing: 1,
+    fontWeight: typography.weightSemibold,
+  },
+  modeSub: {
     fontSize: typography.sizeSm,
     color: colors.muted,
     fontStyle: 'italic',
   },
-  modePromptCard: {
+  modeTileRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  modeTile: {
+    flex: 1,
+    borderRadius: radii.card,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceSoft,
+    padding: spacing.sm,
+    gap: 4,
+    alignItems: 'center',
+  },
+  modeTileActive: {
+    borderColor: colors.primary,
     backgroundColor: colors.primarySoft,
   },
-  modePromptText: {
+  modeTileActiveGreen: {
+    borderColor: colors.success,
+    backgroundColor: '#EBF6EB',
+  },
+  modeTileTitle: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.muted,
+    textAlign: 'center',
+  },
+  modeTileTitleActive: {
+    color: colors.primary,
+  },
+  modeTileTitleActiveGreen: {
+    color: colors.success,
+  },
+  modeTileSub: {
+    fontSize: typography.sizeXs,
+    color: colors.muted,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  modeTileSubActive: {
+    color: colors.actionBlue,
+  },
+  modeTileSubActiveGreen: {
+    color: colors.success,
+  },
+  promptCard: {
+    backgroundColor: colors.primarySoft,
+  },
+  promptText: {
     fontSize: typography.sizeSm,
     color: colors.muted,
     fontStyle: 'italic',

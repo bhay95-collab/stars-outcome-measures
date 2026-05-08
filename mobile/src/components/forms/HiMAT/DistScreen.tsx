@@ -72,8 +72,13 @@ export function DistScreen({
           </View>
         </Card>
 
+        <View style={styles.instructionCard}>
+          <Text style={styles.instructionLabel}>WHAT TO TIME</Text>
+          <Text style={styles.instructionText}>{title}</Text>
+        </View>
+
         <Card style={styles.noteCard}>
-          <Text style={styles.noteLabel}>CLINICAL NOTE</Text>
+          <Text style={styles.noteLabel}>INSTRUCTIONS</Text>
           <Text style={styles.noteText}>{note}</Text>
         </Card>
 
@@ -167,6 +172,24 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold,
     color: colors.actionBlue,
     letterSpacing: 0.5,
+  },
+  instructionCard: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  instructionLabel: {
+    fontSize: typography.sizeXs,
+    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 1,
+    fontWeight: typography.weightSemibold,
+  },
+  instructionText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: '#FFFFFF',
+    lineHeight: 24,
   },
   noteCard: {
     gap: spacing.xs,

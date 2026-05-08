@@ -26,16 +26,8 @@ const DIST_STEPS = [
 ] as const;
 
 const STAIRS_STEPS = [
-  {
-    title:   'Up Stairs',
-    depNote: 'Rail used or non-reciprocal pattern. Time the ascent.',
-    indNote: 'No rail, reciprocal pattern. Time the ascent.',
-  },
-  {
-    title:   'Down Stairs',
-    depNote: 'Rail used or non-reciprocal pattern. Time the descent.',
-    indNote: 'No rail, reciprocal pattern. Time the descent.',
-  },
+  { title: 'Up Stairs' },
+  { title: 'Down Stairs' },
 ] as const;
 
 const TOTAL_INPUT_STEPS = 11;
@@ -125,6 +117,7 @@ export function HiMATForm({ patientId }: { patientId: string }) {
     const cfg = TIMED_STEPS[step];
     return (
       <TimeScreen
+        key={step}
         title={cfg.title}
         hasFail={cfg.hasFail}
         failLabel={cfg.failLabel}
@@ -144,6 +137,7 @@ export function HiMATForm({ patientId }: { patientId: string }) {
     const cfg = DIST_STEPS[distIdx];
     return (
       <DistScreen
+        key={step}
         title={cfg.title}
         note={cfg.note}
         input={boundInputs[distIdx]}
@@ -162,9 +156,8 @@ export function HiMATForm({ patientId }: { patientId: string }) {
     const cfg = STAIRS_STEPS[stairsIdx];
     return (
       <StairsScreen
+        key={step}
         title={cfg.title}
-        depNote={cfg.depNote}
-        indNote={cfg.indNote}
         input={stairsInputs[stairsIdx]}
         onChange={inp => setStairsInputs(prev => prev.map((s, i) => (i === stairsIdx ? inp : s)))}
         onNext={handleNext}
