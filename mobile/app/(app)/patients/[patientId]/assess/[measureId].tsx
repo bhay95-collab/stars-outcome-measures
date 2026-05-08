@@ -9,7 +9,9 @@ import { calcFAC } from '@clinical/fac';
 import { BBSForm } from '../../../../../src/components/forms/BBSForm';
 import { PASSForm } from '../../../../../src/components/forms/PASSForm';
 import { TISForm } from '../../../../../src/components/forms/TISForm';
-import { MASForm } from '../../../../../src/components/forms/MASForm';
+import { MASForm }  from '../../../../../src/components/forms/MASForm';
+import { COVSForm } from '../../../../../src/components/forms/COVSForm';
+import { FGAForm }  from '../../../../../src/components/forms/FGAForm';
 import { MEASURES } from '../../../../../src/clinical/adapter';
 import { getPatient } from '../../../../../src/supabase/patients';
 import type { Patient } from '../../../../../src/types/domain';
@@ -34,6 +36,8 @@ const BBS_ID = 'BBS';
 const PASS_ID = 'PASS';
 const TIS_ID  = 'TIS';
 const MAS_ID  = 'MAS';
+const COVS_ID = 'COVS';
+const FGA_ID  = 'FGA';
 
 const TUG_VARIANTS = ['TUG', 'TUG Fast', 'TUG Dual'];
 const MWT_PACES = ['Comfortable', 'Fast'] as const;
@@ -710,6 +714,14 @@ export default function AssessScreen() {
 
   if (measureId === MAS_ID) {
     return <MASForm patientId={patientId} />;
+  }
+
+  if (measureId === COVS_ID) {
+    return <COVSForm patientId={patientId} />;
+  }
+
+  if (measureId === FGA_ID) {
+    return <FGAForm patientId={patientId} />;
   }
 
   const measure = MEASURES[measureId];
