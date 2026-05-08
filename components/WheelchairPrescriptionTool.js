@@ -1660,13 +1660,19 @@ const wheelchairToolStyles = `
     --wc-muted: var(--color-muted);
     --wc-subtle: var(--color-subtle);
     --wc-line: var(--color-border);
-    --wc-surface: rgba(255,255,255,0.74);
+    --wc-card-border: rgba(216,225,234,0.9);
+    --wc-surface: rgba(255,255,255,0.72);
+    --wc-nested-surface: rgba(247,250,252,0.82);
+    --wc-control-surface: var(--color-surface-soft);
     --wc-soft: var(--color-surface-soft);
     --wc-primary: var(--color-primary);
     --wc-primary-dark: var(--color-primary-dark);
     --wc-primary-soft: var(--color-primary-soft);
     --wc-secondary: var(--color-secondary);
     --wc-danger: #b5451b;
+    --wc-radius-panel: 16px;
+    --wc-radius-inner: 10px;
+    --wc-radius-control: 8px;
     color: var(--wc-ink);
     font-family: 'Inter', sans-serif;
   }
@@ -1699,11 +1705,11 @@ const wheelchairToolStyles = `
     align-items: flex-start;
     justify-content: space-between;
     gap: 24px;
-    margin-bottom: 16px;
-    padding: 18px 20px;
-    border: 1px solid rgba(216,225,234,0.9);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.74);
+    margin-bottom: 18px;
+    padding: 20px 24px;
+    border: 1px solid var(--wc-card-border);
+    border-radius: var(--wc-radius-panel);
+    background: var(--wc-surface);
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(16px);
   }
@@ -1752,13 +1758,13 @@ const wheelchairToolStyles = `
     min-height: 38px;
     padding: 0 13px;
     border: 1px solid var(--wc-line);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.82);
+    border-radius: var(--wc-radius-control);
+    background: rgba(255,255,255,0.86);
     color: var(--wc-primary);
     cursor: pointer;
     font-family: 'Inter', sans-serif;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 800;
     white-space: nowrap;
   }
 
@@ -1771,7 +1777,7 @@ const wheelchairToolStyles = `
 
   .wc-tool__actions button[data-primary] {
     border-color: transparent;
-    background: linear-gradient(180deg, #214d81, #173d68);
+    background: var(--wc-primary);
     box-shadow: 0 8px 18px rgba(23,61,104,0.22);
     color: #fff;
   }
@@ -1789,7 +1795,7 @@ const wheelchairToolStyles = `
   .wc-tool__content {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
-    gap: 16px;
+    gap: 22px;
     align-items: start;
   }
 
@@ -1802,7 +1808,7 @@ const wheelchairToolStyles = `
     position: sticky;
     top: 18px;
     display: grid;
-    gap: 14px;
+    gap: 16px;
     max-height: calc(100vh - 36px);
     overflow-y: auto;
     padding-right: 4px;
@@ -1812,9 +1818,9 @@ const wheelchairToolStyles = `
   .wc-tool .card,
   .wc-tool .side-card {
     overflow: hidden;
-    margin-bottom: 16px;
-    border: 1px solid rgba(216,225,234,0.95);
-    border-radius: 8px;
+    margin-bottom: 18px;
+    border: 1px solid var(--wc-card-border);
+    border-radius: var(--wc-radius-panel);
     background: var(--wc-surface);
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(16px);
@@ -1829,7 +1835,7 @@ const wheelchairToolStyles = `
     min-height: 70px;
     padding: 18px 120px 16px 20px;
     border-bottom: 1px solid var(--wc-line);
-    background: rgba(247,250,252,0.72);
+    background: var(--wc-nested-surface);
   }
 
   .wc-tool .section-header h2 {
@@ -1870,8 +1876,8 @@ const wheelchairToolStyles = `
     margin: 0;
     padding: 13px 15px;
     border-bottom: 1px solid var(--wc-line);
-    background: rgba(247,250,252,0.84);
-    color: var(--wc-primary);
+    background: var(--wc-nested-surface);
+    color: var(--wc-ink);
     font-size: 13px;
     font-weight: 800;
   }
@@ -1886,8 +1892,8 @@ const wheelchairToolStyles = `
   .wc-tool .version-summary,
   .wc-tool .empty-progress {
     border: 1px solid var(--wc-line);
-    border-radius: 8px;
-    background: rgba(247,250,252,0.88);
+    border-radius: var(--wc-radius-inner);
+    background: var(--wc-nested-surface);
     padding: 10px 12px;
   }
 
@@ -1920,7 +1926,7 @@ const wheelchairToolStyles = `
   .wc-tool .progress-error,
   .wc-tool .empty-progress {
     margin: 6px 0 0;
-    color: #3b4b5d;
+    color: var(--wc-muted);
     font-size: 12px;
     line-height: 1.45;
   }
@@ -1955,9 +1961,9 @@ const wheelchairToolStyles = `
     width: 100%;
     padding: 10px 12px;
     border: 1px solid var(--wc-line);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.88);
-    color: #334155;
+    border-radius: var(--wc-radius-inner);
+    background: var(--wc-nested-surface);
+    color: var(--wc-muted);
     cursor: pointer;
     text-align: left;
   }
@@ -2012,7 +2018,7 @@ const wheelchairToolStyles = `
     flex-direction: column;
     gap: 6px;
     min-width: 0;
-    color: #334155;
+    color: var(--wc-muted);
     font-size: 12px;
     font-weight: 700;
     line-height: 1.35;
@@ -2029,7 +2035,7 @@ const wheelchairToolStyles = `
   .wc-tool .option-panel > strong {
     display: block;
     margin-bottom: 7px;
-    color: #334155;
+    color: var(--wc-muted);
     font-size: 12px;
     font-weight: 800;
     line-height: 1.35;
@@ -2049,8 +2055,8 @@ const wheelchairToolStyles = `
     width: 100%;
     min-height: 38px;
     border: 1px solid var(--wc-line);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.94);
+    border-radius: var(--wc-radius-control);
+    background: var(--wc-control-surface);
     color: var(--wc-ink);
     font-family: 'Inter', sans-serif;
     font-size: 13px;
@@ -2113,9 +2119,9 @@ const wheelchairToolStyles = `
     min-height: 38px;
     padding: 9px 10px;
     border: 1px solid rgba(216,225,234,0.95);
-    border-radius: 8px;
-    background: rgba(247,250,252,0.82);
-    color: #334155;
+    border-radius: var(--wc-radius-inner);
+    background: var(--wc-nested-surface);
+    color: var(--wc-muted);
     font-size: 12px;
     line-height: 1.3;
   }
@@ -2143,9 +2149,9 @@ const wheelchairToolStyles = `
   .wc-tool .note,
   .wc-tool .guidance-line {
     border: 1px solid #d7e4ef;
-    border-radius: 8px;
-    background: rgba(232,241,251,0.82);
-    color: #284b63;
+    border-radius: var(--wc-radius-inner);
+    background: #eef3fa;
+    color: #1d4e89;
     font-size: 12px;
     line-height: 1.5;
     padding: 10px 12px;
@@ -2153,7 +2159,7 @@ const wheelchairToolStyles = `
 
   .wc-tool .guidance-line {
     margin-top: 6px;
-    background: rgba(247,250,252,0.9);
+    background: var(--wc-nested-surface);
     color: var(--wc-muted);
   }
 
@@ -2175,18 +2181,18 @@ const wheelchairToolStyles = `
     width: 100%;
     overflow: hidden;
     border: 1px solid var(--wc-line);
-    border-radius: 8px;
+    border-radius: var(--wc-radius-inner);
     border-collapse: separate;
     border-spacing: 0;
-    background: rgba(255,255,255,0.92);
+    background: rgba(255,255,255,0.86);
     font-size: 12px;
   }
 
   .wc-tool .measurement-table th,
   .wc-tool .activity-table th {
     padding: 9px;
-    background: rgba(239,244,249,0.96);
-    color: var(--wc-primary);
+    background: var(--wc-soft);
+    color: var(--wc-subtle);
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.5px;
@@ -2203,7 +2209,7 @@ const wheelchairToolStyles = `
 
   .wc-tool .measurement-table tr:hover td,
   .wc-tool .activity-table tr:hover td {
-    background: rgba(247,250,252,0.72);
+    background: var(--wc-soft);
   }
 
   .wc-tool .measurement-table input,
@@ -2236,8 +2242,8 @@ const wheelchairToolStyles = `
   .wc-tool .option-panel,
   .wc-tool .conditional-panel {
     border: 1px solid var(--wc-line);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.88);
+    border-radius: var(--wc-radius-inner);
+    background: var(--wc-nested-surface);
     padding: 12px;
   }
 
@@ -2263,7 +2269,7 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .wc-tool__reference-body {
-    color: #3b4b5d;
+    color: var(--wc-muted);
     font-size: 13px;
   }
 
@@ -2273,7 +2279,7 @@ const wheelchairToolStyles = `
     width: 100%;
     height: auto;
     border: 1px solid #edf3f7;
-    border-radius: 8px;
+    border-radius: var(--wc-radius-control);
     background: #fff;
     object-fit: contain;
   }
@@ -2339,8 +2345,8 @@ const wheelchairToolStyles = `
     margin-bottom: 10px;
     padding: 12px;
     border: 1px solid var(--wc-line);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.9);
+    border-radius: var(--wc-radius-inner);
+    background: var(--wc-nested-surface);
   }
 
   .wc-tool .guidance-card h4 {
@@ -2352,7 +2358,7 @@ const wheelchairToolStyles = `
   .wc-tool .guidance-card ul {
     margin: 0;
     padding-left: 18px;
-    color: #3b4b5d;
+    color: var(--wc-muted);
     font-size: 12px;
     line-height: 1.45;
   }
@@ -2382,9 +2388,9 @@ const wheelchairToolStyles = `
     overflow: auto;
     white-space: pre-wrap;
     border: 1px solid var(--wc-line);
-    border-radius: 8px;
-    background: #f8fafc;
-    color: #243445;
+    border-radius: var(--wc-radius-inner);
+    background: var(--wc-nested-surface);
+    color: var(--wc-ink);
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 11px;
     line-height: 1.45;
@@ -2394,7 +2400,7 @@ const wheelchairToolStyles = `
   .wc-tool .links-list {
     margin: 0;
     padding-left: 18px;
-    color: #3b4b5d;
+    color: var(--wc-muted);
     font-size: 12px;
     line-height: 1.45;
   }
@@ -2435,7 +2441,7 @@ const wheelchairToolStyles = `
     margin: 8px 0 12px;
     padding: 8px 10px;
     border: 1px solid #f5d49a;
-    border-radius: 8px;
+    border-radius: var(--wc-radius-control);
     background: #fef3e2;
   }
 
@@ -2443,7 +2449,7 @@ const wheelchairToolStyles = `
     overflow: hidden;
     margin: 12px 0 16px;
     border: 1px solid var(--wc-line);
-    border-radius: 8px;
+    border-radius: var(--wc-radius-control);
     break-inside: avoid;
   }
 
@@ -2464,7 +2470,7 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool__print-supplier .print-label {
-    color: #334155;
+    color: var(--wc-muted);
     font-weight: 800;
   }
 

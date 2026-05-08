@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { Accessibility, ChevronDown, ClipboardList, LayoutDashboard, Plus, Users } from 'lucide-react'
+import { Accessibility, ChevronDown, ClipboardList, LayoutDashboard, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
@@ -29,7 +29,7 @@ export default function App() {
   const [showNewPatient, setShowNewPatient] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [profileData, setProfileData] = useState({ firstName: '', lastName: '', avatarUrl: null })
-  const [view, setView] = useState('assessment')
+  const [view, setView] = useState('patients')
   const [notification, setNotification] = useState(null)
   const [reportLoading, setReportLoading] = useState(false)
   const [assessmentDirty, setAssessmentDirty] = useState(false)
@@ -337,16 +337,6 @@ export default function App() {
         <main className="app-main">
           <div className="page-toolbar">
             <h1>{viewTitle}</h1>
-            {view !== 'wheelchair' && (
-              <button
-                type="button"
-                className="new-assessment-btn"
-                onClick={() => selectedPatient ? requestViewChange('assessment') : requestViewChange('assessment')}
-              >
-                <Plus size={17} />
-                New Assessment
-              </button>
-            )}
           </div>
 
           {notification && (
@@ -1575,24 +1565,6 @@ const globalStyles = `
     font-size: clamp(34px, 4vw, 42px);
     font-weight: 800;
     line-height: 1.04;
-  }
-
-  .new-assessment-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-height: 40px;
-    padding: 0 18px;
-    border: 0;
-    border-radius: 8px;
-    background: linear-gradient(180deg, #214d81, #173d68);
-    box-shadow: 0 8px 18px rgba(23,61,104,0.28);
-    color: #fff;
-    cursor: pointer;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
   }
 
   .patient-summary-card,
