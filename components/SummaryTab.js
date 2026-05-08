@@ -50,6 +50,7 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
   const mcidContext = patient.diagnosis ? getMCIDContext(patient.diagnosis) : null
   const selectableMeasures = summary.entries.filter(entry => summary.groups[entry.measureId]?.some(a => toFiniteNumber(a.results?.primaryValue) != null))
   const [selectedMeasureId, setSelectedMeasureId] = useState(selectableMeasures[0]?.measureId ?? '')
+  const [copiedPlainSummary, setCopiedPlainSummary] = useState(false)
   const activeMeasureId = selectableMeasures.some(entry => entry.measureId === selectedMeasureId)
     ? selectedMeasureId
     : selectableMeasures[0]?.measureId ?? ''
@@ -59,6 +60,23 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
   )
   const todayRows = buildTodayAssessmentRows(patient, assessments)
   const isncsciTodayRows = todayRows.find(row => row.measureId === 'ISNCSCI')?.isncsciRows ?? []
+
+  async function copyPlainSummary() {
+    const text = summary.plainLanguageSummary || ''
+    if (!text) return
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      ta.remove()
+    }
+    setCopiedPlainSummary(true)
+    window.setTimeout(() => setCopiedPlainSummary(false), 1800)
+  }
 
   return (
     <section className="summary-dashboard">
@@ -77,6 +95,19 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
           )}
         </div>
         <MeasureTrendChart series={trendSeries} measureId={activeMeasureId} />
+      </div>
+
+      <div className="summary-card letter-summary-card">
+        <div className="summary-card__head">
+          <div>
+            <h3>Plain-Language Patient Summary</h3>
+            <p>Focused narrative for letters to non-specialists and broader care teams.</p>
+          </div>
+          <button type="button" onClick={copyPlainSummary}>
+            {copiedPlainSummary ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+        <p>{summary.plainLanguageSummary}</p>
       </div>
 
       <div className="domain-grid">

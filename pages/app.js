@@ -1738,6 +1738,43 @@ const globalStyles = `
     min-height: 300px;
   }
 
+  .letter-summary-card {
+    border-left: 4px solid var(--color-secondary);
+    background:
+      linear-gradient(135deg, rgba(228,246,243,0.72), rgba(255,255,255,0.82) 54%, rgba(232,241,251,0.52)),
+      rgba(255,255,255,0.78);
+  }
+
+  .letter-summary-card .summary-card__head {
+    margin-bottom: 14px;
+  }
+
+  .letter-summary-card .summary-card__head button {
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid rgba(216,225,234,0.95);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.86);
+    color: var(--color-primary);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .letter-summary-card .summary-card__head button:hover {
+    border-color: rgba(23,61,104,0.32);
+    background: #fff;
+  }
+
+  .letter-summary-card > p {
+    max-width: 1100px;
+    margin: 0;
+    color: #334155;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
   .summary-card__head {
     display: flex;
     align-items: center;
