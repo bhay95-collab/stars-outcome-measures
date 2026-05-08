@@ -73,7 +73,7 @@ export default function PatientSummaryScreen() {
   if (isLoading) {
     return (
       <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
-        <NavyHeader leftLabel="← Patients" onLeft={() => router.back()} />
+        <NavyHeader leftLabel="‹" onLeft={() => router.back()} />
         <View style={styles.panel}>
           <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>
         </View>
@@ -84,7 +84,7 @@ export default function PatientSummaryScreen() {
   if (error || !patient) {
     return (
       <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
-        <NavyHeader leftLabel="← Patients" onLeft={() => router.back()} />
+        <NavyHeader leftLabel="‹" onLeft={() => router.back()} />
         <View style={styles.panel}>
           <View style={styles.center}>
             <Text style={styles.errorText}>{error ?? 'Patient not found.'}</Text>
@@ -94,7 +94,7 @@ export default function PatientSummaryScreen() {
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
-              <Text style={styles.backLinkText}>← Back</Text>
+              <Text style={styles.backLinkText}>‹</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -104,7 +104,7 @@ export default function PatientSummaryScreen() {
 
   return (
     <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
-      <NavyHeader leftLabel="← Patients" onLeft={() => router.back()} />
+      <NavyHeader leftLabel="‹" onLeft={() => router.back()} />
       <ScrollView
         style={styles.panel}
         contentContainerStyle={styles.scroll}

@@ -161,12 +161,13 @@ const styles = StyleSheet.create({
   },
   action: {
     minHeight: 44,
+    minWidth: 44,
     justifyContent: 'center',
   },
   actionText: {
-    fontSize: typography.sizeSm,
+    fontSize: typography.size2xl,
     color: '#FFFFFF',
-    fontWeight: typography.weightMedium,
+    fontWeight: typography.weightRegular,
     opacity: 0.9,
   },
   title: {

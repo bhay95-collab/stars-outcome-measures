@@ -60,7 +60,7 @@ export default function MeasureSelectorScreen() {
   return (
     <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
-        leftLabel="← Back"
+        leftLabel="‹"
         onLeft={() => router.back()}
         title="Select Measure"
       />

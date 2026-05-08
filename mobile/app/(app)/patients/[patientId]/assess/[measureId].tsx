@@ -4,6 +4,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // @ts-ignore — JS clinical module, no type declarations
 import { calcTUG } from '@clinical/tug';
+// @ts-ignore — JS clinical module, no type declarations
+import { calcFAC } from '@clinical/fac';
 import { MEASURES } from '../../../../../src/clinical/adapter';
 import { getPatient } from '../../../../../src/supabase/patients';
 import type { Patient } from '../../../../../src/types/domain';
@@ -23,11 +25,27 @@ const TUG_ID = 'TUG';
 const HIMAT_ID = 'HiMAT';
 const MWT_ID = '10MWT';
 const SMWT_ID = '6MWT';
+const FAC_ID = 'FAC';
 
 const TUG_VARIANTS = ['TUG', 'TUG Fast', 'TUG Dual'];
 const MWT_PACES = ['Comfortable', 'Fast'] as const;
 const LAP_LENGTHS = [10, 20, 25, 30, 50] as const;
 const ASSISTIVE_DEVICES = ['None', 'Cane', 'Walker', 'Crutches', 'Other'] as const;
+
+const FAC_LEVELS = [
+  { label: 'Non-functional ambulator',      classColor: 'red'   },
+  { label: 'Dependent — level 2 assist',    classColor: 'red'   },
+  { label: 'Dependent — level 1 assist',    classColor: 'amber' },
+  { label: 'Dependent — supervision',       classColor: 'amber' },
+  { label: 'Independent on level surfaces', classColor: 'green' },
+  { label: 'Fully independent ambulator',   classColor: 'green' },
+] as const;
+
+const FAC_COLOR_MAP: Record<string, string> = {
+  red:   '#ee8a70',
+  amber: '#a05c00',
+  green: '#107C10',
+};
 
 // --- TUG types ---
 
@@ -36,6 +54,15 @@ interface TUGResult {
   primaryUnit: string;
   interpretation: string;
   meta: { classColor: string; fallRisk: boolean };
+}
+
+// --- FAC types ---
+
+interface FACResult {
+  primaryValue: number;
+  primaryUnit: string;
+  interpretation: string;
+  meta: { classColor: 'red' | 'amber' | 'green' };
 }
 
 // --- 10MWT types ---
@@ -153,7 +180,7 @@ function TUGForm({ patientId }: { patientId: string }) {
     <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         mode="nav"
-        leftLabel="← Back"
+        leftLabel="‹"
         onLeft={() => router.back()}
         title="Timed Up and Go"
       />
@@ -279,7 +306,7 @@ function MWTForm({ patientId }: { patientId: string }) {
     <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         mode="nav"
-        leftLabel="← Back"
+        leftLabel="‹"
         onLeft={() => router.back()}
         title="10 Metre Walk Test"
       />
@@ -416,7 +443,7 @@ function SixMWTForm({ patientId }: { patientId: string }) {
     <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         mode="nav"
-        leftLabel="← Back"
+        leftLabel="‹"
         onLeft={() => router.back()}
         title="6 Minute Walk Test"
       />
@@ -535,6 +562,109 @@ function SixMWTForm({ patientId }: { patientId: string }) {
   );
 }
 
+// --- FAC form ---
+
+function FACForm({ patientId }: { patientId: string }) {
+  const insets = useSafeAreaInsets();
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [result, setResult] = useState<FACResult | null>(null);
+
+  useEffect(() => {
+    getPatient(patientId).then(p => setPatient(p)).catch(() => null);
+  }, [patientId]);
+
+  function handleSelectLevel(level: number) {
+    setSelectedLevel(level);
+    const r = calcFAC({ level }) as FACResult | null;
+    if (r) setResult(r);
+  }
+
+  return (
+    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+      <NavyHeader
+        mode="nav"
+        leftLabel="‹"
+        onLeft={() => router.back()}
+        title="Functional Ambulation"
+      />
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + spacing.xl },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Card style={styles.patientCard}>
+          <PatientAvatar name={patient?.initials ?? '?'} size="sm" />
+          <View style={styles.patientInfo}>
+            <Text style={styles.patientName}>{patient?.initials ?? '…'}</Text>
+            {patient?.condition ? (
+              <Text style={styles.patientSub} numberOfLines={1}>{patient.condition}</Text>
+            ) : null}
+          </View>
+        </Card>
+
+        <Card>
+          <Text style={styles.trialHeading}>Classification</Text>
+          <Text style={styles.mwtFieldLabel}>SELECT LEVEL</Text>
+          <View style={styles.facLevelList}>
+            {FAC_LEVELS.map(({ label }, idx) => {
+              const isSelected = selectedLevel === idx;
+              return (
+                <Pressable
+                  key={idx}
+                  onPress={() => handleSelectLevel(idx)}
+                  style={({ pressed }) => [
+                    styles.facLevelRow,
+                    idx < FAC_LEVELS.length - 1 && styles.facLevelRowBorder,
+                    isSelected && styles.facLevelRowSelected,
+                    pressed && styles.facLevelRowPressed,
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={`FAC level ${idx}: ${label}`}
+                >
+                  <View style={[styles.facLevelBadge, isSelected && styles.facLevelBadgeSelected]}>
+                    <Text style={[styles.facLevelBadgeText, isSelected && styles.facLevelBadgeTextSelected]}>
+                      {idx}
+                    </Text>
+                  </View>
+                  <Text style={[styles.facLevelLabel, isSelected && styles.facLevelLabelSelected]}>
+                    {label}
+                  </Text>
+                  {isSelected ? (
+                    <Text style={styles.facLevelCheck}>✓</Text>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Card>
+
+        {result !== null ? (
+          <View style={styles.mwtPreviewCard}>
+            <Text style={styles.mwtMicroLabel}>FAC RESULT</Text>
+            <View style={styles.mwtValueRow}>
+              <Text style={styles.mwtPrimaryValue}>{result.primaryValue}</Text>
+              <Text style={styles.mwtPrimaryUnit}>{result.primaryUnit}</Text>
+              <View style={[
+                styles.facColorDot,
+                { backgroundColor: FAC_COLOR_MAP[result.meta.classColor] ?? colors.muted },
+              ]} />
+            </View>
+            <View style={styles.mwtInterpPill}>
+              <Text style={styles.mwtInterpText}>{result.interpretation}</Text>
+            </View>
+          </View>
+        ) : null}
+      </ScrollView>
+    </Screen>
+  );
+}
+
 // --- route dispatcher ---
 
 export default function AssessScreen() {
@@ -554,11 +684,15 @@ export default function AssessScreen() {
     return <SixMWTForm patientId={patientId} />;
   }
 
+  if (measureId === FAC_ID) {
+    return <FACForm patientId={patientId} />;
+  }
+
   const measure = MEASURES[measureId];
 
   return (
     <Screen padded={false}>
-      <NavyHeader leftLabel="← Back" onLeft={() => router.back()} />
+      <NavyHeader leftLabel="‹" onLeft={() => router.back()} />
       <View style={styles.stubContent}>
         {measure ? (
           <>
@@ -718,6 +852,71 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeMd,
     fontWeight: typography.weightSemibold,
     color: colors.ink,
+  },
+  // FAC level picker
+  facLevelList: {
+    gap: 0,
+  },
+  facLevelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
+    minHeight: 52,
+    gap: spacing.sm,
+  },
+  facLevelRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  facLevelRowSelected: {
+    backgroundColor: colors.primarySoft,
+  },
+  facLevelRowPressed: {
+    opacity: 0.65,
+  },
+  facLevelBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceSoft,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  facLevelBadgeSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  facLevelBadgeText: {
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightBold,
+    color: colors.muted,
+  },
+  facLevelBadgeTextSelected: {
+    color: '#FFFFFF',
+  },
+  facLevelLabel: {
+    flex: 1,
+    fontSize: typography.sizeMd,
+    color: colors.ink,
+  },
+  facLevelLabelSelected: {
+    fontWeight: typography.weightSemibold,
+    color: colors.actionBlue,
+  },
+  facLevelCheck: {
+    fontSize: typography.sizeMd,
+    color: colors.actionBlue,
+    fontWeight: typography.weightBold,
+  },
+  facColorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginLeft: spacing.xs,
+    alignSelf: 'center',
   },
   // 6MWT lap stepper
   smwtStepper: {
