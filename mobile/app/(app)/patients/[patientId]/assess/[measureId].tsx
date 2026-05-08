@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calcTUG } from '@clinical/tug';
 // @ts-ignore — JS clinical module, no type declarations
 import { calcFAC } from '@clinical/fac';
+import { BBSForm } from '../../../../../src/components/forms/BBSForm';
 import { MEASURES } from '../../../../../src/clinical/adapter';
 import { getPatient } from '../../../../../src/supabase/patients';
 import type { Patient } from '../../../../../src/types/domain';
@@ -26,6 +27,7 @@ const HIMAT_ID = 'HiMAT';
 const MWT_ID = '10MWT';
 const SMWT_ID = '6MWT';
 const FAC_ID = 'FAC';
+const BBS_ID = 'BBS';
 
 const TUG_VARIANTS = ['TUG', 'TUG Fast', 'TUG Dual'];
 const MWT_PACES = ['Comfortable', 'Fast'] as const;
@@ -686,6 +688,10 @@ export default function AssessScreen() {
 
   if (measureId === FAC_ID) {
     return <FACForm patientId={patientId} />;
+  }
+
+  if (measureId === BBS_ID) {
+    return <BBSForm patientId={patientId} />;
   }
 
   const measure = MEASURES[measureId];
