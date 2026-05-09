@@ -23,6 +23,8 @@ import { RPQForm }      from '../../../../../src/components/forms/RPQForm';
 import { PDQ8Form }     from '../../../../../src/components/forms/PDQ8Form';
 import { ABCForm }      from '../../../../../src/components/forms/ABCForm';
 import { BIVIForm }     from '../../../../../src/components/forms/BIVIForm';
+import { BarthelForm }  from '../../../../../src/components/forms/BarthelForm';
+import { SCIMForm }     from '../../../../../src/components/forms/SCIMForm';
 import { MEASURES } from '../../../../../src/clinical/adapter';
 import { getPatient } from '../../../../../src/supabase/patients';
 import type { Patient } from '../../../../../src/types/domain';
@@ -49,7 +51,9 @@ const HADS_ID   = 'HADS';
 const RPQ_ID    = 'RPQ';
 const PDQ8_ID   = 'PDQ8';
 const ABC_ID    = 'ABC';
-const BIVI_ID   = 'BIVI';
+const BIVI_ID    = 'BIVI';
+const BARTHEL_ID = 'Barthel';
+const SCIM_ID    = 'SCIM';
 const HIMAT_ID = 'HiMAT';
 const MWT_ID = '10MWT';
 const SMWT_ID = '6MWT';
@@ -797,6 +801,14 @@ export default function AssessScreen() {
 
   if (measureId === BIVI_ID) {
     return <BIVIForm patientId={patientId} />;
+  }
+
+  if (measureId === BARTHEL_ID) {
+    return <BarthelForm patientId={patientId} />;
+  }
+
+  if (measureId === SCIM_ID) {
+    return <SCIMForm patientId={patientId} />;
   }
 
   const measure = MEASURES[measureId];
