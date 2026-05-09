@@ -5,11 +5,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // @ts-ignore — JS clinical module, no type declarations
 import { calcTUG } from '@clinical/tug';
 import { getPatient } from '../../supabase/patients';
+import { saveAssessment } from '../../supabase/assessments';
+import { useAuth } from '../../auth/AuthProvider';
 import type { Patient } from '../../types/domain';
 import { Screen } from '../ui/Screen';
 import { Card } from '../ui/Card';
 import { NavyHeader } from '../ui/NavyHeader';
 import { PatientAvatar } from '../ui/PatientAvatar';
+import { Button } from '../ui/Button';
 import { NumericClinicalInput } from './NumericClinicalInput';
 import { ResultPreviewCard } from './ResultPreviewCard';
 import { SegmentedControl } from './SegmentedControl';
@@ -22,6 +25,8 @@ interface TUGResult {
   interpretation: string;
   meta: { classColor: string; fallRisk: boolean };
 }
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 const TUG_VARIANTS = ['TUG', 'TUG Fast', 'TUG Dual'];
 
@@ -36,11 +41,14 @@ function validateTime(input: string): string | null {
 
 export function TUGForm({ patientId }: { patientId: string }) {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [variantIndex, setVariantIndex] = useState(0);
   const [timeInput, setTimeInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TUGResult | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getPatient(patientId)
@@ -48,15 +56,22 @@ export function TUGForm({ patientId }: { patientId: string }) {
       .catch(() => null);
   }, [patientId]);
 
+  function resetSaveState() {
+    setSaveState('idle');
+    setSaveError(null);
+  }
+
   function handleVariantChange(idx: number) {
     setVariantIndex(idx);
     setResult(null);
+    resetSaveState();
   }
 
   function handleChange(text: string) {
     setTimeInput(text);
     setError(null);
     setResult(null);
+    resetSaveState();
   }
 
   function handleBlur() {
@@ -73,8 +88,46 @@ export function TUGForm({ patientId }: { patientId: string }) {
     const text = seconds.toFixed(1);
     setTimeInput(text);
     setError(null);
+    resetSaveState();
     const r = calcTUG({ time: seconds, fastTime: null, dualTime: null }) as TUGResult | null;
     if (r) setResult(r);
+  }
+
+  async function handleSave() {
+    if (saveState === 'saving' || !result) return;
+
+    const time = Number(timeInput.trim());
+    const variant = TUG_VARIANTS[variantIndex];
+    if (!isFinite(time) || time <= 0 || !variant) return;
+
+    if (!user) {
+      setSaveError('Your session has expired. Please sign in again.');
+      setSaveState('error');
+      return;
+    }
+
+    setSaveState('saving');
+    setSaveError(null);
+
+    try {
+      await saveAssessment({
+        patient_id: patientId,
+        measure: 'TUG',
+        inputs: { variant, time },
+        results: {
+          ...result,
+          meta: {
+            ...result.meta,
+            encounterDate: new Date().toISOString(),
+          },
+        },
+      });
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 3000);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
+      setSaveState('error');
+    }
   }
 
   const avatarName = patient?.initials ?? '?';
@@ -133,7 +186,26 @@ export function TUGForm({ patientId }: { patientId: string }) {
         </Card>
 
         {result !== null ? (
-          <ResultPreviewCard result={result} label={resultLabel} />
+          <>
+            <ResultPreviewCard result={result} label={resultLabel} />
+            {saveState === 'saved' ? (
+              <View style={styles.savedBanner}>
+                <Text style={styles.savedText}>Result saved</Text>
+              </View>
+            ) : (
+              <>
+                <Button
+                  label="Save Result"
+                  onPress={handleSave}
+                  loading={saveState === 'saving'}
+                  disabled={saveState === 'saving'}
+                />
+                {saveState === 'error' && saveError ? (
+                  <Text style={styles.saveErrorText}>{saveError}</Text>
+                ) : null}
+              </>
+            )}
+          </>
         ) : null}
       </ScrollView>
     </Screen>
@@ -177,5 +249,24 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginVertical: spacing.md,
+  },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  saveErrorText: {
+    fontSize: typography.sizeSm,
+    color: colors.coral,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xs,
   },
 });
