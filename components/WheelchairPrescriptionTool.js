@@ -1090,7 +1090,7 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
             )}
           </div>
         </div>
-        <ThreeBarMotif className="wc-tool__motif" size="lg" tone="muted" />
+        <div className="brand-iq-mark wc-tool__iq-mark" aria-hidden="true">IQ</div>
         <div className="wc-tool__actions">
           <button
             type="button"
@@ -1808,12 +1808,13 @@ const wheelchairToolStyles = `
     z-index: 1;
   }
 
-  .wc-tool__motif {
+  .wc-tool__iq-mark {
     position: absolute !important;
     right: 28px;
     bottom: 18px;
     z-index: 0 !important;
-    opacity: 0.32;
+    color: rgba(127,179,230,0.32);
+    font-size: 82px;
     pointer-events: none;
   }
 

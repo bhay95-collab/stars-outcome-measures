@@ -180,8 +180,9 @@ const styles = StyleSheet.create({
   },
   microLabel: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
   },
   displayRow: {
     flexDirection: 'row',
@@ -217,6 +218,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   btnFlex: {
     flex: 1,
@@ -231,7 +234,6 @@ const styles = StyleSheet.create({
     width: 88,
   },
   btnOutline: {
-    borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },

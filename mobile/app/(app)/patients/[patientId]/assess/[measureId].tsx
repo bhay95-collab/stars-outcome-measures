@@ -26,6 +26,7 @@ import { SegmentedControl } from '../../../../../src/components/forms/SegmentedC
 import { ClinicalTimer } from '../../../../../src/components/forms/ClinicalTimer';
 import { SixMinuteCountdown } from '../../../../../src/components/forms/SixMinuteCountdown';
 import type { SixMWTTimerStatus } from '../../../../../src/components/forms/SixMinuteCountdown';
+import { ThreeBarMotif } from '../../../../../src/components/ui/ThreeBarMotif';
 import { colors, spacing, typography, radii } from '../../../../../src/theme/tokens';
 
 const TUG_ID = 'TUG';
@@ -190,7 +191,7 @@ function TUGForm({ patientId }: { patientId: string }) {
   const resultLabel = TUG_VARIANTS[variantIndex].toUpperCase();
 
   return (
-    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         mode="nav"
         leftLabel="‹"
@@ -316,7 +317,7 @@ function MWTForm({ patientId }: { patientId: string }) {
   const paceLabel = (MWT_PACES[paceIndex] ?? MWT_PACES[0]).toUpperCase();
 
   return (
-    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         mode="nav"
         leftLabel="‹"
@@ -380,7 +381,10 @@ function MWTForm({ patientId }: { patientId: string }) {
 
         {result !== null ? (
           <View style={styles.mwtPreviewCard}>
-            <Text style={styles.mwtMicroLabel}>{paceLabel} RESULT</Text>
+            <View style={styles.resultHeader}>
+              <Text style={styles.mwtMicroLabel}>{paceLabel} RESULT</Text>
+              <ThreeBarMotif size="sm" tone="soft" />
+            </View>
 
             <View style={styles.mwtValueRow}>
               <Text style={styles.mwtPrimaryValue}>{result.speed.toFixed(2)}</Text>
@@ -453,7 +457,7 @@ function SixMWTForm({ patientId }: { patientId: string }) {
   const showResult = timerStatus !== 'idle' && recordedDistance > 0;
 
   return (
-    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         mode="nav"
         leftLabel="‹"
@@ -542,7 +546,10 @@ function SixMWTForm({ patientId }: { patientId: string }) {
 
         {showResult ? (
           <View style={styles.mwtPreviewCard}>
-            <Text style={styles.mwtMicroLabel}>6MWT RESULT</Text>
+            <View style={styles.resultHeader}>
+              <Text style={styles.mwtMicroLabel}>6MWT RESULT</Text>
+              <ThreeBarMotif size="sm" tone="soft" />
+            </View>
             <View style={styles.mwtValueRow}>
               <Text style={styles.mwtPrimaryValue}>{recordedDistance}</Text>
               <Text style={styles.mwtPrimaryUnit}>m</Text>
@@ -594,7 +601,7 @@ function FACForm({ patientId }: { patientId: string }) {
   }
 
   return (
-    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         mode="nav"
         leftLabel="‹"
@@ -659,7 +666,10 @@ function FACForm({ patientId }: { patientId: string }) {
 
         {result !== null ? (
           <View style={styles.mwtPreviewCard}>
-            <Text style={styles.mwtMicroLabel}>FAC RESULT</Text>
+            <View style={styles.resultHeader}>
+              <Text style={styles.mwtMicroLabel}>FAC RESULT</Text>
+              <ThreeBarMotif size="sm" tone="soft" />
+            </View>
             <View style={styles.mwtValueRow}>
               <Text style={styles.mwtPrimaryValue}>{result.primaryValue}</Text>
               <Text style={styles.mwtPrimaryUnit}>{result.primaryUnit}</Text>
@@ -732,7 +742,7 @@ export default function AssessScreen() {
   const measure = MEASURES[measureId];
 
   return (
-    <Screen padded={false}>
+    <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader leftLabel="‹" onLeft={() => router.back()} />
       <View style={styles.stubContent}>
         {measure ? (
@@ -761,8 +771,8 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
     backgroundColor: colors.surfaceSoft,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
     overflow: 'hidden',
   },
   content: {
@@ -773,6 +783,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.secondary,
   },
   patientInfo: {
     flex: 1,
@@ -812,8 +824,8 @@ const styles = StyleSheet.create({
   measureCategory: {
     fontSize: typography.sizeXs,
     fontWeight: typography.weightSemibold,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    letterSpacing: typography.trackingWide,
     marginBottom: spacing.lg,
   },
   messageCard: {
@@ -828,8 +840,9 @@ const styles = StyleSheet.create({
   // 10MWT input card
   mwtFieldLabel: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
     marginBottom: spacing.sm,
   },
   // 10MWT result preview
@@ -838,11 +851,20 @@ const styles = StyleSheet.create({
     borderRadius: radii.card,
     padding: spacing.md,
     gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
   },
   mwtMicroLabel: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
   },
   mwtValueRow: {
     flexDirection: 'row',
@@ -861,9 +883,11 @@ const styles = StyleSheet.create({
   mwtInterpPill: {
     alignSelf: 'flex-start',
     backgroundColor: colors.surface,
-    borderRadius: radii.button,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   mwtInterpText: {
     fontSize: typography.sizeSm,
@@ -887,7 +911,7 @@ const styles = StyleSheet.create({
   mwtMetaLabel: {
     fontSize: typography.sizeXs,
     color: colors.muted,
-    letterSpacing: 1,
+    letterSpacing: typography.trackingWide,
   },
   mwtMetaValue: {
     fontSize: typography.sizeMd,
@@ -968,8 +992,10 @@ const styles = StyleSheet.create({
   smwtStepBtn: {
     width: 44,
     height: 44,
-    borderRadius: radii.button,
+    borderRadius: radii.md,
     backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

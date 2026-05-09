@@ -36,6 +36,8 @@ export function PatientAvatar({ name, size = 'md' }: PatientAvatarProps) {
 const styles = StyleSheet.create({
   circle: {
     backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

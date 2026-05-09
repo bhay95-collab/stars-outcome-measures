@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: typography.sizeXs,
     fontWeight: typography.weightSemibold,
-    color: colors.muted,
+    color: colors.primary,
     letterSpacing: typography.trackingWide,
     textTransform: 'uppercase',
     marginBottom: spacing.sm,

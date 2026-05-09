@@ -61,8 +61,9 @@ export function NumericClinicalInput({
 const styles = StyleSheet.create({
   label: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
     marginBottom: spacing.sm,
   },
   inputRow: {
@@ -76,6 +77,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.lg,
+    backgroundColor: colors.panel,
   },
   inputFocused: {
     borderWidth: 2,

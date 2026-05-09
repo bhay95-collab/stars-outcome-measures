@@ -56,7 +56,7 @@ export function COVSForm({ patientId }: { patientId: string }) {
   const progressPercent = (scoredCount / ITEM_COUNT) * 100;
 
   return (
-    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         mode="nav"
         leftLabel="‹"
@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
     backgroundColor: colors.surfaceSoft,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
     overflow: 'hidden',
   },
   content: {
@@ -201,11 +201,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.card,
     padding: spacing.md,
     gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
   },
   progressLabel: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
   },
   progressHeader: {
     flexDirection: 'row',
@@ -331,11 +334,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.card,
     padding: spacing.md,
     gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
   },
   resultMicroLabel: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
   },
   resultValueRow: {
     flexDirection: 'row',
@@ -361,9 +367,11 @@ const styles = StyleSheet.create({
   resultInterpPill: {
     alignSelf: 'flex-start',
     backgroundColor: colors.surface,
-    borderRadius: radii.button,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   resultInterpText: {
     fontSize: typography.sizeSm,

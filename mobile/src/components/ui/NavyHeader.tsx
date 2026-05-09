@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
 import { colors, spacing, typography } from '../../theme/tokens';
+import { LogoWordmark } from './LogoWordmark';
 
 const squareLogo = require('../../../assets/SquareLogo.png');
 
@@ -23,10 +24,7 @@ function BrandHeader({
     <View style={styles.container}>
       <View style={styles.brandLeft}>
         <Image source={squareLogo} style={styles.logo} resizeMode="contain" />
-        <Text style={styles.brandText}>
-          <Text style={styles.brandMain}>RehabMetrics </Text>
-          <Text style={styles.brandIQ}>IQ</Text>
-        </Text>
+        <LogoWordmark size="sm" tone="light" />
       </View>
       <View style={styles.brandRight}>
         {rightElement ?? (rightLabel && onRight ? (
@@ -117,7 +115,7 @@ export function NavyHeader({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryDark,
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 56,
@@ -134,19 +132,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-  },
-  brandText: {
-    lineHeight: 20,
-  },
-  brandMain: {
-    fontSize: typography.sizeMd,
-    fontWeight: typography.weightBold,
-    color: '#FFFFFF',
-  },
-  brandIQ: {
-    fontSize: typography.sizeMd,
-    fontWeight: typography.weightMedium,
-    color: 'rgba(255,255,255,0.65)',
   },
   brandRight: {
     alignItems: 'flex-end',

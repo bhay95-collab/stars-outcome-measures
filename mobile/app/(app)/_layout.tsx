@@ -1,7 +1,8 @@
 import { Redirect, Stack } from 'expo-router';
 import { useAuth } from '../../src/auth/AuthProvider';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { colors } from '../../src/theme/tokens';
+import { LoadingState } from '../../src/components/ui/LoadingState';
 
 export default function AppLayout() {
   const { session, isLoading } = useAuth();
@@ -9,7 +10,7 @@ export default function AppLayout() {
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} />
+        <LoadingState label="Loading clinical workspace" />
       </View>
     );
   }

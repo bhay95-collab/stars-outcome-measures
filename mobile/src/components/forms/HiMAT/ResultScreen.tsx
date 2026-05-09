@@ -5,6 +5,7 @@ import { Screen } from '../../ui/Screen';
 import { Card } from '../../ui/Card';
 import { NavyHeader } from '../../ui/NavyHeader';
 import { PatientAvatar } from '../../ui/PatientAvatar';
+import { ThreeBarMotif } from '../../ui/ThreeBarMotif';
 import type { Patient } from '../../../types/domain';
 import type { HiMATResult } from './types';
 import { colors, spacing, typography, radii } from '../../../theme/tokens';
@@ -57,7 +58,7 @@ export function ResultScreen({ result, patient, onBack, onStartOver }: ResultScr
   const displayScores = result ? buildDisplayScores(result.meta.itemScores) : null;
 
   return (
-    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader mode="nav" leftLabel="‹" onLeft={onBack} title="Result" />
 
       <ScrollView
@@ -77,7 +78,10 @@ export function ResultScreen({ result, patient, onBack, onStartOver }: ResultScr
         {result !== null && displayScores !== null ? (
           <>
             <View style={styles.resultCard}>
-              <Text style={styles.resultMicroLabel}>HiMAT RESULT</Text>
+              <View style={styles.resultHeader}>
+                <Text style={styles.resultMicroLabel}>HiMAT RESULT</Text>
+                <ThreeBarMotif size="sm" tone="soft" />
+              </View>
               <View style={styles.resultValueRow}>
                 <Text style={styles.resultValue}>{result.primaryValue}</Text>
                 <Text style={styles.resultUnit}>{result.primaryUnit}</Text>
@@ -139,8 +143,8 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
     backgroundColor: colors.surfaceSoft,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
     overflow: 'hidden',
   },
   content: {
@@ -151,6 +155,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.secondary,
   },
   patientInfo: {
     flex: 1,
@@ -170,11 +176,20 @@ const styles = StyleSheet.create({
     borderRadius: radii.card,
     padding: spacing.md,
     gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
   },
   resultMicroLabel: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
   },
   resultValueRow: {
     flexDirection: 'row',
@@ -200,9 +215,11 @@ const styles = StyleSheet.create({
   resultInterpPill: {
     alignSelf: 'flex-start',
     backgroundColor: colors.surface,
-    borderRadius: radii.button,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   resultInterpText: {
     fontSize: typography.sizeSm,
@@ -213,8 +230,9 @@ const styles = StyleSheet.create({
   },
   scoresHeading: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
     marginBottom: spacing.xs,
   },
   scoreRow: {

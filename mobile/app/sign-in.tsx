@@ -9,6 +9,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../src/supabase/client';
 import { Screen } from '../src/components/ui/Screen';
 import { TextInput } from '../src/components/ui/TextInput';
+import { LogoWordmark } from '../src/components/ui/LogoWordmark';
+import { ThreeBarLoading } from '../src/components/ui/ThreeBarMotif';
 import { colors, fonts, spacing, typography, radii } from '../src/theme/tokens';
 import { signInWithGoogle } from '../src/auth/googleAuth';
 
@@ -79,7 +81,7 @@ export default function SignInScreen() {
   }
 
   return (
-    <Screen padded={false} style={styles.navyRoot} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} style={styles.navyRoot} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -90,10 +92,7 @@ export default function SignInScreen() {
         >
           <View style={styles.hero}>
             <Image source={squareLogo} style={styles.logo} resizeMode="contain" />
-            <Text style={styles.brandName}>
-              <Text style={styles.brandMain}>RehabMetrics </Text>
-              <Text style={styles.brandIQ}>IQ</Text>
-            </Text>
+            <LogoWordmark size="lg" tone="light" />
             <Text style={styles.tagline}>
               {'Data-driven outcomes.\nBetter patient care.'}
             </Text>
@@ -162,9 +161,11 @@ export default function SignInScreen() {
               accessibilityRole="button"
               accessibilityLabel="Log in"
             >
-              <Text style={styles.loginButtonText}>
-                {isLoading ? 'Signing in…' : 'Log in'}
-              </Text>
+              {isLoading ? (
+                <ThreeBarLoading size="sm" tone="inverse" />
+              ) : (
+                <Text style={styles.loginButtonText}>Log in</Text>
+              )}
             </Pressable>
 
             <View style={styles.divider}>
@@ -183,9 +184,11 @@ export default function SignInScreen() {
               accessibilityRole="button"
               accessibilityLabel="Continue with Google"
             >
-              <Text style={styles.googleButtonText}>
-                {isGoogleLoading ? 'Opening…' : 'Continue with Google'}
-              </Text>
+              {isGoogleLoading ? (
+                <ThreeBarLoading size="sm" tone="brand" />
+              ) : (
+                <Text style={styles.googleButtonText}>Continue with Google</Text>
+              )}
             </Pressable>
           </View>
         </ScrollView>
@@ -196,7 +199,7 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   navyRoot: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryDark,
   },
   flex: {
     flex: 1,
@@ -217,37 +220,23 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 120,
-    borderRadius: 24,
+    borderRadius: radii.card,
     marginBottom: spacing.xs,
-  },
-  brandName: {
-    lineHeight: 36,
-  },
-  brandMain: {
-    fontFamily: fonts.serif,
-    fontSize: typography.size2xl,
-    fontWeight: typography.weightBold,
-    color: '#FFFFFF',
-    letterSpacing: typography.trackingTight,
-  },
-  brandIQ: {
-    fontFamily: fonts.serif,
-    fontSize: typography.size2xl,
-    fontWeight: typography.weightMedium,
-    color: 'rgba(255,255,255,0.65)',
   },
   tagline: {
     fontSize: typography.sizeSm,
-    color: 'rgba(255,255,255,0.70)',
+    color: colors.secondarySoft,
     textAlign: 'center',
     lineHeight: 20,
   },
   formPanel: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
     padding: spacing.lg,
     gap: spacing.md,
+    borderTopWidth: 1,
+    borderColor: colors.border,
   },
   formHeading: {
     fontFamily: fonts.serif,

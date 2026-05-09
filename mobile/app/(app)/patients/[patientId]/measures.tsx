@@ -7,9 +7,9 @@ import { MEASURES } from '../../../../src/clinical/adapter';
 import type { MeasureDefinition } from '../../../../src/clinical/adapter';
 import { Screen } from '../../../../src/components/ui/Screen';
 import { Card } from '../../../../src/components/ui/Card';
-import { SectionLabel } from '../../../../src/components/ui/SectionLabel';
 import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
-import { colors, spacing, typography } from '../../../../src/theme/tokens';
+import { ThreeBarMotif } from '../../../../src/components/ui/ThreeBarMotif';
+import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
 type Category = 'performance' | 'independence' | 'questionnaire';
 
@@ -28,15 +28,19 @@ function MeasureRow({
   patientId: string;
   hasBorder: boolean;
 }) {
+  const shortName = measure.id;
   return (
     <TouchableOpacity
       onPress={() => router.push(`/(app)/patients/${patientId}/assess/${measure.id}`)}
       style={[styles.measureRow, hasBorder && styles.measureRowBorder]}
       accessibilityRole="button"
-      accessibilityLabel={measure.name}
+      accessibilityLabel={`${shortName}, ${measure.name}`}
       activeOpacity={0.6}
     >
-      <Text style={styles.measureName}>{measure.name}</Text>
+      <View style={styles.measureText}>
+        <Text style={styles.measureName}>{shortName}</Text>
+        <Text style={styles.measureFullName}>{measure.name}</Text>
+      </View>
       <Text style={styles.chevron}>›</Text>
     </TouchableOpacity>
   );
@@ -58,18 +62,31 @@ export default function MeasureSelectorScreen() {
   }, []);
 
   return (
-    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         leftLabel="‹"
         onLeft={() => router.back()}
         title="Select Measure"
       />
       <ScrollView style={styles.panel} contentContainerStyle={styles.content}>
+        <View style={styles.hero}>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroTitle}>New Assessment</Text>
+            <Text style={styles.heroSubtitle}>Choose the next measure to record.</Text>
+          </View>
+          <ThreeBarMotif size="md" tone="soft" />
+        </View>
+
         {GROUPS.map(group => {
           const measures = measuresByCategory.get(group.category) ?? [];
           return (
             <View key={group.category} style={styles.group}>
-              <SectionLabel>{group.label}</SectionLabel>
+              <View style={styles.groupHeader}>
+                <Text style={styles.groupTitle}>{group.label}</Text>
+                <View style={styles.countPill}>
+                  <Text style={styles.countText}>{measures.length}</Text>
+                </View>
+              </View>
               <Card style={styles.groupCard}>
                 {measures.map((m, idx) => (
                   <MeasureRow
@@ -92,16 +109,67 @@ const styles = StyleSheet.create({
   panel: {
     flex: 1,
     backgroundColor: colors.surfaceSoft,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
     overflow: 'hidden',
   },
   content: {
     padding: spacing.md,
     gap: spacing.md,
   },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+  },
+  heroCopy: {
+    flex: 1,
+  },
+  heroTitle: {
+    fontSize: typography.sizeXl,
+    fontWeight: typography.weightBold,
+    color: colors.ink,
+  },
+  heroSubtitle: {
+    fontSize: typography.sizeSm,
+    color: colors.muted,
+    marginTop: spacing.xs,
+  },
   group: {
     gap: spacing.xs,
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  groupTitle: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+    letterSpacing: typography.trackingWide,
+    textTransform: 'uppercase',
+  },
+  countPill: {
+    minWidth: 28,
+    minHeight: 24,
+    borderRadius: radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
+  },
+  countText: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightBold,
+    color: colors.primary,
   },
   groupCard: {
     padding: 0,
@@ -112,16 +180,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    minHeight: 48,
+    minHeight: 58,
   },
   measureRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  measureName: {
+  measureText: {
     flex: 1,
+    gap: spacing.xs,
+  },
+  measureName: {
     fontSize: typography.sizeMd,
     color: colors.ink,
+    fontWeight: typography.weightMedium,
+  },
+  measureFullName: {
+    fontSize: typography.sizeSm,
+    color: colors.muted,
     fontWeight: typography.weightMedium,
   },
   chevron: {

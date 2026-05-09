@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: typography.sizeSm,
-    fontWeight: typography.weightMedium,
+    fontWeight: typography.weightSemibold,
     color: colors.ink,
     marginBottom: spacing.xs,
   },
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.lg,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
     fontSize: typography.sizeMd,
     color: colors.ink,
     backgroundColor: colors.surface,

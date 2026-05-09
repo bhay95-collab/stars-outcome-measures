@@ -1,12 +1,12 @@
 import { Platform } from 'react-native';
 
 export const colors = {
-  primary:       '#002D72',  // Brand Navy
-  primaryDark:   '#0045A5',
-  primarySoft:   '#E8F1FB',
-  actionBlue:    '#0056D2',  // Primary interaction colour
-  secondary:     '#78c8bd',
-  secondarySoft: '#e4f6f3',
+  primary:       '#236499',  // Brand Navy
+  primaryDark:   '#17496F',
+  primarySoft:   '#EAF3FB',
+  actionBlue:    '#236499',  // Primary interaction colour
+  secondary:     '#7FB3E6',
+  secondarySoft: '#DCEEFF',
   success:       '#107C10',  // Clinical success
   coral:         '#ee8a70',  // Error / warning
   violet:        '#8b82c6',
@@ -14,32 +14,33 @@ export const colors = {
   muted:         '#5E718D',  // Muted Navy
   subtle:        '#8a96a3',
   surface:       '#FFFFFF',
-  surfaceSoft:   '#F8F9FA',  // Clinical Surface
-  panel:         '#f7fafc',
-  border:        '#E1E8F0',  // Border Blue
+  surfaceSoft:   '#F6F9FC',  // Clinical Surface
+  panel:         '#F8FBFE',
+  border:        '#D9E6F2',  // Border Blue
 } as const;
 
 export const radii = {
   sm:     6,
   md:     8,
-  lg:     16,
-  card:   24,  // Card corner radius (Stitch)
-  button: 20,  // Button corner radius (Stitch)
+  lg:     12,
+  card:   14,
+  sheet:  28,
+  button: 12,
 } as const;
 
 export const shadows = {
   sm: {
-    shadowColor:   '#002D72',
-    shadowOpacity: 0.05,
-    shadowRadius:  12,
-    shadowOffset:  { width: 0, height: 4 },
+    shadowColor:   '#17496F',
+    shadowOpacity: 0.06,
+    shadowRadius:  14,
+    shadowOffset:  { width: 0, height: 6 },
     elevation:     2,
   },
   md: {
-    shadowColor:   '#002D72',
-    shadowOpacity: 0.10,
+    shadowColor:   '#17496F',
+    shadowOpacity: 0.12,
     shadowRadius:  24,
-    shadowOffset:  { width: 0, height: 8 },
+    shadowOffset:  { width: 0, height: 10 },
     elevation:     5,
   },
 } as const;
@@ -64,7 +65,7 @@ export const typography = {
   weightSemibold: '600' as const,
   weightBold:     '700' as const,
   trackingWide:   0.8,
-  trackingTight:  -0.5,
+  trackingTight:  0,
 } as const;
 
 export const fonts = {

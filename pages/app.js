@@ -480,7 +480,7 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
                 <h2>{selectedPatient.initials}</h2>
                 <p>{selectedPatient.diagnosis || 'Diagnosis not recorded'}</p>
               </div>
-              <ThreeBarMotif className="patient-workspace-motif" size="lg" />
+              <div className="brand-iq-mark patient-workspace-iq" aria-hidden="true">IQ</div>
             </div>
             <div className="patient-workspace-stats">
               <div><span>Total assessments</span><strong>{selectedAssessments.length}</strong></div>
@@ -503,7 +503,7 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
           </>
         ) : (
           <div className="patient-workspace-empty">
-            <ThreeBarMotif className="patient-workspace-empty__motif" size="lg" tone="muted" />
+            <div className="brand-iq-mark patient-workspace-empty__iq" aria-hidden="true">IQ</div>
             <h2>Select or add a patient</h2>
             <p>Choose a patient to see recent measures, dashboard access, and assessment actions.</p>
             <button type="button" onClick={onNew}>Add New Patient</button>
@@ -1570,15 +1570,18 @@ const globalStyles = `
   }
 
   .app-main::before {
-    content: '';
+    content: 'IQ';
     position: absolute;
-    top: 34px;
+    top: 28px;
     right: 42px;
-    width: 138px;
-    height: 98px;
+    width: auto;
+    height: auto;
     pointer-events: none;
-    opacity: 0.18;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 64'%3E%3Crect x='0' y='34' width='22' height='30' rx='5' fill='%230D5C95'/%3E%3Crect x='34' y='18' width='22' height='46' rx='5' fill='%234A9DE8'/%3E%3Crect x='68' y='0' width='22' height='64' rx='5' fill='%239BC7F2'/%3E%3C/svg%3E") center / contain no-repeat;
+    color: rgba(127,179,230,0.18);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 106px;
+    font-weight: 700;
+    line-height: 0.78;
   }
 
   .app-main > * {
@@ -1599,6 +1602,17 @@ const globalStyles = `
     font-size: clamp(34px, 4vw, 42px);
     font-weight: 800;
     line-height: 1.04;
+  }
+
+  .brand-iq-mark {
+    color: rgba(127,179,230,0.42);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 0.84;
+    pointer-events: none;
+    user-select: none;
   }
 
   .patient-summary-card,
@@ -1622,16 +1636,19 @@ const globalStyles = `
   }
 
   .patient-summary-card::after {
-    content: '';
+    content: 'IQ';
     position: absolute;
     top: 22px;
     right: 24px;
     z-index: 0;
-    width: 92px;
-    height: 58px;
-    opacity: 0.2;
+    width: auto;
+    height: auto;
+    color: rgba(127,179,230,0.2);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 74px;
+    font-weight: 700;
+    line-height: 0.78;
     pointer-events: none;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 64'%3E%3Crect x='0' y='34' width='22' height='30' rx='5' fill='%230D5C95'/%3E%3Crect x='34' y='18' width='22' height='46' rx='5' fill='%234A9DE8'/%3E%3Crect x='68' y='0' width='22' height='64' rx='5' fill='%239BC7F2'/%3E%3C/svg%3E") center / contain no-repeat;
   }
 
   .patient-summary-card > * {
@@ -2186,6 +2203,17 @@ const globalStyles = `
     font-weight: 800;
   }
 
+  .patient-identity__iq {
+    align-self: center;
+    color: rgba(127,179,230,0.78);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 26px;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
   .patient-identity > strong {
     color: var(--color-ink);
     font-size: 16px;
@@ -2581,9 +2609,14 @@ const globalStyles = `
     font-weight: 800;
   }
 
-  .patient-workspace-motif,
-  .patient-workspace-empty__motif {
+  .patient-workspace-iq,
+  .patient-workspace-empty__iq {
     justify-self: end;
+  }
+
+  .patient-workspace-iq {
+    color: rgba(127,179,230,0.44);
+    font-size: 58px;
   }
 
   .patient-workspace-panel h2 {
@@ -2682,9 +2715,10 @@ const globalStyles = `
     text-align: center;
   }
 
-  .patient-workspace-empty__motif {
-    min-height: 78px;
-    opacity: 0.74;
+  .patient-workspace-empty__iq {
+    min-height: 58px;
+    color: rgba(127,179,230,0.34);
+    font-size: 72px;
   }
 
   .patient-workspace-empty h2 {
@@ -2733,14 +2767,23 @@ const globalStyles = `
   }
 
   [data-measure-panel] > .measure-header::after {
-    content: '';
+    content: 'IQ';
     position: absolute;
     right: 26px;
-    bottom: 18px;
-    width: 82px;
-    height: 58px;
-    opacity: 0.16;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 64'%3E%3Crect x='0' y='34' width='22' height='30' rx='5' fill='%230D5C95'/%3E%3Crect x='34' y='18' width='22' height='46' rx='5' fill='%234A9DE8'/%3E%3Crect x='68' y='0' width='22' height='64' rx='5' fill='%239BC7F2'/%3E%3C/svg%3E") center / contain no-repeat;
+    top: 18px;
+    width: auto;
+    height: auto;
+    color: rgba(127,179,230,0.18);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 80px;
+    font-weight: 700;
+    line-height: 0.78;
+    pointer-events: none;
+  }
+
+  [data-measure-panel] > .measure-header > * {
+    position: relative;
+    z-index: 1;
   }
 
   .measure-header__copy {
@@ -2753,10 +2796,10 @@ const globalStyles = `
 
   .measure-header__stats {
     display: grid;
-    grid-template-columns: repeat(3, minmax(110px, 1fr)) 70px;
+    grid-template-columns: repeat(3, minmax(110px, 1fr));
     gap: 10px;
     align-items: stretch;
-    min-width: min(100%, 520px);
+    min-width: min(100%, 450px);
   }
 
   .measure-header__stats > div {
@@ -2783,12 +2826,6 @@ const globalStyles = `
     font-size: 17px;
     font-weight: 800;
     line-height: 1.15;
-  }
-
-  .measure-header__motif {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
   }
 
   [data-measure-panel] .section-label {
@@ -2889,10 +2926,6 @@ const globalStyles = `
       min-width: 0;
       width: 100%;
     }
-    .measure-header__motif {
-      grid-column: span 2;
-      min-height: 58px;
-    }
     .summary-divider {
       display: none;
     }
@@ -2938,14 +2971,12 @@ const globalStyles = `
       grid-template-columns: 1fr;
       justify-items: start;
     }
-    .patient-workspace-motif {
-      min-height: 54px;
+    .patient-workspace-iq,
+    .patient-workspace-empty__iq {
+      display: none;
     }
     .measure-header__stats {
       grid-template-columns: 1fr;
-    }
-    .measure-header__motif {
-      grid-column: auto;
     }
     .patient-summary-card__body,
     .summary-grid,

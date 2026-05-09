@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
+import { ThreeBarMotif } from '../ui/ThreeBarMotif';
 
 interface TUGMeta {
   classColor: string;
@@ -27,7 +28,10 @@ export function ResultPreviewCard({ result, label = 'RESULT' }: ResultPreviewCar
 
   return (
     <View style={styles.card}>
-      <Text style={styles.microLabel}>{label}</Text>
+      <View style={styles.cardHeader}>
+        <Text style={styles.microLabel}>{label}</Text>
+        <ThreeBarMotif size="sm" tone="soft" />
+      </View>
       <View style={styles.valueRow}>
         <Text style={styles.value}>{displayValue}</Text>
         <Text style={styles.unit}>{primaryUnit}</Text>
@@ -52,11 +56,20 @@ const styles = StyleSheet.create({
     borderRadius: radii.card,
     padding: spacing.md,
     gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
   },
   microLabel: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
   },
   valueRow: {
     flexDirection: 'row',
@@ -79,9 +92,11 @@ const styles = StyleSheet.create({
   },
   interpPill: {
     backgroundColor: colors.surface,
-    borderRadius: radii.button,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   interpText: {
     fontSize: typography.sizeSm,
@@ -89,7 +104,7 @@ const styles = StyleSheet.create({
   },
   fallRiskPill: {
     backgroundColor: colors.coral,
-    borderRadius: radii.button,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
   },

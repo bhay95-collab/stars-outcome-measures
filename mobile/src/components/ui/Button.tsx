@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { colors, radii, typography, spacing } from '../../theme/tokens';
+import { ThreeBarLoading } from './ThreeBarMotif';
 
 type Variant = 'primary' | 'secondary' | 'ghost';
 
@@ -32,7 +33,7 @@ export function Button({
   disabled = false,
 }: ButtonProps) {
   const isDisabled = disabled || loading;
-  const indicatorColor = variant === 'primary' ? colors.surface : colors.primary;
+  const loadingTone = variant === 'primary' ? 'inverse' : 'brand';
 
   return (
     <TouchableOpacity
@@ -44,7 +45,7 @@ export function Button({
       accessibilityLabel={label}
     >
       {loading ? (
-        <ActivityIndicator color={indicatorColor} />
+        <ThreeBarLoading tone={loadingTone} size="sm" />
       ) : (
         <Text style={[styles.label, variantLabelStyles[variant]]}>{label}</Text>
       )}
@@ -59,6 +60,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   disabled: {
     opacity: 0.45,

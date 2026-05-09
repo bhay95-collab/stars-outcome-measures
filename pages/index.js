@@ -438,7 +438,7 @@ const styles = `
     content: '';
     position: absolute;
     inset: 0;
-    background-image: url('https://images.pexels.com/photos/5793792/pexels-photo-5793792.jpeg?auto=compress&cs=tinysrgb&w=1800');
+    background-image: url('/assets/landing-hero-physio.jpg');
     background-size: cover;
     background-position: 62% center;
     filter: saturate(0.92) sepia(0.06) brightness(1.04) contrast(0.95);

@@ -39,7 +39,7 @@ export default function PatientHeader({ patient, assessments, onViewReport, repo
         <div className="patient-identity">
           <div className="patient-identity__mark" aria-hidden="true">
             <span>{patient.initials?.charAt(0) || '?'}</span>
-            <ThreeBarMotif size="sm" />
+            <em className="patient-identity__iq">IQ</em>
           </div>
           <small>Clinical snapshot</small>
           <strong>{coverage}% domain coverage</strong>

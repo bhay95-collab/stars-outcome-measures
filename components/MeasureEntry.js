@@ -136,7 +136,6 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone, onDirty
             <span>Pending</span>
             <strong>{drafts.length}</strong>
           </div>
-          <div className="measure-header__motif"><ThreeBarMotif size="sm" /></div>
         </div>
       </div>
 

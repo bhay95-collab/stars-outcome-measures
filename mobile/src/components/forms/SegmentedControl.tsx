@@ -35,8 +35,8 @@ export function SegmentedControl({ options, selectedIndex, onSelect }: Segmented
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceSoft,
-    borderRadius: radii.button,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 3,
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
   segment: {
     flex: 1,
     minHeight: 36,
-    borderRadius: radii.button - 2,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xs,

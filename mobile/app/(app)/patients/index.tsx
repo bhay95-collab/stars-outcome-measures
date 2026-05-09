@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Image, Modal, Pressable,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -14,6 +14,9 @@ import { Screen } from '../../../src/components/ui/Screen';
 import { Card } from '../../../src/components/ui/Card';
 import { NavyHeader } from '../../../src/components/ui/NavyHeader';
 import { PatientAvatar } from '../../../src/components/ui/PatientAvatar';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { ThreeBarMotif } from '../../../src/components/ui/ThreeBarMotif';
 import { colors, fonts, spacing, typography, radii } from '../../../src/theme/tokens';
 
 function getUserInitials(user: User): string {
@@ -125,14 +128,18 @@ function PatientCard({ patient }: { patient: Patient }) {
         <PatientAvatar name={patient.initials} size="sm" />
         <View style={styles.cardBody}>
           <Text style={styles.name}>{patient.initials}</Text>
-          {patient.dob ? (
-            <Text style={styles.dob}>{formatDOB(patient.dob)}</Text>
-          ) : null}
-          {patient.condition ? (
-            <Text style={styles.condition} numberOfLines={1}>
-              {patient.condition}
-            </Text>
-          ) : null}
+          <View style={styles.patientMetaRow}>
+            {patient.dob ? (
+              <Text style={styles.dob}>{formatDOB(patient.dob)}</Text>
+            ) : null}
+            {patient.condition ? (
+              <View style={styles.conditionPill}>
+                <Text style={styles.condition} numberOfLines={1}>
+                  {patient.condition}
+                </Text>
+              </View>
+            ) : null}
+          </View>
         </View>
         <Text style={styles.chevron}>›</Text>
       </Card>
@@ -169,14 +176,13 @@ export default function PatientsScreen() {
 
   const resolvedAvatarUrl: string | null =
     profileAvatarUrl ?? user?.user_metadata?.avatar_url ?? null;
-
   async function handleSignOut() {
     setSettingsVisible(false);
     await signOut();
   }
 
   return (
-    <Screen padded={false} style={styles.navyBg} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} style={styles.navyBg} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
         mode="brand"
         rightElement={
@@ -187,12 +193,27 @@ export default function PatientsScreen() {
       />
 
       <View style={styles.panel}>
-        <Text style={styles.heading}>Patient Directory</Text>
-        <Text style={styles.subtitle}>Manage and monitor patient progress.</Text>
+        <View style={styles.overview}>
+          <View style={styles.overviewHeader}>
+            <View style={styles.overviewCopy}>
+              <Text style={styles.heading}>Patient Directory</Text>
+              <Text style={styles.subtitle}>Manage and monitor patient progress.</Text>
+            </View>
+            <ThreeBarMotif size="md" tone="soft" />
+          </View>
+          {!isLoading && !error ? (
+            <View style={styles.metricsRow}>
+              <View style={styles.metricTile}>
+                <Text style={styles.metricValue}>{patients.length}</Text>
+                <Text style={styles.metricLabel}>Patient records</Text>
+              </View>
+            </View>
+          ) : null}
+        </View>
 
         {isLoading ? (
           <View style={styles.center}>
-            <ActivityIndicator color={colors.primary} />
+            <LoadingState label="Loading patients" />
           </View>
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
@@ -203,12 +224,10 @@ export default function PatientsScreen() {
             showsVerticalScrollIndicator={false}
           >
             {patients.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No patients found.</Text>
-                <Text style={styles.emptyHint}>
-                  Patients you add in the web app will appear here.
-                </Text>
-              </View>
+              <EmptyState
+                title="No patients found"
+                hint="Patients you add in the web app will appear here."
+              />
             ) : (
               patients.map(p => <PatientCard key={p.id} patient={p} />)
             )}
@@ -233,7 +252,7 @@ const AVATAR_SIZE = 36;
 
 const styles = StyleSheet.create({
   navyBg: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryDark,
   },
   // User avatar button (header)
   avatarBtn: {
@@ -270,8 +289,8 @@ const styles = StyleSheet.create({
   },
   sheet: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radii.card,
-    borderTopRightRadius: radii.card,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
     padding: spacing.lg,
     gap: spacing.md,
   },
@@ -343,24 +362,64 @@ const styles = StyleSheet.create({
   panel: {
     flex: 1,
     backgroundColor: colors.surfaceSoft,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingTop: spacing.lg,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
+    paddingTop: spacing.md,
     overflow: 'hidden',
+  },
+  overview: {
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  overviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  overviewCopy: {
+    flex: 1,
   },
   heading: {
     fontFamily: fonts.serif,
     fontSize: typography.size2xl,
     fontWeight: typography.weightBold,
     color: colors.ink,
-    paddingHorizontal: spacing.md,
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: typography.sizeSm,
     color: colors.muted,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
+    lineHeight: 20,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  metricTile: {
+    flex: 1,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
+    padding: spacing.sm,
+  },
+  metricValue: {
+    fontSize: typography.sizeXl,
+    fontWeight: typography.weightBold,
+    color: colors.primary,
+  },
+  metricLabel: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
+    color: colors.muted,
+    marginTop: spacing.xs,
   },
   scroll: {
     flex: 1,
@@ -380,9 +439,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    paddingVertical: spacing.md,
   },
   cardBody: {
     flex: 1,
+    gap: spacing.xs,
   },
   name: {
     fontSize: typography.sizeMd,
@@ -392,12 +453,26 @@ const styles = StyleSheet.create({
   dob: {
     fontSize: typography.sizeSm,
     color: colors.muted,
-    marginTop: spacing.xs,
+  },
+  patientMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  conditionPill: {
+    maxWidth: '72%',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
   },
   condition: {
-    fontSize: typography.sizeSm,
-    color: colors.muted,
-    marginTop: spacing.xs,
+    fontSize: typography.sizeXs,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
   },
   chevron: {
     fontSize: typography.sizeLg,
@@ -409,20 +484,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xl,
     paddingHorizontal: spacing.md,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: spacing.xl,
-  },
-  emptyText: {
-    fontSize: typography.sizeMd,
-    color: colors.muted,
-    marginBottom: spacing.xs,
-  },
-  emptyHint: {
-    fontSize: typography.sizeSm,
-    color: colors.subtle,
-    textAlign: 'center',
   },
 });

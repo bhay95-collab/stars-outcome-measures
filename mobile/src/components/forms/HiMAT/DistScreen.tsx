@@ -51,7 +51,7 @@ export function DistScreen({
     : null;
 
   return (
-    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader mode="nav" leftLabel="‹" onLeft={onBack} title={title} />
 
       <ScrollView
@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
     backgroundColor: colors.surfaceSoft,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
     overflow: 'hidden',
   },
   content: {
@@ -147,6 +147,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.secondary,
   },
   patientInfo: {
     flex: 1,
@@ -163,26 +165,30 @@ const styles = StyleSheet.create({
   },
   stepPill: {
     backgroundColor: colors.primarySoft,
-    borderRadius: radii.button,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
   },
   stepText: {
     fontSize: typography.sizeXs,
     fontWeight: typography.weightSemibold,
-    color: colors.actionBlue,
-    letterSpacing: 0.5,
+    color: colors.primary,
+    letterSpacing: typography.trackingWide,
   },
   instructionCard: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryDark,
     borderRadius: radii.card,
     padding: spacing.md,
     gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
   instructionLabel: {
     fontSize: typography.sizeXs,
     color: 'rgba(255,255,255,0.6)',
-    letterSpacing: 1,
+    letterSpacing: typography.trackingWide,
     fontWeight: typography.weightSemibold,
   },
   instructionText: {
@@ -196,8 +202,9 @@ const styles = StyleSheet.create({
   },
   noteLabel: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
   },
   noteText: {
     fontSize: typography.sizeSm,
@@ -210,8 +217,9 @@ const styles = StyleSheet.create({
   },
   trialsHeading: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
   },
   trialsGrid: {
     flexDirection: 'row',
@@ -225,11 +233,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.card,
     padding: spacing.md,
     gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
   },
   averageLabel: {
     fontSize: typography.sizeXs,
-    color: colors.muted,
-    letterSpacing: 1,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: typography.trackingWide,
   },
   averageValueRow: {
     flexDirection: 'row',

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { getPatient } from '../../../../src/supabase/patients';
@@ -12,8 +12,10 @@ import { SectionLabel } from '../../../../src/components/ui/SectionLabel';
 import { Button } from '../../../../src/components/ui/Button';
 import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
 import { PatientAvatar } from '../../../../src/components/ui/PatientAvatar';
+import { EmptyState } from '../../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../../src/components/ui/LoadingState';
 import { MEASURES } from '../../../../src/clinical/adapter';
-import { colors, spacing, typography } from '../../../../src/theme/tokens';
+import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
 function formatPrimary(results: AssessmentResults): string {
   const v = results?.primaryValue;
@@ -30,6 +32,12 @@ function formatDate(iso: string): string {
   });
 }
 
+function formatCompactDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-AU', {
+    day: '2-digit', month: 'short',
+  });
+}
+
 function getLatestPerMeasure(assessments: Assessment[]): Assessment[] {
   const seen = new Set<string>();
   return assessments.filter(a => {
@@ -39,11 +47,22 @@ function getLatestPerMeasure(assessments: Assessment[]): Assessment[] {
   });
 }
 
+function getLatestDate(assessments: Assessment[]): string | null {
+  if (assessments.length === 0) return null;
+  return assessments
+    .map(a => a.created_at)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
+}
+
 function MeasureRow({ assessment }: { assessment: Assessment }) {
   const measureName = MEASURES[assessment.measure]?.name ?? assessment.measure;
+  const measureShortName = MEASURES[assessment.measure]?.id ?? assessment.measure;
   return (
     <Card style={styles.measureCard}>
-      <Text style={styles.measureLabel}>{measureName}</Text>
+      <View>
+        <Text style={styles.measureTitle}>{measureShortName}</Text>
+        <Text style={styles.measureLabel}>{measureName}</Text>
+      </View>
       <View style={styles.measureMeta}>
         <Text style={styles.measureValue}>{formatPrimary(assessment.results)}</Text>
         <Text style={styles.measureDate}>{formatDate(assessment.created_at)}</Text>
@@ -57,6 +76,8 @@ export default function PatientSummaryScreen() {
   const patientId = Array.isArray(params.patientId) ? params.patientId[0] : params.patientId;
   const [patient, setPatient] = useState<Patient | null>(null);
   const [latest, setLatest] = useState<Assessment[]>([]);
+  const [assessmentCount, setAssessmentCount] = useState(0);
+  const [latestAssessmentDate, setLatestAssessmentDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +86,8 @@ export default function PatientSummaryScreen() {
       .then(([p, assessments]) => {
         setPatient(p);
         setLatest(getLatestPerMeasure(assessments));
+        setAssessmentCount(assessments.length);
+        setLatestAssessmentDate(getLatestDate(assessments));
       })
       .catch(() => setError('Unable to load patient data.'))
       .finally(() => setIsLoading(false));
@@ -72,10 +95,10 @@ export default function PatientSummaryScreen() {
 
   if (isLoading) {
     return (
-      <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+      <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
         <NavyHeader leftLabel="‹" onLeft={() => router.back()} />
         <View style={styles.panel}>
-          <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>
+          <View style={styles.center}><LoadingState label="Loading patient" /></View>
         </View>
       </Screen>
     );
@@ -83,7 +106,7 @@ export default function PatientSummaryScreen() {
 
   if (error || !patient) {
     return (
-      <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+      <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
         <NavyHeader leftLabel="‹" onLeft={() => router.back()} />
         <View style={styles.panel}>
           <View style={styles.center}>
@@ -103,19 +126,37 @@ export default function PatientSummaryScreen() {
   }
 
   return (
-    <Screen padded={false} rootBackground={colors.primary} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader leftLabel="‹" onLeft={() => router.back()} />
       <ScrollView
         style={styles.panel}
         contentContainerStyle={styles.scroll}
       >
-        <Card style={styles.patientCard}>
-          <PatientAvatar name={patient.initials} size="md" />
-          <View style={styles.patientInfo}>
-            <Text style={styles.patientName}>{patient.initials}</Text>
-            {patient.condition ? (
-              <Text style={styles.condition}>{patient.condition}</Text>
-            ) : null}
+        <Card style={styles.patientCard} elevated>
+          <View style={styles.patientHeader}>
+            <PatientAvatar name={patient.initials} size="md" />
+            <View style={styles.patientInfo}>
+              <Text style={styles.patientName}>{patient.initials}</Text>
+              {patient.condition ? (
+                <Text style={styles.condition}>{patient.condition}</Text>
+              ) : null}
+            </View>
+          </View>
+          <View style={styles.summaryGrid}>
+            <View style={styles.summaryTile}>
+              <Text style={styles.summaryValue}>{latest.length}</Text>
+              <Text style={styles.summaryLabel}>Measures</Text>
+            </View>
+            <View style={styles.summaryTile}>
+              <Text style={styles.summaryValue}>{assessmentCount}</Text>
+              <Text style={styles.summaryLabel}>Assessments</Text>
+            </View>
+            <View style={styles.summaryTile}>
+              <Text style={styles.summaryValue}>
+                {latestAssessmentDate ? formatCompactDate(latestAssessmentDate) : '—'}
+              </Text>
+              <Text style={styles.summaryLabel}>Latest</Text>
+            </View>
           </View>
         </Card>
 
@@ -123,8 +164,10 @@ export default function PatientSummaryScreen() {
 
         {latest.length === 0 ? (
           <Card style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No measures recorded yet.</Text>
-            <Text style={styles.emptyHint}>Tap New Assessment to record the first measure.</Text>
+            <EmptyState
+              title="No measures recorded yet"
+              hint="Tap New Assessment to record the first measure."
+            />
           </Card>
         ) : (
           <View style={styles.measureList}>
@@ -147,8 +190,8 @@ const styles = StyleSheet.create({
   panel: {
     flex: 1,
     backgroundColor: colors.surfaceSoft,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
     overflow: 'hidden',
   },
   center: {
@@ -175,6 +218,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   patientCard: {
+    gap: spacing.md,
+  },
+  patientHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
@@ -192,16 +238,48 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: spacing.xs,
   },
+  summaryGrid: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  summaryTile: {
+    flex: 1,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
+    padding: spacing.sm,
+    minHeight: 68,
+    justifyContent: 'center',
+  },
+  summaryValue: {
+    fontSize: typography.sizeLg,
+    fontWeight: typography.weightBold,
+    color: colors.primary,
+  },
+  summaryLabel: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
+    color: colors.muted,
+    marginTop: spacing.xs,
+  },
   measureList: {
     gap: spacing.sm,
   },
   measureCard: {
-    gap: spacing.xs,
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+  },
+  measureTitle: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightBold,
+    color: colors.ink,
   },
   measureLabel: {
     fontSize: typography.sizeSm,
     fontWeight: typography.weightMedium,
     color: colors.muted,
+    marginTop: spacing.xs,
   },
   measureMeta: {
     flexDirection: 'row',
@@ -218,18 +296,7 @@ const styles = StyleSheet.create({
     color: colors.subtle,
   },
   emptyCard: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  emptyText: {
-    fontSize: typography.sizeMd,
-    color: colors.muted,
-    marginBottom: spacing.xs,
-  },
-  emptyHint: {
-    fontSize: typography.sizeSm,
-    color: colors.subtle,
-    textAlign: 'center',
+    padding: 0,
   },
   actions: {
     marginTop: spacing.sm,
