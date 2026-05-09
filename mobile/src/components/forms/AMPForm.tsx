@@ -13,11 +13,15 @@ import { PatientAvatar } from '../ui/PatientAvatar';
 import { NumericClinicalInput } from './NumericClinicalInput';
 import { ThreeBarMotif } from '../ui/ThreeBarMotif';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
+import { saveAssessment } from '../../supabase/assessments';
+import { useAuth } from '../../auth/AuthProvider';
+import { Button } from '../ui/Button';
 
 const PRO_MAX = 47;
 const NOPRO_MAX = 43;
 
 type AmpMode = 'pro' | 'nopro';
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 interface AMPResult {
   primaryValue: number;
@@ -49,15 +53,23 @@ function computeResult(mode: AmpMode, scoreInput: string): AMPResult | null {
 
 export function AMPForm({ patientId }: { patientId: string }) {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [mode, setMode] = useState<AmpMode>('pro');
   const [scoreInput, setScoreInput] = useState('');
   const [result, setResult] = useState<AMPResult | null>(null);
   const [scoreError, setScoreError] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getPatient(patientId).then(p => setPatient(p)).catch(() => null);
   }, [patientId]);
+
+  function resetSaveState() {
+    setSaveState('idle');
+    setSaveError(null);
+  }
 
   function handleModeChange(next: AmpMode) {
     if (next === mode) return;
@@ -65,12 +77,14 @@ export function AMPForm({ patientId }: { patientId: string }) {
     setScoreInput('');
     setResult(null);
     setScoreError(null);
+    resetSaveState();
   }
 
   function handleScoreChange(text: string) {
     setScoreInput(text);
     setScoreError(null);
     setResult(computeResult(mode, text));
+    resetSaveState();
   }
 
   function handleScoreBlur() {
@@ -81,6 +95,33 @@ export function AMPForm({ patientId }: { patientId: string }) {
     if (isNaN(score) || score < 0 || score > max) {
       setScoreError(`Enter a score between 0 and ${max}`);
       setResult(null);
+    }
+  }
+
+  async function handleSave() {
+    if (saveState === 'saving' || !result) return;
+    if (!user) {
+      setSaveError('Your session has expired. Please sign in again.');
+      setSaveState('error');
+      return;
+    }
+    setSaveState('saving');
+    setSaveError(null);
+    try {
+      await saveAssessment({
+        patient_id: patientId,
+        measure: 'AMP',
+        inputs: { mode, score: parseInt(scoreInput, 10) },
+        results: {
+          ...result,
+          meta: { ...result.meta, encounterDate: new Date().toISOString() },
+        },
+      });
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 3000);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
+      setSaveState('error');
     }
   }
 
@@ -158,23 +199,42 @@ export function AMPForm({ patientId }: { patientId: string }) {
         </Card>
 
         {result !== null ? (
-          <View style={styles.resultCard}>
-            <View style={styles.resultHeader}>
-              <Text style={styles.resultMicroLabel}>{modeLabel} RESULT</Text>
-              <ThreeBarMotif size="sm" tone="soft" />
-            </View>
-            <View style={styles.resultValueRow}>
-              <View style={[styles.kLevelBadge, { backgroundColor: COLOR_MAP[result.meta.classColor] ?? colors.muted }]}>
-                <Text style={styles.kLevelBadgeText}>{result.meta.kLevel}</Text>
+          <>
+            <View style={styles.resultCard}>
+              <View style={styles.resultHeader}>
+                <Text style={styles.resultMicroLabel}>{modeLabel} RESULT</Text>
+                <ThreeBarMotif size="sm" tone="soft" />
               </View>
-              <Text style={styles.resultScore}>{result.primaryValue}</Text>
-              <Text style={styles.resultUnit}>/{currentMax}</Text>
-              <View style={[styles.colorDot, { backgroundColor: COLOR_MAP[result.meta.classColor] ?? colors.muted }]} />
+              <View style={styles.resultValueRow}>
+                <View style={[styles.kLevelBadge, { backgroundColor: COLOR_MAP[result.meta.classColor] ?? colors.muted }]}>
+                  <Text style={styles.kLevelBadgeText}>{result.meta.kLevel}</Text>
+                </View>
+                <Text style={styles.resultScore}>{result.primaryValue}</Text>
+                <Text style={styles.resultUnit}>/{currentMax}</Text>
+                <View style={[styles.colorDot, { backgroundColor: COLOR_MAP[result.meta.classColor] ?? colors.muted }]} />
+              </View>
+              <View style={styles.interpPill}>
+                <Text style={styles.interpText}>{result.interpretation}</Text>
+              </View>
             </View>
-            <View style={styles.interpPill}>
-              <Text style={styles.interpText}>{result.interpretation}</Text>
-            </View>
-          </View>
+            {saveState === 'saved' ? (
+              <View style={styles.savedBanner}>
+                <Text style={styles.savedText}>Result saved</Text>
+              </View>
+            ) : (
+              <>
+                <Button
+                  label="Save Result"
+                  onPress={handleSave}
+                  loading={saveState === 'saving'}
+                  disabled={saveState === 'saving'}
+                />
+                {saveState === 'error' && saveError ? (
+                  <Text style={styles.saveErrorText}>{saveError}</Text>
+                ) : null}
+              </>
+            )}
+          </>
         ) : null}
       </ScrollView>
     </Screen>
@@ -340,5 +400,24 @@ const styles = StyleSheet.create({
   interpText: {
     fontSize: typography.sizeSm,
     color: colors.ink,
+  },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  saveErrorText: {
+    fontSize: typography.sizeSm,
+    color: colors.coral,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xs,
   },
 });

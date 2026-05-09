@@ -11,6 +11,10 @@ import { ResultScreen } from './ResultScreen';
 
 // @ts-ignore
 import { calcBOOMER } from '@clinical/boomer';
+import { saveAssessment } from '../../../supabase/assessments';
+import { useAuth } from '../../../auth/AuthProvider';
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 const DEFAULT_STEP_INPUT: StepInput = { unable: false, affectedSteps: null, nonAffectedSteps: null };
 const DEFAULT_TIMED_INPUT: TimedInput = { unable: false, seconds: null };
@@ -64,12 +68,15 @@ function computeResult(
 }
 
 export function BOOMERForm({ patientId }: { patientId: string }) {
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [stepInput, setStepInput] = useState<StepInput>(DEFAULT_STEP_INPUT);
   const [tugInput, setTugInput] = useState<TimedInput>(DEFAULT_TIMED_INPUT);
   const [frInput, setFrInput] = useState<FRInput>(DEFAULT_FR_INPUT);
   const [stanceInput, setStanceInput] = useState<TimedInput>(DEFAULT_TIMED_INPUT);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getPatient(patientId).then((p: Patient | null) => setPatient(p)).catch(() => null);
@@ -95,7 +102,42 @@ export function BOOMERForm({ patientId }: { patientId: string }) {
     setTugInput(DEFAULT_TIMED_INPUT);
     setFrInput(DEFAULT_FR_INPUT);
     setStanceInput(DEFAULT_TIMED_INPUT);
+    setSaveState('idle');
+    setSaveError(null);
     setStep(0);
+  }
+
+  async function handleSave() {
+    if (saveState === 'saving' || !result) return;
+    if (!user) {
+      setSaveError('Your session has expired. Please sign in again.');
+      setSaveState('error');
+      return;
+    }
+    setSaveState('saving');
+    setSaveError(null);
+    try {
+      await saveAssessment({
+        patient_id: patientId,
+        measure: 'BOOMER',
+        inputs: {
+          step: { unable: stepInput.unable, affectedSteps: stepInput.affectedSteps, nonAffectedSteps: stepInput.nonAffectedSteps },
+          tug: { unable: tugInput.unable, seconds: tugInput.seconds },
+          fr: { unable: frInput.unable, cm: frInput.cm },
+          stance: { unable: stanceInput.unable, seconds: stanceInput.seconds },
+          scores: { step: stepScore, tug: tugScore, fr: frScore, stance: stanceScore },
+        },
+        results: {
+          ...result,
+          meta: { ...result.meta, encounterDate: new Date().toISOString() },
+        },
+      });
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 3000);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
+      setSaveState('error');
+    }
   }
 
   if (step === 0) {
@@ -170,6 +212,9 @@ export function BOOMERForm({ patientId }: { patientId: string }) {
       patient={patient}
       onBack={() => setStep(3)}
       onStartOver={handleStartOver}
+      saveState={saveState}
+      saveError={saveError}
+      onSave={handleSave}
     />
   );
 }

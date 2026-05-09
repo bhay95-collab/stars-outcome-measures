@@ -3,12 +3,16 @@ import { router } from 'expo-router';
 // @ts-ignore — JS clinical module, no type declarations
 import { calcHiMAT } from '@clinical/himat';
 import { getPatient } from '../../../supabase/patients';
+import { saveAssessment } from '../../../supabase/assessments';
+import { useAuth } from '../../../auth/AuthProvider';
 import type { Patient } from '../../../types/domain';
 import { TimeScreen } from './TimeScreen';
 import { DistScreen } from './DistScreen';
 import { StairsScreen } from './StairsScreen';
 import { ResultScreen } from './ResultScreen';
 import type { TimeInput, DistInput, StairsInput, HiMATResult } from './types';
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 const TIMED_STEPS = [
   { title: 'Walk',               hasFail: true, failLabel: 'Unable to walk' },
@@ -51,11 +55,14 @@ function makeStairsDefaults(): StairsInput[] {
 }
 
 export function HiMATForm({ patientId }: { patientId: string }) {
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [timedInputs, setTimedInputs] = useState<TimeInput[]>(makeTimedDefaults);
   const [boundInputs, setBoundInputs] = useState<DistInput[]>(makeDistDefaults);
   const [stairsInputs, setStairsInputs] = useState<StairsInput[]>(makeStairsDefaults);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getPatient(patientId).then((p: Patient | null) => setPatient(p)).catch(() => null);
@@ -78,6 +85,8 @@ export function HiMATForm({ patientId }: { patientId: string }) {
     setTimedInputs(makeTimedDefaults());
     setBoundInputs(makeDistDefaults());
     setStairsInputs(makeStairsDefaults());
+    setSaveState('idle');
+    setSaveError(null);
   }
 
   function stepLabel(s: number): string {
@@ -111,6 +120,44 @@ export function HiMATForm({ patientId }: { patientId: string }) {
       desc.mode === 'IND' ? { mode: 'IND' }                    : { mode: 'DEP', val: desc.depVal },
       desc.mode === 'IND' ? { val: desc.indVal, unable: false } : { val: 0,      unable: true },
     ];
+  }
+
+  async function handleSave() {
+    if (saveState === 'saving') return;
+    const calcInputs = buildCalcInputs();
+    const r = calcHiMAT(calcInputs) as HiMATResult | null;
+    if (!r) {
+      setSaveError('Unable to calculate result. Please check all inputs.');
+      setSaveState('error');
+      return;
+    }
+    if (!user) {
+      setSaveError('Your session has expired. Please sign in again.');
+      setSaveState('error');
+      return;
+    }
+    setSaveState('saving');
+    setSaveError(null);
+    try {
+      await saveAssessment({
+        patient_id: patientId,
+        measure: 'HiMAT',
+        inputs: {
+          timedInputs: timedInputs.map(t => ({ val: t.val, unable: t.unable })),
+          boundInputs: boundInputs.map(b => ({ trials: [...b.trials] })),
+          stairsInputs: stairsInputs.map(s => ({ mode: s.mode, depVal: s.depVal, indVal: s.indVal })),
+        },
+        results: {
+          ...r,
+          meta: { ...r.meta, encounterDate: new Date().toISOString() },
+        },
+      });
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 3000);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
+      setSaveState('error');
+    }
   }
 
   if (step <= 6) {
@@ -176,6 +223,9 @@ export function HiMATForm({ patientId }: { patientId: string }) {
       patient={patient}
       onBack={handleBack}
       onStartOver={handleStartOver}
+      saveState={saveState}
+      saveError={saveError}
+      onSave={handleSave}
     />
   );
 }

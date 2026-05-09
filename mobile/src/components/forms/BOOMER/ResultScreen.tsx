@@ -6,9 +6,12 @@ import { Card } from '../../ui/Card';
 import { NavyHeader } from '../../ui/NavyHeader';
 import { PatientAvatar } from '../../ui/PatientAvatar';
 import { ThreeBarMotif } from '../../ui/ThreeBarMotif';
+import { Button } from '../../ui/Button';
 import type { Patient } from '../../../types/domain';
 import type { StepInput, TimedInput, FRInput, BOOMERResult } from './types';
 import { colors, spacing, typography, radii } from '../../../theme/tokens';
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 const COLOR_MAP = {
   green: colors.success,
@@ -26,6 +29,9 @@ interface ResultScreenProps {
   patient: Patient | null;
   onBack: () => void;
   onStartOver: () => void;
+  saveState: SaveState;
+  saveError: string | null;
+  onSave: () => void;
 }
 
 function measurementLabel(label: string, value: string | null): string {
@@ -35,6 +41,7 @@ function measurementLabel(label: string, value: string | null): string {
 
 export function ResultScreen({
   stepInput, tugInput, frInput, stanceInput, scores, result, patient, onBack, onStartOver,
+  saveState, saveError, onSave,
 }: ResultScreenProps) {
   const insets = useSafeAreaInsets();
   const dotColor = COLOR_MAP[result.meta.classColor];
@@ -133,6 +140,24 @@ export function ResultScreen({
             </View>
           ))}
         </Card>
+
+        {saveState === 'saved' ? (
+          <View style={styles.savedBanner}>
+            <Text style={styles.savedText}>Result saved</Text>
+          </View>
+        ) : (
+          <>
+            <Button
+              label="Save Result"
+              onPress={onSave}
+              loading={saveState === 'saving'}
+              disabled={saveState === 'saving'}
+            />
+            {saveState === 'error' && saveError ? (
+              <Text style={styles.saveErrorText}>{saveError}</Text>
+            ) : null}
+          </>
+        )}
 
         <Pressable
           onPress={onStartOver}
@@ -298,5 +323,24 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeMd,
     fontWeight: typography.weightSemibold,
     color: colors.primary,
+  },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  saveErrorText: {
+    fontSize: typography.sizeSm,
+    color: colors.coral,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xs,
   },
 });

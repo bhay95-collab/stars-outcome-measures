@@ -13,6 +13,9 @@ import { PatientAvatar } from '../ui/PatientAvatar';
 import { ClinicalTimer } from './ClinicalTimer';
 import { ThreeBarMotif } from '../ui/ThreeBarMotif';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
+import { saveAssessment } from '../../supabase/assessments';
+import { useAuth } from '../../auth/AuthProvider';
+import { Button } from '../ui/Button';
 
 interface SARAResult {
   primaryValue: number;
@@ -35,6 +38,8 @@ interface SaraItem {
   label: string;
   options: number[];
 }
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 const ITEM_COUNT = 8;
 const UNI_COUNT = 4;
@@ -61,6 +66,7 @@ const bilItems = (SARA_ITEMS as SaraItem[]).slice(UNI_COUNT);
 
 export function SARAForm({ patientId }: { patientId: string }) {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [unilateral, setUnilateral] = useState<(number | null)[]>(Array(UNI_COUNT).fill(null));
   const [bilateral, setBilateral] = useState<BilateralScore[]>(
@@ -68,6 +74,8 @@ export function SARAForm({ patientId }: { patientId: string }) {
   );
   const [fastAlt, setFastAlt] = useState<FastAltSecs>({ right: null, left: null });
   const [result, setResult] = useState<SARAResult | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getPatient(patientId).then(p => setPatient(p)).catch(() => null);
@@ -84,10 +92,16 @@ export function SARAForm({ patientId }: { patientId: string }) {
     setResult(r);
   }
 
+  function resetSaveState() {
+    setSaveState('idle');
+    setSaveError(null);
+  }
+
   function handleUnilateral(itemIdx: number, score: number) {
     const next = unilateral.map((s, i) => (i === itemIdx ? (s === score ? null : score) : s));
     setUnilateral(next);
     tryCalc(next, bilateral);
+    resetSaveState();
   }
 
   function handleBilateral(bilIdx: number, side: 'right' | 'left', score: number) {
@@ -96,6 +110,38 @@ export function SARAForm({ patientId }: { patientId: string }) {
     );
     setBilateral(next);
     tryCalc(unilateral, next);
+    resetSaveState();
+  }
+
+  async function handleSave() {
+    if (saveState === 'saving' || !result) return;
+    if (!user) {
+      setSaveError('Your session has expired. Please sign in again.');
+      setSaveState('error');
+      return;
+    }
+    setSaveState('saving');
+    setSaveError(null);
+    try {
+      await saveAssessment({
+        patient_id: patientId,
+        measure: 'SARA',
+        inputs: {
+          unilateral: [...unilateral],
+          bilateral: bilateral.map(b => ({ right: b.right, left: b.left })),
+          fastAlt: { right: fastAlt.right, left: fastAlt.left },
+        },
+        results: {
+          ...result,
+          meta: { ...result.meta, encounterDate: new Date().toISOString() },
+        },
+      });
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 3000);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
+      setSaveState('error');
+    }
   }
 
   const bilateralMeans = bilateral.map(getBilateralMean);
@@ -246,25 +292,44 @@ export function SARAForm({ patientId }: { patientId: string }) {
         })}
 
         {result !== null ? (
-          <View style={styles.resultCard}>
-            <View style={styles.resultHeader}>
-              <Text style={styles.microLabel}>SARA RESULT</Text>
-              <ThreeBarMotif size="sm" tone="soft" />
+          <>
+            <View style={styles.resultCard}>
+              <View style={styles.resultHeader}>
+                <Text style={styles.microLabel}>SARA RESULT</Text>
+                <ThreeBarMotif size="sm" tone="soft" />
+              </View>
+              <View style={styles.resultValueRow}>
+                <Text style={styles.resultValue}>{formatScore(result.primaryValue)}</Text>
+                <Text style={styles.resultUnit}>{result.primaryUnit}</Text>
+                <View
+                  style={[
+                    styles.colorDot,
+                    { backgroundColor: SARA_COLOR_MAP[result.meta.classColor] ?? colors.muted },
+                  ]}
+                />
+              </View>
+              <View style={styles.interpPill}>
+                <Text style={styles.interpText}>{result.interpretation}</Text>
+              </View>
             </View>
-            <View style={styles.resultValueRow}>
-              <Text style={styles.resultValue}>{formatScore(result.primaryValue)}</Text>
-              <Text style={styles.resultUnit}>{result.primaryUnit}</Text>
-              <View
-                style={[
-                  styles.colorDot,
-                  { backgroundColor: SARA_COLOR_MAP[result.meta.classColor] ?? colors.muted },
-                ]}
-              />
-            </View>
-            <View style={styles.interpPill}>
-              <Text style={styles.interpText}>{result.interpretation}</Text>
-            </View>
-          </View>
+            {saveState === 'saved' ? (
+              <View style={styles.savedBanner}>
+                <Text style={styles.savedText}>Result saved</Text>
+              </View>
+            ) : (
+              <>
+                <Button
+                  label="Save Result"
+                  onPress={handleSave}
+                  loading={saveState === 'saving'}
+                  disabled={saveState === 'saving'}
+                />
+                {saveState === 'error' && saveError ? (
+                  <Text style={styles.saveErrorText}>{saveError}</Text>
+                ) : null}
+              </>
+            )}
+          </>
         ) : null}
       </ScrollView>
     </Screen>
@@ -468,5 +533,24 @@ const styles = StyleSheet.create({
   interpText: {
     fontSize: typography.sizeSm,
     color: colors.ink,
+  },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  saveErrorText: {
+    fontSize: typography.sizeSm,
+    color: colors.coral,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xs,
   },
 });

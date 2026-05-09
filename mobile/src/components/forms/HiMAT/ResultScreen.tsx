@@ -6,15 +6,21 @@ import { Card } from '../../ui/Card';
 import { NavyHeader } from '../../ui/NavyHeader';
 import { PatientAvatar } from '../../ui/PatientAvatar';
 import { ThreeBarMotif } from '../../ui/ThreeBarMotif';
+import { Button } from '../../ui/Button';
 import type { Patient } from '../../../types/domain';
 import type { HiMATResult } from './types';
 import { colors, spacing, typography, radii } from '../../../theme/tokens';
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 interface ResultScreenProps {
   result: HiMATResult | null;
   patient: Patient | null;
   onBack: () => void;
   onStartOver: () => void;
+  saveState: SaveState;
+  saveError: string | null;
+  onSave: () => void;
 }
 
 const RESULT_ROWS = [
@@ -53,7 +59,7 @@ function buildDisplayScores(itemScores: number[]): number[] {
   ];
 }
 
-export function ResultScreen({ result, patient, onBack, onStartOver }: ResultScreenProps) {
+export function ResultScreen({ result, patient, onBack, onStartOver, saveState, saveError, onSave }: ResultScreenProps) {
   const insets = useSafeAreaInsets();
   const displayScores = result ? buildDisplayScores(result.meta.itemScores) : null;
 
@@ -125,6 +131,26 @@ export function ResultScreen({ result, patient, onBack, onStartOver }: ResultScr
             </Text>
           </Card>
         )}
+
+        {result !== null ? (
+          saveState === 'saved' ? (
+            <View style={styles.savedBanner}>
+              <Text style={styles.savedText}>Result saved</Text>
+            </View>
+          ) : (
+            <>
+              <Button
+                label="Save Result"
+                onPress={onSave}
+                loading={saveState === 'saving'}
+                disabled={saveState === 'saving'}
+              />
+              {saveState === 'error' && saveError ? (
+                <Text style={styles.saveErrorText}>{saveError}</Text>
+              ) : null}
+            </>
+          )
+        ) : null}
 
         <Pressable
           onPress={onStartOver}
@@ -294,5 +320,24 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeMd,
     fontWeight: typography.weightSemibold,
     color: colors.ink,
+  },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  saveErrorText: {
+    fontSize: typography.sizeSm,
+    color: colors.coral,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xs,
   },
 });
