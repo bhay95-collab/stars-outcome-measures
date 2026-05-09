@@ -81,109 +81,157 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
   }
 
   return (
-    <section className="summary-dashboard">
-      <div className="summary-card summary-card--wide">
-        <div className="summary-card__head">
+    <section className="summary-dashboard" aria-label="Patient dashboard">
+      <section className="dashboard-zone dashboard-zone--progress" aria-labelledby="dashboard-progress-heading">
+        <div className="dashboard-zone__head">
           <div>
-            <h3>Outcome Measure Trend</h3>
-            <p>Select a recorded measure to review change over time. Where Minimally Clinically Important Difference thresholds exist, clinically meaningful improvements are highlighted.</p>
+            <span className="section-label">Progress and pathway</span>
+            <h2 id="dashboard-progress-heading">Outcome trajectory and next action</h2>
           </div>
-          {selectableMeasures.length > 0 && (
-            <select value={activeMeasureId} onChange={event => setSelectedMeasureId(event.target.value)} aria-label="Select outcome measure trend">
-              {selectableMeasures.map(entry => (
-                <option key={entry.measureId} value={entry.measureId}>{entry.measure.id} - {entry.measure.name}</option>
-              ))}
-            </select>
-          )}
+          <p>Recent change and pathway coverage to prioritise the next assessment.</p>
         </div>
-        <MeasureTrendChart series={trendSeries} measureId={activeMeasureId} />
-      </div>
 
-      <div className="summary-card letter-summary-card">
-        <div className="summary-card__head">
+        <div className="dashboard-progress-grid">
+          <div className="summary-card summary-card--wide summary-card--anchor">
+            <div className="summary-card__head">
+              <div>
+                <h3>Outcome Measure Trend</h3>
+                <p>Recorded outcome values over time, with clinically meaningful change highlighted where thresholds exist.</p>
+              </div>
+              {selectableMeasures.length > 0 && (
+                <select value={activeMeasureId} onChange={event => setSelectedMeasureId(event.target.value)} aria-label="Select outcome measure trend">
+                  {selectableMeasures.map(entry => (
+                    <option key={entry.measureId} value={entry.measureId}>{entry.measure.id} - {entry.measure.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <MeasureTrendChart series={trendSeries} measureId={activeMeasureId} />
+          </div>
+
+          <PathwayPanel pathway={pathway} />
+        </div>
+      </section>
+
+      <section className="dashboard-zone dashboard-zone--review" aria-labelledby="dashboard-review-heading">
+        <div className="dashboard-zone__head">
           <div>
-            <h3>Plain-Language Patient Summary</h3>
-            <p>Focused narrative for letters to non-specialists and broader care teams.</p>
+            <span className="section-label">Clinical review</span>
+            <h2 id="dashboard-review-heading">Narrative and interpretation</h2>
           </div>
-          <button type="button" onClick={copyPlainSummary}>
-            {copiedPlainSummary ? 'Copied' : 'Copy'}
-          </button>
+          <p>Patient-facing narrative and clinician interpretation from recorded outcome data.</p>
         </div>
-        <p>{summary.plainLanguageSummary}</p>
-      </div>
 
-      <PathwayPanel pathway={pathway} />
+        <div className="dashboard-review-grid">
+          <div className="summary-card letter-summary-card">
+            <div className="summary-card__head">
+              <div>
+                <h3>Plain-Language Patient Summary</h3>
+                <p>Focused narrative for letters to non-specialists and broader care teams.</p>
+              </div>
+              <button type="button" onClick={copyPlainSummary}>
+                {copiedPlainSummary ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+            <p>{summary.plainLanguageSummary}</p>
+          </div>
 
-      <div className="domain-grid">
-        {summary.domains.map(domain => (
-          <DomainCard key={domain.id} domain={domain} />
-        ))}
-      </div>
+          <div className="summary-card insight-card">
+            <h3>Clinical Interpretation</h3>
+            <div className="interpretation-list">
+              {summary.interpretation.map((text, index) => {
+                const meta = interpretationMeta(text, index)
+                return (
+                  <article key={index} data-tone={meta.tone}>
+                    <span>{meta.label}</span>
+                    <p>{text}</p>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <div className="summary-grid summary-grid--real">
-        <div className="summary-card insight-card">
-          <h3>Clinical Interpretation</h3>
-          <div className="interpretation-list">
-            {summary.interpretation.map((text, index) => {
-              const meta = interpretationMeta(text, index)
-              return (
-                <article key={index} data-tone={meta.tone}>
-                  <span>{meta.label}</span>
-                  <p>{text}</p>
-                </article>
-              )
-            })}
+      <section className="dashboard-zone dashboard-zone--signals" aria-labelledby="dashboard-signals-heading">
+        <div className="dashboard-zone__head">
+          <div>
+            <span className="section-label">Signals and measures</span>
+            <h2 id="dashboard-signals-heading">Current status tiles</h2>
+          </div>
+          <p>Latest flags, values, and covered domains from recorded assessments.</p>
+        </div>
+
+        <div className="dashboard-signals-grid">
+          <div className="summary-card signal-card">
+            <h3>Current Clinical Signals</h3>
+            <ClinicalSignals flags={summary.flags} onSelectMeasure={setSelectedMeasureId} />
+          </div>
+
+          <div className="summary-card latest-card">
+            <h3>Latest Recorded Measures</h3>
+            <LatestMeasures entries={summary.entries} onSelectMeasure={setSelectedMeasureId} />
           </div>
         </div>
 
-        <div className="summary-card signal-card">
-          <h3>Current Clinical Signals</h3>
-          <ClinicalSignals flags={summary.flags} onSelectMeasure={setSelectedMeasureId} />
-        </div>
-
-        <div className="summary-card latest-card">
-          <h3>Latest Recorded Measures</h3>
-          <LatestMeasures entries={summary.entries} onSelectMeasure={setSelectedMeasureId} />
-        </div>
-      </div>
-
-      <TodayAssessmentTable rows={todayRows} isncsciRows={isncsciTodayRows} />
-
-      <div className="summary-card assessment-history">
-        <h3>Assessment History</h3>
-        {summary.entries.length === 0 && (
-          <p className="empty-hint">
-            Use &ldquo;New Assessment&rdquo; above to record the first assessment for {patient.initials}.
-          </p>
-        )}
-        <div className="history-list">
-          {summary.entries.map(entry => (
-            <AssessmentCard
-              key={entry.measureId}
-              entry={entry}
-              onDelete={onDeleteAssessment}
-            />
+        <div className="domain-grid">
+          {summary.domains.map(domain => (
+            <DomainCard key={domain.id} domain={domain} />
           ))}
         </div>
-      </div>
+      </section>
 
-      {mcidContext && (
-        <div className="info-panel">
-          <strong>Minimally Clinically Important Difference reference - {patient.diagnosis}:</strong> {mcidContext}
-        </div>
-      )}
-
-      {patient?.id && (
-        <div className="summary-card patient-management-card">
+      <section className="dashboard-zone dashboard-zone--records" aria-labelledby="dashboard-records-heading">
+        <div className="dashboard-zone__head">
           <div>
-            <h3>Patient Management</h3>
-            <p>Administrative actions are kept separate from the clinical overview.</p>
+            <span className="section-label">Records</span>
+            <h2 id="dashboard-records-heading">Notes, history, and administration</h2>
           </div>
-          <button type="button" data-delete-btn="" onClick={() => onDeletePatient(patient.id)}>
-            Delete Patient
-          </button>
+          <p>Clinical-note exports, historic entries, reference thresholds, and administrative actions.</p>
         </div>
-      )}
+
+        <div className="dashboard-records-grid">
+          <TodayAssessmentTable rows={todayRows} isncsciRows={isncsciTodayRows} />
+
+          <div className="dashboard-records-side">
+            {mcidContext && (
+              <div className="info-panel dashboard-mcid-reference">
+                <strong>Minimally Clinically Important Difference reference - {patient.diagnosis}:</strong> {mcidContext}
+              </div>
+            )}
+
+            {patient?.id && (
+              <div className="summary-card patient-management-card">
+                <div>
+                  <h3>Patient Management</h3>
+                  <p>Delete this patient record and linked assessments.</p>
+                </div>
+                <button type="button" data-delete-btn="" onClick={() => onDeletePatient(patient.id)}>
+                  Delete Patient
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="summary-card assessment-history">
+          <h3>Assessment History</h3>
+          {summary.entries.length === 0 && (
+            <p className="empty-hint">
+              Use &ldquo;New Assessment&rdquo; above to record the first assessment for {patient.initials}.
+            </p>
+          )}
+          <div className="history-list">
+            {summary.entries.map(entry => (
+              <AssessmentCard
+                key={entry.measureId}
+                entry={entry}
+                onDelete={onDeleteAssessment}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
     </section>
   )
 }

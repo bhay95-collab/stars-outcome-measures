@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { colors, spacing, typography } from '../../theme/tokens';
 import { LogoWordmark } from './LogoWordmark';
+import { MeasureInstructionsButton } from './MeasureInstructionsButton';
 
 const squareLogo = require('../../../assets/SquareLogo.png');
 
@@ -50,6 +52,11 @@ function NavHeader({
   onRight,
   rightElement,
 }: Omit<NavyHeaderProps, 'mode'>) {
+  const params = useLocalSearchParams<{ measureId?: string | string[] }>();
+  const measureId = Array.isArray(params.measureId) ? params.measureId[0] : params.measureId;
+  const inferredRightElement = measureId ? <MeasureInstructionsButton measureId={measureId} /> : null;
+  const resolvedRightElement = rightElement ?? inferredRightElement;
+
   return (
     <View style={styles.container}>
       <View style={styles.side}>
@@ -74,7 +81,7 @@ function NavHeader({
       )}
 
       <View style={[styles.side, styles.sideRight]}>
-        {rightElement ?? (rightLabel && onRight ? (
+        {resolvedRightElement ?? (rightLabel && onRight ? (
           <Pressable
             onPress={onRight}
             style={styles.action}

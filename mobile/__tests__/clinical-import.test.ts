@@ -52,7 +52,7 @@ function arr(count: number, value: number): number[] {
 
 describe('Phase 0 — clinical calc smoke tests (23 active measures)', () => {
   test('10MWT', () => {
-    assertCalcResult(calc10mwt({ comfortTime: 10, fastTime: 8, age: 60, gender: 'male' }), '10MWT');
+    assertCalcResult(calc10mwt({ comfortTime: 10, fastTime: 8, age: 60, gender: 'M' }), '10MWT');
   });
 
   test('TUG', () => {
@@ -65,7 +65,7 @@ describe('Phase 0 — clinical calc smoke tests (23 active measures)', () => {
 
   test('6MWT', () => {
     assertCalcResult(
-      calc6MWT({ distance: 400, age: 65, gender: 'female', height: 165, weight: 70 }),
+      calc6MWT({ distance: 400, age: 65, gender: 'F', height: 165, weight: 70 }),
       '6MWT'
     );
   });

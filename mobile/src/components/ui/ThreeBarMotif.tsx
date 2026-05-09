@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { colors, radii, spacing } from '../../theme/tokens';
+import { colors, spacing } from '../../theme/tokens';
 
 type MotifSize = 'sm' | 'md' | 'lg';
 type MotifTone = 'brand' | 'inverse' | 'soft';
@@ -12,15 +12,15 @@ interface ThreeBarMotifProps {
 }
 
 const SIZE_MAP = {
-  sm: { width: 8, gap: 5, heights: [16, 26, 38] },
-  md: { width: 12, gap: 7, heights: [22, 36, 52] },
-  lg: { width: 16, gap: 9, heights: [30, 50, 72] },
+  sm: { width: 8, gap: 3, radius: 2, heights: [16, 26, 38] },
+  md: { width: 12, gap: 4, radius: 3, heights: [22, 36, 52] },
+  lg: { width: 16, gap: 5, radius: 4, heights: [30, 50, 72] },
 } as const;
 
 const TONE_MAP = {
-  brand: [colors.primaryDark, colors.primary, colors.secondary],
-  inverse: ['#FFFFFF', colors.secondarySoft, colors.secondary],
-  soft: [colors.primary, colors.secondary, '#B9D8F3'],
+  brand: ['#0D5C95', '#4A9DE8', '#9BC7F2'],
+  inverse: ['#FFFFFF', colors.secondarySoft, '#9BC7F2'],
+  soft: ['rgba(13,92,149,0.72)', 'rgba(74,157,232,0.68)', 'rgba(155,199,242,0.72)'],
 } as const;
 
 export function ThreeBarMotif({
@@ -78,7 +78,7 @@ export function ThreeBarMotif({
           {
             width: dimensions.width,
             height,
-            borderRadius: Math.min(radii.md, dimensions.width / 2 + 2),
+            borderRadius: dimensions.radius,
             backgroundColor: palette[index],
           },
         ];

@@ -29,11 +29,11 @@ export default function ThreeBarMotif({
           --motif-mid: #4A9DE8;
           --motif-light: #9BC7F2;
           --motif-width: 18px;
-          --motif-gap: 8px;
+          --motif-gap: 5px;
           --motif-h1: 24px;
           --motif-h2: 44px;
           --motif-h3: 64px;
-          --motif-radius: 5px;
+          --motif-radius: 4px;
           display: inline-grid;
           grid-template-columns: repeat(3, var(--motif-width));
           align-items: end;
@@ -45,29 +45,29 @@ export default function ThreeBarMotif({
 
         .three-bar-motif--xs {
           --motif-width: 5px;
-          --motif-gap: 3px;
+          --motif-gap: 2px;
           --motif-h1: 9px;
           --motif-h2: 15px;
           --motif-h3: 22px;
-          --motif-radius: 2px;
+          --motif-radius: 1.5px;
         }
 
         .three-bar-motif--sm {
           --motif-width: 10px;
-          --motif-gap: 5px;
+          --motif-gap: 3px;
           --motif-h1: 15px;
           --motif-h2: 28px;
           --motif-h3: 42px;
-          --motif-radius: 3px;
+          --motif-radius: 2.5px;
         }
 
         .three-bar-motif--lg {
           --motif-width: 24px;
-          --motif-gap: 10px;
+          --motif-gap: 7px;
           --motif-h1: 34px;
           --motif-h2: 62px;
           --motif-h3: 92px;
-          --motif-radius: 7px;
+          --motif-radius: 5px;
         }
 
         .three-bar-motif--light {
