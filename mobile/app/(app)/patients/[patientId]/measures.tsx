@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { MEASURES } from '../../../../src/clinical/adapter';
-import type { MeasureDefinition } from '../../../../src/clinical/adapter';
+import { MEASURES, buildPatientPathway } from '../../../../src/clinical/adapter';
+import type { MeasureDefinition, PatientPathway } from '../../../../src/clinical/adapter';
+import { getPatient } from '../../../../src/supabase/patients';
+import { getAssessmentsForPatient } from '../../../../src/supabase/assessments';
 import { Screen } from '../../../../src/components/ui/Screen';
 import { Card } from '../../../../src/components/ui/Card';
 import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
@@ -23,10 +25,12 @@ function MeasureRow({
   measure,
   patientId,
   hasBorder,
+  pathwayStatus,
 }: {
   measure: MeasureDefinition;
   patientId: string;
   hasBorder: boolean;
+  pathwayStatus: { state: string; label: string } | null;
 }) {
   const shortName = measure.id;
   return (
@@ -41,14 +45,34 @@ function MeasureRow({
         <Text style={styles.measureName}>{shortName}</Text>
         <Text style={styles.measureFullName}>{measure.name}</Text>
       </View>
+      {pathwayStatus ? (
+        <View style={[
+          styles.pathwayBadge,
+          pathwayStatus.state === 'due'
+            ? styles.pathwayBadge_due
+            : pathwayStatus.state === 'recorded'
+              ? styles.pathwayBadge_recorded
+              : styles.pathwayBadge_missing,
+        ]}>
+          <Text style={styles.pathwayBadgeText}>{pathwayStatus.label}</Text>
+        </View>
+      ) : null}
       <Text style={styles.chevron}>›</Text>
     </TouchableOpacity>
   );
 }
 
+function getPathwayStatus(pathway: PatientPathway | null, measureId: string): { state: string; label: string } | null {
+  if (!pathway?.recommendedMeasures.some(item => item.id === measureId)) return null;
+  if (pathway.dueMeasures.some(item => item.id === measureId)) return { state: 'due', label: 'Due' };
+  if (pathway.missingMeasures.some(item => item.id === measureId)) return { state: 'missing', label: 'Baseline' };
+  return { state: 'recorded', label: 'Pathway' };
+}
+
 export default function MeasureSelectorScreen() {
   const params = useLocalSearchParams<{ patientId: string }>();
   const patientId = Array.isArray(params.patientId) ? params.patientId[0] : params.patientId;
+  const [pathway, setPathway] = useState<PatientPathway | null>(null);
 
   const measuresByCategory = useMemo(() => {
     const map = new Map<Category, MeasureDefinition[]>();
@@ -61,6 +85,14 @@ export default function MeasureSelectorScreen() {
     return map;
   }, []);
 
+  useEffect(() => {
+    Promise.all([getPatient(patientId), getAssessmentsForPatient(patientId)])
+      .then(([patient, assessments]) => {
+        setPathway(buildPatientPathway(patient, assessments));
+      })
+      .catch(() => setPathway(null));
+  }, [patientId]);
+
   return (
     <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader
@@ -72,7 +104,9 @@ export default function MeasureSelectorScreen() {
         <View style={styles.hero}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroTitle}>New Assessment</Text>
-            <Text style={styles.heroSubtitle}>Choose the next measure to record.</Text>
+            <Text style={styles.heroSubtitle}>
+              {pathway ? pathway.statusLabel : 'Choose the next measure to record.'}
+            </Text>
           </View>
           <ThreeBarMotif size="md" tone="soft" />
         </View>
@@ -94,6 +128,7 @@ export default function MeasureSelectorScreen() {
                     measure={m}
                     patientId={patientId}
                     hasBorder={idx < measures.length - 1}
+                    pathwayStatus={getPathwayStatus(pathway, m.id)}
                   />
                 ))}
               </Card>
@@ -199,6 +234,33 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeSm,
     color: colors.muted,
     fontWeight: typography.weightMedium,
+  },
+  pathwayBadge: {
+    minHeight: 24,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.secondarySoft,
+  },
+  pathwayBadge_missing: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.secondarySoft,
+  },
+  pathwayBadge_due: {
+    backgroundColor: colors.surface,
+    borderColor: colors.primary,
+  },
+  pathwayBadge_recorded: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+  },
+  pathwayBadgeText: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightBold,
+    color: colors.primary,
   },
   chevron: {
     fontSize: typography.sizeLg,

@@ -35,6 +35,24 @@ const CATEGORY_LABELS = {
   questionnaire: 'Questionnaire',
 }
 
+function getInitialMeasure(pathway) {
+  const candidates = [
+    pathway?.preferredMeasureId,
+    ...(pathway?.missingMeasures ?? []).map(item => item.id),
+    ...(pathway?.dueMeasures ?? []).map(item => item.id),
+    ...(pathway?.recommendedMeasures ?? []).map(item => item.id),
+    '10MWT',
+  ]
+  return candidates.find(id => id && IMPLEMENTED.has(id) && MEASURES[id]) ?? '10MWT'
+}
+
+function getPathwayStatus(pathway, measureId) {
+  if (!pathway?.recommendedMeasures?.some(item => item.id === measureId)) return null
+  if (pathway.dueMeasures?.some(item => item.id === measureId)) return { state: 'due', label: 'Due' }
+  if (pathway.missingMeasures?.some(item => item.id === measureId)) return { state: 'missing', label: 'Baseline' }
+  return { state: 'recorded', label: 'Pathway' }
+}
+
 function measuresInCat(cat) {
   return Object.values(MEASURES).filter(m => m.category === cat)
 }
@@ -44,9 +62,10 @@ function makeEncounterId() {
   return `encounter-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
-export default function MeasureEntry({ patient, userId, onSaved, onDone, onDirtyChange }) {
-  const [activeMeasure, setActiveMeasure] = useState('10MWT')
-  const [activeCategory, setActiveCategory] = useState('performance')
+export default function MeasureEntry({ patient, userId, pathway, onSaved, onDone, onDirtyChange }) {
+  const initialMeasure = getInitialMeasure(pathway)
+  const [activeMeasure, setActiveMeasure] = useState(initialMeasure)
+  const [activeCategory, setActiveCategory] = useState(MEASURES[initialMeasure]?.category ?? 'performance')
   const [completed, setCompleted] = useState(new Set())
   const [drafts, setDrafts] = useState([])
   const [loading, setLoading] = useState(false)
@@ -56,6 +75,14 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone, onDirty
   useEffect(() => {
     onDirtyChange?.(drafts.length > 0)
   }, [drafts.length, onDirtyChange])
+
+  useEffect(() => {
+    const nextMeasure = getInitialMeasure(pathway)
+    if (!drafts.length && nextMeasure && MEASURES[nextMeasure]) {
+      setActiveMeasure(nextMeasure)
+      setActiveCategory(MEASURES[nextMeasure].category)
+    }
+  }, [drafts.length, patient?.id, pathway?.preferredMeasureId])
 
   function handleSubmit(inputs, results) {
     setError('')
@@ -124,6 +151,12 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone, onDirty
           </div>
         </div>
         <div className="measure-header__stats" aria-label="Encounter status">
+          {pathway && (
+            <div>
+              <span>Pathway</span>
+              <strong>{pathway.coveragePercent}%</strong>
+            </div>
+          )}
           <div>
             <span>Active measure</span>
             <strong>{activeMeasureInfo?.id || activeMeasure}</strong>
@@ -137,6 +170,9 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone, onDirty
             <strong>{drafts.length}</strong>
           </div>
         </div>
+        {pathway?.nextActions?.[0]?.detail && (
+          <p className="measure-header__pathway">{pathway.nextActions[0].detail}</p>
+        )}
       </div>
 
       <div data-measure-tabs="">
@@ -165,24 +201,29 @@ export default function MeasureEntry({ patient, userId, onSaved, onDone, onDirty
           </button>
           {CATEGORY_ORDER.filter(cat => cat === activeCategory).map(cat => (
             <div key={cat} data-measure-group="">
-              {measuresInCat(cat).map(m => (
-                <button
-                  key={m.id}
-                  data-measure-btn=""
-                  data-active={activeMeasure === m.id ? '' : undefined}
-                  data-done={completed.has(m.id) ? '' : undefined}
-                  data-unavailable={!IMPLEMENTED.has(m.id) ? '' : undefined}
-                  disabled={!IMPLEMENTED.has(m.id)}
-                  onClick={() => setActiveMeasure(m.id)}
-                >
-                  <div data-measure-label="">
-                    <span data-measure-abbr="">{m.id}</span>
-                    {!navCollapsed && <span data-measure-name="">{m.name}</span>}
-                  </div>
-                  {completed.has(m.id) && !navCollapsed && <span data-done-badge="">✓</span>}
-                  {!IMPLEMENTED.has(m.id) && !navCollapsed && <span data-soon-badge="">Soon</span>}
-                </button>
-              ))}
+              {measuresInCat(cat).map(m => {
+                const pathwayStatus = getPathwayStatus(pathway, m.id)
+                return (
+                  <button
+                    key={m.id}
+                    data-measure-btn=""
+                    data-active={activeMeasure === m.id ? '' : undefined}
+                    data-done={completed.has(m.id) ? '' : undefined}
+                    data-unavailable={!IMPLEMENTED.has(m.id) ? '' : undefined}
+                    data-pathway={pathwayStatus?.state}
+                    disabled={!IMPLEMENTED.has(m.id)}
+                    onClick={() => setActiveMeasure(m.id)}
+                  >
+                    <div data-measure-label="">
+                      <span data-measure-abbr="">{m.id}</span>
+                      {!navCollapsed && <span data-measure-name="">{m.name}</span>}
+                    </div>
+                    {pathwayStatus && !navCollapsed && <span data-pathway-badge={pathwayStatus.state}>{pathwayStatus.label}</span>}
+                    {completed.has(m.id) && !navCollapsed && <span data-done-badge="">✓</span>}
+                    {!IMPLEMENTED.has(m.id) && !navCollapsed && <span data-soon-badge="">Soon</span>}
+                  </button>
+                )
+              })}
             </div>
           ))}
         </nav>

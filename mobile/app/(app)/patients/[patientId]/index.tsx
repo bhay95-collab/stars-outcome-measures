@@ -14,7 +14,7 @@ import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
 import { PatientAvatar } from '../../../../src/components/ui/PatientAvatar';
 import { EmptyState } from '../../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../../src/components/ui/LoadingState';
-import { MEASURES } from '../../../../src/clinical/adapter';
+import { MEASURES, buildPatientPathway } from '../../../../src/clinical/adapter';
 import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
 function formatPrimary(results: AssessmentResults): string {
@@ -75,6 +75,7 @@ export default function PatientSummaryScreen() {
   const params = useLocalSearchParams<{ patientId: string }>();
   const patientId = Array.isArray(params.patientId) ? params.patientId[0] : params.patientId;
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [latest, setLatest] = useState<Assessment[]>([]);
   const [assessmentCount, setAssessmentCount] = useState(0);
   const [latestAssessmentDate, setLatestAssessmentDate] = useState<string | null>(null);
@@ -85,6 +86,7 @@ export default function PatientSummaryScreen() {
     Promise.all([getPatient(patientId), getAssessmentsForPatient(patientId)])
       .then(([p, assessments]) => {
         setPatient(p);
+        setAssessments(assessments);
         setLatest(getLatestPerMeasure(assessments));
         setAssessmentCount(assessments.length);
         setLatestAssessmentDate(getLatestDate(assessments));
@@ -103,6 +105,9 @@ export default function PatientSummaryScreen() {
       </Screen>
     );
   }
+
+  const pathway = buildPatientPathway(patient, assessments);
+  const pathwayActions = pathway.nextActions.filter(action => action.detail).slice(0, 3);
 
   if (error || !patient) {
     return (
@@ -158,6 +163,28 @@ export default function PatientSummaryScreen() {
               <Text style={styles.summaryLabel}>Latest</Text>
             </View>
           </View>
+        </Card>
+
+        <Card style={styles.pathwayCard}>
+          <View style={styles.pathwayHeader}>
+            <View>
+              <Text style={styles.pathwayKicker}>SMART REHAB PATHWAY</Text>
+              <Text style={styles.pathwayStatus}>{pathway.statusLabel}</Text>
+            </View>
+            <View style={styles.pathwayScore}>
+              <Text style={styles.pathwayScoreValue}>{pathway.coveragePercent}%</Text>
+              <Text style={styles.pathwayScoreLabel}>covered</Text>
+            </View>
+          </View>
+          <View style={styles.pathwayProgress} accessibilityElementsHidden>
+            <View style={[styles.pathwayProgressFill, { width: `${pathway.coveragePercent}%` }]} />
+          </View>
+          {pathwayActions.map(action => (
+            <View key={`${action.type}-${action.measureId ?? action.label}`} style={styles.pathwayAction}>
+              <Text style={styles.pathwayActionTitle}>{action.label}</Text>
+              <Text style={styles.pathwayActionText}>{action.detail}</Text>
+            </View>
+          ))}
         </Card>
 
         <SectionLabel>Recorded Measures</SectionLabel>
@@ -237,6 +264,67 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeSm,
     color: colors.muted,
     marginTop: spacing.xs,
+  },
+  pathwayCard: {
+    gap: spacing.sm,
+  },
+  pathwayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  pathwayKicker: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+    letterSpacing: typography.trackingWide,
+  },
+  pathwayStatus: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightBold,
+    color: colors.ink,
+    marginTop: spacing.xs,
+  },
+  pathwayScore: {
+    alignItems: 'flex-end',
+  },
+  pathwayScoreValue: {
+    fontSize: typography.sizeLg,
+    fontWeight: typography.weightBold,
+    color: colors.primary,
+  },
+  pathwayScoreLabel: {
+    fontSize: typography.sizeXs,
+    color: colors.muted,
+  },
+  pathwayProgress: {
+    height: 8,
+    borderRadius: radii.sm,
+    backgroundColor: colors.primarySoft,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
+  },
+  pathwayProgressFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+  },
+  pathwayAction: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  pathwayActionTitle: {
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightBold,
+    color: colors.ink,
+  },
+  pathwayActionText: {
+    fontSize: typography.sizeSm,
+    color: colors.muted,
+    lineHeight: 20,
   },
   summaryGrid: {
     flexDirection: 'row',

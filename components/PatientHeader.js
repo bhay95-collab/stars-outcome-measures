@@ -1,4 +1,5 @@
 import { buildPatientSummary, fmtDate } from '../lib/clinical/patientSummary'
+import { buildPatientPathway } from '../lib/clinical/pathways'
 import ThreeBarMotif from './ThreeBarMotif'
 
 function calculateAge(dobYear) {
@@ -16,6 +17,7 @@ export default function PatientHeader({ patient, assessments, onViewReport, repo
   const age = calculateAge(patient.dob_year)
   const summary = buildPatientSummary(patient, assessments)
   const coverage = Math.min(100, Math.round((summary.totals.domains / 5) * 100))
+  const pathway = buildPatientPathway(patient, assessments)
 
   return (
     <section className="patient-summary-card">
@@ -64,6 +66,11 @@ export default function PatientHeader({ patient, assessments, onViewReport, repo
           <span>Measures Recorded</span>
           <strong>{summary.totals.measures}</strong>
           <small>{summary.totals.domains} clinical domain{summary.totals.domains === 1 ? '' : 's'} covered</small>
+        </div>
+        <div className="summary-block">
+          <span>Pathway</span>
+          <strong>{pathway.coveragePercent}%</strong>
+          <small>{pathway.statusLabel}</small>
         </div>
       </div>
     </section>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { getMCIDContext, getMCIDStatus } from '../lib/clinical'
+import { buildPatientPathway } from '../lib/clinical/pathways'
 import {
   buildMeasureTrendSeries,
   buildPatientSummary,
@@ -47,6 +48,7 @@ function trendSeriesColor(index) {
 
 export default function SummaryTab({ patient, assessments, onDeleteAssessment, onDeletePatient }) {
   const summary = buildPatientSummary(patient, assessments)
+  const pathway = buildPatientPathway(patient, assessments)
   const mcidContext = patient.diagnosis ? getMCIDContext(patient.diagnosis) : null
   const selectableMeasures = summary.entries.filter(entry => summary.groups[entry.measureId]?.some(a => toFiniteNumber(a.results?.primaryValue) != null))
   const [selectedMeasureId, setSelectedMeasureId] = useState(selectableMeasures[0]?.measureId ?? '')
@@ -109,6 +111,8 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
         </div>
         <p>{summary.plainLanguageSummary}</p>
       </div>
+
+      <PathwayPanel pathway={pathway} />
 
       <div className="domain-grid">
         {summary.domains.map(domain => (
@@ -181,6 +185,51 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
         </div>
       )}
     </section>
+  )
+}
+
+function PathwayPanel({ pathway }) {
+  const keyMeasures = pathway.recommendedMeasures.slice(0, 6)
+  return (
+    <div className="summary-card pathway-panel" data-tone={pathway.statusTone}>
+      <div className="summary-card__head">
+        <div>
+          <h3>Smart Rehab Pathway</h3>
+          <p>{pathway.diagnosisLabel} pathway · {pathway.reassessmentDays}-day reassessment rhythm.</p>
+        </div>
+        <div className="pathway-score">
+          <strong>{pathway.coveragePercent}%</strong>
+          <span>{pathway.statusLabel}</span>
+        </div>
+      </div>
+
+      <div className="pathway-progress" aria-hidden="true">
+        <i style={{ width: `${pathway.coveragePercent}%` }} />
+      </div>
+
+      <div className="pathway-actions">
+        {pathway.nextActions.map((action, index) => (
+          <article key={`${action.type}-${action.measureId ?? index}`} data-tone={action.tone}>
+            <span>{action.type === 'reassess' ? 'Reassessment' : action.type === 'baseline' ? 'Baseline' : 'Next Step'}</span>
+            <strong>{action.label}</strong>
+            <p>{action.detail}</p>
+          </article>
+        ))}
+      </div>
+
+      {keyMeasures.length > 0 && (
+        <div className="pathway-chip-row" aria-label="Recommended pathway measures">
+          {keyMeasures.map(measure => (
+            <span
+              key={measure.id}
+              data-state={measure.isDue ? 'due' : measure.hasBaseline ? 'recorded' : 'missing'}
+            >
+              {measure.id}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

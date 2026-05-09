@@ -13,6 +13,7 @@ import SubscriptionWall from '../components/SubscriptionWall'
 import LogoWordmark from '../components/LogoWordmark'
 import WheelchairPrescriptionTool from '../components/WheelchairPrescriptionTool'
 import ThreeBarMotif from '../components/ThreeBarMotif'
+import { buildPatientPathway } from '../lib/clinical/pathways'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
 
 export async function getServerSideProps() { return { props: {} } }
@@ -249,6 +250,7 @@ export default function App() {
     : view === 'patients' ? 'Patients'
     : view === 'wheelchair' ? 'Wheelchair Prescription'
     : 'Patient Overview'
+  const selectedPathway = selectedPatient ? buildPatientPathway(selectedPatient, assessments) : null
 
   if (loading) {
     return (
@@ -391,6 +393,7 @@ export default function App() {
                 <MeasureEntry
                   patient={selectedPatient}
                   userId={user.id}
+                  pathway={selectedPathway}
                   onSaved={handleAssessmentSaved}
                   onDone={() => requestViewChange('summary')}
                   onDirtyChange={setAssessmentDirty}
@@ -456,6 +459,8 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
   const latestDate = latestAssessment?.created_at
     ? new Date(latestAssessment.created_at).toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' })
     : 'No assessments'
+  const pathway = selectedPatient ? buildPatientPathway(selectedPatient, selectedAssessments) : null
+  const nextPathwayAction = pathway?.nextActions?.[0] ?? null
 
   return (
     <div className="patients-workspace">
@@ -486,7 +491,22 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
               <div><span>Total assessments</span><strong>{selectedAssessments.length}</strong></div>
               <div><span>Measure types</span><strong>{measureCount}</strong></div>
               <div><span>Latest assessment</span><strong>{latestDate}</strong></div>
+              <div><span>Pathway</span><strong>{pathway ? `${pathway.coveragePercent}%` : '-'}</strong></div>
             </div>
+            {pathway && (
+              <div className="pathway-mini-card" data-tone={pathway.statusTone}>
+                <div>
+                  <span>Smart pathway</span>
+                  <strong>{pathway.statusLabel}</strong>
+                  <p>{nextPathwayAction?.detail}</p>
+                </div>
+                {nextPathwayAction?.measureId && (
+                  <button type="button" onClick={onNewAssessment}>
+                    {nextPathwayAction.label}
+                  </button>
+                )}
+              </div>
+            )}
             <div className="patient-workspace-actions">
               <button type="button" onClick={onNewAssessment}>New Assessment</button>
               <button type="button" onClick={onDashboard}>Open Dashboard</button>
@@ -1823,6 +1843,125 @@ const globalStyles = `
     line-height: 1.75;
   }
 
+  .pathway-panel {
+    border-left: 4px solid var(--color-primary);
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.88), rgba(234,243,251,0.78)),
+      rgba(255,255,255,0.8);
+  }
+
+  .pathway-score {
+    min-width: 150px;
+    text-align: right;
+  }
+
+  .pathway-score strong {
+    display: block;
+    color: var(--color-primary);
+    font-size: 28px;
+    font-weight: 800;
+  }
+
+  .pathway-score span {
+    color: var(--color-muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .pathway-progress {
+    height: 10px;
+    margin: 16px 0;
+    overflow: hidden;
+    border: 1px solid rgba(127,179,230,0.34);
+    border-radius: 999px;
+    background: rgba(234,243,251,0.92);
+  }
+
+  .pathway-progress i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  }
+
+  .pathway-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .pathway-actions article {
+    min-height: 120px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.78);
+  }
+
+  .pathway-actions article[data-tone="due"] {
+    border-color: rgba(238,138,112,0.42);
+    background: rgba(255,247,244,0.82);
+  }
+
+  .pathway-actions span {
+    display: block;
+    color: var(--color-primary);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  .pathway-actions strong {
+    display: block;
+    margin-top: 6px;
+    color: var(--color-ink);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .pathway-actions p {
+    margin-top: 8px;
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .pathway-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .pathway-chip-row span,
+  [data-pathway-badge] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 0 9px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.82);
+    color: var(--color-primary);
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .pathway-chip-row span[data-state="missing"],
+  [data-pathway-badge="missing"] {
+    border-color: rgba(127,179,230,0.52);
+    background: var(--color-primary-soft);
+  }
+
+  .pathway-chip-row span[data-state="due"],
+  [data-pathway-badge="due"] {
+    border-color: rgba(238,138,112,0.48);
+    background: rgba(255,247,244,0.92);
+    color: #9a4c34;
+  }
+
   .summary-card__head {
     display: flex;
     align-items: center;
@@ -2142,7 +2281,7 @@ const globalStyles = `
   }
 
   .patient-summary-card__body--real {
-    grid-template-columns: minmax(210px, 1.35fr) repeat(4, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 18px;
   }
 
@@ -2615,7 +2754,7 @@ const globalStyles = `
 
   .patient-workspace-stats {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
     margin-top: 22px;
   }
@@ -2642,6 +2781,54 @@ const globalStyles = `
     margin-top: 4px;
     color: var(--color-muted);
     font-size: 12px;
+  }
+
+  .pathway-mini-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid rgba(127,179,230,0.38);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(234,243,251,0.9), rgba(255,255,255,0.76));
+  }
+
+  .pathway-mini-card span {
+    display: block;
+    color: var(--color-primary);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  .pathway-mini-card strong {
+    display: block;
+    margin-top: 4px;
+    color: var(--color-ink);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .pathway-mini-card p {
+    max-width: 680px;
+    margin: 6px 0 0;
+    color: var(--color-muted);
+    line-height: 1.45;
+  }
+
+  .pathway-mini-card button {
+    min-height: 36px;
+    flex-shrink: 0;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--color-primary);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 800;
   }
 
   .patient-workspace-actions {
@@ -2757,10 +2944,10 @@ const globalStyles = `
 
   .measure-header__stats {
     display: grid;
-    grid-template-columns: repeat(3, minmax(110px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 10px;
     align-items: stretch;
-    min-width: min(100%, 450px);
+    min-width: min(100%, 560px);
   }
 
   .measure-header__stats > div {
@@ -2787,6 +2974,15 @@ const globalStyles = `
     font-size: 17px;
     font-weight: 800;
     line-height: 1.15;
+  }
+
+  .measure-header__pathway {
+    flex-basis: 100%;
+    max-width: 860px;
+    margin: 4px 0 0;
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.5;
   }
 
   [data-measure-panel] .section-label {
@@ -2876,6 +3072,9 @@ const globalStyles = `
     .patients-workspace {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+    .patient-workspace-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
     .patient-summary-card__body {
       grid-template-columns: 130px 1fr;
     }
@@ -2927,6 +3126,14 @@ const globalStyles = `
       align-items: flex-start;
       flex-direction: column;
     }
+    .pathway-score {
+      min-width: 0;
+      text-align: left;
+    }
+    .pathway-mini-card {
+      align-items: stretch;
+      flex-direction: column;
+    }
     .patient-workspace-hero {
       grid-template-columns: 1fr;
       justify-items: start;
@@ -2936,6 +3143,9 @@ const globalStyles = `
       display: none;
     }
     .measure-header__stats {
+      grid-template-columns: 1fr;
+    }
+    .patient-workspace-stats {
       grid-template-columns: 1fr;
     }
     .patient-summary-card__body,

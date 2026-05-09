@@ -1,4 +1,5 @@
 import { MEASURES as _MEASURES, MEASURE_IDS } from '@clinical/measures';
+import { buildPatientPathway as _buildPatientPathway } from '@clinical/pathways';
 
 export interface MeasureDefinition {
   id: string;
@@ -9,5 +10,44 @@ export interface MeasureDefinition {
   mcidKey: string | null;
 }
 
+export interface PathwayMeasure {
+  id: string;
+  name: string;
+  category: MeasureDefinition['category'];
+  hasBaseline: boolean;
+  isDue: boolean;
+  lastRecordedAt: string | null;
+  lastRecordedLabel: string | null;
+  daysSinceLast: number | null;
+}
+
+export interface PathwayAction {
+  type: string;
+  tone: 'neutral' | 'attention' | 'due' | 'good';
+  measureId: string | null;
+  label: string;
+  detail: string;
+}
+
+export interface PatientPathway {
+  diagnosis: string;
+  diagnosisLabel: string;
+  recommendedMeasures: PathwayMeasure[];
+  missingMeasures: PathwayMeasure[];
+  dueMeasures: PathwayMeasure[];
+  recordedMeasures: PathwayMeasure[];
+  coveragePercent: number;
+  nextActions: PathwayAction[];
+  statusLabel: string;
+  statusTone: 'neutral' | 'attention' | 'due' | 'good';
+  preferredMeasureId: string | null;
+  reassessmentDays: number;
+}
+
 export const MEASURES = _MEASURES as Record<string, MeasureDefinition>;
+export const buildPatientPathway = _buildPatientPathway as (
+  patient: unknown,
+  assessments?: unknown[],
+  options?: Record<string, unknown>,
+) => PatientPathway;
 export { MEASURE_IDS };
