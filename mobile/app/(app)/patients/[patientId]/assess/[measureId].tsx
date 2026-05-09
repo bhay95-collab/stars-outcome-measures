@@ -822,11 +822,7 @@ export default function AssessScreen() {
             <Text style={styles.measureName}>{measure.name}</Text>
             <Text style={styles.measureCategory}>{measure.category.toUpperCase()}</Text>
             <Card style={styles.messageCard}>
-              <Text style={styles.messageText}>
-                {measureId === HIMAT_ID
-                  ? 'HiMAT is not yet available on mobile.'
-                  : 'Assessment form coming soon.'}
-              </Text>
+              <Text style={styles.messageText}>Assessment form coming soon.</Text>
             </Card>
           </>
         ) : (

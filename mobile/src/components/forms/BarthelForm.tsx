@@ -29,6 +29,10 @@ interface BarthelItemType {
 
 const ITEM_COUNT = 10;
 
+const BARTHEL_CHIP_OPTIONS: ChipOption[][] = (BARTHEL_ITEMS as BarthelItemType[]).map(
+  item => item.options.map((v: number) => ({ value: v })),
+);
+
 const COLOR_MAP: Record<string, string> = {
   green: colors.success,
   amber: '#a05c00',
@@ -96,7 +100,6 @@ export function BarthelForm({ patientId }: { patientId: string }) {
         <Card>
           {items.map((item, idx) => {
             const isLast = idx === ITEM_COUNT - 1;
-            const chipOptions: ChipOption[] = item.options.map(v => ({ value: v }));
             return (
               <View key={idx} style={[styles.itemRow, !isLast && styles.itemBorder]}>
                 <View style={styles.itemHeader}>
@@ -110,7 +113,7 @@ export function BarthelForm({ patientId }: { patientId: string }) {
                 </View>
                 <View style={styles.chipWrap}>
                   <ScoreChipRow
-                    options={chipOptions}
+                    options={BARTHEL_CHIP_OPTIONS[idx]}
                     selected={scores[idx]}
                     onSelect={v => handleScore(idx, v)}
                   />
