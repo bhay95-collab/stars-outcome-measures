@@ -1570,18 +1570,15 @@ const globalStyles = `
   }
 
   .app-main::before {
-    content: 'IQ';
+    content: '';
     position: absolute;
-    top: 28px;
+    top: 34px;
     right: 42px;
-    width: auto;
-    height: auto;
+    width: 138px;
+    height: 98px;
     pointer-events: none;
-    color: rgba(127,179,230,0.18);
-    font-family: 'Source Serif 4', Georgia, serif;
-    font-size: 106px;
-    font-weight: 700;
-    line-height: 0.78;
+    opacity: 0.11;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 64'%3E%3Crect x='0' y='34' width='22' height='30' rx='5' fill='%230D5C95'/%3E%3Crect x='34' y='18' width='22' height='46' rx='5' fill='%234A9DE8'/%3E%3Crect x='68' y='0' width='22' height='64' rx='5' fill='%239BC7F2'/%3E%3C/svg%3E") center / contain no-repeat;
   }
 
   .app-main > * {
@@ -1633,22 +1630,6 @@ const globalStyles = `
     background:
       linear-gradient(120deg, rgba(255,255,255,0.86), rgba(234,243,251,0.7) 58%, rgba(220,238,255,0.82)),
       rgba(255,255,255,0.72);
-  }
-
-  .patient-summary-card::after {
-    content: 'IQ';
-    position: absolute;
-    top: 22px;
-    right: 24px;
-    z-index: 0;
-    width: auto;
-    height: auto;
-    color: rgba(127,179,230,0.2);
-    font-family: 'Source Serif 4', Georgia, serif;
-    font-size: 74px;
-    font-weight: 700;
-    line-height: 0.78;
-    pointer-events: none;
   }
 
   .patient-summary-card > * {
@@ -2766,26 +2747,6 @@ const globalStyles = `
       rgba(255,255,255,0.72);
   }
 
-  [data-measure-panel] > .measure-header::after {
-    content: 'IQ';
-    position: absolute;
-    right: 26px;
-    top: 18px;
-    width: auto;
-    height: auto;
-    color: rgba(127,179,230,0.18);
-    font-family: 'Source Serif 4', Georgia, serif;
-    font-size: 80px;
-    font-weight: 700;
-    line-height: 0.78;
-    pointer-events: none;
-  }
-
-  [data-measure-panel] > .measure-header > * {
-    position: relative;
-    z-index: 1;
-  }
-
   .measure-header__copy {
     min-width: 0;
   }
@@ -2957,8 +2918,7 @@ const globalStyles = `
     .app-main {
       padding: 28px 16px 44px;
     }
-    .app-main::before,
-    .patient-summary-card::after {
+    .app-main::before {
       display: none;
     }
     .page-toolbar,
