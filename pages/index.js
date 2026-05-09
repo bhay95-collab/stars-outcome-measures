@@ -248,6 +248,8 @@ export default function Landing() {
           </div>
         </section>
 
+        <MobileAppShowcase />
+
         <section id="pricing" className="section pricing-section">
           <div className="section-head centered">
             <p className="eyebrow">PRICING</p>
@@ -349,6 +351,124 @@ export default function Landing() {
         />
       )}
     </>
+  )
+}
+
+function MobileAppShowcase() {
+  return (
+    <section className="mobile-showcase" aria-label="Mobile app coming soon">
+      <div className="mobile-showcase__inner">
+        <div className="mobile-showcase__copy">
+          <p className="eyebrow">MOBILE APP COMING SOON</p>
+          <h2>Outcome capture where assessment actually happens.</h2>
+          <p>
+            The mobile companion is being built for fast bedside, gym, ward, and community use: find a patient, follow pathway prompts, open a measure, use built-in timers and guides, then keep the web dashboard as the reporting workspace.
+          </p>
+          <div className="mobile-showcase__points">
+            <span><Check size={15} /> Patient directory and search</span>
+            <span><Check size={15} /> Smart Rehab Pathway prompts</span>
+            <span><Check size={15} /> Measure guides and timed capture</span>
+          </div>
+        </div>
+
+        <div className="phone-gallery" aria-hidden="true">
+          <PhonePreview variant="directory" />
+          <PhonePreview variant="pathway" />
+          <PhonePreview variant="measure" />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function PhonePreview({ variant }) {
+  return (
+    <div className={`phone-preview phone-preview--${variant}`}>
+      <div className="phone-preview__status">
+        <span>21:28</span>
+        <i />
+      </div>
+      <div className="phone-preview__nav">
+        {variant === 'directory' ? <strong>RehabMetrics <em>IQ</em></strong> : <b>‹</b>}
+        {variant === 'measure' && <small>Guide</small>}
+      </div>
+      <div className="phone-preview__sheet">
+        {variant === 'directory' && (
+          <>
+            <div className="phone-hero">
+              <div>
+                <h3>Patient Directory</h3>
+                <p>Manage and monitor patient progress.</p>
+              </div>
+              <MiniBars />
+            </div>
+            <div className="phone-search">Search patients</div>
+            {['Benjamin H.', 'Dharsha P.', 'Haylee K.', 'John S.'].map((name, index) => (
+              <div className="phone-row" key={name}>
+                <span>{name.split(' ').map(part => part[0]).join('')}</span>
+                <div>
+                  <strong>{name}</strong>
+                  <small>{['04/05/1995', '09/09/1986', '02/02/1980', '01/01/1975'][index]}</small>
+                </div>
+                <em>›</em>
+              </div>
+            ))}
+          </>
+        )}
+
+        {variant === 'pathway' && (
+          <>
+            <div className="phone-patient">
+              <span>JS</span>
+              <strong>John S.</strong>
+            </div>
+            <div className="phone-pathway">
+              <div>
+                <small>SMART REHAB PATHWAY</small>
+                <strong>8 baseline measures remaining</strong>
+              </div>
+              <b>11%</b>
+              <div className="phone-progress"><i /></div>
+              <p>Suggested measures, missing baselines, and reassessments that are ready to repeat.</p>
+            </div>
+            {['Record TUG', 'Record FAC', 'Record 6MWT'].map(item => (
+              <div className="phone-action" key={item}>
+                <strong>{item}</strong>
+                <span>Recommended for this pathway.</span>
+              </div>
+            ))}
+          </>
+        )}
+
+        {variant === 'measure' && (
+          <>
+            <div className="phone-patient">
+              <span>JS</span>
+              <strong>John S.</strong>
+            </div>
+            <div className="phone-measure">
+              <h3>Trial 1</h3>
+              <div className="phone-tabs"><span>TUG</span><span>TUG Fast</span><span>TUG Dual</span></div>
+              <small>STOPWATCH</small>
+              <strong>0.0 <em>sec</em></strong>
+              <div className="phone-start">Start</div>
+              <label>TIME (SECONDS)</label>
+              <div className="phone-input">— <span>sec</span></div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MiniBars() {
+  return (
+    <div className="mini-bars">
+      <i />
+      <i />
+      <i />
+    </div>
   )
 }
 
@@ -902,6 +1022,446 @@ const styles = `
     line-height: 1.6;
   }
 
+  .mobile-showcase {
+    overflow: hidden;
+    border-top: 1px solid rgba(215,224,232,0.72);
+    border-bottom: 1px solid rgba(215,224,232,0.72);
+    background:
+      linear-gradient(135deg, rgba(23,73,111,0.96), rgba(35,100,153,0.92)),
+      var(--navy-dark);
+  }
+
+  .mobile-showcase__inner {
+    max-width: 1088px;
+    margin: 0 auto;
+    padding: 80px 24px;
+    display: grid;
+    grid-template-columns: minmax(300px, 0.86fr) minmax(0, 1.14fr);
+    gap: 48px;
+    align-items: center;
+  }
+
+  .mobile-showcase__copy .eyebrow {
+    color: rgba(220,238,255,0.82);
+  }
+
+  .mobile-showcase h2 {
+    max-width: 520px;
+    margin-top: 12px;
+    color: #fff;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(34px, 4vw, 54px);
+    line-height: 1.06;
+  }
+
+  .mobile-showcase__copy > p:not(.eyebrow) {
+    max-width: 520px;
+    margin-top: 18px;
+    color: rgba(234,243,251,0.86);
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+  .mobile-showcase__points {
+    display: grid;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .mobile-showcase__points span {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .mobile-showcase__points svg {
+    color: var(--mint);
+  }
+
+  .phone-gallery {
+    min-height: 520px;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    gap: 14px;
+  }
+
+  .phone-preview {
+    position: relative;
+    min-width: 0;
+    aspect-ratio: 0.49;
+    overflow: hidden;
+    border: 1px solid rgba(220,238,255,0.2);
+    border-radius: 34px;
+    background: #17496F;
+    box-shadow: 0 24px 58px rgba(0,0,0,0.32);
+  }
+
+  .phone-preview--pathway {
+    transform: translateY(-24px) scale(1.04);
+    z-index: 2;
+  }
+
+  .phone-preview--directory,
+  .phone-preview--measure {
+    opacity: 0.9;
+    transform: translateY(28px) scale(0.94);
+  }
+
+  .phone-preview__status {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .phone-preview__status i {
+    width: 42px;
+    height: 12px;
+    border-radius: 999px;
+    background: #050608;
+  }
+
+  .phone-preview__nav {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    color: #fff;
+  }
+
+  .phone-preview__nav strong {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .phone-preview__nav em {
+    color: #9BC7F2;
+    font-style: normal;
+  }
+
+  .phone-preview__nav b {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .phone-preview__nav small {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 11px;
+    border: 1px solid rgba(220,238,255,0.42);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .phone-preview__sheet {
+    position: absolute;
+    inset: 92px 0 0;
+    overflow: hidden;
+    padding: 18px;
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    background: #f1f7fc;
+  }
+
+  .phone-hero,
+  .phone-patient,
+  .phone-measure,
+  .phone-pathway,
+  .phone-row,
+  .phone-action {
+    border: 1px solid #d7e7f5;
+    background: #fff;
+  }
+
+  .phone-hero {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    padding: 15px;
+    border-radius: 18px;
+  }
+
+  .phone-hero h3 {
+    color: #0A1B33;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 23px;
+    line-height: 1;
+  }
+
+  .phone-hero p {
+    margin-top: 7px;
+    color: #62728b;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .mini-bars {
+    height: 42px;
+    display: inline-grid;
+    grid-template-columns: repeat(3, 9px);
+    align-items: end;
+    gap: 3px;
+  }
+
+  .mini-bars i {
+    display: block;
+    border-radius: 2px;
+  }
+  .mini-bars i:nth-child(1) { height: 20px; background: #0D5C95; }
+  .mini-bars i:nth-child(2) { height: 31px; background: #4A9DE8; }
+  .mini-bars i:nth-child(3) { height: 42px; background: #9BC7F2; }
+
+  .phone-search {
+    min-height: 43px;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    border: 1px solid #d7e7f5;
+    border-radius: 14px;
+    background: #f8fbfe;
+    color: #8a96a3;
+    font-size: 13px;
+  }
+
+  .phone-row {
+    min-height: 58px;
+    display: grid;
+    grid-template-columns: 34px 1fr auto;
+    align-items: center;
+    gap: 11px;
+    margin-top: 9px;
+    padding: 9px 12px;
+    border-radius: 14px;
+  }
+
+  .phone-row span,
+  .phone-patient span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #eaf3fb;
+    color: var(--navy);
+    font-weight: 800;
+  }
+
+  .phone-row span {
+    width: 34px;
+    height: 34px;
+    font-size: 10px;
+  }
+
+  .phone-row strong,
+  .phone-patient strong,
+  .phone-action strong {
+    display: block;
+    color: #0A1B33;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .phone-row small,
+  .phone-action span {
+    display: block;
+    margin-top: 3px;
+    color: #667891;
+    font-size: 10px;
+  }
+
+  .phone-row em {
+    color: #8a96a3;
+    font-size: 20px;
+    font-style: normal;
+  }
+
+  .phone-patient {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .phone-patient span {
+    width: 42px;
+    height: 42px;
+    font-size: 12px;
+  }
+
+  .phone-pathway {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .phone-pathway small,
+  .phone-measure small,
+  .phone-measure label {
+    color: var(--navy);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+  }
+
+  .phone-pathway strong {
+    display: block;
+    margin-top: 4px;
+    color: #0A1B33;
+    font-size: 16px;
+    line-height: 1.15;
+  }
+
+  .phone-pathway b {
+    color: var(--navy);
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .phone-progress {
+    grid-column: 1 / -1;
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #dceeff;
+  }
+
+  .phone-progress i {
+    display: block;
+    width: 20%;
+    height: 100%;
+    background: var(--navy);
+  }
+
+  .phone-pathway p {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 10px;
+    border-radius: 10px;
+    background: #eaf3fb;
+    color: #27364a;
+    font-size: 10px;
+    line-height: 1.45;
+  }
+
+  .phone-action {
+    margin-top: 10px;
+    padding: 11px 0;
+    border-width: 1px 0 0;
+    background: transparent;
+  }
+
+  .phone-measure {
+    margin-top: 14px;
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .phone-measure h3 {
+    color: #0A1B33;
+    font-size: 18px;
+  }
+
+  .phone-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    margin: 16px 0;
+    padding: 4px;
+    border-radius: 13px;
+    background: #eaf3fb;
+    border: 1px solid #d7e7f5;
+  }
+
+  .phone-tabs span {
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: #62728b;
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .phone-tabs span:first-child {
+    background: var(--navy);
+    color: #fff;
+  }
+
+  .phone-measure > strong {
+    display: block;
+    margin: 26px 0 18px;
+    color: #0A1B33;
+    font-size: 44px;
+    line-height: 1;
+    text-align: center;
+  }
+
+  .phone-measure > strong em {
+    color: #667891;
+    font-size: 16px;
+    font-style: normal;
+  }
+
+  .phone-start {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--navy);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .phone-measure label {
+    display: block;
+    margin-top: 20px;
+  }
+
+  .phone-input {
+    position: relative;
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+    border: 1px solid #d7e7f5;
+    border-radius: 14px;
+    background: #f8fbfe;
+    color: #8a96a3;
+    font-size: 26px;
+    font-weight: 800;
+  }
+
+  .phone-input span {
+    position: absolute;
+    right: 28px;
+    color: #667891;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
   .pricing-section {
     display: grid;
     justify-items: center;
@@ -1180,6 +1740,7 @@ const styles = `
     .hero__inner,
     .workflow-layout,
     .clinical-band__inner,
+    .mobile-showcase__inner,
     .pricing-layout,
     .faq-section { grid-template-columns: 1fr; }
     .preview-card { justify-self: start; }
@@ -1189,12 +1750,33 @@ const styles = `
     .image-panel--pricing {
       min-height: 320px;
     }
+    .phone-gallery {
+      min-height: auto;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+    }
+    .phone-preview--pathway,
+    .phone-preview--directory,
+    .phone-preview--measure {
+      transform: none;
+    }
   }
   @media (max-width: 700px) {
     .site-header__inner, .hero__inner, .section, .measure-strip__inner { padding-left: 18px; padding-right: 18px; }
     .site-header__inner { min-height: 84px; }
     .hero__inner { padding-top: 56px; }
     .hero__actions { align-items: stretch; flex-direction: column; gap: 16px; }
+    .mobile-showcase__inner { padding: 58px 18px; }
+    .phone-gallery {
+      display: flex;
+      overflow-x: auto;
+      padding: 4px 0 18px;
+      scroll-snap-type: x mandatory;
+    }
+    .phone-preview {
+      width: 224px;
+      flex: 0 0 224px;
+      scroll-snap-align: center;
+    }
     .faq-cta { align-items: stretch; flex-direction: column; }
     .measure-strip__inner { grid-template-columns: 1fr; }
     .preview-row { grid-template-columns: 1fr; }
