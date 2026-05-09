@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Image, Modal, Pressable,
+  Image, Modal, Pressable, TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -154,6 +154,7 @@ export default function PatientsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     listPatients()
@@ -176,6 +177,22 @@ export default function PatientsScreen() {
 
   const resolvedAvatarUrl: string | null =
     profileAvatarUrl ?? user?.user_metadata?.avatar_url ?? null;
+
+  const filteredPatients = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return patients;
+
+    return patients.filter(patient => {
+      const searchable = [
+        patient.initials,
+        patient.condition ?? '',
+        patient.dob ?? '',
+        patient.dob ? formatDOB(patient.dob) : '',
+      ].join(' ').toLowerCase();
+      return searchable.includes(query);
+    });
+  }, [patients, searchQuery]);
+
   async function handleSignOut() {
     setSettingsVisible(false);
     await signOut();
@@ -201,14 +218,19 @@ export default function PatientsScreen() {
             </View>
             <ThreeBarMotif size="md" tone="soft" />
           </View>
-          {!isLoading && !error ? (
-            <View style={styles.metricsRow}>
-              <View style={styles.metricTile}>
-                <Text style={styles.metricValue}>{patients.length}</Text>
-                <Text style={styles.metricLabel}>Patient records</Text>
-              </View>
-            </View>
-          ) : null}
+          <View style={styles.searchRow}>
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search patients"
+              placeholderTextColor={colors.subtle}
+              autoCapitalize="none"
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+              style={styles.searchInput}
+              accessibilityLabel="Search patients"
+            />
+          </View>
         </View>
 
         {isLoading ? (
@@ -228,8 +250,13 @@ export default function PatientsScreen() {
                 title="No patients found"
                 hint="Patients you add in the web app will appear here."
               />
+            ) : filteredPatients.length === 0 ? (
+              <EmptyState
+                title="No matching patients"
+                hint="Try searching by initials, condition, or date of birth."
+              />
             ) : (
-              patients.map(p => <PatientCard key={p.id} patient={p} />)
+              filteredPatients.map(p => <PatientCard key={p.id} patient={p} />)
             )}
           </ScrollView>
         )}
@@ -397,29 +424,18 @@ const styles = StyleSheet.create({
     color: colors.muted,
     lineHeight: 20,
   },
-  metricsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  searchRow: {
     marginTop: spacing.md,
   },
-  metricTile: {
-    flex: 1,
-    backgroundColor: colors.primarySoft,
+  searchInput: {
+    minHeight: 48,
+    backgroundColor: colors.panel,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.secondarySoft,
-    padding: spacing.sm,
-  },
-  metricValue: {
-    fontSize: typography.sizeXl,
-    fontWeight: typography.weightBold,
-    color: colors.primary,
-  },
-  metricLabel: {
-    fontSize: typography.sizeXs,
-    fontWeight: typography.weightSemibold,
-    color: colors.muted,
-    marginTop: spacing.xs,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    color: colors.ink,
+    fontSize: typography.sizeMd,
   },
   scroll: {
     flex: 1,
