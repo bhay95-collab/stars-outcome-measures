@@ -13,6 +13,9 @@ import { MASForm }  from '../../../../../src/components/forms/MASForm';
 import { COVSForm } from '../../../../../src/components/forms/COVSForm';
 import { FGAForm }  from '../../../../../src/components/forms/FGAForm';
 import { HiMATForm } from '../../../../../src/components/forms/HiMAT';
+import { SARAForm }      from '../../../../../src/components/forms/SARAForm';
+import { StepTestForm } from '../../../../../src/components/forms/StepTest';
+import { AMPForm }      from '../../../../../src/components/forms/AMPForm';
 import { MEASURES } from '../../../../../src/clinical/adapter';
 import { getPatient } from '../../../../../src/supabase/patients';
 import type { Patient } from '../../../../../src/types/domain';
@@ -29,7 +32,10 @@ import type { SixMWTTimerStatus } from '../../../../../src/components/forms/SixM
 import { ThreeBarMotif } from '../../../../../src/components/ui/ThreeBarMotif';
 import { colors, spacing, typography, radii } from '../../../../../src/theme/tokens';
 
-const TUG_ID = 'TUG';
+const TUG_ID  = 'TUG';
+const SARA_ID = 'SARA';
+const STEP_ID = 'Step';
+const AMP_ID  = 'AMP';
 const HIMAT_ID = 'HiMAT';
 const MWT_ID = '10MWT';
 const SMWT_ID = '6MWT';
@@ -737,6 +743,18 @@ export default function AssessScreen() {
 
   if (measureId === HIMAT_ID) {
     return <HiMATForm patientId={patientId} />;
+  }
+
+  if (measureId === SARA_ID) {
+    return <SARAForm patientId={patientId} />;
+  }
+
+  if (measureId === STEP_ID) {
+    return <StepTestForm patientId={patientId} />;
+  }
+
+  if (measureId === AMP_ID) {
+    return <AMPForm patientId={patientId} />;
   }
 
   const measure = MEASURES[measureId];
