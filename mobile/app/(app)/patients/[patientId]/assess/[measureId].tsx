@@ -17,6 +17,12 @@ import { SARAForm }      from '../../../../../src/components/forms/SARAForm';
 import { StepTestForm } from '../../../../../src/components/forms/StepTest';
 import { AMPForm }      from '../../../../../src/components/forms/AMPForm';
 import { BOOMERForm }   from '../../../../../src/components/forms/BOOMER';
+import { FSSForm }      from '../../../../../src/components/forms/FSSForm';
+import { HADSForm }     from '../../../../../src/components/forms/HADSForm';
+import { RPQForm }      from '../../../../../src/components/forms/RPQForm';
+import { PDQ8Form }     from '../../../../../src/components/forms/PDQ8Form';
+import { ABCForm }      from '../../../../../src/components/forms/ABCForm';
+import { BIVIForm }     from '../../../../../src/components/forms/BIVIForm';
 import { MEASURES } from '../../../../../src/clinical/adapter';
 import { getPatient } from '../../../../../src/supabase/patients';
 import type { Patient } from '../../../../../src/types/domain';
@@ -38,6 +44,12 @@ const SARA_ID = 'SARA';
 const STEP_ID = 'Step';
 const AMP_ID    = 'AMP';
 const BOOMER_ID = 'BOOMER';
+const FSS_ID    = 'FSS';
+const HADS_ID   = 'HADS';
+const RPQ_ID    = 'RPQ';
+const PDQ8_ID   = 'PDQ8';
+const ABC_ID    = 'ABC';
+const BIVI_ID   = 'BIVI';
 const HIMAT_ID = 'HiMAT';
 const MWT_ID = '10MWT';
 const SMWT_ID = '6MWT';
@@ -761,6 +773,30 @@ export default function AssessScreen() {
 
   if (measureId === BOOMER_ID) {
     return <BOOMERForm patientId={patientId} />;
+  }
+
+  if (measureId === FSS_ID) {
+    return <FSSForm patientId={patientId} />;
+  }
+
+  if (measureId === HADS_ID) {
+    return <HADSForm patientId={patientId} />;
+  }
+
+  if (measureId === RPQ_ID) {
+    return <RPQForm patientId={patientId} />;
+  }
+
+  if (measureId === PDQ8_ID) {
+    return <PDQ8Form patientId={patientId} />;
+  }
+
+  if (measureId === ABC_ID) {
+    return <ABCForm patientId={patientId} />;
+  }
+
+  if (measureId === BIVI_ID) {
+    return <BIVIForm patientId={patientId} />;
   }
 
   const measure = MEASURES[measureId];
