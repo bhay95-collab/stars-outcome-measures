@@ -104,8 +104,11 @@ export default function MeasureSelectorScreen() {
         <View style={styles.hero}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroTitle}>New Assessment</Text>
+            {pathway ? (
+              <Text style={styles.heroStatus}>{pathway.statusLabel}</Text>
+            ) : null}
             <Text style={styles.heroSubtitle}>
-              {pathway ? pathway.statusLabel : 'Choose the next measure to record.'}
+              {pathway ? pathway.explanation.badgeHelp : 'Choose the next measure to record.'}
             </Text>
           </View>
           <ThreeBarMotif size="md" tone="soft" />
@@ -170,6 +173,12 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeXl,
     fontWeight: typography.weightBold,
     color: colors.ink,
+  },
+  heroStatus: {
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightBold,
+    color: colors.primary,
+    marginTop: spacing.xs,
   },
   heroSubtitle: {
     fontSize: typography.sizeSm,

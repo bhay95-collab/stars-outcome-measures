@@ -179,6 +179,11 @@ export default function PatientSummaryScreen() {
           <View style={styles.pathwayProgress} accessibilityElementsHidden>
             <View style={[styles.pathwayProgressFill, { width: `${pathway.coveragePercent}%` }]} />
           </View>
+          <View style={styles.pathwayExplanation}>
+            <Text style={styles.pathwayExplanationTitle}>What this means</Text>
+            <Text style={styles.pathwayExplanationText}>{pathway.explanation.detail}</Text>
+            <Text style={styles.pathwayCaution}>{pathway.explanation.caution}</Text>
+          </View>
           {pathwayActions.map(action => (
             <View key={`${action.type}-${action.measureId ?? action.label}`} style={styles.pathwayAction}>
               <Text style={styles.pathwayActionTitle}>{action.label}</Text>
@@ -309,6 +314,31 @@ const styles = StyleSheet.create({
   pathwayProgressFill: {
     height: '100%',
     backgroundColor: colors.primary,
+  },
+  pathwayExplanation: {
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
+    borderRadius: radii.md,
+    backgroundColor: colors.primarySoft,
+    padding: spacing.sm,
+    gap: spacing.xs,
+  },
+  pathwayExplanationTitle: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightBold,
+    color: colors.primary,
+    letterSpacing: typography.trackingWide,
+    textTransform: 'uppercase',
+  },
+  pathwayExplanationText: {
+    fontSize: typography.sizeSm,
+    color: colors.ink,
+    lineHeight: 20,
+  },
+  pathwayCaution: {
+    fontSize: typography.sizeXs,
+    color: colors.muted,
+    lineHeight: 17,
   },
   pathwayAction: {
     borderTopWidth: 1,

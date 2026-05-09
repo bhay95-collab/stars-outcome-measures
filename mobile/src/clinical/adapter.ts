@@ -1,5 +1,8 @@
 import { MEASURES as _MEASURES, MEASURE_IDS } from '@clinical/measures';
-import { buildPatientPathway as _buildPatientPathway } from '@clinical/pathways';
+import {
+  SMART_REHAB_PATHWAY_COPY as _SMART_REHAB_PATHWAY_COPY,
+  buildPatientPathway as _buildPatientPathway,
+} from '@clinical/pathways';
 
 export interface MeasureDefinition {
   id: string;
@@ -29,6 +32,13 @@ export interface PathwayAction {
   detail: string;
 }
 
+export interface PathwayExplanation {
+  short: string;
+  detail: string;
+  badgeHelp: string;
+  caution: string;
+}
+
 export interface PatientPathway {
   diagnosis: string;
   diagnosisLabel: string;
@@ -42,9 +52,11 @@ export interface PatientPathway {
   statusTone: 'neutral' | 'attention' | 'due' | 'good';
   preferredMeasureId: string | null;
   reassessmentDays: number;
+  explanation: PathwayExplanation;
 }
 
 export const MEASURES = _MEASURES as Record<string, MeasureDefinition>;
+export const SMART_REHAB_PATHWAY_COPY = _SMART_REHAB_PATHWAY_COPY as PathwayExplanation;
 export const buildPatientPathway = _buildPatientPathway as (
   patient: unknown,
   assessments?: unknown[],

@@ -255,6 +255,12 @@ function PathwayPanel({ pathway }) {
         <i style={{ width: `${pathway.coveragePercent}%` }} />
       </div>
 
+      <div className="pathway-explainer">
+        <strong>How it works</strong>
+        <p>{pathway.explanation.detail}</p>
+        <small>{pathway.explanation.caution}</small>
+      </div>
+
       <div className="pathway-actions">
         {pathway.nextActions.map((action, index) => (
           <article key={`${action.type}-${action.measureId ?? index}`} data-tone={action.tone}>

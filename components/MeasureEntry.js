@@ -170,8 +170,12 @@ export default function MeasureEntry({ patient, userId, pathway, onSaved, onDone
             <strong>{drafts.length}</strong>
           </div>
         </div>
-        {pathway?.nextActions?.[0]?.detail && (
-          <p className="measure-header__pathway">{pathway.nextActions[0].detail}</p>
+        {pathway && (
+          <div className="measure-header__pathway">
+            <strong>Smart pathway guide</strong>
+            <span>{pathway.explanation.badgeHelp}</span>
+            {pathway.nextActions?.[0]?.detail && <em>{pathway.nextActions[0].detail}</em>}
+          </div>
         )}
       </div>
 

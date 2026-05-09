@@ -498,7 +498,8 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
                 <div>
                   <span>Smart pathway</span>
                   <strong>{pathway.statusLabel}</strong>
-                  <p>{nextPathwayAction?.detail}</p>
+                  <p className="pathway-mini-card__explanation">{pathway.explanation.short}</p>
+                  {nextPathwayAction?.detail && <p>{nextPathwayAction.detail}</p>}
                 </div>
                 {nextPathwayAction?.measureId && (
                   <button type="button" onClick={onNewAssessment}>
@@ -1976,6 +1977,30 @@ const globalStyles = `
     background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
   }
 
+  .pathway-explainer {
+    display: grid;
+    gap: 5px;
+    margin-bottom: 14px;
+    padding: 12px;
+    border: 1px solid rgba(127,179,230,0.34);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.74);
+  }
+
+  .pathway-explainer strong {
+    color: var(--color-ink);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .pathway-explainer p,
+  .pathway-explainer small {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
   .pathway-actions {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -2917,6 +2942,11 @@ const globalStyles = `
     line-height: 1.45;
   }
 
+  .pathway-mini-card__explanation {
+    color: var(--color-ink) !important;
+    font-weight: 700;
+  }
+
   .pathway-mini-card button {
     min-height: 36px;
     flex-shrink: 0;
@@ -3077,10 +3107,30 @@ const globalStyles = `
   .measure-header__pathway {
     flex-basis: 100%;
     max-width: 860px;
-    margin: 4px 0 0;
+    display: grid;
+    gap: 4px;
+    margin: 6px 0 0;
+    padding: 11px 12px;
+    border: 1px solid rgba(127,179,230,0.38);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.58);
     color: var(--color-muted);
     font-size: 13px;
     line-height: 1.5;
+  }
+
+  .measure-header__pathway strong {
+    color: var(--color-primary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .measure-header__pathway span,
+  .measure-header__pathway em {
+    color: var(--color-muted);
+    font-style: normal;
   }
 
   [data-measure-panel] .section-label {
