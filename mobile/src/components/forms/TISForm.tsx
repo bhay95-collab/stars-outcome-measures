@@ -11,7 +11,12 @@ import { Card } from '../ui/Card';
 import { NavyHeader } from '../ui/NavyHeader';
 import { PatientAvatar } from '../ui/PatientAvatar';
 import { NumericClinicalInput } from './NumericClinicalInput';
+import { saveAssessment } from '../../supabase/assessments';
+import { useAuth } from '../../auth/AuthProvider';
+import { Button } from '../ui/Button';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 interface TISResult {
   primaryValue: number;
@@ -66,33 +71,78 @@ function attemptResult(
 
 export function TISForm({ patientId }: { patientId: string }) {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [patient, setPatient]           = useState<Patient | null>(null);
   const [staticInput, setStaticInput]   = useState('');
   const [dynamicInput, setDynamicInput] = useState('');
   const [coordInput, setCoordInput]     = useState('');
   const [errors, setErrors]             = useState<TISErrors>({});
   const [result, setResult]             = useState<TISResult | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getPatient(patientId).then(p => setPatient(p)).catch(() => null);
   }, [patientId]);
 
+  function resetSaveState() {
+    setSaveState('idle');
+    setSaveError(null);
+  }
+
   function handleStaticChange(text: string) {
     setStaticInput(text);
     setResult(null);
     setErrors(prev => ({ ...prev, static: undefined }));
+    resetSaveState();
   }
 
   function handleDynamicChange(text: string) {
     setDynamicInput(text);
     setResult(null);
     setErrors(prev => ({ ...prev, dynamic: undefined }));
+    resetSaveState();
   }
 
   function handleCoordChange(text: string) {
     setCoordInput(text);
     setResult(null);
     setErrors(prev => ({ ...prev, coord: undefined }));
+    resetSaveState();
+  }
+
+  async function handleSave() {
+    if (saveState === 'saving' || !result) return;
+
+    if (!user) {
+      setSaveError('Your session has expired. Please sign in again.');
+      setSaveState('error');
+      return;
+    }
+
+    setSaveState('saving');
+    setSaveError(null);
+
+    try {
+      await saveAssessment({
+        patient_id: patientId,
+        measure: 'TIS',
+        inputs: {
+          staticScore: Number(staticInput.trim()),
+          dynamicScore: Number(dynamicInput.trim()),
+          coordinationScore: Number(coordInput.trim()),
+        },
+        results: {
+          ...result,
+          meta: { ...result.meta, encounterDate: new Date().toISOString() },
+        },
+      });
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 3000);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
+      setSaveState('error');
+    }
   }
 
   function handleStaticBlur() {
@@ -177,35 +227,54 @@ export function TISForm({ patientId }: { patientId: string }) {
         </Card>
 
         {result !== null ? (
-          <View style={styles.resultCard}>
-            <Text style={styles.resultMicroLabel}>TIS RESULT</Text>
-            <View style={styles.resultValueRow}>
-              <Text style={styles.resultValue}>{result.primaryValue}</Text>
-              <Text style={styles.resultUnit}>{result.primaryUnit}</Text>
-              <View style={[
-                styles.resultColorDot,
-                { backgroundColor: TIS_COLOR_MAP[result.meta.classColor] ?? colors.muted },
-              ]} />
-            </View>
-            <View style={styles.resultInterpPill}>
-              <Text style={styles.resultInterpText}>{result.interpretation}</Text>
-            </View>
-            <View style={styles.resultDivider} />
-            <View style={styles.resultMetaGrid}>
-              <View style={styles.resultMetaCell}>
-                <Text style={styles.resultMetaLabel}>STATIC</Text>
-                <Text style={styles.resultMetaValue}>{result.meta.staticScore} / {STATIC_MAX}</Text>
+          <>
+            <View style={styles.resultCard}>
+              <Text style={styles.resultMicroLabel}>TIS RESULT</Text>
+              <View style={styles.resultValueRow}>
+                <Text style={styles.resultValue}>{result.primaryValue}</Text>
+                <Text style={styles.resultUnit}>{result.primaryUnit}</Text>
+                <View style={[
+                  styles.resultColorDot,
+                  { backgroundColor: TIS_COLOR_MAP[result.meta.classColor] ?? colors.muted },
+                ]} />
               </View>
-              <View style={styles.resultMetaCell}>
-                <Text style={styles.resultMetaLabel}>DYNAMIC</Text>
-                <Text style={styles.resultMetaValue}>{result.meta.dynamicScore} / {DYNAMIC_MAX}</Text>
+              <View style={styles.resultInterpPill}>
+                <Text style={styles.resultInterpText}>{result.interpretation}</Text>
               </View>
-              <View style={styles.resultMetaCell}>
-                <Text style={styles.resultMetaLabel}>COORDINATION</Text>
-                <Text style={styles.resultMetaValue}>{result.meta.coordinationScore} / {COORD_MAX}</Text>
+              <View style={styles.resultDivider} />
+              <View style={styles.resultMetaGrid}>
+                <View style={styles.resultMetaCell}>
+                  <Text style={styles.resultMetaLabel}>STATIC</Text>
+                  <Text style={styles.resultMetaValue}>{result.meta.staticScore} / {STATIC_MAX}</Text>
+                </View>
+                <View style={styles.resultMetaCell}>
+                  <Text style={styles.resultMetaLabel}>DYNAMIC</Text>
+                  <Text style={styles.resultMetaValue}>{result.meta.dynamicScore} / {DYNAMIC_MAX}</Text>
+                </View>
+                <View style={styles.resultMetaCell}>
+                  <Text style={styles.resultMetaLabel}>COORDINATION</Text>
+                  <Text style={styles.resultMetaValue}>{result.meta.coordinationScore} / {COORD_MAX}</Text>
+                </View>
               </View>
             </View>
-          </View>
+            {saveState === 'saved' ? (
+              <View style={styles.savedBanner}>
+                <Text style={styles.savedText}>Result saved</Text>
+              </View>
+            ) : (
+              <>
+                <Button
+                  label="Save Result"
+                  onPress={handleSave}
+                  loading={saveState === 'saving'}
+                  disabled={saveState === 'saving'}
+                />
+                {saveState === 'error' && saveError ? (
+                  <Text style={styles.saveErrorText}>{saveError}</Text>
+                ) : null}
+              </>
+            )}
+          </>
         ) : null}
       </ScrollView>
     </Screen>
@@ -326,5 +395,24 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeMd,
     fontWeight: typography.weightSemibold,
     color: colors.ink,
+  },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  saveErrorText: {
+    fontSize: typography.sizeSm,
+    color: colors.coral,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xs,
   },
 });

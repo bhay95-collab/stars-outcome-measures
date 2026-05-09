@@ -12,7 +12,12 @@ import { NumericClinicalInput } from './NumericClinicalInput';
 import { SegmentedControl } from './SegmentedControl';
 import { ClinicalTimer } from './ClinicalTimer';
 import { ThreeBarMotif } from '../ui/ThreeBarMotif';
+import { saveAssessment } from '../../supabase/assessments';
+import { useAuth } from '../../auth/AuthProvider';
+import { Button } from '../ui/Button';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 interface MWTResult {
   pace: string;
@@ -29,6 +34,28 @@ interface MWTErrors {
 }
 
 const MWT_PACES = ['Comfortable', 'Fast'] as const;
+
+function deriveClassColor(speed: number): 'red' | 'amber' | 'green' {
+  if (speed < 0.4) return 'red';
+  if (speed < 1.2) return 'amber';
+  return 'green';
+}
+
+function buildMWTSaveResults(r: MWTResult, encounterDate: string): Record<string, unknown> {
+  return {
+    primaryValue: r.speed,
+    primaryUnit: 'm/s',
+    interpretation: r.interpretation,
+    meta: {
+      classColor: deriveClassColor(r.speed),
+      pace: r.pace,
+      steps: r.steps,
+      stepLength: r.stepLength,
+      cadence: r.cadence,
+      encounterDate,
+    },
+  };
+}
 
 function classifySpeed(speed: number): string {
   if (speed < 0.4) return 'Household ambulator';
@@ -66,12 +93,15 @@ function computeMWT(
 
 export function MWTForm({ patientId }: { patientId: string }) {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [paceIndex, setPaceIndex] = useState(0);
   const [timeInput, setTimeInput] = useState('');
   const [stepsInput, setStepsInput] = useState('');
   const [errors, setErrors] = useState<MWTErrors>({});
   const [result, setResult] = useState<MWTResult | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getPatient(patientId)
@@ -79,20 +109,58 @@ export function MWTForm({ patientId }: { patientId: string }) {
       .catch(() => null);
   }, [patientId]);
 
+  function resetSaveState() {
+    setSaveState('idle');
+    setSaveError(null);
+  }
+
   function handlePaceChange(idx: number) {
     setPaceIndex(idx);
     setResult(null);
+    resetSaveState();
   }
 
   function handleTimeChange(text: string) {
     setTimeInput(text);
     setResult(null);
     setErrors(prev => ({ ...prev, time: undefined }));
+    resetSaveState();
   }
 
   function handleStepsChange(text: string) {
     setStepsInput(text);
     setResult(null);
+    resetSaveState();
+  }
+
+  async function handleSave() {
+    if (saveState === 'saving' || !result) return;
+
+    const time = Number(timeInput.trim());
+    if (!isFinite(time) || time <= 0) return;
+
+    if (!user) {
+      setSaveError('Your session has expired. Please sign in again.');
+      setSaveState('error');
+      return;
+    }
+
+    setSaveState('saving');
+    setSaveError(null);
+
+    try {
+      await saveAssessment({
+        patient_id: patientId,
+        measure: '10MWT',
+        inputs: { pace: result.pace, time: result.time, steps: result.steps ?? null },
+        results: buildMWTSaveResults(result, new Date().toISOString()),
+      });
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 3000);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
+      setSaveState('error');
+    }
   }
 
   function handleTimeBlur() {
@@ -192,48 +260,67 @@ export function MWTForm({ patientId }: { patientId: string }) {
         </Card>
 
         {result !== null ? (
-          <View style={styles.previewCard}>
-            <View style={styles.previewHeader}>
-              <Text style={styles.previewLabel}>{paceLabel} RESULT</Text>
-              <ThreeBarMotif size="sm" tone="soft" />
-            </View>
-
-            <View style={styles.valueRow}>
-              <Text style={styles.primaryValue}>{result.speed.toFixed(2)}</Text>
-              <Text style={styles.primaryUnit}>m/s</Text>
-            </View>
-
-            <View style={styles.interpPill}>
-              <Text style={styles.interpText}>{result.interpretation}</Text>
-            </View>
-
-            <View style={styles.metaDivider} />
-
-            <View style={styles.metaGrid}>
-              <View style={styles.metaCell}>
-                <Text style={styles.metaLabel}>TIME</Text>
-                <Text style={styles.metaValue}>{result.time} sec</Text>
+          <>
+            <View style={styles.previewCard}>
+              <View style={styles.previewHeader}>
+                <Text style={styles.previewLabel}>{paceLabel} RESULT</Text>
+                <ThreeBarMotif size="sm" tone="soft" />
               </View>
-              {result.steps !== null ? (
+
+              <View style={styles.valueRow}>
+                <Text style={styles.primaryValue}>{result.speed.toFixed(2)}</Text>
+                <Text style={styles.primaryUnit}>m/s</Text>
+              </View>
+
+              <View style={styles.interpPill}>
+                <Text style={styles.interpText}>{result.interpretation}</Text>
+              </View>
+
+              <View style={styles.metaDivider} />
+
+              <View style={styles.metaGrid}>
                 <View style={styles.metaCell}>
-                  <Text style={styles.metaLabel}>STEPS</Text>
-                  <Text style={styles.metaValue}>{result.steps}</Text>
+                  <Text style={styles.metaLabel}>TIME</Text>
+                  <Text style={styles.metaValue}>{result.time} sec</Text>
                 </View>
-              ) : null}
-              {result.stepLength !== null ? (
-                <View style={styles.metaCell}>
-                  <Text style={styles.metaLabel}>STEP LENGTH</Text>
-                  <Text style={styles.metaValue}>{result.stepLength.toFixed(2)} m</Text>
-                </View>
-              ) : null}
-              {result.cadence !== null ? (
-                <View style={styles.metaCell}>
-                  <Text style={styles.metaLabel}>CADENCE</Text>
-                  <Text style={styles.metaValue}>{result.cadence.toFixed(1)} spm</Text>
-                </View>
-              ) : null}
+                {result.steps !== null ? (
+                  <View style={styles.metaCell}>
+                    <Text style={styles.metaLabel}>STEPS</Text>
+                    <Text style={styles.metaValue}>{result.steps}</Text>
+                  </View>
+                ) : null}
+                {result.stepLength !== null ? (
+                  <View style={styles.metaCell}>
+                    <Text style={styles.metaLabel}>STEP LENGTH</Text>
+                    <Text style={styles.metaValue}>{result.stepLength.toFixed(2)} m</Text>
+                  </View>
+                ) : null}
+                {result.cadence !== null ? (
+                  <View style={styles.metaCell}>
+                    <Text style={styles.metaLabel}>CADENCE</Text>
+                    <Text style={styles.metaValue}>{result.cadence.toFixed(1)} spm</Text>
+                  </View>
+                ) : null}
+              </View>
             </View>
-          </View>
+            {saveState === 'saved' ? (
+              <View style={styles.savedBanner}>
+                <Text style={styles.savedText}>Result saved</Text>
+              </View>
+            ) : (
+              <>
+                <Button
+                  label="Save Result"
+                  onPress={handleSave}
+                  loading={saveState === 'saving'}
+                  disabled={saveState === 'saving'}
+                />
+                {saveState === 'error' && saveError ? (
+                  <Text style={styles.saveErrorText}>{saveError}</Text>
+                ) : null}
+              </>
+            )}
+          </>
         ) : null}
       </ScrollView>
     </Screen>
@@ -356,5 +443,24 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeMd,
     fontWeight: typography.weightSemibold,
     color: colors.ink,
+  },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  saveErrorText: {
+    fontSize: typography.sizeSm,
+    color: colors.coral,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xs,
   },
 });
