@@ -16,6 +16,7 @@ import { HiMATForm } from '../../../../../src/components/forms/HiMAT';
 import { SARAForm }      from '../../../../../src/components/forms/SARAForm';
 import { StepTestForm } from '../../../../../src/components/forms/StepTest';
 import { AMPForm }      from '../../../../../src/components/forms/AMPForm';
+import { BOOMERForm }   from '../../../../../src/components/forms/BOOMER';
 import { MEASURES } from '../../../../../src/clinical/adapter';
 import { getPatient } from '../../../../../src/supabase/patients';
 import type { Patient } from '../../../../../src/types/domain';
@@ -35,7 +36,8 @@ import { colors, spacing, typography, radii } from '../../../../../src/theme/tok
 const TUG_ID  = 'TUG';
 const SARA_ID = 'SARA';
 const STEP_ID = 'Step';
-const AMP_ID  = 'AMP';
+const AMP_ID    = 'AMP';
+const BOOMER_ID = 'BOOMER';
 const HIMAT_ID = 'HiMAT';
 const MWT_ID = '10MWT';
 const SMWT_ID = '6MWT';
@@ -755,6 +757,10 @@ export default function AssessScreen() {
 
   if (measureId === AMP_ID) {
     return <AMPForm patientId={patientId} />;
+  }
+
+  if (measureId === BOOMER_ID) {
+    return <BOOMERForm patientId={patientId} />;
   }
 
   const measure = MEASURES[measureId];
