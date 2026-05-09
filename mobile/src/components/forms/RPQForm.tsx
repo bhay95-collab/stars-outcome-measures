@@ -14,6 +14,9 @@ import { ThreeBarMotif } from '../ui/ThreeBarMotif';
 import { ScoreChipRow } from './fields/ScoreChipRow';
 import type { ChipOption } from './fields/ScoreChipRow';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
+import { saveAssessment } from '../../supabase/assessments';
+import { useAuth } from '../../auth/AuthProvider';
+import { Button } from '../ui/Button';
 
 interface RPQResult {
   primaryValue: number;
@@ -45,17 +48,55 @@ const COLOR_MAP: Record<string, string> = {
   red: colors.coral,
 };
 
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
 export function RPQForm({ patientId }: { patientId: string }) {
   const insets = useSafeAreaInsets();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [scores, setScores] = useState<(number | null)[]>(Array(ITEM_COUNT).fill(null));
   const [result, setResult] = useState<RPQResult | null>(null);
+  const { user } = useAuth();
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getPatient(patientId).then(p => setPatient(p)).catch(() => null);
   }, [patientId]);
 
+  function resetSaveState() {
+    setSaveState('idle');
+    setSaveError(null);
+  }
+
+  async function handleSave() {
+    if (saveState === 'saving' || !result) return;
+    if (!user) {
+      setSaveError('Your session has expired. Please sign in again.');
+      setSaveState('error');
+      return;
+    }
+    setSaveState('saving');
+    setSaveError(null);
+    try {
+      await saveAssessment({
+        patient_id: patientId,
+        measure: 'RPQ',
+        inputs: { items: scores as number[] },
+        results: {
+          ...result,
+          meta: { ...result.meta, encounterDate: new Date().toISOString() },
+        },
+      });
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 3000);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
+      setSaveState('error');
+    }
+  }
+
   function handleScore(idx: number, value: number) {
+    resetSaveState();
     const next = scores.map((s, i) => (i === idx ? value : s));
     setScores(next);
     if (next.every(s => s !== null)) {
@@ -171,6 +212,26 @@ export function RPQForm({ patientId }: { patientId: string }) {
               </Text>
             </View>
           </View>
+        ) : null}
+
+        {result !== null ? (
+          saveState === 'saved' ? (
+            <View style={styles.savedBanner}>
+              <Text style={styles.savedText}>Result saved</Text>
+            </View>
+          ) : (
+            <>
+              <Button
+                label="Save Result"
+                onPress={handleSave}
+                loading={saveState === 'saving'}
+                disabled={saveState === 'saving'}
+              />
+              {saveState === 'error' && saveError ? (
+                <Text style={styles.saveErrorText}>{saveError}</Text>
+              ) : null}
+            </>
+          )
         ) : null}
       </ScrollView>
     </Screen>
@@ -301,4 +362,23 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   interpText: { fontSize: typography.sizeSm, fontWeight: typography.weightSemibold },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  saveErrorText: {
+    fontSize: typography.sizeSm,
+    color: colors.coral,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xs,
+  },
 });
