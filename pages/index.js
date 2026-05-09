@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { ArrowRight, Check, ClipboardCheck, FileText, LineChart, Play } from 'lucide-react'
+import { Accessibility, ArrowRight, Check, ClipboardCheck, FileText, LineChart, Route, Smartphone } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import LogoWordmark from '../components/LogoWordmark'
 
@@ -23,7 +23,7 @@ const WORKFLOW = [
   {
     Icon: ClipboardCheck,
     title: 'Automated scoring',
-    text: 'Capture standardised measures with embedded calculations and clean interpretation.',
+    text: 'Capture physiotherapy-focused outcome measures with embedded calculations and clean interpretation.',
   },
   {
     Icon: LineChart,
@@ -37,10 +37,37 @@ const WORKFLOW = [
   },
 ]
 
+const CAPABILITIES = [
+  {
+    Icon: Route,
+    title: 'Smart Rehab Pathway',
+    text: 'Uses diagnosis and saved assessments to recommend baseline measures, flag reassessments that are due, and show pathway coverage for each patient.',
+  },
+  {
+    Icon: Accessibility,
+    title: 'Wheelchair prescription support',
+    text: 'A structured workspace for seating and mobility reasoning, measurements, posture and function notes, environmental constraints, trial planning, and supplier briefs.',
+  },
+  {
+    Icon: Smartphone,
+    title: 'Phone app coming soon',
+    text: 'A mobile companion is in development for faster bedside, gym, ward, and community assessment capture while the full web app remains available now.',
+  },
+  {
+    Icon: FileText,
+    title: 'Reports patients can understand',
+    text: 'Plain-language summaries, clinical interpretation, trend views, and PDF reporting help turn scores into useful communication.',
+  },
+]
+
 const FAQS = [
-  ['Who is RehabMetrics IQ for?', 'Physiotherapists, OTs, and rehabilitation teams working across inpatient, outpatient, private practice, and community settings.'],
-  ['Does it replace clinical judgement?', 'No. It standardises calculations and reporting so clinicians can spend more time interpreting outcomes and planning care.'],
-  ['Can I cancel?', 'Yes. The product has a 14-day free trial and no lock-in.'],
+  ['Who is RehabMetrics IQ for?', 'RehabMetrics IQ is built first for physiotherapists and physiotherapy-led rehabilitation teams working across inpatient, outpatient, private practice, community, neurological, amputee, reconditioning, cardiorespiratory, and complex mobility caseloads.'],
+  ['Is this an Occupational Therapy outcome measure platform?', 'Not yet. The current outcome measure library is deliberately physiotherapy-focused, with measures centred on gait, balance, mobility, endurance, function, fatigue, symptoms, and neurological rehabilitation. The wheelchair prescription workspace may still support clinicians involved in seating and mobility, but OT-specific assessment libraries are not the current focus.'],
+  ['What is the Smart Rehab Pathway?', 'It is a diagnosis-based guide that compares the recommended outcome measures for a patient with what has already been recorded. It highlights missing baseline measures, reassessments that are due, and pathway coverage so clinicians can keep measurement consistent over time.'],
+  ['Does it include wheelchair prescription support?', 'Yes. The web app includes a structured wheelchair prescription tool for recording client details, posture and MAT findings, functional needs, measurements, equipment reasoning, trial planning, quote instructions, and supplier-ready summaries.'],
+  ['Is there a phone app?', 'A mobile app is coming soon. The goal is faster outcome measure capture in the clinic, ward, gym, or community, while the current web app remains the main workspace for dashboards, reporting, and wheelchair prescription support.'],
+  ['Does it replace clinical judgement?', 'No. RehabMetrics IQ standardises calculations, prompts consistent pathways, and improves reporting. Clinical interpretation, risk management, diagnosis, and treatment planning remain the responsibility of the clinician.'],
+  ['What happens after the free trial?', 'You can start with a 14-day free trial. After that, choose monthly or annual access, and cancel without lock-in if it is not the right fit for your workflow.'],
 ]
 
 function getInterpretation(s) {
@@ -99,12 +126,12 @@ export default function Landing() {
     <>
       <Head>
         <title>RehabMetrics IQ | Clinical Outcome Measures</title>
-        <meta name="description" content="Clinical outcome measures for physiotherapists. Automated scoring, Minimally Clinically Important Difference tracking, and clinical-grade reports." />
+        <meta name="description" content="Physiotherapy-focused outcome measure software with automated scoring, Smart Rehab Pathways, wheelchair prescription support, Minimally Clinically Important Difference tracking, and clinical-grade reports." />
         <meta name="robots" content="index,follow" />
         <link rel="canonical" href={CANONICAL_HOME} />
         <meta property="og:url" content={CANONICAL_HOME} />
         <meta property="og:title" content="RehabMetrics IQ | Clinical Outcome Measures" />
-        <meta property="og:description" content="Clinical outcome measures for physiotherapists. Automated scoring, Minimally Clinically Important Difference tracking, and clinical-grade reports." />
+        <meta property="og:description" content="Physiotherapy-focused outcome measure software with automated scoring, Smart Rehab Pathways, wheelchair prescription support, Minimally Clinically Important Difference tracking, and clinical-grade reports." />
         <meta property="og:type" content="website" />
         <link rel="icon" href="/SquareLogo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -130,13 +157,19 @@ export default function Landing() {
               <p className="eyebrow">AUTOMATED SCORING. CLINICAL-GRADE REPORTING.</p>
               <h1>Data-driven outcomes. <span>Better patient care.</span></h1>
               <p className="hero__sub">
-                RehabMetrics helps physiotherapists track what matters most with automated scoring, Minimally Clinically Important Difference tracking, and clinical-grade reports—so you can focus on your patients.
+                RehabMetrics IQ helps physiotherapists track what matters most with automated scoring, Smart Rehab Pathways, Minimally Clinically Important Difference tracking, wheelchair prescription support, and clinical-grade reports.
               </p>
               <div className="hero__actions">
                 <a className="primary-btn" href="/signup">Start 14-day free trial</a>
                 <button className="text-btn" type="button" onClick={() => setShowDemoModal(true)}>
                   See how it works <ArrowRight size={15} />
                 </button>
+              </div>
+              <div className="hero__proof" aria-label="Included product capabilities">
+                <span>Physiotherapy-focused measures</span>
+                <span>Smart Rehab Pathways</span>
+                <span>Wheelchair prescription support</span>
+                <span>Phone app coming soon</span>
               </div>
             </div>
 
@@ -146,7 +179,7 @@ export default function Landing() {
 
         <section className="measure-strip" aria-label="Measures included">
           <div className="measure-strip__inner">
-            <span>MEASURES INCLUDED</span>
+            <span>PHYSIO-FOCUSED MEASURES</span>
             <div>
               {MEASURES.map(measure => <small key={measure}>{measure}</small>)}
             </div>
@@ -159,6 +192,7 @@ export default function Landing() {
               <div className="section-head">
                 <p className="eyebrow">CLINICAL WORKFLOW</p>
                 <h2>Outcome measures without the spreadsheet drift.</h2>
+                <p>Built around the physiotherapy problems clinicians repeatedly measure: gait speed, balance, endurance, neurological recovery, independence, symptoms, and meaningful change over time.</p>
               </div>
               <div className="workflow-grid">
                 {WORKFLOW.map(({ Icon, title, text }) => (
@@ -197,6 +231,23 @@ export default function Landing() {
           </div>
         </section>
 
+        <section className="section capability-section">
+          <div className="section-head centered">
+            <p className="eyebrow">WHAT IS INCLUDED</p>
+            <h2>More than a score calculator.</h2>
+            <p>RehabMetrics IQ connects measurement, pathway planning, prescription reasoning, and reporting in one clinical workspace.</p>
+          </div>
+          <div className="capability-grid">
+            {CAPABILITIES.map(({ Icon, title, text }) => (
+              <article className="capability-card" key={title}>
+                <Icon size={22} />
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section id="pricing" className="section pricing-section">
           <div className="section-head centered">
             <p className="eyebrow">PRICING</p>
@@ -224,7 +275,16 @@ export default function Landing() {
                   <p>{period}</p>
                 </div>
                 <ul>
-                  {['All outcome measures', 'Unlimited patients', 'Minimally Clinically Important Difference tracking', 'PDF export', 'Secure account access'].map(item => (
+                  {[
+                    'Physiotherapy-focused outcome measure library',
+                    'Unlimited patients',
+                    'Smart Rehab Pathway recommendations',
+                    'Wheelchair prescription workspace',
+                    'Minimally Clinically Important Difference tracking',
+                    'Clinical report and PDF export',
+                    'Phone app companion coming soon',
+                    'Secure account access',
+                  ].map(item => (
                     <li key={item}><Check size={16} /> {item}</li>
                   ))}
                 </ul>
@@ -252,6 +312,13 @@ export default function Landing() {
                 <p>{answer}</p>
               </details>
             ))}
+            <div className="faq-cta">
+              <div>
+                <strong>Ready to test it with real patients?</strong>
+                <p>Start the trial, add a patient, and record a baseline measure. You will know quickly whether it fits your clinical workflow.</p>
+              </div>
+              <a className="primary-btn" href="/signup">Start free trial</a>
+            </div>
           </div>
         </section>
       </main>
@@ -502,6 +569,29 @@ const styles = `
     gap: 28px;
     margin-top: 36px;
   }
+
+  .hero__proof {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 560px;
+    margin-top: 26px;
+  }
+
+  .hero__proof span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border: 1px solid rgba(35,100,153,0.18);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.58);
+    color: var(--navy-dark);
+    font-size: 12px;
+    font-weight: 800;
+    backdrop-filter: blur(10px);
+  }
+
   .primary-btn {
     display: inline-flex;
     align-items: center;
@@ -636,7 +726,7 @@ const styles = `
     margin: 0 auto;
     padding: 14px 24px;
     display: grid;
-    grid-template-columns: 150px 1fr;
+    grid-template-columns: 190px 1fr;
     align-items: center;
     gap: 10px;
   }
@@ -763,7 +853,7 @@ const styles = `
     line-height: 1.65;
   }
 
-  .soft-card, .pricing-card, details {
+  .soft-card, .pricing-card, .capability-card, details {
     border: 1px solid rgba(215,224,232,0.9);
     border-radius: 14px;
     background: rgba(255,255,255,0.9);
@@ -775,6 +865,42 @@ const styles = `
   .soft-card svg { color: var(--navy); }
   .soft-card h3 { margin-top: 16px; font-size: 18px; }
   .soft-card p { margin-top: 8px; color: var(--muted); line-height: 1.55; }
+
+  .capability-section {
+    padding-top: 70px;
+  }
+
+  .capability-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .capability-card {
+    min-height: 236px;
+    padding: 24px;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.96), rgba(238,243,248,0.82)),
+      #fff;
+  }
+
+  .capability-card svg {
+    color: var(--navy);
+  }
+
+  .capability-card h3 {
+    margin-top: 16px;
+    color: var(--ink);
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  .capability-card p {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
 
   .pricing-section {
     display: grid;
@@ -880,6 +1006,36 @@ const styles = `
     margin-top: 12px;
     color: var(--muted);
     line-height: 1.55;
+  }
+
+  .faq-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 22px;
+    border: 1px solid rgba(35,100,153,0.2);
+    border-radius: 14px;
+    background:
+      linear-gradient(135deg, rgba(234,243,251,0.96), rgba(255,255,255,0.9)),
+      #fff;
+    box-shadow: 0 14px 32px rgba(23,38,59,0.08);
+  }
+
+  .faq-cta strong {
+    color: var(--ink);
+    font-size: 18px;
+  }
+
+  .faq-cta p {
+    max-width: 520px;
+    margin-top: 6px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .faq-cta .primary-btn {
+    flex: 0 0 auto;
   }
 
   .footer {
@@ -1027,7 +1183,8 @@ const styles = `
     .pricing-layout,
     .faq-section { grid-template-columns: 1fr; }
     .preview-card { justify-self: start; }
-    .workflow-grid { grid-template-columns: 1fr; }
+    .workflow-grid,
+    .capability-grid { grid-template-columns: 1fr; }
     .image-panel--workflow,
     .image-panel--pricing {
       min-height: 320px;
@@ -1038,6 +1195,7 @@ const styles = `
     .site-header__inner { min-height: 84px; }
     .hero__inner { padding-top: 56px; }
     .hero__actions { align-items: stretch; flex-direction: column; gap: 16px; }
+    .faq-cta { align-items: stretch; flex-direction: column; }
     .measure-strip__inner { grid-template-columns: 1fr; }
     .preview-row { grid-template-columns: 1fr; }
     .demo-patient, .demo-results, .change-panel, .demo-fields { grid-template-columns: 1fr; }
