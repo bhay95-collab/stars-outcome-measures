@@ -26,7 +26,7 @@ const ITEM_COUNT = 16;
 
 const COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red: colors.coral,
 };
 
@@ -108,7 +108,7 @@ export function ABCForm({ patientId }: { patientId: string }) {
             const isLast = idx === ITEM_COUNT - 1;
             const isEntered = values[idx] !== null;
             return (
-              <View key={idx} style={[styles.itemRow, !isLast && styles.itemBorder]}>
+              <View key={item.label} style={[styles.itemRow, !isLast && styles.itemBorder]}>
                 <View style={[styles.itemBadge, isEntered && styles.itemBadgeScored]}>
                   <Text style={[styles.itemNum, isEntered && styles.itemNumScored]}>
                     {idx + 1}

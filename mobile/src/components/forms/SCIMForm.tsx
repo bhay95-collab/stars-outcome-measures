@@ -33,7 +33,7 @@ const SUBSCALES: { label: string; key: string; range: [number, number]; max: num
 
 const COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red: colors.coral,
 };
 
@@ -67,9 +67,7 @@ export function SCIMForm({ patientId }: { patientId: string }) {
   const items = SCIM_ITEMS as SCIMItemType[];
 
   function subscaleRunning(range: [number, number]): number {
-    let total = 0;
-    for (let i = range[0]; i <= range[1]; i++) total += scores[i] ?? 0;
-    return total;
+    return scores.slice(range[0], range[1] + 1).reduce<number>((sum, s) => sum + (s ?? 0), 0);
   }
 
   function renderSection(sub: typeof SUBSCALES[number]) {
@@ -89,7 +87,7 @@ export function SCIMForm({ patientId }: { patientId: string }) {
           const idx = sub.range[0] + localIdx;
           const isLast = localIdx === sectionItems.length - 1;
           return (
-            <View key={idx} style={[styles.itemRow, !isLast && styles.itemBorder]}>
+            <View key={item.label} style={[styles.itemRow, !isLast && styles.itemBorder]}>
               <View style={styles.itemHeader}>
                 <View style={[styles.itemBadge, scores[idx] !== null && styles.itemBadgeScored]}>
                   <Text style={[styles.itemNum, scores[idx] !== null && styles.itemNumScored]}>
@@ -158,7 +156,9 @@ export function SCIMForm({ patientId }: { patientId: string }) {
         </Card>
 
         <View style={styles.progressCard}>
-          <Text style={styles.progressMeta}>PROGRESS</Text>
+          <Text style={styles.progressMeta}>
+          {scoredCount < ITEM_COUNT ? 'RUNNING TOTAL' : 'TOTAL'}
+        </Text>
           <View style={styles.progressHeader}>
             <Text style={styles.progressCount}>{scoredCount} / {ITEM_COUNT} scored</Text>
             <View style={styles.progressScoreRow}>

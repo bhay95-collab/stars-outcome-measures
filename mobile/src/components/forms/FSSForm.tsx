@@ -28,7 +28,7 @@ const FSS_OPTIONS: ChipOption[] = [1, 2, 3, 4, 5, 6, 7].map(v => ({ value: v }))
 
 const COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red: colors.coral,
 };
 
@@ -93,7 +93,7 @@ export function FSSForm({ patientId }: { patientId: string }) {
           {(FSS_ITEMS as string[]).map((itemText: string, idx: number) => {
             const isLast = idx === ITEM_COUNT - 1;
             return (
-              <View key={idx} style={[styles.itemRow, !isLast && styles.itemBorder]}>
+              <View key={itemText} style={[styles.itemRow, !isLast && styles.itemBorder]}>
                 <View style={styles.itemHeader}>
                   <View style={[styles.itemBadge, scores[idx] !== null && styles.itemBadgeScored]}>
                     <Text style={[styles.itemNum, scores[idx] !== null && styles.itemNumScored]}>
@@ -106,6 +106,7 @@ export function FSSForm({ patientId }: { patientId: string }) {
                 <View style={styles.chipWrap}>
                   <ScoreChipRow
                     options={FSS_OPTIONS}
+                    label={itemText}
                     selected={scores[idx]}
                     onSelect={v => handleScore(idx, v)}
                   />

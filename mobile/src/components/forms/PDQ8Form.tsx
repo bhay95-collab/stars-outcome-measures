@@ -29,9 +29,14 @@ const ITEM_COUNT = 8;
 
 const COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red: colors.coral,
 };
+
+const PDQ8_CHIP_OPTIONS: ChipOption[] = (PDQ8_OPTIONS as PDQ8OptionType[]).map(o => ({
+  value: o.value,
+  label: o.label,
+}));
 
 export function PDQ8Form({ patientId }: { patientId: string }) {
   const insets = useSafeAreaInsets();
@@ -42,11 +47,6 @@ export function PDQ8Form({ patientId }: { patientId: string }) {
   useEffect(() => {
     getPatient(patientId).then(p => setPatient(p)).catch(() => null);
   }, [patientId]);
-
-  const chipOptions: ChipOption[] = (PDQ8_OPTIONS as PDQ8OptionType[]).map(o => ({
-    value: o.value,
-    label: o.label,
-  }));
 
   function handleScore(idx: number, value: number) {
     const next = scores.map((s, i) => (i === idx ? value : s));
@@ -94,7 +94,7 @@ export function PDQ8Form({ patientId }: { patientId: string }) {
           {(PDQ8_ITEMS as PDQ8ItemType[]).map((item: PDQ8ItemType, idx: number) => {
             const isLast = idx === ITEM_COUNT - 1;
             return (
-              <View key={idx} style={[styles.itemRow, !isLast && styles.itemBorder]}>
+              <View key={item.label} style={[styles.itemRow, !isLast && styles.itemBorder]}>
                 <View style={styles.itemHeader}>
                   <View style={[styles.itemBadge, scores[idx] !== null && styles.itemBadgeScored]}>
                     <Text style={[styles.itemNum, scores[idx] !== null && styles.itemNumScored]}>
@@ -106,7 +106,8 @@ export function PDQ8Form({ patientId }: { patientId: string }) {
                 </View>
                 <View style={styles.chipWrap}>
                   <ScoreChipRow
-                    options={chipOptions}
+                    options={PDQ8_CHIP_OPTIONS}
+                    label={item.label}
                     selected={scores[idx]}
                     onSelect={v => handleScore(idx, v)}
                   />

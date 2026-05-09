@@ -9,6 +9,7 @@ export const colors = {
   secondarySoft: '#DCEEFF',
   success:       '#107C10',  // Clinical success
   coral:         '#ee8a70',  // Error / warning
+  amber:         '#a05c00',  // Clinical caution
   violet:        '#8b82c6',
   ink:           '#0A1B33',
   muted:         '#5E718D',  // Muted Navy

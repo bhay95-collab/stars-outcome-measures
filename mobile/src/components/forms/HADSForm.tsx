@@ -38,7 +38,7 @@ const HADS_OPTIONS: ChipOption[] = [0, 1, 2, 3].map(v => ({ value: v }));
 
 const COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red: colors.coral,
 };
 
@@ -109,7 +109,7 @@ export function HADSForm({ patientId }: { patientId: string }) {
           {(HADS_ITEMS as HADSItemType[]).map((item: HADSItemType, idx: number) => {
             const isLast = idx === ITEM_COUNT - 1;
             return (
-              <View key={idx} style={[styles.itemRow, !isLast && styles.itemBorder]}>
+              <View key={item.text} style={[styles.itemRow, !isLast && styles.itemBorder]}>
                 <View style={styles.itemHeader}>
                   <View style={[styles.itemBadge, scores[idx] !== null && styles.itemBadgeScored]}>
                     <Text style={[styles.itemNum, scores[idx] !== null && styles.itemNumScored]}>
@@ -124,6 +124,7 @@ export function HADSForm({ patientId }: { patientId: string }) {
                 <View style={styles.chipWrap}>
                   <ScoreChipRow
                     options={HADS_OPTIONS}
+                    label={item.text}
                     selected={scores[idx]}
                     onSelect={v => handleScore(idx, v)}
                   />

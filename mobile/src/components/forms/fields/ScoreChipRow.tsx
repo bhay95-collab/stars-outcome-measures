@@ -11,12 +11,13 @@ interface ScoreChipRowProps {
   options: ChipOption[];
   selected: number | null;
   onSelect: (value: number) => void;
+  label?: string;
 }
 
-export function ScoreChipRow({ options, selected, onSelect }: ScoreChipRowProps) {
+export function ScoreChipRow({ options, selected, onSelect, label }: ScoreChipRowProps) {
   const hasLabels = options.some(o => o.label);
   return (
-    <View style={styles.row}>
+    <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel={label}>
       {options.map(opt => {
         const isSelected = selected === opt.value;
         return (

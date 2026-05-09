@@ -34,7 +34,7 @@ const BIVI_OPTIONS: ChipOption[] = [
 
 const COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red: colors.coral,
 };
 
@@ -82,7 +82,9 @@ export function BIVIForm({ patientId }: { patientId: string }) {
         </Card>
 
         <View style={styles.progressCard}>
-          <Text style={styles.progressMeta}>PROGRESS</Text>
+          <Text style={styles.progressMeta}>
+          {scoredCount < ITEM_COUNT ? 'RUNNING TOTAL' : 'TOTAL'}
+        </Text>
           <View style={styles.progressHeader}>
             <Text style={styles.progressCount}>{scoredCount} / {ITEM_COUNT} scored</Text>
             <View style={styles.progressScoreRow}>
@@ -99,7 +101,7 @@ export function BIVIForm({ patientId }: { patientId: string }) {
           {(BIVI_ITEMS as string[]).map((itemText: string, idx: number) => {
             const isLast = idx === ITEM_COUNT - 1;
             return (
-              <View key={idx} style={[styles.itemRow, !isLast && styles.itemBorder]}>
+              <View key={itemText} style={[styles.itemRow, !isLast && styles.itemBorder]}>
                 <View style={styles.itemHeader}>
                   <View style={[styles.itemBadge, scores[idx] !== null && styles.itemBadgeScored]}>
                     <Text style={[styles.itemNum, scores[idx] !== null && styles.itemNumScored]}>
@@ -112,6 +114,7 @@ export function BIVIForm({ patientId }: { patientId: string }) {
                 <View style={styles.chipWrap}>
                   <ScoreChipRow
                     options={BIVI_OPTIONS}
+                    label={itemText}
                     selected={scores[idx]}
                     onSelect={v => handleScore(idx, v)}
                   />

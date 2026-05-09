@@ -41,7 +41,7 @@ const RPQ_OPTIONS: ChipOption[] = [
 
 const COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red: colors.coral,
 };
 
@@ -77,7 +77,7 @@ export function RPQForm({ patientId }: { patientId: string }) {
           const idx = startIdx + localIdx;
           const isLast = localIdx === sectionItems.length - 1;
           return (
-            <View key={idx} style={[styles.itemRow, !isLast && styles.itemBorder]}>
+            <View key={itemText} style={[styles.itemRow, !isLast && styles.itemBorder]}>
               <View style={styles.itemHeader}>
                 <View style={[styles.itemBadge, scores[idx] !== null && styles.itemBadgeScored]}>
                   <Text style={[styles.itemNum, scores[idx] !== null && styles.itemNumScored]}>
@@ -90,6 +90,7 @@ export function RPQForm({ patientId }: { patientId: string }) {
               <View style={styles.chipWrap}>
                 <ScoreChipRow
                   options={RPQ_OPTIONS}
+                  label={itemText}
                   selected={scores[idx]}
                   onSelect={v => handleScore(idx, v)}
                 />
