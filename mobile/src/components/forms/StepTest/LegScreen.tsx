@@ -21,6 +21,7 @@ interface LegScreenProps {
   patient: Patient | null;
   stepHeight?: string;
   onStepHeightChange?: (v: string) => void;
+  savedNotice?: boolean;
 }
 
 type TimerStatus = 'idle' | 'running' | 'paused' | 'stopped' | 'complete';
@@ -36,7 +37,7 @@ function formatMmSs(ms: number): string {
 
 export function LegScreen({
   legLabel, stepLabel, input, onChange, onNext, onBack, canProceed, patient,
-  stepHeight, onStepHeightChange,
+  stepHeight, onStepHeightChange, savedNotice,
 }: LegScreenProps) {
   const insets = useSafeAreaInsets();
   const [remainingMs, setRemainingMs] = useState(DURATION_MS);
@@ -160,6 +161,12 @@ export function LegScreen({
             <Text style={styles.stepPillText}>{stepLabel}</Text>
           </View>
         </Card>
+
+        {savedNotice ? (
+          <View style={styles.savedBanner}>
+            <Text style={styles.savedText}>Result saved</Text>
+          </View>
+        ) : null}
 
         {stepHeight !== undefined && onStepHeightChange !== undefined ? (
           <Card>
@@ -377,6 +384,19 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeSm,
     color: colors.muted,
     marginTop: spacing.xs,
+  },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
   },
   stepPill: {
     backgroundColor: colors.primarySoft,

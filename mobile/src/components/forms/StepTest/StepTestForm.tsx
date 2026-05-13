@@ -57,6 +57,13 @@ export function StepTestForm({ patientId }: { patientId: string }) {
     setSaveError(null);
   }
 
+  function resetTestCapture() {
+    setStep(0);
+    setAffectedInput(makeLegDefault());
+    setNonAffectedInput(makeLegDefault());
+    setStepHeight(DEFAULT_STEP_HEIGHT);
+  }
+
   async function handleSave() {
     if (saveState === 'saving') return;
     const aff    = affectedInput.unable ? 0 : (affectedInput.steps ?? 0);
@@ -88,6 +95,7 @@ export function StepTestForm({ patientId }: { patientId: string }) {
           meta: { ...r.meta, encounterDate: new Date().toISOString() },
         },
       });
+      resetTestCapture();
       setSaveState('saved');
       setTimeout(() => setSaveState('idle'), 3000);
     } catch (e) {
@@ -110,6 +118,7 @@ export function StepTestForm({ patientId }: { patientId: string }) {
         patient={patient}
         stepHeight={stepHeight}
         onStepHeightChange={setStepHeight}
+        savedNotice={saveState === 'saved'}
       />
     );
   }

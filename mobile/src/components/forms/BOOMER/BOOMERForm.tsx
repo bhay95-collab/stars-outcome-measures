@@ -107,6 +107,14 @@ export function BOOMERForm({ patientId }: { patientId: string }) {
     setStep(0);
   }
 
+  function resetTestCapture() {
+    setStepInput(DEFAULT_STEP_INPUT);
+    setTugInput(DEFAULT_TIMED_INPUT);
+    setFrInput(DEFAULT_FR_INPUT);
+    setStanceInput(DEFAULT_TIMED_INPUT);
+    setStep(0);
+  }
+
   async function handleSave() {
     if (saveState === 'saving' || !result) return;
     if (!user) {
@@ -132,6 +140,7 @@ export function BOOMERForm({ patientId }: { patientId: string }) {
           meta: { ...result.meta, encounterDate: new Date().toISOString() },
         },
       });
+      resetTestCapture();
       setSaveState('saved');
       setTimeout(() => setSaveState('idle'), 3000);
     } catch (e) {
@@ -151,6 +160,7 @@ export function BOOMERForm({ patientId }: { patientId: string }) {
         canProceed={stepInput.unable || stepScore !== null}
         patient={patient}
         score={stepScore}
+        savedNotice={saveState === 'saved'}
       />
     );
   }

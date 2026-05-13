@@ -89,6 +89,13 @@ export function HiMATForm({ patientId }: { patientId: string }) {
     setSaveError(null);
   }
 
+  function resetTestCapture() {
+    setStep(0);
+    setTimedInputs(makeTimedDefaults());
+    setBoundInputs(makeDistDefaults());
+    setStairsInputs(makeStairsDefaults());
+  }
+
   function stepLabel(s: number): string {
     return `Step ${s + 1} of ${TOTAL_INPUT_STEPS}`;
   }
@@ -152,6 +159,7 @@ export function HiMATForm({ patientId }: { patientId: string }) {
           meta: { ...r.meta, encounterDate: new Date().toISOString() },
         },
       });
+      resetTestCapture();
       setSaveState('saved');
       setTimeout(() => setSaveState('idle'), 3000);
     } catch (e) {
@@ -175,6 +183,7 @@ export function HiMATForm({ patientId }: { patientId: string }) {
         stepLabel={stepLabel(step)}
         canProceed={canProceedTimed(step)}
         patient={patient}
+        savedNotice={step === 0 && saveState === 'saved'}
       />
     );
   }

@@ -18,6 +18,7 @@ interface StepTestScreenProps {
   canProceed: boolean;
   patient: Patient | null;
   score: number | null;
+  savedNotice?: boolean;
 }
 
 type TimerStatus = 'idle' | 'running' | 'paused' | 'stopped' | 'complete';
@@ -81,7 +82,7 @@ function StepCounterCard({
 }
 
 export function StepTestScreen({
-  input, onChange, onNext, onBack, canProceed, patient, score,
+  input, onChange, onNext, onBack, canProceed, patient, score, savedNotice,
 }: StepTestScreenProps) {
   const insets = useSafeAreaInsets();
   const [timerStatus, setTimerStatus] = useState<TimerStatus>('idle');
@@ -201,6 +202,12 @@ export function StepTestScreen({
             <Text style={styles.stepPillText}>1 OF 4</Text>
           </View>
         </Card>
+
+        {savedNotice ? (
+          <View style={styles.savedBanner}>
+            <Text style={styles.savedText}>Result saved</Text>
+          </View>
+        ) : null}
 
         <View style={styles.instructionCard}>
           <Text style={styles.instructionLabel}>STEP TEST</Text>
@@ -371,6 +378,19 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   patientSub: { fontSize: typography.sizeSm, color: colors.muted, marginTop: spacing.xs },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
   stepPill: {
     backgroundColor: colors.primarySoft,
     borderRadius: radii.md,

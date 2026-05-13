@@ -76,6 +76,7 @@ export function SARAForm({ patientId }: { patientId: string }) {
   const [result, setResult] = useState<SARAResult | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [timerResetSignal, setTimerResetSignal] = useState(0);
 
   useEffect(() => {
     getPatient(patientId).then(p => setPatient(p)).catch(() => null);
@@ -95,6 +96,14 @@ export function SARAForm({ patientId }: { patientId: string }) {
   function resetSaveState() {
     setSaveState('idle');
     setSaveError(null);
+  }
+
+  function resetAssessmentCapture() {
+    setUnilateral(Array(UNI_COUNT).fill(null));
+    setBilateral(Array.from({ length: BIL_COUNT }, () => ({ right: null, left: null })));
+    setFastAlt({ right: null, left: null });
+    setResult(null);
+    setTimerResetSignal(signal => signal + 1);
   }
 
   function handleUnilateral(itemIdx: number, score: number) {
@@ -136,6 +145,7 @@ export function SARAForm({ patientId }: { patientId: string }) {
           meta: { ...result.meta, encounterDate: new Date().toISOString() },
         },
       });
+      resetAssessmentCapture();
       setSaveState('saved');
       setTimeout(() => setSaveState('idle'), 3000);
     } catch (e) {
@@ -266,9 +276,11 @@ export function SARAForm({ patientId }: { patientId: string }) {
                     {isFastAlt ? (
                       <View style={styles.timerSection}>
                         <ClinicalTimer
-                          onUseTime={secs =>
-                            setFastAlt(prev => ({ ...prev, [side]: secs }))
-                          }
+                          resetSignal={timerResetSignal}
+                          onUseTime={secs => {
+                            setFastAlt(prev => ({ ...prev, [side]: secs }));
+                            resetSaveState();
+                          }}
                         />
                         {fastAlt[side] !== null ? (
                           <Text style={styles.timerRef}>
@@ -290,6 +302,12 @@ export function SARAForm({ patientId }: { patientId: string }) {
             </Card>
           );
         })}
+
+        {saveState === 'saved' && result === null ? (
+          <View style={styles.savedBanner}>
+            <Text style={styles.savedText}>Result saved</Text>
+          </View>
+        ) : null}
 
         {result !== null ? (
           <>

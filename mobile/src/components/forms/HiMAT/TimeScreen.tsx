@@ -22,11 +22,12 @@ interface TimeScreenProps {
   stepLabel: string;
   canProceed: boolean;
   patient: Patient | null;
+  savedNotice?: boolean;
 }
 
 export function TimeScreen({
   title, hasFail, failLabel, input, onChange,
-  onNext, onBack, stepLabel, canProceed, patient,
+  onNext, onBack, stepLabel, canProceed, patient, savedNotice,
 }: TimeScreenProps) {
   const insets = useSafeAreaInsets();
   const [manualText, setManualText] = useState(
@@ -70,6 +71,12 @@ export function TimeScreen({
             <Text style={styles.stepText}>{stepLabel}</Text>
           </View>
         </Card>
+
+        {savedNotice ? (
+          <View style={styles.savedBanner}>
+            <Text style={styles.savedText}>Result saved</Text>
+          </View>
+        ) : null}
 
         <View style={styles.instructionCard}>
           <Text style={styles.instructionLabel}>WHAT TO TIME</Text>
@@ -168,6 +175,19 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeSm,
     color: colors.muted,
     marginTop: spacing.xs,
+  },
+  savedBanner: {
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  savedText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
   },
   stepPill: {
     backgroundColor: colors.primarySoft,
