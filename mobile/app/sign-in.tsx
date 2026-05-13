@@ -6,15 +6,19 @@ import {
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { supabase } from '../src/supabase/client';
 import { Screen } from '../src/components/ui/Screen';
 import { TextInput } from '../src/components/ui/TextInput';
 import { LogoWordmark } from '../src/components/ui/LogoWordmark';
 import { ThreeBarLoading } from '../src/components/ui/ThreeBarMotif';
 import { colors, fonts, spacing, typography, radii } from '../src/theme/tokens';
+
 import { GOOGLE_SIGN_IN_ERROR_MESSAGE, signInWithGoogle } from '../src/auth/googleAuth';
 
 WebBrowser.maybeCompleteAuthSession();
+
+const heroVideo = require('../assets/videos/hero-loop.mp4');
 
 const WEB_SIGNUP_URL = 'https://www.rehabmetricsiq.com/signup';
 const squareLogo = require('../assets/SquareLogo.png');
@@ -27,6 +31,12 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const videoPlayer = useVideoPlayer(heroVideo, (player) => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
 
   function handleEmailChange(text: string) {
     if (error) setError(null);
@@ -93,7 +103,7 @@ export default function SignInScreen() {
   }
 
   return (
-    <Screen padded={false} style={styles.navyRoot} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
+    <Screen padded={false} style={styles.navyRoot} rootBackground={colors.primaryDark} safeEdges={['left', 'right']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -101,8 +111,18 @@ export default function SignInScreen() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="never"
         >
-          <View style={styles.hero}>
+          <View style={[styles.hero, { paddingTop: insets.top + spacing.xl }]}>
+            <VideoView
+              player={videoPlayer}
+              style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.primaryDark }]}
+              contentFit="cover"
+              fullscreenOptions={{ enable: false }}
+              allowsPictureInPicture={false}
+              nativeControls={false}
+            />
+            <View style={styles.heroScrim} />
             <Image source={squareLogo} style={styles.logo} resizeMode="contain" />
             <LogoWordmark size="lg" tone="light" />
             <Text style={styles.tagline}>
@@ -233,9 +253,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.lg + radii.sheet,
     gap: spacing.sm,
+    overflow: 'hidden',
+    backgroundColor: colors.primaryDark,
+    marginBottom: -radii.sheet,
+  },
+  heroScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(16, 41, 71, 0.62)',
   },
   logo: {
     width: 120,
