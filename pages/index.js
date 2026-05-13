@@ -388,14 +388,16 @@ export default function Landing() {
 function FaqItem({ question, answer, revealDelay }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className={`faq-item reveal${open ? ' faq-item--open' : ''}`} style={{ '--reveal-delay': revealDelay }}>
-      <button className="faq-question" type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}>
-        {question}
-        <ChevronDown size={18} className="faq-chevron" />
-      </button>
-      <div className="faq-body" aria-hidden={!open}>
-        <div className="faq-body__inner">
-          <p>{answer}</p>
+    <div className="faq-reveal reveal" style={{ '--reveal-delay': revealDelay }}>
+      <div className={`faq-item${open ? ' faq-item--open' : ''}`}>
+        <button className="faq-question" type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+          {question}
+          <ChevronDown size={18} className="faq-chevron" />
+        </button>
+        <div className="faq-body" aria-hidden={!open}>
+          <div className="faq-body__inner">
+            <p>{answer}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -639,6 +641,11 @@ const styles = `
     --amber: #c47b43;
     --danger: #b42318;
     --shadow: 0 18px 36px rgba(23, 38, 59, 0.18);
+    --surface: #fbfdff;
+    --surface-raised: #f6f9fc;
+    --surface-muted: #eef4f8;
+    --line-strong: #c3d0dc;
+    --shadow-card: 0 1px 2px rgba(23,38,59,0.06), 0 10px 24px rgba(23,38,59,0.045);
   }
   html { scroll-behavior: smooth; }
   body { background: #f5f8fb; color: var(--ink); font-family: Inter, sans-serif; }
@@ -832,11 +839,11 @@ const styles = `
     justify-self: end;
     width: min(100%, 516px);
     padding: 28px 24px 30px;
-    border: 1px solid rgba(255,255,255,0.56);
-    border-radius: 12px;
-    background: rgba(255,255,255,0.62);
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(18px);
+    border: 1px solid rgba(195,208,220,0.86);
+    border-radius: 10px;
+    background: rgba(251,253,255,0.9);
+    box-shadow: 0 18px 38px rgba(23,38,59,0.14);
+    backdrop-filter: blur(12px);
   }
   .preview-card__top {
     display: flex;
@@ -1049,9 +1056,7 @@ const styles = `
   .clinical-band {
     border-top: 1px solid rgba(215,224,232,0.72);
     border-bottom: 1px solid rgba(215,224,232,0.72);
-    background:
-      linear-gradient(90deg, rgba(255,255,255,0.88), rgba(238,243,248,0.82)),
-      #eef3f8;
+    background: var(--surface-muted);
   }
 
   .clinical-band__inner {
@@ -1079,15 +1084,26 @@ const styles = `
   }
 
   .soft-card, .pricing-card, .capability-card, details {
-    border: 1px solid rgba(215,224,232,0.9);
-    border-radius: 14px;
-    background: rgba(255,255,255,0.9);
-    box-shadow: 0 14px 32px rgba(23,38,59,0.08);
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
   }
   .soft-card {
     padding: 24px;
   }
-  .soft-card svg { color: var(--navy); }
+  .soft-card > svg,
+  .capability-card > svg {
+    display: block;
+    width: 22px;
+    height: 22px;
+    padding: 8px;
+    border: 1px solid #d4e0ea;
+    border-radius: 8px;
+    background: var(--surface-muted);
+    color: var(--navy-dark);
+    box-sizing: content-box;
+  }
   .soft-card h3 { margin-top: 16px; font-size: 18px; }
   .soft-card p { margin-top: 8px; color: var(--muted); line-height: 1.55; }
 
@@ -1104,13 +1120,11 @@ const styles = `
   .capability-card {
     min-height: 236px;
     padding: 24px;
-    background:
-      linear-gradient(135deg, rgba(255,255,255,0.96), rgba(238,243,248,0.82)),
-      #fff;
+    background: var(--surface);
   }
 
-  .capability-card svg {
-    color: var(--navy);
+  .capability-card:nth-child(even) {
+    background: var(--surface-raised);
   }
 
   .capability-card h3 {
@@ -1131,9 +1145,7 @@ const styles = `
     overflow: hidden;
     border-top: 1px solid rgba(215,224,232,0.72);
     border-bottom: 1px solid rgba(215,224,232,0.72);
-    background:
-      linear-gradient(135deg, rgba(23,73,111,0.96), rgba(35,100,153,0.92)),
-      var(--navy-dark);
+    background: var(--navy-dark);
   }
 
   .mobile-showcase__inner {
@@ -1684,10 +1696,10 @@ const styles = `
 
   .faq-list { display: grid; gap: 12px; }
   .faq-item {
-    border: 1px solid rgba(215,224,232,0.9);
-    border-radius: 14px;
-    background: rgba(255,255,255,0.9);
-    box-shadow: 0 14px 32px rgba(23,38,59,0.08);
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
   }
   .faq-question {
@@ -1731,12 +1743,10 @@ const styles = `
     justify-content: space-between;
     gap: 18px;
     padding: 22px;
-    border: 1px solid rgba(35,100,153,0.2);
-    border-radius: 14px;
-    background:
-      linear-gradient(135deg, rgba(234,243,251,0.96), rgba(255,255,255,0.9)),
-      #fff;
-    box-shadow: 0 14px 32px rgba(23,38,59,0.08);
+    border: 1px solid #b8cad9;
+    border-radius: 10px;
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-card);
   }
 
   .faq-cta strong {

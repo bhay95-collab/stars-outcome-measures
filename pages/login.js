@@ -198,9 +198,7 @@ const pageStyles = `
     display: grid;
     place-items: center;
     padding: 32px;
-    background:
-      linear-gradient(135deg, rgba(234,243,251,0.92), rgba(247,250,252,0.98)),
-      linear-gradient(135deg, #f7fbff 0%, #eaf1f8 100%);
+    background: var(--color-surface-soft);
   }
 
   .login-shell {
@@ -210,10 +208,9 @@ const pageStyles = `
     grid-template-columns: minmax(0, 1.12fr) minmax(380px, 0.82fr);
     overflow: hidden;
     border: 1px solid rgba(216,226,236,0.95);
-    border-radius: 24px;
-    background: rgba(255,255,255,0.74);
+    border-radius: 18px;
+    background: var(--color-surface);
     box-shadow: var(--shadow-md);
-    backdrop-filter: blur(18px);
   }
   @media (prefers-reduced-motion: no-preference) {
     .login-shell { animation: shell-appear 0.52s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -250,15 +247,6 @@ const pageStyles = `
     background:
       linear-gradient(90deg, rgba(9, 19, 32, 0.68), rgba(9, 19, 32, 0.26) 56%, rgba(9, 19, 32, 0.08)),
       linear-gradient(180deg, rgba(9, 19, 32, 0.18), rgba(9, 19, 32, 0.1) 42%, rgba(9, 19, 32, 0.54));
-  }
-
-  .login-visual::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent 38%);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -316,10 +304,9 @@ const pageStyles = `
     min-height: 94px;
     padding: 16px;
     border: 1px solid rgba(255,255,255,0.24);
-    border-radius: 16px;
-    background: rgba(8,18,30,0.34);
+    border-radius: 10px;
+    background: rgba(8,18,30,0.58);
     box-shadow: inset 0 1px rgba(255,255,255,0.16);
-    backdrop-filter: blur(12px);
   }
 
   .login-visual__metrics strong {
@@ -350,7 +337,7 @@ const pageStyles = `
     align-self: center;
     max-width: none;
     padding: 46px;
-    background: rgba(255,255,255,0.9);
+    background: var(--color-surface);
   }
 
   .card .logo-wordmark {

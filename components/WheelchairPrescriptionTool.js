@@ -1744,8 +1744,8 @@ const wheelchairToolStyles = `
     --wc-subtle: var(--color-subtle);
     --wc-line: var(--color-border);
     --wc-card-border: rgba(216,225,234,0.9);
-    --wc-surface: rgba(255,255,255,0.72);
-    --wc-nested-surface: rgba(247,250,252,0.82);
+    --wc-surface: #fbfdff;
+    --wc-nested-surface: #f6f9fc;
     --wc-control-surface: var(--color-surface-soft);
     --wc-soft: var(--color-surface-soft);
     --wc-primary: var(--color-primary);
@@ -1795,12 +1795,19 @@ const wheelchairToolStyles = `
     padding: 20px 24px;
     border: 1px solid var(--wc-card-border);
     border-radius: var(--wc-radius-panel);
-    background:
-      linear-gradient(90deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.86) 58%, rgba(234,243,251,0.82) 100%),
-      url('/assets/wheelchair-prescription/mid-wheel-drive-power-wheelchair.jpg') right center / 330px auto no-repeat,
-      var(--wc-surface);
+    background: var(--wc-surface);
     box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(16px);
+  }
+
+  .wc-tool__header::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: 0;
+    width: min(38%, 340px);
+    pointer-events: none;
+    background: url('/assets/wheelchair-prescription/mid-wheel-drive-power-wheelchair.jpg') right center / 330px auto no-repeat;
+    opacity: 0.16;
   }
 
   .wc-tool__header > * {
@@ -1987,7 +1994,6 @@ const wheelchairToolStyles = `
     border-radius: var(--wc-radius-panel);
     background: var(--wc-surface);
     box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(16px);
   }
 
   .wc-tool .side-card {
