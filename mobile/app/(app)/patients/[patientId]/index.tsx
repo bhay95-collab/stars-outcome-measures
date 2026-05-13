@@ -17,25 +17,70 @@ import { LoadingState } from '../../../../src/components/ui/LoadingState';
 import { MEASURES, buildPatientPathway } from '../../../../src/clinical/adapter';
 import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
-function formatPrimary(results: AssessmentResults): string {
-  const v = results?.primaryValue;
-  const u = results?.primaryUnit;
-  if (v == null || !Number.isFinite(Number(v))) return '—';
-  const n = Number(v);
-  const formatted = Number.isInteger(n) ? String(n) : n.toFixed(2);
-  return u ? `${formatted} ${u}` : formatted;
+const HISTORY_LIMIT = 8;
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-AU', {
+function formatPrimaryParts(results: AssessmentResults | null | undefined): { value: string; unit: string | null } {
+  const record = asRecord(results);
+  const v = record?.primaryValue;
+  const u = record?.primaryUnit;
+  if (v == null || !Number.isFinite(Number(v))) return { value: '—', unit: null };
+  const n = Number(v);
+  const formatted = Number.isInteger(n) ? String(n) : n.toFixed(2);
+  return {
+    value: formatted,
+    unit: typeof u === 'string' && u.trim() ? u.trim() : null,
+  };
+}
+
+function formatDate(iso: string | null | undefined): string {
+  const date = new Date(iso ?? '');
+  if (Number.isNaN(date.getTime())) return 'Date unavailable';
+  return date.toLocaleDateString('en-AU', {
     day: '2-digit', month: 'short', year: 'numeric',
   });
 }
 
-function formatCompactDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-AU', {
+function formatCompactDate(iso: string | null | undefined): string {
+  const date = new Date(iso ?? '');
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('en-AU', {
     day: '2-digit', month: 'short',
   });
+}
+
+function getStringField(record: unknown, keys: string[]): string | null {
+  const safeRecord = asRecord(record);
+  if (!safeRecord) return null;
+  for (const key of keys) {
+    const value = safeRecord[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function formatMetaLabel(value: string): string {
+  return value
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getAssessmentMetaLabel(assessment: Assessment): string | null {
+  const inputs = assessment.inputs;
+  const resultMeta = asRecord(assessment.results)?.meta;
+  const label = getStringField(inputs, ['variant', 'pace', 'condition', 'mode', 'testType'])
+    ?? getStringField(resultMeta, ['variant', 'pace', 'condition', 'mode', 'testType']);
+  return label ? formatMetaLabel(label) : null;
+}
+
+function getInterpretation(results: AssessmentResults | null | undefined): string {
+  const interpretation = asRecord(results)?.interpretation;
+  return typeof interpretation === 'string' ? interpretation.trim() : '';
 }
 
 function getLatestPerMeasure(assessments: Assessment[]): Assessment[] {
@@ -54,19 +99,40 @@ function getLatestDate(assessments: Assessment[]): string | null {
     .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
 }
 
-function MeasureRow({ assessment }: { assessment: Assessment }) {
+function AssessmentHistoryCard({ assessment }: { assessment: Assessment }) {
   const measureName = MEASURES[assessment.measure]?.name ?? assessment.measure;
   const measureShortName = MEASURES[assessment.measure]?.id ?? assessment.measure;
+  const primary = formatPrimaryParts(assessment.results);
+  const interpretation = getInterpretation(assessment.results);
+  const metaLabel = getAssessmentMetaLabel(assessment);
+
   return (
-    <Card style={styles.measureCard}>
-      <View>
-        <Text style={styles.measureTitle}>{measureShortName}</Text>
-        <Text style={styles.measureLabel}>{measureName}</Text>
+    <Card style={styles.historyCard}>
+      <View style={styles.historyHeader}>
+        <View style={styles.historyTitleGroup}>
+          <Text style={styles.historyMeasure}>{measureShortName}</Text>
+          <Text style={styles.historyMeasureName}>{measureName}</Text>
+        </View>
+        <Text style={styles.historyDate}>{formatDate(assessment.created_at)}</Text>
       </View>
-      <View style={styles.measureMeta}>
-        <Text style={styles.measureValue}>{formatPrimary(assessment.results)}</Text>
-        <Text style={styles.measureDate}>{formatDate(assessment.created_at)}</Text>
+      <View style={styles.historyResultRow}>
+        <Text style={styles.historyValue}>{primary.value}</Text>
+        {primary.unit ? <Text style={styles.historyUnit}>{primary.unit}</Text> : null}
       </View>
+      {(interpretation || metaLabel) ? (
+        <View style={styles.historyPillRow}>
+          {interpretation ? (
+            <View style={styles.interpretationPill}>
+              <Text style={styles.interpretationText}>{interpretation}</Text>
+            </View>
+          ) : null}
+          {metaLabel ? (
+            <View style={styles.metaPill}>
+              <Text style={styles.metaPillText}>{metaLabel}</Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
     </Card>
   );
 }
@@ -108,6 +174,7 @@ export default function PatientSummaryScreen() {
 
   const pathway = buildPatientPathway(patient, assessments);
   const pathwayActions = pathway.nextActions.filter(action => action.detail).slice(0, 3);
+  const recentHistory = assessments.slice(0, HISTORY_LIMIT);
 
   if (error || !patient) {
     return (
@@ -192,18 +259,18 @@ export default function PatientSummaryScreen() {
           ))}
         </Card>
 
-        <SectionLabel>Recorded Measures</SectionLabel>
+        <SectionLabel>Recent Assessment History</SectionLabel>
 
-        {latest.length === 0 ? (
+        {recentHistory.length === 0 ? (
           <Card style={styles.emptyCard}>
             <EmptyState
-              title="No measures recorded yet"
-              hint="Tap New Assessment to record the first measure."
+              title="No assessment history yet"
+              hint="Save an assessment to build this patient's mobile history."
             />
           </Card>
         ) : (
-          <View style={styles.measureList}>
-            {latest.map(a => <MeasureRow key={a.id} assessment={a} />)}
+          <View style={styles.historyList}>
+            {recentHistory.map(a => <AssessmentHistoryCard key={a.id} assessment={a} />)}
           </View>
         )}
 
@@ -381,37 +448,82 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: spacing.xs,
   },
-  measureList: {
+  historyList: {
     gap: spacing.sm,
   },
-  measureCard: {
+  historyCard: {
     gap: spacing.sm,
     paddingVertical: spacing.md,
   },
-  measureTitle: {
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  historyTitleGroup: {
+    flex: 1,
+  },
+  historyMeasure: {
     fontSize: typography.sizeMd,
     fontWeight: typography.weightBold,
     color: colors.ink,
   },
-  measureLabel: {
+  historyMeasureName: {
     fontSize: typography.sizeSm,
     fontWeight: typography.weightMedium,
     color: colors.muted,
     marginTop: spacing.xs,
   },
-  measureMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
+  historyDate: {
+    fontSize: typography.sizeXs,
+    color: colors.subtle,
+    marginTop: 2,
   },
-  measureValue: {
-    fontSize: typography.sizeLg,
+  historyResultRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing.xs,
+  },
+  historyValue: {
+    fontSize: typography.sizeXl,
     fontWeight: typography.weightSemibold,
     color: colors.ink,
   },
-  measureDate: {
+  historyUnit: {
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightMedium,
+    color: colors.muted,
+  },
+  historyPillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  interpretationPill: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
+  },
+  interpretationText: {
+    fontSize: typography.sizeSm,
+    color: colors.ink,
+  },
+  metaPill: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  metaPillText: {
     fontSize: typography.sizeXs,
-    color: colors.subtle,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
   },
   emptyCard: {
     padding: 0,

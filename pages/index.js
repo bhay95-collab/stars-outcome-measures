@@ -407,12 +407,12 @@ function PhonePreview({ variant }) {
               <MiniBars />
             </div>
             <div className="phone-search">Search patients</div>
-            {['Benjamin H.', 'Dharsha P.', 'Haylee K.', 'John S.'].map((name, index) => (
+            {['Patient A.', 'Patient B.', 'Patient C.', 'Patient D.'].map((name, index) => (
               <div className="phone-row" key={name}>
                 <span>{name.split(' ').map(part => part[0]).join('')}</span>
                 <div>
                   <strong>{name}</strong>
-                  <small>{['04/05/1995', '09/09/1986', '02/02/1980', '01/01/1975'][index]}</small>
+                  <small>{['14/03/1978', '22/07/1986', '09/11/1991', '31/01/1969'][index]}</small>
                 </div>
                 <em>›</em>
               </div>
@@ -423,8 +423,8 @@ function PhonePreview({ variant }) {
         {variant === 'pathway' && (
           <>
             <div className="phone-patient">
-              <span>JS</span>
-              <strong>John S.</strong>
+              <span>PD</span>
+              <strong>Patient D.</strong>
             </div>
             <div className="phone-pathway">
               <div>
@@ -447,8 +447,8 @@ function PhonePreview({ variant }) {
         {variant === 'measure' && (
           <>
             <div className="phone-patient">
-              <span>JS</span>
-              <strong>John S.</strong>
+              <span>PD</span>
+              <strong>Patient D.</strong>
             </div>
             <div className="phone-measure">
               <h3>Trial 1</h3>
@@ -534,7 +534,7 @@ function DemoModal({
         <p className="eyebrow">INTERACTIVE DEMO</p>
         <h2>10 Metre Walk Test</h2>
         <div className="demo-patient">
-          <span><small>Patient</small>John Smith</span>
+          <span><small>Patient</small>Example Patient</span>
           <span><small>Age</small>{PATIENT_AGE}</span>
           <span><small>Diagnosis</small>Stroke</span>
         </div>
