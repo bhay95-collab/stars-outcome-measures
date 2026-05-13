@@ -102,6 +102,7 @@ export function MWTForm({ patientId }: { patientId: string }) {
   const [result, setResult] = useState<MWTResult | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [timerResetSignal, setTimerResetSignal] = useState(0);
 
   useEffect(() => {
     getPatient(patientId)
@@ -133,6 +134,14 @@ export function MWTForm({ patientId }: { patientId: string }) {
     resetSaveState();
   }
 
+  function resetTimingInputs() {
+    setTimeInput('');
+    setStepsInput('');
+    setErrors({});
+    setResult(null);
+    setTimerResetSignal(signal => signal + 1);
+  }
+
   async function handleSave() {
     if (saveState === 'saving' || !result) return;
 
@@ -155,6 +164,7 @@ export function MWTForm({ patientId }: { patientId: string }) {
         inputs: { pace: result.pace, time: result.time, steps: result.steps ?? null },
         results: buildMWTSaveResults(result, new Date().toISOString()),
       });
+      resetTimingInputs();
       setSaveState('saved');
       setTimeout(() => setSaveState('idle'), 3000);
     } catch (e) {
@@ -182,6 +192,7 @@ export function MWTForm({ patientId }: { patientId: string }) {
     const text = seconds.toFixed(1);
     setTimeInput(text);
     setErrors(prev => ({ ...prev, time: undefined }));
+    resetSaveState();
     const r = computeMWT('10', text, stepsInput, paceIndex);
     if (r) setResult(r);
   }
@@ -235,7 +246,7 @@ export function MWTForm({ patientId }: { patientId: string }) {
 
           <View style={styles.divider} />
 
-          <ClinicalTimer onUseTime={handleUseTime} />
+          <ClinicalTimer onUseTime={handleUseTime} resetSignal={timerResetSignal} />
 
           <View style={styles.divider} />
 
@@ -258,6 +269,12 @@ export function MWTForm({ patientId }: { patientId: string }) {
             unit="steps"
           />
         </Card>
+
+        {saveState === 'saved' && result === null ? (
+          <View style={styles.savedBanner}>
+            <Text style={styles.savedText}>Result saved</Text>
+          </View>
+        ) : null}
 
         {result !== null ? (
           <>

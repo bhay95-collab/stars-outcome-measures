@@ -49,6 +49,7 @@ export function TUGForm({ patientId }: { patientId: string }) {
   const [result, setResult] = useState<TUGResult | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [timerResetSignal, setTimerResetSignal] = useState(0);
 
   useEffect(() => {
     getPatient(patientId)
@@ -72,6 +73,13 @@ export function TUGForm({ patientId }: { patientId: string }) {
     setError(null);
     setResult(null);
     resetSaveState();
+  }
+
+  function resetTimingInputs() {
+    setTimeInput('');
+    setError(null);
+    setResult(null);
+    setTimerResetSignal(signal => signal + 1);
   }
 
   function handleBlur() {
@@ -122,6 +130,7 @@ export function TUGForm({ patientId }: { patientId: string }) {
           },
         },
       });
+      resetTimingInputs();
       setSaveState('saved');
       setTimeout(() => setSaveState('idle'), 3000);
     } catch (e) {
@@ -171,7 +180,7 @@ export function TUGForm({ patientId }: { patientId: string }) {
 
           <View style={styles.divider} />
 
-          <ClinicalTimer onUseTime={handleUseTime} />
+          <ClinicalTimer onUseTime={handleUseTime} resetSignal={timerResetSignal} />
 
           <View style={styles.divider} />
 
@@ -184,6 +193,12 @@ export function TUGForm({ patientId }: { patientId: string }) {
             error={error ?? undefined}
           />
         </Card>
+
+        {saveState === 'saved' && result === null ? (
+          <View style={styles.savedBanner}>
+            <Text style={styles.savedText}>Result saved</Text>
+          </View>
+        ) : null}
 
         {result !== null ? (
           <>

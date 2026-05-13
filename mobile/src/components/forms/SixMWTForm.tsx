@@ -43,6 +43,7 @@ export function SixMWTForm({ patientId }: { patientId: string }) {
   const [deviceIndex, setDeviceIndex] = useState(0);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [timerResetSignal, setTimerResetSignal] = useState(0);
 
   useEffect(() => {
     getPatient(patientId).then(p => setPatient(p)).catch(() => null);
@@ -55,7 +56,7 @@ export function SixMWTForm({ patientId }: { patientId: string }) {
 
   function handleTimerStatusChange(status: SixMWTTimerStatus) {
     setTimerStatus(status);
-    resetSaveState();
+    if (status !== 'idle') resetSaveState();
   }
 
   function handleLapLengthChange(idx: number) {
@@ -81,6 +82,13 @@ export function SixMWTForm({ patientId }: { patientId: string }) {
   function handleDeviceChange(idx: number) {
     setDeviceIndex(idx);
     resetSaveState();
+  }
+
+  function resetTestCapture() {
+    setTimerStatus('idle');
+    setLapCount(0);
+    setManualDistance('');
+    setTimerResetSignal(signal => signal + 1);
   }
 
   async function handleSave() {
@@ -113,6 +121,7 @@ export function SixMWTForm({ patientId }: { patientId: string }) {
           meta: { ...r.meta, encounterDate: new Date().toISOString() },
         },
       });
+      resetTestCapture();
       setSaveState('saved');
       setTimeout(() => setSaveState('idle'), 3000);
     } catch (e) {
@@ -163,7 +172,10 @@ export function SixMWTForm({ patientId }: { patientId: string }) {
 
         <Card>
           <Text style={styles.trialHeading}>Timer</Text>
-          <SixMinuteCountdown onStatusChange={handleTimerStatusChange} />
+          <SixMinuteCountdown
+            onStatusChange={handleTimerStatusChange}
+            resetSignal={timerResetSignal}
+          />
         </Card>
 
         <Card>
@@ -221,6 +233,12 @@ export function SixMWTForm({ patientId }: { patientId: string }) {
             onSelect={handleDeviceChange}
           />
         </Card>
+
+        {saveState === 'saved' && !showResult ? (
+          <View style={styles.savedBanner}>
+            <Text style={styles.savedText}>Result saved</Text>
+          </View>
+        ) : null}
 
         {showResult ? (
           <>

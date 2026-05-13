@@ -4,11 +4,12 @@ import { colors, spacing, typography, radii } from '../../theme/tokens';
 
 interface ClinicalTimerProps {
   onUseTime: (seconds: number) => void;
+  resetSignal?: number;
 }
 
 type TimerState = 'idle' | 'running' | 'stopped';
 
-export function ClinicalTimer({ onUseTime }: ClinicalTimerProps) {
+export function ClinicalTimer({ onUseTime, resetSignal }: ClinicalTimerProps) {
   const [elapsed, setElapsed] = useState(0);
   const [timerState, setTimerState] = useState<TimerState>('idle');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -19,6 +20,11 @@ export function ClinicalTimer({ onUseTime }: ClinicalTimerProps) {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (resetSignal === undefined) return;
+    reset();
+  }, [resetSignal]);
 
   function start() {
     startTimeRef.current = Date.now() - elapsed;

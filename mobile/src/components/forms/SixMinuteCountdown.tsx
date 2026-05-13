@@ -6,6 +6,7 @@ export type SixMWTTimerStatus = 'idle' | 'running' | 'paused' | 'stopped' | 'com
 
 interface SixMinuteCountdownProps {
   onStatusChange: (status: SixMWTTimerStatus) => void;
+  resetSignal?: number;
 }
 
 const DURATION_MS = 360_000;
@@ -17,7 +18,7 @@ function formatMmSs(ms: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export function SixMinuteCountdown({ onStatusChange }: SixMinuteCountdownProps) {
+export function SixMinuteCountdown({ onStatusChange, resetSignal }: SixMinuteCountdownProps) {
   const [remainingMs, setRemainingMs] = useState(DURATION_MS);
   const [status, setStatus] = useState<SixMWTTimerStatus>('idle');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -28,6 +29,11 @@ export function SixMinuteCountdown({ onStatusChange }: SixMinuteCountdownProps) 
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (resetSignal === undefined) return;
+    reset();
+  }, [resetSignal]);
 
   function changeStatus(next: SixMWTTimerStatus) {
     setStatus(next);
@@ -75,6 +81,10 @@ export function SixMinuteCountdown({ onStatusChange }: SixMinuteCountdownProps) 
   }
 
   function reset() {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     setRemainingMs(DURATION_MS);
     changeStatus('idle');
   }
