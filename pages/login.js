@@ -64,6 +64,18 @@ export default function Login() {
       <main className="page">
         <section className="login-shell">
           <div className="login-visual">
+            <video
+              className="login-visual__video"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              poster="/assets/videos/login-poster.jpg"
+              aria-hidden="true"
+            >
+              <source src="/assets/videos/login-loop.mp4" type="video/mp4" />
+            </video>
             <div className="login-visual__content">
               <LogoWordmark size="lg" showMark={false} />
               <p className="eyebrow">CLINICAL OUTCOMES WORKSPACE</p>
@@ -200,25 +212,45 @@ const pageStyles = `
     min-height: 560px;
     isolation: isolate;
     overflow: hidden;
-    background:
-      linear-gradient(90deg, rgba(23,73,111,0.92), rgba(35,100,153,0.52)),
-      url('https://images.pexels.com/photos/6111595/pexels-photo-6111595.jpeg?auto=compress&cs=tinysrgb&w=1400') center / cover;
+    background: #17496F;
+  }
+
+  .login-visual__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
   }
 
   .login-visual::before {
     content: '';
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(23,73,111,0.92), rgba(35,100,153,0.52));
+  }
+
+  .login-visual::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
     pointer-events: none;
     background:
       linear-gradient(135deg, rgba(255,255,255,0.18), transparent 38%),
       repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 92px);
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .login-visual__video { display: none; }
+  }
+
   .login-visual__content {
     position: relative;
-    z-index: 1;
+    z-index: 3;
     min-height: 100%;
     display: flex;
     flex-direction: column;

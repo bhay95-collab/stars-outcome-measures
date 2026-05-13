@@ -150,6 +150,18 @@ export default function Landing() {
 
       <main>
         <section className="hero">
+          <video
+            className="hero__video"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            poster="/assets/landing-hero-physio.jpg"
+            aria-hidden="true"
+          >
+            <source src="/assets/videos/hero-loop.mp4" type="video/mp4" />
+          </video>
           <div className="hero__focus-blur" />
           <div className="hero__scrim" />
           <div className="hero__inner">
@@ -205,10 +217,17 @@ export default function Landing() {
               </div>
             </div>
             <figure className="image-panel image-panel--workflow">
-              <img
-                src="https://images.pexels.com/photos/7697827/pexels-photo-7697827.jpeg?auto=compress&cs=tinysrgb&w=1200"
-                alt="Wheelchair user strength training with support from a rehabilitation trainer"
-              />
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="metadata"
+                poster="/assets/videos/workflow-poster.jpg"
+                aria-hidden="true"
+              >
+                <source src="/assets/videos/workflow-loop.mp4" type="video/mp4" />
+              </video>
             </figure>
           </div>
         </section>
@@ -635,6 +654,19 @@ const styles = `
     filter: saturate(0.92) sepia(0.06) brightness(1.04) contrast(0.95);
     transform: scale(1.01);
   }
+  .hero__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 62% center;
+    filter: saturate(0.92) sepia(0.06) brightness(1.04) contrast(0.95);
+    transform: scale(1.01);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero__video { display: none; }
+  }
   .hero__focus-blur {
     position: absolute;
     inset: 0 auto 0 0;
@@ -936,9 +968,21 @@ const styles = `
     display: block;
     object-fit: cover;
   }
+  .image-panel video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
 
   .image-panel--workflow {
     min-height: 100%;
+    background-image: url('/assets/videos/workflow-poster.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .image-panel--workflow video { display: none; }
   }
 
   .image-panel--wide {
