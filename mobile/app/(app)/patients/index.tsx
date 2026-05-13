@@ -20,6 +20,7 @@ import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { ThreeBarMotif } from '../../../src/components/ui/ThreeBarMotif';
 import { TextInput as ClinicalTextInput } from '../../../src/components/ui/TextInput';
 import { colors, fonts, spacing, typography, radii } from '../../../src/theme/tokens';
+import { CONDITION_OPTIONS } from '@clinical/constants';
 
 type PatientGender = 'M' | 'F' | 'Other';
 
@@ -28,6 +29,8 @@ const GENDER_OPTIONS: { value: PatientGender; label: string }[] = [
   { value: 'F', label: 'Female' },
   { value: 'Other', label: 'Other' },
 ];
+
+const DIAGNOSIS_OPTIONS = CONDITION_OPTIONS as readonly string[];
 
 function getUserInitials(user: User): string {
   const name: string = user.user_metadata?.full_name ?? user.user_metadata?.name ?? '';
@@ -163,13 +166,13 @@ function PatientCard({ patient }: { patient: Patient }) {
   );
 }
 
-function isDOBValid(dob: string): boolean {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
-  if (!match) return false;
+function parseDOBInput(dob: string): string | null {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dob);
+  if (!match) return null;
 
-  const year = Number(match[1]);
+  const day = Number(match[1]);
   const month = Number(match[2]);
-  const day = Number(match[3]);
+  const year = Number(match[3]);
   const date = new Date(year, month - 1, day);
 
   if (
@@ -177,12 +180,21 @@ function isDOBValid(dob: string): boolean {
     date.getMonth() !== month - 1 ||
     date.getDate() !== day
   ) {
-    return false;
+    return null;
   }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return date <= today;
+  if (date > today) return null;
+
+  return `${match[3]}-${match[2]}-${match[1]}`;
+}
+
+function formatDOBInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
 
 function CreatePatientSheet({
@@ -200,6 +212,7 @@ function CreatePatientSheet({
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState<PatientGender | null>(null);
   const [diagnosis, setDiagnosis] = useState('');
+  const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -209,6 +222,7 @@ function CreatePatientSheet({
     setDob('');
     setGender(null);
     setDiagnosis('');
+    setDiagnosisOpen(false);
     setError(null);
   }
 
@@ -239,19 +253,21 @@ function CreatePatientSheet({
       setError('Date of birth is required.');
       return;
     }
-    if (!isDOBValid(dob.trim())) {
-      setError('Enter a valid date of birth that is not in the future.');
+    const isoDOB = parseDOBInput(dob.trim());
+    if (!isoDOB) {
+      setError('Enter a valid date of birth in DD/MM/YYYY format that is not in the future.');
       return;
     }
 
     setIsSaving(true);
     setError(null);
+    setDiagnosisOpen(false);
 
     try {
       await createPatient({
         firstName: trimmedFirstName,
         lastInitial: trimmedLastInitial,
-        dob: dob.trim(),
+        dob: isoDOB,
         gender,
         diagnosis,
       });
@@ -271,10 +287,12 @@ function CreatePatientSheet({
       animationType="slide"
       onRequestClose={handleDismiss}
     >
-      <Pressable style={styles.backdrop} onPress={handleDismiss} />
+      <View style={styles.modalRoot}>
+      <Pressable style={styles.createBackdrop} onPress={handleDismiss} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.sheetKeyboard}
+        style={styles.createSheetKeyboard}
+        pointerEvents="box-none"
       >
         <View style={[styles.sheet, styles.createSheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <View style={styles.sheetHandle} />
@@ -311,9 +329,9 @@ function CreatePatientSheet({
               value={dob}
               onChangeText={(value) => {
                 setError(null);
-                setDob(value);
+                setDob(formatDOBInput(value));
               }}
-              placeholder="YYYY-MM-DD"
+              placeholder="DD/MM/YYYY"
               keyboardType="numeric"
             />
 
@@ -346,16 +364,78 @@ function CreatePatientSheet({
               </View>
             </View>
 
-            <ClinicalTextInput
-              label="Diagnosis"
-              value={diagnosis}
-              onChangeText={(value) => {
-                setError(null);
-                setDiagnosis(value);
-              }}
-              placeholder="Optional"
-              autoCapitalize="words"
-            />
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Diagnosis</Text>
+              <Pressable
+                onPress={() => {
+                  setError(null);
+                  setDiagnosisOpen(open => !open);
+                }}
+                style={({ pressed }) => [
+                  styles.dropdownButton,
+                  diagnosisOpen && styles.dropdownButtonOpen,
+                  pressed && styles.dropdownButtonPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Select diagnosis"
+              >
+                <Text
+                  style={[styles.dropdownText, !diagnosis && styles.dropdownPlaceholder]}
+                  numberOfLines={1}
+                >
+                  {diagnosis || 'Select diagnosis'}
+                </Text>
+                <Text style={styles.dropdownChevron}>{diagnosisOpen ? '⌃' : '⌄'}</Text>
+              </Pressable>
+              {diagnosisOpen ? (
+                <View style={styles.dropdownMenu}>
+                  <ScrollView
+                    nestedScrollEnabled
+                    keyboardShouldPersistTaps="handled"
+                    style={styles.dropdownScroll}
+                  >
+                    {DIAGNOSIS_OPTIONS.map(option => {
+                      const selected = diagnosis === option;
+                      return (
+                        <Pressable
+                          key={option}
+                          onPress={() => {
+                            setDiagnosis(option);
+                            setDiagnosisOpen(false);
+                            setError(null);
+                          }}
+                          style={({ pressed }) => [
+                            styles.dropdownOption,
+                            selected && styles.dropdownOptionSelected,
+                            pressed && styles.dropdownOptionPressed,
+                          ]}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Diagnosis ${option}`}
+                        >
+                          <Text style={[styles.dropdownOptionText, selected && styles.dropdownOptionTextSelected]}>
+                            {option}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                  {diagnosis ? (
+                    <Pressable
+                      onPress={() => {
+                        setDiagnosis('');
+                        setDiagnosisOpen(false);
+                        setError(null);
+                      }}
+                      style={({ pressed }) => [styles.clearDiagnosisButton, pressed && styles.dropdownOptionPressed]}
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear diagnosis selection"
+                    >
+                      <Text style={styles.clearDiagnosisText}>Clear selection</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : null}
+            </View>
 
             {error ? <Text style={styles.createError}>{error}</Text> : null}
 
@@ -375,6 +455,7 @@ function CreatePatientSheet({
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
@@ -440,8 +521,12 @@ export default function PatientsScreen() {
   }
 
   async function handlePatientCreated() {
-    await refreshPatients();
     setCreatePatientVisible(false);
+    try {
+      await refreshPatients();
+    } catch {
+      setError('Patient was created, but the list could not refresh. Please try again.');
+    }
   }
 
   return (
@@ -568,8 +653,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   // Settings sheet
+  modalRoot: {
+    flex: 1,
+  },
   backdrop: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  createBackdrop: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   sheet: {
@@ -580,6 +672,10 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   sheetKeyboard: {
+    justifyContent: 'flex-end',
+  },
+  createSheetKeyboard: {
+    flex: 1,
     justifyContent: 'flex-end',
   },
   sheetHandle: {
@@ -647,10 +743,12 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   createSheet: {
-    maxHeight: '88%',
+    maxHeight: '92%',
+    width: '100%',
   },
   createSheetContent: {
     gap: spacing.sm,
+    paddingTop: spacing.xs,
   },
   sheetKicker: {
     fontSize: typography.sizeXs,
@@ -704,6 +802,80 @@ const styles = StyleSheet.create({
   segmentTextSelected: {
     color: colors.primary,
     fontWeight: typography.weightBold,
+  },
+  dropdownButton: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  dropdownButtonOpen: {
+    borderColor: colors.primary,
+    backgroundColor: colors.panel,
+  },
+  dropdownButtonPressed: {
+    opacity: 0.75,
+  },
+  dropdownText: {
+    flex: 1,
+    fontSize: typography.sizeMd,
+    color: colors.ink,
+  },
+  dropdownPlaceholder: {
+    color: colors.subtle,
+  },
+  dropdownChevron: {
+    fontSize: typography.sizeMd,
+    color: colors.actionBlue,
+    fontWeight: typography.weightBold,
+  },
+  dropdownMenu: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  dropdownScroll: {
+    maxHeight: 232,
+  },
+  dropdownOption: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  dropdownOptionSelected: {
+    backgroundColor: colors.primarySoft,
+  },
+  dropdownOptionPressed: {
+    opacity: 0.75,
+  },
+  dropdownOptionText: {
+    fontSize: typography.sizeSm,
+    color: colors.ink,
+    fontWeight: typography.weightMedium,
+  },
+  dropdownOptionTextSelected: {
+    color: colors.primary,
+    fontWeight: typography.weightBold,
+  },
+  clearDiagnosisButton: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.panel,
+  },
+  clearDiagnosisText: {
+    fontSize: typography.sizeSm,
+    color: colors.actionBlue,
+    fontWeight: typography.weightSemibold,
   },
   createError: {
     fontSize: typography.sizeSm,

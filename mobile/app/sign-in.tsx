@@ -24,7 +24,6 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -147,21 +146,6 @@ export default function SignInScreen() {
                   </Pressable>
                 }
               />
-            </View>
-
-            <View style={styles.rememberRow}>
-              <Pressable
-                onPress={() => setRememberMe(v => !v)}
-                style={styles.checkboxRow}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: rememberMe }}
-              >
-                <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                  {rememberMe ? <Text style={styles.checkmark}>✓</Text> : null}
-                </View>
-                <Text style={styles.rememberLabel}>Remember me</Text>
-              </Pressable>
-              <Text style={styles.forgotPassword}>Forgot password?</Text>
             </View>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -301,47 +285,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eyeText: {
-    fontSize: typography.sizeSm,
-    color: colors.actionBlue,
-    fontWeight: typography.weightMedium,
-  },
-  rememberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: -spacing.xs,
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    minHeight: 44,
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  checkmark: {
-    fontSize: 11,
-    color: '#FFFFFF',
-    fontWeight: typography.weightBold,
-    lineHeight: 14,
-  },
-  rememberLabel: {
-    fontSize: typography.sizeSm,
-    color: colors.muted,
-  },
-  forgotPassword: {
     fontSize: typography.sizeSm,
     color: colors.actionBlue,
     fontWeight: typography.weightMedium,
