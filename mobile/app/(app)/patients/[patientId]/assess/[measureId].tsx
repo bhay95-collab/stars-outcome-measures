@@ -24,7 +24,6 @@ import { TUGForm }      from '../../../../../src/components/forms/TUGForm';
 import { MWTForm }      from '../../../../../src/components/forms/MWTForm';
 import { SixMWTForm }   from '../../../../../src/components/forms/SixMWTForm';
 import { FACForm }      from '../../../../../src/components/forms/FACForm';
-import { MEASURES } from '../../../../../src/clinical/adapter';
 import { Screen } from '../../../../../src/components/ui/Screen';
 import { Card } from '../../../../../src/components/ui/Card';
 import { NavyHeader } from '../../../../../src/components/ui/NavyHeader';
@@ -96,25 +95,13 @@ export default function AssessScreen() {
   if (measureId === BARTHEL_ID) return <BarthelForm patientId={patientId} />;
   if (measureId === SCIM_ID)    return <SCIMForm patientId={patientId} />;
 
-  const measure = MEASURES[measureId];
-
   return (
     <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
       <NavyHeader leftLabel="‹" onLeft={() => router.back()} />
       <View style={styles.stubContent}>
-        {measure ? (
-          <>
-            <Text style={styles.measureName}>{measure.name}</Text>
-            <Text style={styles.measureCategory}>{measure.category.toUpperCase()}</Text>
-            <Card style={styles.messageCard}>
-              <Text style={styles.messageText}>Assessment form coming soon.</Text>
-            </Card>
-          </>
-        ) : (
-          <Card style={styles.messageCard}>
-            <Text style={styles.messageText}>Measure not found.</Text>
-          </Card>
-        )}
+        <Card style={styles.messageCard}>
+          <Text style={styles.messageText}>This measure is not available in the mobile app.</Text>
+        </Card>
       </View>
     </Screen>
   );
@@ -124,19 +111,6 @@ const styles = StyleSheet.create({
   stubContent: {
     flex: 1,
     padding: spacing.md,
-  },
-  measureName: {
-    fontSize: typography.sizeXl,
-    fontWeight: typography.weightBold,
-    color: colors.ink,
-    marginBottom: spacing.xs,
-  },
-  measureCategory: {
-    fontSize: typography.sizeXs,
-    fontWeight: typography.weightSemibold,
-    color: colors.primary,
-    letterSpacing: typography.trackingWide,
-    marginBottom: spacing.lg,
   },
   messageCard: {
     alignItems: 'center',

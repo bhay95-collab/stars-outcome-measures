@@ -15,9 +15,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.rehabmetrics-iq"
+      "bundleIdentifier": "com.rehabmetricsiq.app",
+      "buildNumber": "1"
     },
     "android": {
+      "package": "com.rehabmetricsiq.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
