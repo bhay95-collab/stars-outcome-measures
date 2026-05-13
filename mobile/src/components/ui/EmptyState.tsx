@@ -1,6 +1,12 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, spacing, typography } from '../../theme/tokens';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  useReducedMotion,
+} from 'react-native-reanimated';
+import { colors, spacing, typography, animation } from '../../theme/tokens';
 import { ThreeBarMotif } from './ThreeBarMotif';
 
 interface EmptyStateProps {
@@ -9,12 +15,22 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ title, hint }: EmptyStateProps) {
+  const reducedMotion = useReducedMotion();
+  const opacity = useSharedValue(reducedMotion ? 1 : 0);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    opacity.value = withTiming(1, { duration: animation.durationBase });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, animStyle]}>
       <ThreeBarMotif size="sm" tone="soft" />
       <Text style={styles.title}>{title}</Text>
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
-    </View>
+    </Animated.View>
   );
 }
 

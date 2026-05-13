@@ -1,7 +1,15 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { colors, radii, typography, spacing } from '../../theme/tokens';
+import { StyleSheet, Text, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  useReducedMotion,
+} from 'react-native-reanimated';
+import { colors, radii, typography, spacing, animation } from '../../theme/tokens';
 import { ThreeBarLoading } from './ThreeBarMotif';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type Variant = 'primary' | 'secondary' | 'ghost';
 
@@ -34,13 +42,32 @@ export function Button({
 }: ButtonProps) {
   const isDisabled = disabled || loading;
   const loadingTone = variant === 'primary' ? 'inverse' : 'brand';
+  const reducedMotion = useReducedMotion();
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  function handlePressIn() {
+    if (!reducedMotion) {
+      scale.value = withSpring(0.97, animation.spring);
+    }
+  }
+
+  function handlePressOut() {
+    if (!reducedMotion) {
+      scale.value = withSpring(1, animation.spring);
+    }
+  }
 
   return (
-    <TouchableOpacity
-      style={[styles.base, variantContainerStyles[variant], isDisabled && styles.disabled]}
-      onPress={onPress}
+    <AnimatedPressable
+      style={[styles.base, variantContainerStyles[variant], isDisabled && styles.disabled, animatedStyle]}
+      onPress={isDisabled ? undefined : onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={isDisabled}
-      activeOpacity={0.75}
       accessibilityRole="button"
       accessibilityLabel={label}
     >
@@ -49,7 +76,7 @@ export function Button({
       ) : (
         <Text style={[styles.label, variantLabelStyles[variant]]}>{label}</Text>
       )}
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 }
 

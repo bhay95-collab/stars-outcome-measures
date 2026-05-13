@@ -1,5 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  useReducedMotion,
+} from 'react-native-reanimated';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
 
 interface ClinicalTimerProps {
@@ -15,6 +23,9 @@ export function ClinicalTimer({ onUseTime, resetSignal }: ClinicalTimerProps) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
 
+  const reducedMotion = useReducedMotion();
+  const pulseOpacity = useSharedValue(0);
+
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -24,7 +35,26 @@ export function ClinicalTimer({ onUseTime, resetSignal }: ClinicalTimerProps) {
   useEffect(() => {
     if (resetSignal === undefined) return;
     reset();
-  }, [resetSignal]);
+  }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (timerState === 'running' && !reducedMotion) {
+      pulseOpacity.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 700 }),
+          withTiming(0.2, { duration: 700 })
+        ),
+        -1,
+        false
+      );
+    } else {
+      pulseOpacity.value = withTiming(0, { duration: 200 });
+    }
+  }, [timerState, reducedMotion]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+  }));
 
   function start() {
     startTimeRef.current = Date.now() - elapsed;
@@ -59,7 +89,10 @@ export function ClinicalTimer({ onUseTime, resetSignal }: ClinicalTimerProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.microLabel}>STOPWATCH</Text>
+      <View style={styles.labelRow}>
+        <Text style={styles.microLabel}>STOPWATCH</Text>
+        <Animated.View style={[styles.pulseIndicator, pulseStyle]} />
+      </View>
 
       <View style={styles.displayRow}>
         <Text style={[styles.display, timerState === 'running' && styles.displayRunning]}>
@@ -124,11 +157,22 @@ const styles = StyleSheet.create({
   container: {
     gap: spacing.sm,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   microLabel: {
     fontSize: typography.sizeXs,
     color: colors.primary,
     fontWeight: typography.weightSemibold,
     letterSpacing: typography.trackingWide,
+  },
+  pulseIndicator: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.actionBlue,
   },
   displayRow: {
     flexDirection: 'row',

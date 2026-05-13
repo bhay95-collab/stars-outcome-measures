@@ -3,10 +3,17 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Image, Modal, Pressable, TextInput as RNTextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
+  useReducedMotion,
+} from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { User } from '@supabase/supabase-js';
-import { useAuth } from '../../../src/auth/AuthProvider';
+import { SIGN_OUT_ERROR_MESSAGE, useAuth } from '../../../src/auth/AuthProvider';
 import { supabase } from '../../../src/supabase/client';
 import { createPatient, listPatients } from '../../../src/supabase/patients';
 import type { Patient } from '../../../src/types/domain';
@@ -133,36 +140,52 @@ function getPatientClinicalLabel(patient: Patient): string | null {
   return patient.diagnosis ?? patient.condition ?? null;
 }
 
-function PatientCard({ patient }: { patient: Patient }) {
+function PatientCard({ patient, index }: { patient: Patient; index: number }) {
   const clinicalLabel = getPatientClinicalLabel(patient);
+  const reducedMotion = useReducedMotion();
+  const opacity = useSharedValue(reducedMotion ? 1 : 0);
+  const translateY = useSharedValue(reducedMotion ? 0 : 10);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    opacity.value = withDelay(index * 40, withSpring(1, { damping: 26, stiffness: 160, mass: 1 }));
+    translateY.value = withDelay(index * 40, withSpring(0, { damping: 26, stiffness: 160, mass: 1 }));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
 
   return (
-    <TouchableOpacity
-      onPress={() => router.push(`/(app)/patients/${patient.id}`)}
-      activeOpacity={0.75}
-      accessibilityRole="button"
-      accessibilityLabel={`Open patient ${patient.initials}`}
-    >
-      <Card style={styles.patientCard}>
-        <PatientAvatar name={patient.initials} size="sm" />
-        <View style={styles.cardBody}>
-          <Text style={styles.name}>{patient.initials}</Text>
-          <View style={styles.patientMetaRow}>
-            {patient.dob ? (
-              <Text style={styles.dob}>{formatDOB(patient.dob)}</Text>
-            ) : null}
-            {clinicalLabel ? (
-              <View style={styles.conditionPill}>
-                <Text style={styles.condition} numberOfLines={1}>
-                  {clinicalLabel}
-                </Text>
-              </View>
-            ) : null}
+    <Animated.View style={animStyle}>
+      <TouchableOpacity
+        onPress={() => router.push(`/(app)/patients/${patient.id}`)}
+        activeOpacity={0.75}
+        accessibilityRole="button"
+        accessibilityLabel={`Open patient ${patient.initials}`}
+      >
+        <Card style={styles.patientCard}>
+          <PatientAvatar name={patient.initials} size="sm" />
+          <View style={styles.cardBody}>
+            <Text style={styles.name}>{patient.initials}</Text>
+            <View style={styles.patientMetaRow}>
+              {patient.dob ? (
+                <Text style={styles.dob}>{formatDOB(patient.dob)}</Text>
+              ) : null}
+              {clinicalLabel ? (
+                <View style={styles.conditionPill}>
+                  <Text style={styles.condition} numberOfLines={1}>
+                    {clinicalLabel}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           </View>
-        </View>
-        <Text style={styles.chevron}>›</Text>
-      </Card>
-    </TouchableOpacity>
+          <Text style={styles.chevron}>›</Text>
+        </Card>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
@@ -517,7 +540,13 @@ export default function PatientsScreen() {
 
   async function handleSignOut() {
     setSettingsVisible(false);
-    await signOut();
+    setError(null);
+    try {
+      await signOut();
+      router.replace('/sign-in');
+    } catch {
+      setError(SIGN_OUT_ERROR_MESSAGE);
+    }
   }
 
   async function handlePatientCreated() {
@@ -594,7 +623,7 @@ export default function PatientsScreen() {
                 hint="Try searching by initials, condition, or date of birth."
               />
             ) : (
-              filteredPatients.map(p => <PatientCard key={p.id} patient={p} />)
+              filteredPatients.map((p, idx) => <PatientCard key={p.id} patient={p} index={idx} />)
             )}
           </ScrollView>
         )}

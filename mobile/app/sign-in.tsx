@@ -45,6 +45,7 @@ export default function SignInScreen() {
     try {
       const completed = await signInWithGoogle();
       if (completed) router.replace('/(app)/patients');
+      else setError(GOOGLE_SIGN_IN_ERROR_MESSAGE);
     } catch {
       setError(GOOGLE_SIGN_IN_ERROR_MESSAGE);
     } finally {

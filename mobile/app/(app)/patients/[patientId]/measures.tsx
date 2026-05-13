@@ -14,12 +14,20 @@ import { ThreeBarMotif } from '../../../../src/components/ui/ThreeBarMotif';
 import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
 type Category = 'performance' | 'independence' | 'questionnaire';
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const GROUPS: { label: string; category: Category }[] = [
   { label: 'Performance', category: 'performance' },
   { label: 'Independence', category: 'independence' },
   { label: 'Questionnaire', category: 'questionnaire' },
 ];
+
+function getValidPatientId(value: string | string[] | undefined): string | null {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  const patientId = candidate?.trim();
+  if (!patientId || !UUID_PATTERN.test(patientId)) return null;
+  return patientId;
+}
 
 function MeasureRow({
   measure,
@@ -71,8 +79,9 @@ function getPathwayStatus(pathway: PatientPathway | null, measureId: string): { 
 
 export default function MeasureSelectorScreen() {
   const params = useLocalSearchParams<{ patientId: string }>();
-  const patientId = Array.isArray(params.patientId) ? params.patientId[0] : params.patientId;
+  const patientId = getValidPatientId(params.patientId);
   const [pathway, setPathway] = useState<PatientPathway | null>(null);
+  const [routeError, setRouteError] = useState<string | null>(null);
 
   const measuresByCategory = useMemo(() => {
     const map = new Map<Category, MeasureDefinition[]>();
@@ -86,12 +95,51 @@ export default function MeasureSelectorScreen() {
   }, []);
 
   useEffect(() => {
+    if (!patientId) {
+      setPathway(null);
+      setRouteError('Invalid patient link.');
+      return;
+    }
+
+    let isActive = true;
+    setRouteError(null);
     Promise.all([getPatient(patientId), getAssessmentsForPatient(patientId)])
       .then(([patient, assessments]) => {
+        if (!isActive) return;
+        if (!patient) {
+          setPathway(null);
+          setRouteError('Patient not found.');
+          return;
+        }
         setPathway(buildPatientPathway(patient, assessments));
       })
-      .catch(() => setPathway(null));
+      .catch(() => {
+        if (!isActive) return;
+        setPathway(null);
+        setRouteError('Unable to load patient data.');
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, [patientId]);
+
+  if (routeError || !patientId) {
+    return (
+      <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
+        <NavyHeader
+          leftLabel="‹"
+          onLeft={() => router.back()}
+          title="Select Measure"
+        />
+        <ScrollView style={styles.panel} contentContainerStyle={styles.content}>
+          <Card>
+            <Text style={styles.heroSubtitle}>{routeError ?? 'Invalid patient link.'}</Text>
+          </Card>
+        </ScrollView>
+      </Screen>
+    );
+  }
 
   return (
     <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>

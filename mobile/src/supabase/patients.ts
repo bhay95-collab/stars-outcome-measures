@@ -22,6 +22,16 @@ function mapPatientWriteError(code: string | undefined): string {
   }
 }
 
+function mapPatientReadError(scope: 'list' | 'detail', code: string | undefined): string {
+  if (code === '42501') {
+    return 'Unable to load patient data. Please check your access and try again.';
+  }
+
+  return scope === 'list'
+    ? 'Unable to load patients. Please try again.'
+    : 'Unable to load patient data. Please try again.';
+}
+
 function isValidDOB(dob: string): boolean {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
   if (!match) return false;
@@ -50,7 +60,7 @@ export async function listPatients(): Promise<Patient[]> {
     .select('*')
     .order('initials', { ascending: true });
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(mapPatientReadError('list', error.code));
   return (data ?? []) as Patient[];
 }
 
@@ -61,7 +71,7 @@ export async function getPatient(id: string): Promise<Patient | null> {
     .eq('id', id)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(mapPatientReadError('detail', error.code));
   return data as Patient | null;
 }
 

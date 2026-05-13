@@ -1,6 +1,14 @@
 import { supabase } from './client';
 import type { Assessment } from '../types/domain';
 
+function mapAssessmentReadError(code: string | undefined): string {
+  if (code === '42501') {
+    return 'Unable to load assessment history. Please check your access and try again.';
+  }
+
+  return 'Unable to load assessment history. Please try again.';
+}
+
 export async function getAssessmentsForPatient(patientId: string): Promise<Assessment[]> {
   const { data, error } = await supabase
     .from('assessments')
@@ -8,7 +16,7 @@ export async function getAssessmentsForPatient(patientId: string): Promise<Asses
     .eq('patient_id', patientId)
     .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(mapAssessmentReadError(error.code));
   return (data ?? []) as Assessment[];
 }
 

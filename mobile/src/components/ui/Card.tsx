@@ -1,6 +1,13 @@
-import React from 'react';
-import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
-import { colors, radii, shadows, spacing } from '../../theme/tokens';
+import React, { useEffect } from 'react';
+import { StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  useReducedMotion,
+} from 'react-native-reanimated';
+import { colors, radii, shadows, spacing, animation } from '../../theme/tokens';
 
 interface CardProps {
   children: React.ReactNode;
@@ -9,7 +16,26 @@ interface CardProps {
 }
 
 export function Card({ children, style, elevated = false }: CardProps) {
-  return <View style={[styles.card, elevated && styles.elevated, style]}>{children}</View>;
+  const reducedMotion = useReducedMotion();
+  const opacity = useSharedValue(reducedMotion ? 1 : 0);
+  const translateY = useSharedValue(reducedMotion ? 0 : 8);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    opacity.value = withTiming(1, { duration: animation.durationBase });
+    translateY.value = withSpring(0, animation.springGentle);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Animated.View style={[styles.card, elevated && styles.elevated, style, animatedStyle]}>
+      {children}
+    </Animated.View>
+  );
 }
 
 const styles = StyleSheet.create({

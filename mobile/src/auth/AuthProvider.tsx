@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../supabase/client';
 
+export const SIGN_OUT_ERROR_MESSAGE = 'Unable to sign out. Please try again.';
+
 interface AuthContextValue {
   session: Session | null;
   user: User | null;
@@ -29,7 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function signOut(): Promise<void> {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error(SIGN_OUT_ERROR_MESSAGE);
+    setSession(null);
   }
 
   return (

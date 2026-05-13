@@ -11,6 +11,7 @@ import { DistScreen } from './DistScreen';
 import { StairsScreen } from './StairsScreen';
 import { ResultScreen } from './ResultScreen';
 import type { TimeInput, DistInput, StairsInput, HiMATResult } from './types';
+import { StepTransition } from '../../ui/StepTransition';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -171,20 +172,21 @@ export function HiMATForm({ patientId }: { patientId: string }) {
   if (step <= 6) {
     const cfg = TIMED_STEPS[step];
     return (
-      <TimeScreen
-        key={step}
-        title={cfg.title}
-        hasFail={cfg.hasFail}
-        failLabel={cfg.failLabel}
-        input={timedInputs[step]}
-        onChange={inp => setTimedInputs(prev => prev.map((t, i) => (i === step ? inp : t)))}
-        onNext={handleNext}
-        onBack={handleBack}
-        stepLabel={stepLabel(step)}
-        canProceed={canProceedTimed(step)}
-        patient={patient}
-        savedNotice={step === 0 && saveState === 'saved'}
-      />
+      <StepTransition key={step}>
+        <TimeScreen
+          title={cfg.title}
+          hasFail={cfg.hasFail}
+          failLabel={cfg.failLabel}
+          input={timedInputs[step]}
+          onChange={inp => setTimedInputs(prev => prev.map((t, i) => (i === step ? inp : t)))}
+          onNext={handleNext}
+          onBack={handleBack}
+          stepLabel={stepLabel(step)}
+          canProceed={canProceedTimed(step)}
+          patient={patient}
+          savedNotice={step === 0 && saveState === 'saved'}
+        />
+      </StepTransition>
     );
   }
 
@@ -192,18 +194,19 @@ export function HiMATForm({ patientId }: { patientId: string }) {
     const distIdx = step - 7;
     const cfg = DIST_STEPS[distIdx];
     return (
-      <DistScreen
-        key={step}
-        title={cfg.title}
-        note={cfg.note}
-        input={boundInputs[distIdx]}
-        onChange={inp => setBoundInputs(prev => prev.map((b, i) => (i === distIdx ? inp : b)))}
-        onNext={handleNext}
-        onBack={handleBack}
-        stepLabel={stepLabel(step)}
-        canProceed={canProceedDist(distIdx)}
-        patient={patient}
-      />
+      <StepTransition key={step}>
+        <DistScreen
+          title={cfg.title}
+          note={cfg.note}
+          input={boundInputs[distIdx]}
+          onChange={inp => setBoundInputs(prev => prev.map((b, i) => (i === distIdx ? inp : b)))}
+          onNext={handleNext}
+          onBack={handleBack}
+          stepLabel={stepLabel(step)}
+          canProceed={canProceedDist(distIdx)}
+          patient={patient}
+        />
+      </StepTransition>
     );
   }
 
@@ -211,30 +214,33 @@ export function HiMATForm({ patientId }: { patientId: string }) {
     const stairsIdx = step - 9;
     const cfg = STAIRS_STEPS[stairsIdx];
     return (
-      <StairsScreen
-        key={step}
-        title={cfg.title}
-        input={stairsInputs[stairsIdx]}
-        onChange={inp => setStairsInputs(prev => prev.map((s, i) => (i === stairsIdx ? inp : s)))}
-        onNext={handleNext}
-        onBack={handleBack}
-        stepLabel={stepLabel(step)}
-        canProceed={canProceedStairs(stairsIdx)}
-        patient={patient}
-      />
+      <StepTransition key={step}>
+        <StairsScreen
+          title={cfg.title}
+          input={stairsInputs[stairsIdx]}
+          onChange={inp => setStairsInputs(prev => prev.map((s, i) => (i === stairsIdx ? inp : s)))}
+          onNext={handleNext}
+          onBack={handleBack}
+          stepLabel={stepLabel(step)}
+          canProceed={canProceedStairs(stairsIdx)}
+          patient={patient}
+        />
+      </StepTransition>
     );
   }
 
   const result = calcHiMAT(buildCalcInputs()) as HiMATResult | null;
   return (
-    <ResultScreen
-      result={result}
-      patient={patient}
-      onBack={handleBack}
-      onStartOver={handleStartOver}
-      saveState={saveState}
-      saveError={saveError}
-      onSave={handleSave}
-    />
+    <StepTransition key={step}>
+      <ResultScreen
+        result={result}
+        patient={patient}
+        onBack={handleBack}
+        onStartOver={handleStartOver}
+        saveState={saveState}
+        saveError={saveError}
+        onSave={handleSave}
+      />
+    </StepTransition>
   );
 }

@@ -73,3 +73,11 @@ export const fonts = {
   serif: Platform.OS === 'ios' ? 'Georgia' : 'serif',
   sans:  undefined as string | undefined,
 } as const;
+
+export const animation = {
+  spring:       { damping: 20, stiffness: 200, mass: 0.8 },
+  springGentle: { damping: 26, stiffness: 160, mass: 1 },
+  durationFast: 180,
+  durationBase: 280,
+  durationSlow: 420,
+} as const;

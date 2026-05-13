@@ -18,6 +18,14 @@ import { MEASURES, buildPatientPathway } from '../../../../src/clinical/adapter'
 import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
 const HISTORY_LIMIT = 8;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function getValidPatientId(value: string | string[] | undefined): string | null {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  const patientId = candidate?.trim();
+  if (!patientId || !UUID_PATTERN.test(patientId)) return null;
+  return patientId;
+}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -143,7 +151,7 @@ function AssessmentHistoryCard({ assessment }: { assessment: Assessment }) {
 
 export default function PatientSummaryScreen() {
   const params = useLocalSearchParams<{ patientId: string }>();
-  const patientId = Array.isArray(params.patientId) ? params.patientId[0] : params.patientId;
+  const patientId = getValidPatientId(params.patientId);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [latest, setLatest] = useState<Assessment[]>([]);
@@ -155,6 +163,18 @@ export default function PatientSummaryScreen() {
 
   useFocusEffect(useCallback(() => {
     let isActive = true;
+
+    if (!patientId) {
+      setPatient(null);
+      setAssessments([]);
+      setLatest([]);
+      setAssessmentCount(0);
+      setLatestAssessmentDate(null);
+      setError('Invalid patient link.');
+      hasLoadedPatientData.current = true;
+      setIsLoading(false);
+      return;
+    }
 
     if (!hasLoadedPatientData.current) {
       setIsLoading(true);
@@ -196,11 +216,6 @@ export default function PatientSummaryScreen() {
     );
   }
 
-  const pathway = buildPatientPathway(patient, assessments);
-  const pathwayActions = pathway.nextActions.filter(action => action.detail).slice(0, 3);
-  const recentHistory = assessments.slice(0, HISTORY_LIMIT);
-  const clinicalLabel = patient ? getPatientClinicalLabel(patient) : null;
-
   if (error || !patient) {
     return (
       <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
@@ -221,6 +236,11 @@ export default function PatientSummaryScreen() {
       </Screen>
     );
   }
+
+  const pathway = buildPatientPathway(patient, assessments);
+  const pathwayActions = pathway.nextActions.filter(action => action.detail).slice(0, 3);
+  const recentHistory = assessments.slice(0, HISTORY_LIMIT);
+  const clinicalLabel = getPatientClinicalLabel(patient);
 
   return (
     <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
