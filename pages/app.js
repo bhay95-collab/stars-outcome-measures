@@ -1305,12 +1305,27 @@ const globalStyles = `
   }
   [data-measure-footer] button:hover { background: var(--color-primary-dark); }
 
+  [data-measure-footer] button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  [data-measure-footer] button:disabled:hover {
+    background: var(--color-primary);
+  }
+
   [data-measure-footer] button[data-secondary] {
     background: var(--color-surface);
     color: var(--color-muted);
     border: 1px solid var(--color-border);
   }
   [data-measure-footer] button[data-secondary]:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-surface); }
+
+  [data-measure-footer] button[data-secondary]:disabled:hover {
+    border-color: var(--color-border);
+    color: var(--color-muted);
+    background: var(--color-surface);
+  }
 
   /* ── INLINE MEASURE PANEL ── */
   [data-measure-panel] {
@@ -2846,6 +2861,79 @@ const globalStyles = `
     background: rgba(255,255,255,0.82);
     color: var(--color-primary);
     font-weight: 800;
+  }
+
+  [data-assessment-save-status] {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border: 1px solid #b7d4ef;
+    border-radius: 10px;
+    background: #f2f8ff;
+    color: var(--color-primary-dark);
+  }
+
+  [data-assessment-save-status][data-state="saved"] {
+    border-color: #bddbc9;
+    background: #f4fbf7;
+    color: #2d6a4f;
+  }
+
+  [data-assessment-save-icon] {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    flex: 0 0 32px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(35,100,153,0.18);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  [data-assessment-save-status][data-state="saved"] [data-assessment-save-icon] {
+    border-color: #bddbc9;
+    background: #ffffff;
+    color: #2d6a4f;
+  }
+
+  [data-assessment-save-status] strong,
+  [data-assessment-save-status] p {
+    margin: 0;
+  }
+
+  [data-assessment-save-status] strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  [data-assessment-save-status] p {
+    margin-top: 2px;
+    color: var(--color-muted);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  [data-assessment-form-instance] {
+    transition: opacity 0.18s ease, filter 0.18s ease;
+  }
+
+  [data-assessment-form-instance][data-saving] {
+    opacity: 0.72;
+    filter: saturate(0.92);
+    pointer-events: none;
+  }
+
+  [data-measure-tabs] button:disabled,
+  [data-measure-btn]:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 
   .isncsci-summary-table {

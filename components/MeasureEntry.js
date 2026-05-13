@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { MEASURES } from '../lib/clinical'
 import Form10MWT from './Form10MWT'
@@ -71,10 +71,23 @@ export default function MeasureEntry({ patient, userId, pathway, onSaved, onDone
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [navCollapsed, setNavCollapsed] = useState(false)
+  const [assessmentSaveState, setAssessmentSaveState] = useState('idle')
+  const [assessmentSaveNotice, setAssessmentSaveNotice] = useState(null)
+  const [formResetCount, setFormResetCount] = useState(0)
+  const assessmentSaveTimer = useRef(null)
+
+  function clearAssessmentSaveTimer() {
+    if (assessmentSaveTimer.current) {
+      clearTimeout(assessmentSaveTimer.current)
+      assessmentSaveTimer.current = null
+    }
+  }
 
   useEffect(() => {
     onDirtyChange?.(drafts.length > 0)
   }, [drafts.length, onDirtyChange])
+
+  useEffect(() => clearAssessmentSaveTimer, [])
 
   useEffect(() => {
     const nextMeasure = getInitialMeasure(pathway)
@@ -85,12 +98,38 @@ export default function MeasureEntry({ patient, userId, pathway, onSaved, onDone
   }, [drafts.length, patient?.id, pathway?.preferredMeasureId])
 
   function handleSubmit(inputs, results) {
+    if (assessmentSaveState === 'saving') return
+
+    const measureId = activeMeasure
+    const measureInfo = MEASURES[measureId]
+
+    clearAssessmentSaveTimer()
     setError('')
-    setDrafts(prev => {
-      const next = prev.filter(item => item.measure !== activeMeasure)
-      return [...next, { measure: activeMeasure, inputs, results }]
+    setAssessmentSaveState('saving')
+    setAssessmentSaveNotice({
+      title: `Saving ${measureInfo?.id ?? measureId} assessment`,
+      detail: 'Adding the scored assessment to this encounter.',
     })
-    setCompleted(prev => new Set([...prev, activeMeasure]))
+
+    assessmentSaveTimer.current = setTimeout(() => {
+      setDrafts(prev => {
+        const next = prev.filter(item => item.measure !== measureId)
+        return [...next, { measure: measureId, inputs, results }]
+      })
+      setCompleted(prev => new Set([...prev, measureId]))
+      setFormResetCount(prev => prev + 1)
+      setAssessmentSaveState('saved')
+      setAssessmentSaveNotice({
+        title: `${measureInfo?.id ?? measureId} assessment saved`,
+        detail: 'Fields reset. This assessment is pending in the encounter.',
+      })
+
+      assessmentSaveTimer.current = setTimeout(() => {
+        setAssessmentSaveState('idle')
+        setAssessmentSaveNotice(null)
+        assessmentSaveTimer.current = null
+      }, 4200)
+    }, 450)
   }
 
   async function saveEncounter() {
@@ -139,6 +178,9 @@ export default function MeasureEntry({ patient, userId, pathway, onSaved, onDone
   }
 
   const activeMeasureInfo = MEASURES[activeMeasure]
+  const assessmentSaving = assessmentSaveState === 'saving'
+  const formLoading = loading || assessmentSaving
+  const formInstanceKey = `${activeMeasure}-${formResetCount}`
 
   return (
     <div data-measure-panel="">
@@ -185,6 +227,7 @@ export default function MeasureEntry({ patient, userId, pathway, onSaved, onDone
             key={cat}
             type="button"
             data-active={activeCategory === cat ? '' : undefined}
+            disabled={assessmentSaving}
             onClick={() => setActiveCategory(cat)}
           >
             {CATEGORY_LABELS[cat]}
@@ -215,7 +258,7 @@ export default function MeasureEntry({ patient, userId, pathway, onSaved, onDone
                     data-done={completed.has(m.id) ? '' : undefined}
                     data-unavailable={!IMPLEMENTED.has(m.id) ? '' : undefined}
                     data-pathway={pathwayStatus?.state}
-                    disabled={!IMPLEMENTED.has(m.id)}
+                    disabled={assessmentSaving || !IMPLEMENTED.has(m.id)}
                     onClick={() => setActiveMeasure(m.id)}
                   >
                     <div data-measure-label="">
@@ -233,44 +276,64 @@ export default function MeasureEntry({ patient, userId, pathway, onSaved, onDone
         </nav>
 
         <div data-measure-form="">
+          {assessmentSaveNotice && (
+            <div
+              data-assessment-save-status=""
+              data-state={assessmentSaveState}
+              role="status"
+              aria-live="polite"
+            >
+              <span data-assessment-save-icon="">
+                {assessmentSaving ? (
+                  <ThreeBarMotif size="xs" loading label="Saving assessment" />
+                ) : '✓'}
+              </span>
+              <div>
+                <strong>{assessmentSaveNotice.title}</strong>
+                <p>{assessmentSaveNotice.detail}</p>
+              </div>
+            </div>
+          )}
           {drafts.length > 0 && (
             <div data-encounter-draft="">
               <strong>Pending in this encounter:</strong>
               {drafts.map(item => <span key={item.measure}>{item.measure}</span>)}
             </div>
           )}
-          {activeMeasure === '10MWT'   && <Form10MWT   patient={patient} onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'TUG'     && <FormTUG     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'BBS'     && <FormBBS     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === '6MWT'    && <Form6MWT    patient={patient} onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'FAC'     && <FormFAC     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'FSS'     && <FormFSS     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'HADS'    && <FormHADS    onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'Barthel' && <FormBarthel onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'Step'    && <FormStepTest onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'PASS'    && <FormPASS     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'FGA'     && <FormFGA      onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'SARA'    && <FormSARA     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'PDQ8'    && <FormPDQ8     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'ABC'     && <FormABC      onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'TIS'    && <FormTIS     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'MAS'    && <FormMAS     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'COVS'   && <FormCOVS    onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'BOOMER' && <FormBOOMER  onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'HiMAT'  && <FormHiMAT   onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'AMP'    && <FormAMP     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'SCIM'   && <FormSCIM    onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'RPQ'     && <FormRPQ      onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'BIVI'    && <FormBIVI     onSubmit={handleSubmit} loading={loading} />}
-          {activeMeasure === 'ISNCSCI' && <FormISNCSCI  patient={patient} onSubmit={handleSubmit} loading={loading} />}
+          <div key={formInstanceKey} data-assessment-form-instance="" data-saving={assessmentSaving ? '' : undefined} aria-busy={assessmentSaving}>
+            {activeMeasure === '10MWT'   && <Form10MWT   patient={patient} onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'TUG'     && <FormTUG     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'BBS'     && <FormBBS     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === '6MWT'    && <Form6MWT    patient={patient} onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'FAC'     && <FormFAC     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'FSS'     && <FormFSS     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'HADS'    && <FormHADS    onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'Barthel' && <FormBarthel onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'Step'    && <FormStepTest onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'PASS'    && <FormPASS     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'FGA'     && <FormFGA      onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'SARA'    && <FormSARA     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'PDQ8'    && <FormPDQ8     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'ABC'     && <FormABC      onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'TIS'    && <FormTIS     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'MAS'    && <FormMAS     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'COVS'   && <FormCOVS    onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'BOOMER' && <FormBOOMER  onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'HiMAT'  && <FormHiMAT   onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'AMP'    && <FormAMP     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'SCIM'   && <FormSCIM    onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'RPQ'     && <FormRPQ      onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'BIVI'    && <FormBIVI     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'ISNCSCI' && <FormISNCSCI  patient={patient} onSubmit={handleSubmit} loading={formLoading} />}
+          </div>
           {error && <p className="error">{error}</p>}
         </div>
 
       </div>
 
       <div data-measure-footer="">
-        <button type="button" data-secondary="" onClick={handleDone}>Done</button>
-        <button type="button" data-save-encounter="" disabled={!drafts.length || loading} onClick={saveEncounter}>
+        <button type="button" data-secondary="" disabled={assessmentSaving} onClick={handleDone}>Done</button>
+        <button type="button" data-save-encounter="" disabled={!drafts.length || loading || assessmentSaving} onClick={saveEncounter}>
           {loading ? (
             <span className="button-loading">
               <ThreeBarMotif size="xs" tone="light" loading label="Saving encounter" />
