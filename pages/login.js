@@ -243,9 +243,7 @@ const pageStyles = `
     inset: 0;
     z-index: 2;
     pointer-events: none;
-    background:
-      linear-gradient(135deg, rgba(255,255,255,0.09), transparent 38%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 92px);
+    background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent 38%);
   }
 
   @media (prefers-reduced-motion: reduce) {
