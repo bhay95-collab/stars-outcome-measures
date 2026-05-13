@@ -3,7 +3,10 @@ export interface Patient {
   user_id: string;
   initials: string;
   dob: string | null;
-  condition: string | null;
+  dob_year?: number | null;
+  gender?: 'M' | 'F' | 'Other' | string | null;
+  diagnosis?: string | null;
+  condition?: string | null;
 }
 
 export interface AssessmentResults {

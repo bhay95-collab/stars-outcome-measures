@@ -19,6 +19,58 @@ export interface SavePayload {
   results: Record<string, unknown>;
 }
 
+const inFlightSaveKeys = new Set<string>();
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normalizeForSignature(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(normalizeForSignature);
+  }
+
+  if (isRecord(value)) {
+    return Object.keys(value)
+      .sort()
+      .reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = normalizeForSignature(value[key]);
+        return acc;
+      }, {});
+  }
+
+  return value;
+}
+
+function stableStringify(value: unknown): string {
+  return JSON.stringify(normalizeForSignature(value));
+}
+
+function resultsWithoutEncounterDate(results: Record<string, unknown>): Record<string, unknown> {
+  const meta = results.meta;
+
+  if (!isRecord(meta) || !Object.prototype.hasOwnProperty.call(meta, 'encounterDate')) {
+    return results;
+  }
+
+  const nextMeta = { ...meta };
+  delete nextMeta.encounterDate;
+
+  return {
+    ...results,
+    meta: nextMeta,
+  };
+}
+
+function buildInFlightSaveKey(payload: SavePayload): string {
+  return stableStringify({
+    patient_id: payload.patient_id,
+    measure: payload.measure,
+    inputs: payload.inputs,
+    results: resultsWithoutEncounterDate(payload.results),
+  });
+}
+
 function mapInsertError(code: string | undefined): string {
   switch (code) {
     case '42501':  // RLS / insufficient_privilege
@@ -33,20 +85,29 @@ function mapInsertError(code: string | undefined): string {
 }
 
 export async function saveAssessment(payload: SavePayload): Promise<void> {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const saveKey = buildInFlightSaveKey(payload);
+  if (inFlightSaveKeys.has(saveKey)) return;
 
-  if (sessionError || !session) {
-    throw new Error('Your session has expired. Please sign in again.');
-  }
+  inFlightSaveKeys.add(saveKey);
 
-  const { error } = await supabase
-    .from('assessments')
-    .insert({
-      user_id: session.user.id,
-      ...payload,
-    });
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-  if (error) {
-    throw new Error(mapInsertError(error.code));
+    if (sessionError || !session) {
+      throw new Error('Your session has expired. Please sign in again.');
+    }
+
+    const { error } = await supabase
+      .from('assessments')
+      .insert({
+        user_id: session.user.id,
+        ...payload,
+      });
+
+    if (error) {
+      throw new Error(mapInsertError(error.code));
+    }
+  } finally {
+    inFlightSaveKeys.delete(saveKey);
   }
 }

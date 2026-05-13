@@ -1,23 +1,33 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Image, Modal, Pressable, TextInput,
+  Image, Modal, Pressable, TextInput as RNTextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { User } from '@supabase/supabase-js';
 import { useAuth } from '../../../src/auth/AuthProvider';
 import { supabase } from '../../../src/supabase/client';
-import { listPatients } from '../../../src/supabase/patients';
+import { createPatient, listPatients } from '../../../src/supabase/patients';
 import type { Patient } from '../../../src/types/domain';
 import { Screen } from '../../../src/components/ui/Screen';
 import { Card } from '../../../src/components/ui/Card';
+import { Button } from '../../../src/components/ui/Button';
 import { NavyHeader } from '../../../src/components/ui/NavyHeader';
 import { PatientAvatar } from '../../../src/components/ui/PatientAvatar';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { ThreeBarMotif } from '../../../src/components/ui/ThreeBarMotif';
+import { TextInput as ClinicalTextInput } from '../../../src/components/ui/TextInput';
 import { colors, fonts, spacing, typography, radii } from '../../../src/theme/tokens';
+
+type PatientGender = 'M' | 'F' | 'Other';
+
+const GENDER_OPTIONS: { value: PatientGender; label: string }[] = [
+  { value: 'M', label: 'Male' },
+  { value: 'F', label: 'Female' },
+  { value: 'Other', label: 'Other' },
+];
 
 function getUserInitials(user: User): string {
   const name: string = user.user_metadata?.full_name ?? user.user_metadata?.name ?? '';
@@ -116,7 +126,13 @@ function formatDOB(iso: string): string {
   return `${day}/${month}/${year}`;
 }
 
+function getPatientClinicalLabel(patient: Patient): string | null {
+  return patient.diagnosis ?? patient.condition ?? null;
+}
+
 function PatientCard({ patient }: { patient: Patient }) {
+  const clinicalLabel = getPatientClinicalLabel(patient);
+
   return (
     <TouchableOpacity
       onPress={() => router.push(`/(app)/patients/${patient.id}`)}
@@ -132,10 +148,10 @@ function PatientCard({ patient }: { patient: Patient }) {
             {patient.dob ? (
               <Text style={styles.dob}>{formatDOB(patient.dob)}</Text>
             ) : null}
-            {patient.condition ? (
+            {clinicalLabel ? (
               <View style={styles.conditionPill}>
                 <Text style={styles.condition} numberOfLines={1}>
-                  {patient.condition}
+                  {clinicalLabel}
                 </Text>
               </View>
             ) : null}
@@ -147,16 +163,240 @@ function PatientCard({ patient }: { patient: Patient }) {
   );
 }
 
+function isDOBValid(dob: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
+  if (!match) return false;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date <= today;
+}
+
+function CreatePatientSheet({
+  visible,
+  onDismiss,
+  onCreated,
+}: {
+  visible: boolean;
+  onDismiss: () => void;
+  onCreated: () => Promise<void>;
+}) {
+  const insets = useSafeAreaInsets();
+  const [firstName, setFirstName] = useState('');
+  const [lastInitial, setLastInitial] = useState('');
+  const [dob, setDob] = useState('');
+  const [gender, setGender] = useState<PatientGender | null>(null);
+  const [diagnosis, setDiagnosis] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  function resetForm() {
+    setFirstName('');
+    setLastInitial('');
+    setDob('');
+    setGender(null);
+    setDiagnosis('');
+    setError(null);
+  }
+
+  function handleDismiss() {
+    if (isSaving) return;
+    resetForm();
+    onDismiss();
+  }
+
+  function handleLastInitialChange(value: string) {
+    setError(null);
+    setLastInitial(value.replace(/[^a-zA-Z]/g, '').slice(0, 1).toUpperCase());
+  }
+
+  async function handleCreate() {
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastInitial = lastInitial.trim().toUpperCase();
+
+    if (!trimmedFirstName) {
+      setError('First name is required.');
+      return;
+    }
+    if (!/^[A-Z]$/.test(trimmedLastInitial)) {
+      setError('Last initial is required.');
+      return;
+    }
+    if (!dob.trim()) {
+      setError('Date of birth is required.');
+      return;
+    }
+    if (!isDOBValid(dob.trim())) {
+      setError('Enter a valid date of birth that is not in the future.');
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      await createPatient({
+        firstName: trimmedFirstName,
+        lastInitial: trimmedLastInitial,
+        dob: dob.trim(),
+        gender,
+        diagnosis,
+      });
+      resetForm();
+      await onCreated();
+    } catch {
+      setError('Unable to create patient. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={handleDismiss}
+    >
+      <Pressable style={styles.backdrop} onPress={handleDismiss} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.sheetKeyboard}
+      >
+        <View style={[styles.sheet, styles.createSheet, { paddingBottom: insets.bottom + spacing.lg }]}>
+          <View style={styles.sheetHandle} />
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.createSheetContent}
+          >
+            <View>
+              <Text style={styles.sheetKicker}>NEW PATIENT</Text>
+              <Text style={styles.createTitle}>Patient details</Text>
+            </View>
+
+            <ClinicalTextInput
+              label="First name"
+              value={firstName}
+              onChangeText={(value) => {
+                setError(null);
+                setFirstName(value);
+              }}
+              placeholder="e.g. Benjamin"
+              autoCapitalize="words"
+              autoComplete="name"
+            />
+            <ClinicalTextInput
+              label="Last initial"
+              value={lastInitial}
+              onChangeText={handleLastInitialChange}
+              placeholder="e.g. H"
+              autoCapitalize="characters"
+            />
+            <ClinicalTextInput
+              label="Date of birth"
+              value={dob}
+              onChangeText={(value) => {
+                setError(null);
+                setDob(value);
+              }}
+              placeholder="YYYY-MM-DD"
+              keyboardType="numeric"
+            />
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Gender</Text>
+              <View style={styles.segmentRow}>
+                {GENDER_OPTIONS.map(option => {
+                  const selected = gender === option.value;
+                  return (
+                    <Pressable
+                      key={option.value}
+                      onPress={() => {
+                        setError(null);
+                        setGender(selected ? null : option.value);
+                      }}
+                      style={({ pressed }) => [
+                        styles.segmentButton,
+                        selected && styles.segmentButtonSelected,
+                        pressed && styles.segmentButtonPressed,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Gender ${option.label}`}
+                    >
+                      <Text style={[styles.segmentText, selected && styles.segmentTextSelected]}>
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <ClinicalTextInput
+              label="Diagnosis"
+              value={diagnosis}
+              onChangeText={(value) => {
+                setError(null);
+                setDiagnosis(value);
+              }}
+              placeholder="Optional"
+              autoCapitalize="words"
+            />
+
+            {error ? <Text style={styles.createError}>{error}</Text> : null}
+
+            <View style={styles.createActions}>
+              <Button
+                label="Create patient"
+                onPress={handleCreate}
+                loading={isSaving}
+              />
+              <Button
+                label="Cancel"
+                onPress={handleDismiss}
+                variant="secondary"
+                disabled={isSaving}
+              />
+            </View>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
 export default function PatientsScreen() {
   const { user, signOut } = useAuth();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [createPatientVisible, setCreatePatientVisible] = useState(false);
   const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  async function refreshPatients() {
+    setError(null);
+    const nextPatients = await listPatients();
+    setPatients(nextPatients);
+  }
+
   useEffect(() => {
+    setIsLoading(true);
     listPatients()
       .then(setPatients)
       .catch(() => setError('Unable to load patients.'))
@@ -183,9 +423,10 @@ export default function PatientsScreen() {
     if (!query) return patients;
 
     return patients.filter(patient => {
+      const clinicalLabel = getPatientClinicalLabel(patient);
       const searchable = [
         patient.initials,
-        patient.condition ?? '',
+        clinicalLabel ?? '',
         patient.dob ?? '',
         patient.dob ? formatDOB(patient.dob) : '',
       ].join(' ').toLowerCase();
@@ -196,6 +437,11 @@ export default function PatientsScreen() {
   async function handleSignOut() {
     setSettingsVisible(false);
     await signOut();
+  }
+
+  async function handlePatientCreated() {
+    await refreshPatients();
+    setCreatePatientVisible(false);
   }
 
   return (
@@ -219,7 +465,7 @@ export default function PatientsScreen() {
             <ThreeBarMotif size="md" tone="soft" />
           </View>
           <View style={styles.searchRow}>
-            <TextInput
+            <RNTextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholder="Search patients"
@@ -229,6 +475,13 @@ export default function PatientsScreen() {
               clearButtonMode="while-editing"
               style={styles.searchInput}
               accessibilityLabel="Search patients"
+            />
+          </View>
+          <View style={styles.createButtonRow}>
+            <Button
+              label="New Patient"
+              onPress={() => setCreatePatientVisible(true)}
+              variant="secondary"
             />
           </View>
         </View>
@@ -248,7 +501,7 @@ export default function PatientsScreen() {
             {patients.length === 0 ? (
               <EmptyState
                 title="No patients found"
-                hint="Patients you add in the web app will appear here."
+                hint="Create a patient to start recording mobile assessments."
               />
             ) : filteredPatients.length === 0 ? (
               <EmptyState
@@ -271,6 +524,11 @@ export default function PatientsScreen() {
           onSignOut={handleSignOut}
         />
       ) : null}
+      <CreatePatientSheet
+        visible={createPatientVisible}
+        onDismiss={() => setCreatePatientVisible(false)}
+        onCreated={handlePatientCreated}
+      />
     </Screen>
   );
 }
@@ -320,6 +578,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radii.sheet,
     padding: spacing.lg,
     gap: spacing.md,
+  },
+  sheetKeyboard: {
+    justifyContent: 'flex-end',
   },
   sheetHandle: {
     width: 36,
@@ -385,6 +646,73 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightMedium,
     color: colors.ink,
   },
+  createSheet: {
+    maxHeight: '88%',
+  },
+  createSheetContent: {
+    gap: spacing.sm,
+  },
+  sheetKicker: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+    letterSpacing: typography.trackingWide,
+  },
+  createTitle: {
+    fontFamily: fonts.serif,
+    fontSize: typography.sizeLg,
+    fontWeight: typography.weightBold,
+    color: colors.ink,
+    marginTop: spacing.xs,
+  },
+  fieldGroup: {
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  fieldLabel: {
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightSemibold,
+    color: colors.ink,
+  },
+  segmentRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  segmentButton: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  segmentButtonSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
+  },
+  segmentButtonPressed: {
+    opacity: 0.75,
+  },
+  segmentText: {
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightMedium,
+    color: colors.muted,
+  },
+  segmentTextSelected: {
+    color: colors.primary,
+    fontWeight: typography.weightBold,
+  },
+  createError: {
+    fontSize: typography.sizeSm,
+    color: colors.coral,
+  },
+  createActions: {
+    gap: spacing.sm,
+    paddingTop: spacing.xs,
+  },
   // Patient directory
   panel: {
     flex: 1,
@@ -425,6 +753,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   searchRow: {
+    marginTop: spacing.md,
+  },
+  createButtonRow: {
     marginTop: spacing.md,
   },
   searchInput: {

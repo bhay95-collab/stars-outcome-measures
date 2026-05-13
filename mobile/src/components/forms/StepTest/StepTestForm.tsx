@@ -77,7 +77,7 @@ export function StepTestForm({ patientId }: { patientId: string }) {
     try {
       await saveAssessment({
         patient_id: patientId,
-        measure: 'StepTest',
+        measure: 'Step',
         inputs: {
           affectedLeg: { unable: affectedInput.unable, steps: affectedInput.steps },
           nonAffectedLeg: { unable: nonAffectedInput.unable, steps: nonAffectedInput.steps },

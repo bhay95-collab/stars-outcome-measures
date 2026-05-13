@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { getPatient } from '../../../../src/supabase/patients';
 import { getAssessmentsForPatient } from '../../../../src/supabase/assessments';
 import type { Patient, Assessment, AssessmentResults } from '../../../../src/types/domain';
@@ -83,6 +83,10 @@ function getInterpretation(results: AssessmentResults | null | undefined): strin
   return typeof interpretation === 'string' ? interpretation.trim() : '';
 }
 
+function getPatientClinicalLabel(patient: Patient): string | null {
+  return patient.diagnosis ?? patient.condition ?? null;
+}
+
 function getLatestPerMeasure(assessments: Assessment[]): Assessment[] {
   const seen = new Set<string>();
   return assessments.filter(a => {
@@ -147,19 +151,39 @@ export default function PatientSummaryScreen() {
   const [latestAssessmentDate, setLatestAssessmentDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedPatientData = useRef(false);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
+    let isActive = true;
+
+    if (!hasLoadedPatientData.current) {
+      setIsLoading(true);
+    }
+    setError(null);
+
     Promise.all([getPatient(patientId), getAssessmentsForPatient(patientId)])
       .then(([p, assessments]) => {
+        if (!isActive) return;
         setPatient(p);
         setAssessments(assessments);
         setLatest(getLatestPerMeasure(assessments));
         setAssessmentCount(assessments.length);
         setLatestAssessmentDate(getLatestDate(assessments));
       })
-      .catch(() => setError('Unable to load patient data.'))
-      .finally(() => setIsLoading(false));
-  }, [patientId]);
+      .catch(() => {
+        if (!isActive) return;
+        setError('Unable to load patient data.');
+      })
+      .finally(() => {
+        if (!isActive) return;
+        hasLoadedPatientData.current = true;
+        setIsLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [patientId]));
 
   if (isLoading) {
     return (
@@ -175,6 +199,7 @@ export default function PatientSummaryScreen() {
   const pathway = buildPatientPathway(patient, assessments);
   const pathwayActions = pathway.nextActions.filter(action => action.detail).slice(0, 3);
   const recentHistory = assessments.slice(0, HISTORY_LIMIT);
+  const clinicalLabel = patient ? getPatientClinicalLabel(patient) : null;
 
   if (error || !patient) {
     return (
@@ -209,8 +234,8 @@ export default function PatientSummaryScreen() {
             <PatientAvatar name={patient.initials} size="md" />
             <View style={styles.patientInfo}>
               <Text style={styles.patientName}>{patient.initials}</Text>
-              {patient.condition ? (
-                <Text style={styles.condition}>{patient.condition}</Text>
+              {clinicalLabel ? (
+                <Text style={styles.condition}>{clinicalLabel}</Text>
               ) : null}
             </View>
           </View>

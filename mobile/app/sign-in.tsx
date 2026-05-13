@@ -12,10 +12,11 @@ import { TextInput } from '../src/components/ui/TextInput';
 import { LogoWordmark } from '../src/components/ui/LogoWordmark';
 import { ThreeBarLoading } from '../src/components/ui/ThreeBarMotif';
 import { colors, fonts, spacing, typography, radii } from '../src/theme/tokens';
-import { signInWithGoogle } from '../src/auth/googleAuth';
+import { GOOGLE_SIGN_IN_ERROR_MESSAGE, signInWithGoogle } from '../src/auth/googleAuth';
 
 WebBrowser.maybeCompleteAuthSession();
 
+const WEB_SIGNUP_URL = 'https://www.rehabmetricsiq.com/signup';
 const squareLogo = require('../assets/SquareLogo.png');
 
 export default function SignInScreen() {
@@ -45,10 +46,21 @@ export default function SignInScreen() {
     try {
       const completed = await signInWithGoogle();
       if (completed) router.replace('/(app)/patients');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Google sign-in failed.');
+    } catch {
+      setError(GOOGLE_SIGN_IN_ERROR_MESSAGE);
     } finally {
       setIsGoogleLoading(false);
+    }
+  }
+
+  async function handleCreateAccount() {
+    if (isLoading || isGoogleLoading) return;
+    setError(null);
+
+    try {
+      await WebBrowser.openBrowserAsync(WEB_SIGNUP_URL);
+    } catch {
+      setError('Create account could not be opened. Please visit rehabmetricsiq.com/signup.');
     }
   }
 
@@ -99,8 +111,11 @@ export default function SignInScreen() {
           </View>
 
           <View style={[styles.formPanel, { paddingBottom: Math.max(insets.bottom + spacing.lg, spacing.xl) }]}>
-            <Text style={styles.formHeading}>Welcome back</Text>
-            <Text style={styles.formSubtitle}>Log in to continue to your account.</Text>
+            <View style={styles.formHeader}>
+              <Text style={styles.formKicker}>SECURE CLINICAL WORKSPACE</Text>
+              <Text style={styles.formHeading}>Welcome back</Text>
+              <Text style={styles.formSubtitle}>Log in to continue to your account.</Text>
+            </View>
 
             <View style={styles.fields}>
               <TextInput
@@ -168,12 +183,6 @@ export default function SignInScreen() {
               )}
             </Pressable>
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
             <Pressable
               onPress={handleGoogleSignIn}
               disabled={isLoading || isGoogleLoading}
@@ -190,6 +199,32 @@ export default function SignInScreen() {
                 <Text style={styles.googleButtonText}>Continue with Google</Text>
               )}
             </Pressable>
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>New here?</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <View style={styles.signupCard}>
+              <View style={styles.signupCopy}>
+                <Text style={styles.signupTitle}>New to RehabMetrics IQ?</Text>
+                <Text style={styles.signupText}>Create your account on the secure web signup page.</Text>
+              </View>
+              <Pressable
+                onPress={handleCreateAccount}
+                disabled={isLoading || isGoogleLoading}
+                accessibilityRole="link"
+                accessibilityLabel="Create account on the secure web signup page"
+                style={({ pressed }) => [
+                  styles.signupButton,
+                  pressed && styles.signupButtonPressed,
+                  (isLoading || isGoogleLoading) && styles.signupButtonDisabled,
+                ]}
+              >
+                <Text style={styles.signupLink}>Create account</Text>
+              </Pressable>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -238,6 +273,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: colors.border,
   },
+  formHeader: {
+    gap: spacing.xs,
+  },
+  formKicker: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightBold,
+    color: colors.primary,
+    letterSpacing: typography.trackingWide,
+  },
   formHeading: {
     fontFamily: fonts.serif,
     fontSize: typography.sizeLg,
@@ -247,7 +291,6 @@ const styles = StyleSheet.create({
   formSubtitle: {
     fontSize: typography.sizeSm,
     color: colors.muted,
-    marginTop: -spacing.xs,
   },
   fields: {
     gap: spacing.xs,
@@ -335,6 +378,8 @@ const styles = StyleSheet.create({
   dividerText: {
     fontSize: typography.sizeSm,
     color: colors.subtle,
+    minWidth: 110,
+    textAlign: 'center',
   },
   googleButton: {
     height: 52,
@@ -351,5 +396,47 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeMd,
     fontWeight: typography.weightSemibold,
     color: colors.primary,
+  },
+  signupCard: {
+    marginTop: spacing.xs,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.panel,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  signupCopy: {
+    gap: spacing.xs,
+  },
+  signupTitle: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightBold,
+    color: colors.ink,
+  },
+  signupText: {
+    fontSize: typography.sizeSm,
+    color: colors.muted,
+    lineHeight: 19,
+  },
+  signupButton: {
+    minHeight: 44,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+  },
+  signupButtonPressed: {
+    opacity: 0.75,
+  },
+  signupButtonDisabled: {
+    opacity: 0.45,
+  },
+  signupLink: {
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightSemibold,
+    color: colors.actionBlue,
   },
 });
