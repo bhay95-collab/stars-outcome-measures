@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { Accessibility, ArrowRight, Check, ClipboardCheck, FileText, LineChart, Route, Smartphone } from 'lucide-react'
+import { Accessibility, ArrowRight, Check, ChevronDown, ClipboardCheck, FileText, LineChart, Route, Smartphone } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import LogoWordmark from '../components/LogoWordmark'
 
@@ -109,6 +109,21 @@ export default function Landing() {
     })
   }, [router])
 
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible')
+          observer.unobserve(entry.target)
+        }
+      }),
+      { threshold: 0.1 }
+    )
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
   const speed = time > 0 ? 10 / time : 0
   const cadence = time > 0 ? (steps / time) * 60 : 0
   const predictedSpeed = 1.79 - (0.0073 * PATIENT_AGE)
@@ -201,14 +216,14 @@ export default function Landing() {
         <section id="workflow" className="section">
           <div className="workflow-layout">
             <div>
-              <div className="section-head">
+              <div className="section-head reveal">
                 <p className="eyebrow">CLINICAL WORKFLOW</p>
                 <h2>Outcome measures without the spreadsheet drift.</h2>
                 <p>Built around the physiotherapy problems clinicians repeatedly measure: gait speed, balance, endurance, neurological recovery, independence, symptoms, and meaningful change over time.</p>
               </div>
               <div className="workflow-grid">
-                {WORKFLOW.map(({ Icon, title, text }) => (
-                  <article className="soft-card" key={title}>
+                {WORKFLOW.map(({ Icon, title, text }, index) => (
+                  <article className="soft-card reveal" key={title} style={{ '--reveal-delay': `${index * 0.1}s` }}>
                     <Icon size={22} />
                     <h3>{title}</h3>
                     <p>{text}</p>
@@ -216,7 +231,7 @@ export default function Landing() {
                 ))}
               </div>
             </div>
-            <figure className="image-panel image-panel--workflow">
+            <figure className="image-panel image-panel--workflow reveal">
               <video
                 autoPlay
                 loop
@@ -234,13 +249,13 @@ export default function Landing() {
 
         <section className="clinical-band">
           <div className="clinical-band__inner">
-            <figure className="image-panel image-panel--wide">
+            <figure className="image-panel image-panel--wide reveal">
               <img
                 src="https://images.pexels.com/photos/6111595/pexels-photo-6111595.jpeg?auto=compress&cs=tinysrgb&w=1400"
                 alt="Amputee patient using a prosthetic leg during rehabilitation therapy"
               />
             </figure>
-            <div className="clinical-band__copy">
+            <div className="clinical-band__copy reveal" style={{ '--reveal-delay': '0.12s' }}>
               <p className="eyebrow">DESIGNED FOR REHAB TEAMS</p>
               <h2>Clinical data that still feels human.</h2>
               <p>
@@ -251,14 +266,14 @@ export default function Landing() {
         </section>
 
         <section className="section capability-section">
-          <div className="section-head centered">
+          <div className="section-head centered reveal">
             <p className="eyebrow">WHAT IS INCLUDED</p>
             <h2>More than a score calculator.</h2>
             <p>RehabMetrics IQ connects measurement, pathway planning, prescription reasoning, and reporting in one clinical workspace.</p>
           </div>
           <div className="capability-grid">
-            {CAPABILITIES.map(({ Icon, title, text }) => (
-              <article className="capability-card" key={title}>
+            {CAPABILITIES.map(({ Icon, title, text }, index) => (
+              <article className="capability-card reveal" key={title} style={{ '--reveal-delay': `${index * 0.08}s` }}>
                 <Icon size={22} />
                 <h3>{title}</h3>
                 <p>{text}</p>
@@ -270,14 +285,14 @@ export default function Landing() {
         <MobileAppShowcase />
 
         <section id="pricing" className="section pricing-section">
-          <div className="section-head centered">
+          <div className="section-head centered reveal">
             <p className="eyebrow">PRICING</p>
             <h2>Simple access for modern rehab practice.</h2>
             <p>Start with a free trial. No credit card required.</p>
           </div>
 
           <div className="pricing-layout">
-            <figure className="image-panel image-panel--pricing">
+            <figure className="image-panel image-panel--pricing reveal">
               <img
                 src="https://images.pexels.com/photos/20860624/pexels-photo-20860624.jpeg?auto=compress&cs=tinysrgb&w=1000"
                 alt="Physiotherapist guiding a patient through a rehabilitation exercise"
@@ -289,7 +304,7 @@ export default function Landing() {
                 <button type="button" data-active={billing === 'yearly' ? '' : undefined} onClick={() => setBilling('yearly')}>Yearly <span>Save 30%</span></button>
               </div>
 
-              <article className="pricing-card">
+              <article className="pricing-card reveal" style={{ '--reveal-delay': '0.1s' }}>
                 <div>
                   <span>{billing === 'monthly' ? 'Monthly' : 'Annual'}</span>
                   <strong><em>$</em>{price}</strong>
@@ -316,7 +331,7 @@ export default function Landing() {
         </section>
 
         <section className="section faq-section">
-          <div className="section-head">
+          <div className="section-head reveal">
             <p className="eyebrow">FAQ</p>
             <h2>Clear answers before you start.</h2>
             <figure className="image-panel image-panel--faq">
@@ -327,11 +342,8 @@ export default function Landing() {
             </figure>
           </div>
           <div className="faq-list">
-            {FAQS.map(([question, answer]) => (
-              <details key={question}>
-                <summary>{question}</summary>
-                <p>{answer}</p>
-              </details>
+            {FAQS.map(([question, answer], index) => (
+              <FaqItem key={question} question={question} answer={answer} revealDelay={`${index * 0.06}s`} />
             ))}
             <div className="faq-cta">
               <div>
@@ -373,11 +385,28 @@ export default function Landing() {
   )
 }
 
+function FaqItem({ question, answer, revealDelay }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className={`faq-item reveal${open ? ' faq-item--open' : ''}`} style={{ '--reveal-delay': revealDelay }}>
+      <button className="faq-question" type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+        {question}
+        <ChevronDown size={18} className="faq-chevron" />
+      </button>
+      <div className="faq-body" aria-hidden={!open}>
+        <div className="faq-body__inner">
+          <p>{answer}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function MobileAppShowcase() {
   return (
     <section className="mobile-showcase" aria-label="Mobile app coming soon">
       <div className="mobile-showcase__inner">
-        <div className="mobile-showcase__copy">
+        <div className="mobile-showcase__copy reveal">
           <p className="eyebrow">MOBILE APP COMING SOON</p>
           <h2>Your measures should be with you, not back at the desk.</h2>
           <p>
@@ -393,7 +422,7 @@ function MobileAppShowcase() {
           </div>
         </div>
 
-        <div className="phone-gallery" aria-hidden="true">
+        <div className="phone-gallery reveal" style={{ '--reveal-delay': '0.14s' }} aria-hidden="true">
           <PhonePreview variant="directory" />
           <PhonePreview variant="pathway" />
           <PhonePreview variant="measure" />
@@ -616,6 +645,26 @@ const styles = `
   a { color: inherit; }
   button, input { font: inherit; }
 
+  @keyframes reveal-up {
+    from { opacity: 0; transform: translateY(22px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up-scale {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { opacity: 0; }
+    .reveal.is-visible {
+      animation: reveal-up 0.64s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: var(--reveal-delay, 0s);
+    }
+  }
+
   .site-header {
     position: relative;
     z-index: 10;
@@ -762,8 +811,10 @@ const styles = `
     cursor: pointer;
     font-weight: 700;
     text-decoration: none;
+    transition: background 0.18s, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
   }
-  .primary-btn:hover { background: var(--navy-dark); }
+  .primary-btn:hover { background: var(--navy-dark); transform: translateY(-2px); box-shadow: 0 14px 28px rgba(23,61,104,0.42); }
+  .primary-btn:active { transform: translateY(0); box-shadow: 0 6px 14px rgba(23,61,104,0.26); }
   .text-btn {
     display: inline-flex;
     align-items: center;
@@ -773,7 +824,9 @@ const styles = `
     color: var(--navy-dark);
     cursor: pointer;
     font-weight: 600;
+    transition: gap 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
+  .text-btn:hover { gap: 10px; }
 
   .preview-card {
     justify-self: end;
@@ -1572,6 +1625,7 @@ const styles = `
     color: var(--muted);
     cursor: pointer;
     font-weight: 700;
+    transition: background 0.22s, color 0.22s;
   }
   .billing-toggle button[data-active] {
     background: var(--navy);
@@ -1629,10 +1683,44 @@ const styles = `
   }
 
   .faq-list { display: grid; gap: 12px; }
-  details { padding: 18px 20px; }
-  summary { cursor: pointer; font-weight: 800; }
-  details p {
-    margin-top: 12px;
+  .faq-item {
+    border: 1px solid rgba(215,224,232,0.9);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 14px 32px rgba(23,38,59,0.08);
+    overflow: hidden;
+  }
+  .faq-question {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 800;
+    text-align: left;
+  }
+  .faq-question:hover { color: var(--navy); }
+  .faq-chevron {
+    flex: 0 0 18px;
+    color: var(--navy);
+    transition: transform 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .faq-item--open .faq-chevron { transform: rotate(180deg); }
+  .faq-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .faq-item--open .faq-body { grid-template-rows: 1fr; }
+  .faq-body__inner { overflow: hidden; }
+  .faq-body__inner > p {
+    padding: 0 20px 18px;
     color: var(--muted);
     line-height: 1.55;
   }
@@ -1690,6 +1778,7 @@ const styles = `
     justify-content: center;
     padding: 20px;
     background: rgba(23,34,56,0.54);
+    animation: fade-in 0.22s ease;
   }
   .demo-modal {
     position: relative;
@@ -1701,6 +1790,7 @@ const styles = `
     border-radius: 14px;
     background: #fff;
     box-shadow: var(--shadow);
+    animation: slide-up-scale 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .icon-close {
     position: absolute;

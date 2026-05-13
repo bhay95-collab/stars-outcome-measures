@@ -35,6 +35,7 @@ export default function App() {
   const [notification, setNotification] = useState(null)
   const [reportLoading, setReportLoading] = useState(false)
   const [assessmentDirty, setAssessmentDirty] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, message: '', onConfirm: null })
 
   const handleAssessmentSaved = useCallback((assessment) => {
     if (Array.isArray(assessment)) {
@@ -53,28 +54,41 @@ export default function App() {
 
   const requestViewChange = useCallback((nextView) => {
     if (assessmentDirty && view === 'assessment') {
-      const ok = window.confirm('You have unsaved assessments in this encounter. Leave without saving?')
-      if (!ok) return
-      setAssessmentDirty(false)
+      setConfirmDialog({
+        open: true,
+        message: 'You have unsaved assessments. Leave without saving?',
+        onConfirm: () => { setAssessmentDirty(false); setView(nextView) },
+      })
+      return
     }
     setView(nextView)
   }, [assessmentDirty, view])
 
-  const handleDeleteAssessment = useCallback(async (assessmentId) => {
-    if (!window.confirm('Delete this assessment? This cannot be undone.')) return
-    const { error } = await supabase.from('assessments').delete().eq('id', assessmentId)
-    if (!error) setAssessments(prev => prev.filter(a => a.id !== assessmentId))
+  const handleDeleteAssessment = useCallback((assessmentId) => {
+    setConfirmDialog({
+      open: true,
+      message: 'Delete this assessment? This cannot be undone.',
+      onConfirm: async () => {
+        const { error } = await supabase.from('assessments').delete().eq('id', assessmentId)
+        if (!error) setAssessments(prev => prev.filter(a => a.id !== assessmentId))
+      },
+    })
   }, [])
 
-  const handleDeletePatient = useCallback(async (patientId) => {
-    if (!window.confirm('Delete this patient and all their assessments? This cannot be undone.')) return
-    await supabase.from('assessments').delete().eq('patient_id', patientId)
-    const { error } = await supabase.from('patients').delete().eq('id', patientId)
-    if (!error) {
-      setPatients(prev => prev.filter(p => p.id !== patientId))
-      setSelectedPatient(null)
-      setAssessments([])
-    }
+  const handleDeletePatient = useCallback((patientId) => {
+    setConfirmDialog({
+      open: true,
+      message: 'Delete this patient and all their assessments? This cannot be undone.',
+      onConfirm: async () => {
+        await supabase.from('assessments').delete().eq('patient_id', patientId)
+        const { error } = await supabase.from('patients').delete().eq('id', patientId)
+        if (!error) {
+          setPatients(prev => prev.filter(p => p.id !== patientId))
+          setSelectedPatient(null)
+          setAssessments([])
+        }
+      },
+    })
   }, [])
 
   const handleExportFullReport = useCallback(async () => {
@@ -240,6 +254,14 @@ export default function App() {
     handlePatientSelect(patient)
   }, [handlePatientSelect])
 
+  function handleConfirmClose() {
+    setConfirmDialog({ open: false, message: '', onConfirm: null })
+  }
+  function handleConfirmOk() {
+    if (confirmDialog.onConfirm) confirmDialog.onConfirm()
+    setConfirmDialog({ open: false, message: '', onConfirm: null })
+  }
+
   async function handleSignOut() {
     await supabase.auth.signOut()
     router.push('/')
@@ -328,6 +350,13 @@ export default function App() {
           onProfileUpdated={(data) => { setProfileData(data); setShowProfile(false) }}
         />
       )}
+      {confirmDialog.open && (
+        <ConfirmModal
+          message={confirmDialog.message}
+          onConfirm={handleConfirmOk}
+          onCancel={handleConfirmClose}
+        />
+      )}
       <div className="app-shell">
         <AppSidebar
           activeView={view}
@@ -353,63 +382,65 @@ export default function App() {
             </div>
           )}
 
-          {view === 'wheelchair' ? (
-            <WheelchairPrescriptionTool
-              patient={selectedPatient}
-              patients={patients}
-              onPatientSelect={handlePatientSelect}
-              userId={user?.id}
-              assessments={assessments}
-              onSaved={handleWheelchairPrescriptionSaved}
-            />
-          ) : view === 'patients' ? (
-            <PatientsWorkspace
-              patients={patients}
-              selectedPatient={selectedPatient}
-              selectedAssessments={assessments}
-              onSelect={handlePatientSelect}
-              onNew={() => setShowNewPatient(true)}
-              onNewAssessment={() => selectedPatient ? requestViewChange('assessment') : setShowNewPatient(true)}
-              onDashboard={() => selectedPatient ? requestViewChange('summary') : null}
-            />
-          ) : selectedPatient ? (
-            <>
-              {view === 'summary' && (
-                <PatientHeader
-                  patient={selectedPatient}
-                  assessments={assessments}
-                  onViewReport={handleExportFullReport}
-                  reportLoading={reportLoading}
-                />
-              )}
-              {view === 'summary' ? (
-                <SummaryTab
-                  patient={selectedPatient}
-                  assessments={assessments}
-                  onDeleteAssessment={handleDeleteAssessment}
-                  onDeletePatient={handleDeletePatient}
-                />
-              ) : (
-                <MeasureEntry
-                  patient={selectedPatient}
-                  userId={user.id}
-                  pathway={selectedPathway}
-                  onSaved={handleAssessmentSaved}
-                  onDone={() => requestViewChange('summary')}
-                  onDirtyChange={setAssessmentDirty}
-                />
-              )}
-            </>
-          ) : (
-            <div className="patient-directory-card">
-              <PatientList
+          <div key={view} className="app-view">
+            {view === 'wheelchair' ? (
+              <WheelchairPrescriptionTool
+                patient={selectedPatient}
                 patients={patients}
-                selectedId={selectedPatient?.id ?? null}
+                onPatientSelect={handlePatientSelect}
+                userId={user?.id}
+                assessments={assessments}
+                onSaved={handleWheelchairPrescriptionSaved}
+              />
+            ) : view === 'patients' ? (
+              <PatientsWorkspace
+                patients={patients}
+                selectedPatient={selectedPatient}
+                selectedAssessments={assessments}
                 onSelect={handlePatientSelect}
                 onNew={() => setShowNewPatient(true)}
+                onNewAssessment={() => selectedPatient ? requestViewChange('assessment') : setShowNewPatient(true)}
+                onDashboard={() => selectedPatient ? requestViewChange('summary') : null}
               />
-            </div>
-          )}
+            ) : selectedPatient ? (
+              <>
+                {view === 'summary' && (
+                  <PatientHeader
+                    patient={selectedPatient}
+                    assessments={assessments}
+                    onViewReport={handleExportFullReport}
+                    reportLoading={reportLoading}
+                  />
+                )}
+                {view === 'summary' ? (
+                  <SummaryTab
+                    patient={selectedPatient}
+                    assessments={assessments}
+                    onDeleteAssessment={handleDeleteAssessment}
+                    onDeletePatient={handleDeletePatient}
+                  />
+                ) : (
+                  <MeasureEntry
+                    patient={selectedPatient}
+                    userId={user.id}
+                    pathway={selectedPathway}
+                    onSaved={handleAssessmentSaved}
+                    onDone={() => requestViewChange('summary')}
+                    onDirtyChange={setAssessmentDirty}
+                  />
+                )}
+              </>
+            ) : (
+              <div className="patient-directory-card">
+                <PatientList
+                  patients={patients}
+                  selectedId={selectedPatient?.id ?? null}
+                  onSelect={handlePatientSelect}
+                  onNew={() => setShowNewPatient(true)}
+                />
+              </div>
+            )}
+          </div>
         </main>
       </div>
     </>
@@ -531,6 +562,20 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
           </div>
         )}
       </section>
+    </div>
+  )
+}
+
+function ConfirmModal({ message, onConfirm, onCancel }) {
+  return (
+    <div className="modal" onClick={onCancel} aria-modal="true" role="dialog">
+      <div className="modal-content confirm-modal-content" onClick={e => e.stopPropagation()}>
+        <p className="confirm-modal-message">{message}</p>
+        <div className="confirm-modal-actions">
+          <button type="button" onClick={onCancel}>Cancel</button>
+          <button type="button" data-danger="" onClick={onConfirm}>Confirm</button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -3342,5 +3387,77 @@ const globalStyles = `
       border-right: 0;
       border-bottom: 1px solid var(--color-border);
     }
+  }
+
+  /* ── SIDEBAR NAV TRANSITIONS ── */
+  .app-nav button,
+  .app-sidebar__settings,
+  .profile-strip {
+    transition: background 0.18s, box-shadow 0.18s, color 0.15s;
+  }
+
+  /* ── CONFIRM MODAL ── */
+  .confirm-modal-content {
+    max-width: 420px;
+    padding: 28px;
+    overflow: visible;
+  }
+  .confirm-modal-message {
+    font-size: 15px;
+    color: var(--color-ink);
+    line-height: 1.55;
+    margin: 0;
+  }
+  .confirm-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--color-border);
+  }
+  .confirm-modal-actions button {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-muted);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .confirm-modal-actions button:hover { color: var(--color-ink); border-color: var(--color-muted); }
+  .confirm-modal-actions button[data-danger] {
+    background: #b5451b;
+    color: #fff;
+    border-color: #b5451b;
+  }
+  .confirm-modal-actions button[data-danger]:hover { background: #9a3a16; border-color: #9a3a16; }
+
+  /* ── PHASE 3 MOTION ── */
+  @media (prefers-reduced-motion: no-preference) {
+    /* View fade on tab switch */
+    @keyframes view-fade-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+    .app-view { animation: view-fade-in 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    /* Modal entrance */
+    @keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes modal-content-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
+    .modal { animation: modal-backdrop-in 0.2s ease; }
+    .modal-content { animation: modal-content-in 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    /* Notification banner */
+    @keyframes notif-slide-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+    [data-notification] { animation: notif-slide-in 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    /* Patient list hover nudge */
+    .patient-card li { transition: background 0.12s, border-color 0.12s, transform 0.18s; }
+    .patient-card li:hover:not([aria-selected="true"]) { transform: translateX(2px); }
+
+    /* Interpretation chips */
+    @keyframes chip-appear { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: none; } }
+    .interp-chip { animation: chip-appear 0.22s cubic-bezier(0.34, 1.56, 0.64, 1); }
   }
 `
