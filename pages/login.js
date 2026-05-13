@@ -81,9 +81,9 @@ export default function Login() {
               <p className="eyebrow">CLINICAL OUTCOMES WORKSPACE</p>
               <h1>Progress data with the clinical context still attached.</h1>
               <div className="login-visual__metrics" aria-label="Example outcome indicators">
-                <div><strong>84%</strong><span>Minimally Clinically Important Difference tracked</span></div>
-                <div><strong>22</strong><span>Measures ready</span></div>
-                <div className="data-bars"><ThreeBarMotif size="lg" tone="light" /></div>
+                <div><strong>23</strong><span>Measures for gait, balance, endurance, independence and symptoms.</span></div>
+                <div><strong>MCID</strong><span>Meaningful change context beside patient trends and reports.</span></div>
+                <div><strong>Context</strong><span>Diagnosis-aware interpretation for measures clinicians already use.</span></div>
               </div>
             </div>
           </div>
@@ -221,6 +221,8 @@ const pageStyles = `
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
+    transform: scale(1.12);
     z-index: 0;
   }
 
@@ -230,7 +232,9 @@ const pageStyles = `
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    background: linear-gradient(90deg, rgba(23,73,111,0.92), rgba(35,100,153,0.52));
+    background:
+      linear-gradient(90deg, rgba(9, 19, 32, 0.68), rgba(9, 19, 32, 0.26) 56%, rgba(9, 19, 32, 0.08)),
+      linear-gradient(180deg, rgba(9, 19, 32, 0.18), rgba(9, 19, 32, 0.1) 42%, rgba(9, 19, 32, 0.54));
   }
 
   .login-visual::after {
@@ -240,8 +244,8 @@ const pageStyles = `
     z-index: 2;
     pointer-events: none;
     background:
-      linear-gradient(135deg, rgba(255,255,255,0.18), transparent 38%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 92px);
+      linear-gradient(135deg, rgba(255,255,255,0.09), transparent 38%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 92px);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -262,6 +266,7 @@ const pageStyles = `
   .login-visual__content .logo-wordmark {
     margin-bottom: auto;
     color: #fff;
+    text-shadow: 0 2px 18px rgba(0,0,0,0.3);
   }
 
   .login-visual__content .logo-wordmark__iq {
@@ -274,6 +279,7 @@ const pageStyles = `
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 1.4px;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.28);
   }
 
   .login-visual h1 {
@@ -282,6 +288,7 @@ const pageStyles = `
     font-size: clamp(34px, 4vw, 54px);
     font-weight: 700;
     line-height: 1.04;
+    text-shadow: 0 2px 22px rgba(0,0,0,0.32);
   }
 
   .login-visual__metrics {
@@ -297,16 +304,17 @@ const pageStyles = `
     padding: 16px;
     border: 1px solid rgba(255,255,255,0.24);
     border-radius: 16px;
-    background: rgba(255,255,255,0.15);
+    background: rgba(8,18,30,0.34);
     box-shadow: inset 0 1px rgba(255,255,255,0.16);
     backdrop-filter: blur(12px);
   }
 
   .login-visual__metrics strong {
     display: block;
-    font-size: 28px;
+    font-size: clamp(22px, 2.4vw, 28px);
     font-weight: 800;
     line-height: 1;
+    letter-spacing: 0;
   }
 
   .login-visual__metrics span {
@@ -315,12 +323,6 @@ const pageStyles = `
     color: rgba(255,255,255,0.74);
     font-size: 12px;
     font-weight: 700;
-  }
-
-  .data-bars {
-    display: flex !important;
-    align-items: flex-end;
-    justify-content: center;
   }
 
   .button-loading {
@@ -491,9 +493,8 @@ const pageStyles = `
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .login-visual__metrics .data-bars {
+    .login-visual__metrics > div:last-child {
       grid-column: 1 / -1;
-      min-height: 84px;
     }
   }
 

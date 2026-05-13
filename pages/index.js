@@ -969,10 +969,14 @@ const styles = `
     object-fit: cover;
   }
   .image-panel video {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     display: block;
     object-fit: cover;
+    object-position: center;
+    transform: scale(1.1);
   }
 
   .image-panel--workflow {
