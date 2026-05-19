@@ -12,3 +12,8 @@ node_modules/
 /RehabMetricsIQ/
 *.xcuserstate
 xcuserdata/
+
+# Claude / plugin generated files
+.agents/
+.claude/skills/
+skills-lock.json
