@@ -65,23 +65,41 @@ export default function App() {
   }, [assessmentDirty, view])
 
   const handleDeleteAssessment = useCallback((assessmentId) => {
+    if (!user?.id) return
     setConfirmDialog({
       open: true,
       message: 'Delete this assessment? This cannot be undone.',
       onConfirm: async () => {
-        const { error } = await supabase.from('assessments').delete().eq('id', assessmentId)
+        const { error } = await supabase
+          .from('assessments')
+          .delete()
+          .eq('id', assessmentId)
+          .eq('user_id', user.id)
         if (!error) setAssessments(prev => prev.filter(a => a.id !== assessmentId))
       },
     })
-  }, [])
+  }, [user])
 
   const handleDeletePatient = useCallback((patientId) => {
+    if (!user?.id) return
     setConfirmDialog({
       open: true,
       message: 'Delete this patient and all their assessments? This cannot be undone.',
       onConfirm: async () => {
-        await supabase.from('assessments').delete().eq('patient_id', patientId)
-        const { error } = await supabase.from('patients').delete().eq('id', patientId)
+        const { error: cascadeError } = await supabase
+          .from('assessments')
+          .delete()
+          .eq('patient_id', patientId)
+          .eq('user_id', user.id)
+        if (cascadeError) {
+          alert('Could not delete assessments. Please try again.')
+          return
+        }
+        const { error } = await supabase
+          .from('patients')
+          .delete()
+          .eq('id', patientId)
+          .eq('user_id', user.id)
         if (!error) {
           setPatients(prev => prev.filter(p => p.id !== patientId))
           setSelectedPatient(null)
@@ -89,7 +107,7 @@ export default function App() {
         }
       },
     })
-  }, [])
+  }, [user])
 
   const handleExportFullReport = useCallback(async () => {
     if (!selectedPatient || reportLoading) return
