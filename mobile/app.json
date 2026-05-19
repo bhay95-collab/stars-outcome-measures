@@ -34,7 +34,8 @@
     "plugins": [
       "expo-router",
       "expo-web-browser",
-      "expo-video"
+      "expo-video",
+      "@sentry/react-native/expo"
     ]
   }
 }

@@ -1,9 +1,13 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Sentry from '@sentry/react-native';
 import { AuthProvider } from '../src/auth/AuthProvider';
+import { initSentry } from '../sentry';
 
-export default function RootLayout() {
+initSentry();
+
+function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
@@ -12,3 +16,5 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);

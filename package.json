@@ -9,6 +9,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.53.1",
     "@stripe/stripe-js": "latest",
     "@supabase/supabase-js": "latest",
     "isncsci-ui": "^1.0.38",

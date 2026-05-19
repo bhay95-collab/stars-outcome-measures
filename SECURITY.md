@@ -97,6 +97,46 @@ A public bucket is acceptable here because avatars are non-clinical profile asse
 
 No SQL changes required. Safe for beta.
 
+### Sentry Error Monitoring
+
+Sentry is installed on both platforms. Scope: **error monitoring only** — no tracing, no profiling, no Session Replay, no user feedback widget.
+
+| Platform | Package | Init file |
+|---|---|---|
+| Next.js web | `@sentry/nextjs` v10 | `instrumentation-client.js` (browser), `instrumentation.js` (server/edge hook) |
+| Expo mobile | `@sentry/react-native` v7 | `mobile/sentry.ts`, called from `mobile/app/_layout.tsx` |
+
+PHI scrubbing logic is centralised in `lib/sentry-scrub.js` (web) and `mobile/sentry.ts` (mobile). All three web init files (`instrumentation-client.js`, `sentry.server.config.js`, `sentry.edge.config.js`) import the shared `scrubEvent` function — no scrub logic is duplicated.
+
+**PHI scrubbing — `beforeSend` applied on all init calls:**
+
+| Data | Action |
+|---|---|
+| `cookie`, `set-cookie`, `authorization`, `x-supabase-auth` headers | Stripped case-insensitively from all request headers |
+| Request body / `event.request.data` | Replaced with `'[redacted]'` on all server events |
+| `user.email` | Stripped; only `user.id` retained |
+| Navigation breadcrumb `data` (mobile) | Stripped from all navigation and http breadcrumb entries — prevents patient UUID leakage via route params and Supabase endpoint URLs |
+
+**Config controls:**
+
+| Setting | Value |
+|---|---|
+| `sendDefaultPii` | `false` on all init calls — IP addresses and user emails not auto-captured |
+| `tracesSampleRate` | `0` — tracing disabled |
+| Source maps | Opt-in via `SENTRY_AUTH_TOKEN` CI secret; build succeeds without it |
+
+**Required env vars (not committed):**
+
+| Variable | Where |
+|---|---|
+| `NEXT_PUBLIC_SENTRY_DSN` | Web `.env.local` — get from Sentry Dashboard → Project → Settings → Client Keys |
+| `EXPO_PUBLIC_SENTRY_DSN` | `mobile/.env.local` — same location |
+| `SENTRY_AUTH_TOKEN` | Vercel / EAS Build secret only — for source map upload |
+| `SENTRY_ORG` | Vercel / EAS Build secret only |
+| `SENTRY_PROJECT` | Vercel / EAS Build secret only |
+
+---
+
 ### Defense-in-Depth: Client-Side Ownership Filters
 
 Destructive Supabase mutations in `pages/app.js` include an explicit `.eq('user_id', user.id)` filter in addition to RLS. This ensures that even if a future RLS policy regression occurs, the client cannot issue an unscoped DELETE.
@@ -119,7 +159,6 @@ These have been assessed and accepted for post-beta remediation.
 | Rate limiting is in-memory only | LOW | In-memory rate limiting resets on server restart and does not scale across multiple instances. Replace with Upstash Redis + `@upstash/ratelimit` before high-traffic rollout. |
 | All npm dependencies pinned to `"latest"` | LOW | No fixed version constraints. Pin to exact versions before public launch to prevent unexpected breaking changes on deploy. |
 | No Next.js edge middleware | LOW | No edge-level auth guard. All auth is handled at the page level. Acceptable for current scale. |
-| No Sentry / error monitoring | INFO | No production error visibility. Integrate Sentry for both web (Next.js) and mobile (Expo) before public launch. |
 | No audit logging for clinical data | INFO | Supabase has a built-in audit log. Enable on `patients` and `assessments` tables for production compliance. |
 | No autosave / assessment draft recovery | INFO | Unsaved assessment warning exists but does not recover data after accidental navigation. Add localStorage draft rescue pattern. |
 | `avatars` DELETE policy absent | INFO | No DELETE policy exists on the `avatars` bucket. Required only if avatar removal is added as a feature. Not needed for beta. |
