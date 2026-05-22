@@ -36,6 +36,13 @@
       "expo-web-browser",
       "expo-video",
       "@sentry/react-native/expo"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7012551f-e4e4-4c63-8657-c3e51880c233"
+      }
+    },
+    "owner": "benhay95"
   }
 }
