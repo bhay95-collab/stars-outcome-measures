@@ -3,7 +3,7 @@ import {
   View, Text, Image, StyleSheet, KeyboardAvoidingView, Platform,
   ScrollView, Pressable,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -25,6 +25,9 @@ const squareLogo = require('../assets/SquareLogo.png');
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
+  const { reason } = useLocalSearchParams<{ reason?: string }>();
+  const isAccessExpired = reason === 'access_expired';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -136,6 +139,14 @@ export default function SignInScreen() {
               <Text style={styles.formHeading}>Welcome back</Text>
               <Text style={styles.formSubtitle}>Log in to continue to your account.</Text>
             </View>
+
+            {isAccessExpired ? (
+              <View style={styles.accessNotice}>
+                <Text style={styles.accessNoticeText}>
+                  Your trial or subscription has ended. Visit rehabmetricsiq.com to continue.
+                </Text>
+              </View>
+            ) : null}
 
             <View style={styles.fields}>
               <TextInput
@@ -315,6 +326,18 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeSm,
     color: colors.actionBlue,
     fontWeight: typography.weightMedium,
+  },
+  accessNotice: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.sm,
+  },
+  accessNoticeText: {
+    fontSize: typography.sizeSm,
+    color: colors.ink,
+    lineHeight: 19,
   },
   errorText: {
     fontSize: typography.sizeSm,
