@@ -310,42 +310,11 @@ export default function App() {
       <>
         <AppHead />
         <style jsx global>{globalStyles}</style>
-        <div className="page">
-          <header className="header">
-            <div className="header-inner">
-              <LogoWordmark className="wordmark" size="md" />
-              {user?.email && (
-                <>
-                  <span data-header-divider="" />
-                  <button data-profile-btn="" onClick={() => setShowProfile(true)}>
-                    {profileData.avatarUrl
-                      ? <img data-profile-avatar="" src={profileData.avatarUrl} alt="Profile photo" />
-                      : <span data-profile-initials="">
-                          {(profileData.firstName?.[0] || user.email?.[0] || '?').toUpperCase()}
-                        </span>}
-                    <span data-header-subtitle="">
-                      {profileData.firstName
-                        ? `${profileData.firstName} ${profileData.lastName}`.trim()
-                        : user.email}
-                    </span>
-                  </button>
-                </>
-              )}
-            </div>
-          </header>
-          <SubscriptionWall
-            user={user}
-            subscription={subscription}
-            onSignOut={handleSignOut}
-          />
-        </div>
-        {showProfile && (
-          <ProfileModal
-            user={user}
-            onClose={() => setShowProfile(false)}
-            onProfileUpdated={(data) => { setProfileData(data); setShowProfile(false) }}
-          />
-        )}
+        <SubscriptionWall
+          user={user}
+          subscription={subscription}
+          onSignOut={handleSignOut}
+        />
       </>
     )
   }
@@ -671,37 +640,6 @@ const globalStyles = `
   .dashboard { max-width: 1360px; margin: 0 auto; padding: 20px 24px 56px; display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
   .sidebar { }
   .main { min-width: 0; }
-
-  /* ── SUBSCRIPTION WALL ── */
-  .main-center { min-height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center; padding: 60px 32px; }
-  .expired-card { max-width: 560px; width: 100%; }
-  .tier-label { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--color-subtle); margin-bottom: 12px; }
-  .heading { font-size: 30px; font-weight: 800; color: var(--color-ink); line-height: 1.15; margin-bottom: 12px; }
-  .subtext { font-size: 15px; color: var(--color-muted); line-height: 1.6; }
-
-  [data-plans] { display: flex; gap: 16px; margin-top: 28px; flex-wrap: wrap; }
-  [data-plan-card] { flex: 1; min-width: 180px; margin: 0; }
-  [data-plan-price] { font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 700; color: var(--color-ink); margin: 8px 0 4px; }
-  [data-subscribe-btn] {
-    display: block; width: 100%; margin-top: 16px; padding: 10px 20px;
-    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
-    color: var(--color-surface); background: var(--color-primary);
-    border: none; border-radius: var(--radius-md);
-    cursor: pointer; transition: background 0.15s, opacity 0.15s;
-  }
-  [data-subscribe-btn]:hover { background: var(--color-primary-dark); }
-  [data-subscribe-btn]:disabled { opacity: 0.55; cursor: wait; }
-
-  [data-wall-links] { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
-  [data-wall-link] { background: none; border: none; padding: 0; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; }
-  [data-wall-link="manage"] { color: var(--color-primary); text-decoration: underline; }
-  [data-wall-link="manage"]:disabled { opacity: 0.55; cursor: wait; }
-  [data-wall-link="signout"] { color: var(--color-muted); }
-  [data-wall-link="delete"] { color: #b5451b; }
-
-  /* Danger submit button in delete modal */
-  .modal-content form button[type="submit"][data-danger] { background: #b5451b; }
-  .modal-content form button[type="submit"][data-danger]:hover { background: #9a3a16; }
 
   /* Payment notification banner */
   [data-notification] { padding: 12px 16px; font-size: 13px; font-weight: 500; border-radius: var(--radius-sm); margin-bottom: 20px; }
