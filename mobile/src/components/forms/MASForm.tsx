@@ -14,8 +14,9 @@ import { saveAssessment } from '../../supabase/assessments';
 import { useAuth } from '../../auth/AuthProvider';
 import { Button } from '../ui/Button';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
+import { SAVE_TIMEOUT_MS } from '../../utils/withTimeout';
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type SaveState = 'idle' | 'saving' | 'timed-out' | 'saved' | 'error';
 
 interface MASResult {
   primaryValue: number;
@@ -65,7 +66,7 @@ export function MASForm({ patientId }: { patientId: string }) {
   }
 
   async function handleSave() {
-    if (saveState === 'saving' || !allScored || !result) return;
+    if (saveState === 'saving' || saveState === 'timed-out' || !allScored || !result) return;
 
     if (!user) {
       setSaveError('Your session has expired. Please sign in again.');
@@ -75,6 +76,13 @@ export function MASForm({ patientId }: { patientId: string }) {
 
     setSaveState('saving');
     setSaveError(null);
+
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      setSaveState('timed-out');
+      setSaveError('Save timed out. Your result may not have been saved. Check your connection before trying again.');
+    }, SAVE_TIMEOUT_MS);
 
     try {
       await saveAssessment({
@@ -86,11 +94,17 @@ export function MASForm({ patientId }: { patientId: string }) {
           meta: { ...result.meta, encounterDate: new Date().toISOString() },
         },
       });
-      setSaveState('saved');
-      setTimeout(() => setSaveState('idle'), 3000);
+      clearTimeout(timeoutId);
+      if (!timedOut) {
+        setSaveState('saved');
+        setTimeout(() => setSaveState('idle'), 3000);
+      }
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
-      setSaveState('error');
+      clearTimeout(timeoutId);
+      if (!timedOut) {
+        setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
+        setSaveState('error');
+      }
     }
   }
 
@@ -218,9 +232,9 @@ export function MASForm({ patientId }: { patientId: string }) {
                   label="Save Result"
                   onPress={handleSave}
                   loading={saveState === 'saving'}
-                  disabled={saveState === 'saving'}
+                  disabled={saveState === 'saving' || saveState === 'timed-out'}
                 />
-                {saveState === 'error' && saveError ? (
+                {(saveState === 'error' || saveState === 'timed-out') && saveError ? (
                   <Text style={styles.saveErrorText}>{saveError}</Text>
                 ) : null}
               </>

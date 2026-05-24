@@ -8,6 +8,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { supabase } from '../src/supabase/client';
+import { withTimeout, SIGN_IN_TIMEOUT_MS } from '../src/utils/withTimeout';
 import { Screen } from '../src/components/ui/Screen';
 import { TextInput } from '../src/components/ui/TextInput';
 import { LogoWordmark } from '../src/components/ui/LogoWordmark';
@@ -89,12 +90,18 @@ export default function SignInScreen() {
     setIsLoading(true);
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      let result: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>;
+      try {
+        result = await withTimeout(
+          supabase.auth.signInWithPassword({ email: email.trim(), password }),
+          SIGN_IN_TIMEOUT_MS,
+        );
+      } catch {
+        setError('Unable to sign in. Check your connection and try again.');
+        return;
+      }
 
-      if (authError) {
+      if (result.error) {
         setError('Invalid email or password.');
         return;
       }

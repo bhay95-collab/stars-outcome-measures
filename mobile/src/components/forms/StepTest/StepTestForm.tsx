@@ -9,8 +9,9 @@ import type { Patient } from '../../../types/domain';
 import { LegScreen } from './LegScreen';
 import { ResultScreen } from './ResultScreen';
 import type { LegInput, StepTestResult } from './types';
+import { SAVE_TIMEOUT_MS } from '../../../utils/withTimeout';
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type SaveState = 'idle' | 'saving' | 'timed-out' | 'saved' | 'error';
 
 const DEFAULT_STEP_HEIGHT = '7.5';
 
@@ -65,7 +66,7 @@ export function StepTestForm({ patientId }: { patientId: string }) {
   }
 
   async function handleSave() {
-    if (saveState === 'saving') return;
+    if (saveState === 'saving' || saveState === 'timed-out') return;
     const aff    = affectedInput.unable ? 0 : (affectedInput.steps ?? 0);
     const nonAff = nonAffectedInput.unable ? 0 : (nonAffectedInput.steps ?? 0);
     const r = calcStepTest({ affectedSteps: aff, nonAffectedSteps: nonAff }) as StepTestResult | null;
@@ -81,6 +82,13 @@ export function StepTestForm({ patientId }: { patientId: string }) {
     }
     setSaveState('saving');
     setSaveError(null);
+
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      setSaveState('timed-out');
+      setSaveError('Save timed out. Your result may not have been saved. Check your connection before trying again.');
+    }, SAVE_TIMEOUT_MS);
     try {
       await saveAssessment({
         patient_id: patientId,
@@ -95,12 +103,18 @@ export function StepTestForm({ patientId }: { patientId: string }) {
           meta: { ...r.meta, encounterDate: new Date().toISOString() },
         },
       });
-      resetTestCapture();
-      setSaveState('saved');
-      setTimeout(() => setSaveState('idle'), 3000);
+      clearTimeout(timeoutId);
+      if (!timedOut) {
+        resetTestCapture();
+        setSaveState('saved');
+        setTimeout(() => setSaveState('idle'), 3000);
+      }
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
-      setSaveState('error');
+      clearTimeout(timeoutId);
+      if (!timedOut) {
+        setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
+        setSaveState('error');
+      }
     }
   }
 

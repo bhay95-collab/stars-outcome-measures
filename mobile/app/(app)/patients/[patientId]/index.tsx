@@ -5,6 +5,7 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { getPatient } from '../../../../src/supabase/patients';
 import { getAssessmentsForPatient } from '../../../../src/supabase/assessments';
+import { withTimeout, DATA_FETCH_TIMEOUT_MS } from '../../../../src/utils/withTimeout';
 import type { Patient, Assessment, AssessmentResults } from '../../../../src/types/domain';
 import { Screen } from '../../../../src/components/ui/Screen';
 import { Card } from '../../../../src/components/ui/Card';
@@ -159,7 +160,13 @@ export default function PatientSummaryScreen() {
   const [latestAssessmentDate, setLatestAssessmentDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const hasLoadedPatientData = useRef(false);
+
+  function handleRetry() {
+    hasLoadedPatientData.current = false;
+    setRetryKey(k => k + 1);
+  }
 
   useFocusEffect(useCallback(() => {
     let isActive = true;
@@ -181,18 +188,21 @@ export default function PatientSummaryScreen() {
     }
     setError(null);
 
-    Promise.all([getPatient(patientId), getAssessmentsForPatient(patientId)])
-      .then(([p, assessments]) => {
+    withTimeout(
+      Promise.all([getPatient(patientId), getAssessmentsForPatient(patientId)]),
+      DATA_FETCH_TIMEOUT_MS,
+    )
+      .then(([p, loadedAssessments]) => {
         if (!isActive) return;
         setPatient(p);
-        setAssessments(assessments);
-        setLatest(getLatestPerMeasure(assessments));
-        setAssessmentCount(assessments.length);
-        setLatestAssessmentDate(getLatestDate(assessments));
+        setAssessments(loadedAssessments);
+        setLatest(getLatestPerMeasure(loadedAssessments));
+        setAssessmentCount(loadedAssessments.length);
+        setLatestAssessmentDate(getLatestDate(loadedAssessments));
       })
       .catch(() => {
         if (!isActive) return;
-        setError('Unable to load patient data.');
+        setError('Unable to load patient data. Check your connection and try again.');
       })
       .finally(() => {
         if (!isActive) return;
@@ -203,7 +213,7 @@ export default function PatientSummaryScreen() {
     return () => {
       isActive = false;
     };
-  }, [patientId]));
+  }, [patientId, retryKey]));
 
   if (isLoading) {
     return (
@@ -223,6 +233,16 @@ export default function PatientSummaryScreen() {
         <View style={styles.panel}>
           <View style={styles.center}>
             <Text style={styles.errorText}>{error ?? 'Patient not found.'}</Text>
+            {error ? (
+              <TouchableOpacity
+                onPress={handleRetry}
+                style={styles.retryButton}
+                accessibilityRole="button"
+                accessibilityLabel="Try again"
+              >
+                <Text style={styles.retryButtonText}>Try again</Text>
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity
               onPress={() => router.back()}
               style={styles.backLink}
@@ -354,6 +374,22 @@ const styles = StyleSheet.create({
   },
   backLinkText: {
     fontSize: typography.sizeSm,
+    color: colors.primary,
+  },
+  retryButton: {
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  retryButtonText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
     color: colors.primary,
   },
   scroll: {

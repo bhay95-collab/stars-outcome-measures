@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { User } from '@supabase/supabase-js';
 import { SIGN_OUT_ERROR_MESSAGE, useAuth } from '../../../src/auth/AuthProvider';
+import { withTimeout, DATA_FETCH_TIMEOUT_MS } from '../../../src/utils/withTimeout';
 import { supabase } from '../../../src/supabase/client';
 import { createPatient, listPatients } from '../../../src/supabase/patients';
 import type { Patient } from '../../../src/types/domain';
@@ -493,18 +494,23 @@ export default function PatientsScreen() {
   const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  function loadPatients() {
+    setIsLoading(true);
+    setError(null);
+    withTimeout(listPatients(), DATA_FETCH_TIMEOUT_MS)
+      .then(setPatients)
+      .catch(() => setError('Unable to load patients. Check your connection and try again.'))
+      .finally(() => setIsLoading(false));
+  }
+
   async function refreshPatients() {
     setError(null);
-    const nextPatients = await listPatients();
+    const nextPatients = await withTimeout(listPatients(), DATA_FETCH_TIMEOUT_MS);
     setPatients(nextPatients);
   }
 
   useEffect(() => {
-    setIsLoading(true);
-    listPatients()
-      .then(setPatients)
-      .catch(() => setError('Unable to load patients.'))
-      .finally(() => setIsLoading(false));
+    loadPatients();
   }, []);
 
   useEffect(() => {
@@ -605,7 +611,17 @@ export default function PatientsScreen() {
             <LoadingState label="Loading patients" />
           </View>
         ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity
+              onPress={loadPatients}
+              style={styles.retryButton}
+              accessibilityRole="button"
+              accessibilityLabel="Try again"
+            >
+              <Text style={styles.retryButtonText}>Try again</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <ScrollView
             style={styles.scroll}
@@ -1026,11 +1042,30 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeLg,
     color: colors.subtle,
   },
+  errorContainer: {
+    alignItems: 'center',
+    paddingTop: spacing.xl,
+    paddingHorizontal: spacing.md,
+    gap: spacing.md,
+  },
   errorText: {
     fontSize: typography.sizeMd,
     color: colors.coral,
     textAlign: 'center',
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.md,
+  },
+  retryButton: {
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retryButtonText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
   },
 });

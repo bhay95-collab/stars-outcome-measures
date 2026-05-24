@@ -11,7 +11,7 @@ import type { Patient } from '../../../types/domain';
 import type { HiMATResult } from './types';
 import { colors, spacing, typography, radii } from '../../../theme/tokens';
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type SaveState = 'idle' | 'saving' | 'timed-out' | 'saved' | 'error';
 
 interface ResultScreenProps {
   result: HiMATResult | null;
@@ -143,9 +143,9 @@ export function ResultScreen({ result, patient, onBack, onStartOver, saveState, 
                 label="Save Result"
                 onPress={onSave}
                 loading={saveState === 'saving'}
-                disabled={saveState === 'saving'}
+                disabled={saveState === 'saving' || saveState === 'timed-out'}
               />
-              {saveState === 'error' && saveError ? (
+              {(saveState === 'error' || saveState === 'timed-out') && saveError ? (
                 <Text style={styles.saveErrorText}>{saveError}</Text>
               ) : null}
             </>

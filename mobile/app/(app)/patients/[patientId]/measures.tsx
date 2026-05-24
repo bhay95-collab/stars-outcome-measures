@@ -7,6 +7,7 @@ import { MEASURES, buildPatientPathway } from '../../../../src/clinical/adapter'
 import type { MeasureDefinition, PatientPathway } from '../../../../src/clinical/adapter';
 import { getPatient } from '../../../../src/supabase/patients';
 import { getAssessmentsForPatient } from '../../../../src/supabase/assessments';
+import { withTimeout, DATA_FETCH_TIMEOUT_MS } from '../../../../src/utils/withTimeout';
 import { Screen } from '../../../../src/components/ui/Screen';
 import { Card } from '../../../../src/components/ui/Card';
 import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
@@ -82,6 +83,14 @@ export default function MeasureSelectorScreen() {
   const patientId = getValidPatientId(params.patientId);
   const [pathway, setPathway] = useState<PatientPathway | null>(null);
   const [routeError, setRouteError] = useState<string | null>(null);
+  const [isNetworkError, setIsNetworkError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const [isFetching, setIsFetching] = useState(false);
+
+  function handleRetry() {
+    setIsFetching(true);
+    setRetryKey(k => k + 1);
+  }
 
   const measuresByCategory = useMemo(() => {
     const map = new Map<Category, MeasureDefinition[]>();
@@ -103,7 +112,11 @@ export default function MeasureSelectorScreen() {
 
     let isActive = true;
     setRouteError(null);
-    Promise.all([getPatient(patientId), getAssessmentsForPatient(patientId)])
+    setIsNetworkError(false);
+    withTimeout(
+      Promise.all([getPatient(patientId), getAssessmentsForPatient(patientId)]),
+      DATA_FETCH_TIMEOUT_MS,
+    )
       .then(([patient, assessments]) => {
         if (!isActive) return;
         if (!patient) {
@@ -116,13 +129,17 @@ export default function MeasureSelectorScreen() {
       .catch(() => {
         if (!isActive) return;
         setPathway(null);
-        setRouteError('Unable to load patient data.');
+        setIsNetworkError(true);
+        setRouteError('Unable to load patient data. Check your connection and try again.');
+      })
+      .finally(() => {
+        if (isActive) setIsFetching(false);
       });
 
     return () => {
       isActive = false;
     };
-  }, [patientId]);
+  }, [patientId, retryKey]);
 
   if (routeError || !patientId) {
     return (
@@ -133,8 +150,19 @@ export default function MeasureSelectorScreen() {
           title="Select Measure"
         />
         <ScrollView style={styles.panel} contentContainerStyle={styles.content}>
-          <Card>
-            <Text style={styles.heroSubtitle}>{routeError ?? 'Invalid patient link.'}</Text>
+          <Card style={styles.errorCard}>
+            <Text style={styles.errorText}>{routeError ?? 'Invalid patient link.'}</Text>
+            {isNetworkError && patientId ? (
+              <TouchableOpacity
+                onPress={handleRetry}
+                disabled={isFetching}
+                style={styles.retryButton}
+                accessibilityRole="button"
+                accessibilityLabel="Try again"
+              >
+                <Text style={styles.retryButtonText}>Try again</Text>
+              </TouchableOpacity>
+            ) : null}
           </Card>
         </ScrollView>
       </Screen>
@@ -322,5 +350,27 @@ const styles = StyleSheet.create({
   chevron: {
     fontSize: typography.sizeLg,
     color: colors.subtle,
+  },
+  errorCard: {
+    gap: spacing.md,
+  },
+  errorText: {
+    fontSize: typography.sizeMd,
+    color: colors.coral,
+  },
+  retryButton: {
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retryButtonText: {
+    fontSize: typography.sizeMd,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
   },
 });

@@ -11,7 +11,7 @@ import type { Patient } from '../../../types/domain';
 import type { StepTestResult } from './types';
 import { colors, spacing, typography, radii } from '../../../theme/tokens';
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type SaveState = 'idle' | 'saving' | 'timed-out' | 'saved' | 'error';
 
 interface ResultScreenProps {
   result: StepTestResult | null;
@@ -162,9 +162,9 @@ export function ResultScreen({ result, patient, stepHeight, onBack, onStartOver,
                 label="Save Result"
                 onPress={onSave}
                 loading={saveState === 'saving'}
-                disabled={saveState === 'saving'}
+                disabled={saveState === 'saving' || saveState === 'timed-out'}
               />
-              {saveState === 'error' && saveError ? (
+              {(saveState === 'error' || saveState === 'timed-out') && saveError ? (
                 <Text style={styles.saveErrorText}>{saveError}</Text>
               ) : null}
             </>

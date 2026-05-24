@@ -11,7 +11,7 @@ import type { Patient } from '../../../types/domain';
 import type { StepInput, TimedInput, FRInput, BOOMERResult } from './types';
 import { colors, spacing, typography, radii } from '../../../theme/tokens';
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type SaveState = 'idle' | 'saving' | 'timed-out' | 'saved' | 'error';
 
 const COLOR_MAP = {
   green: colors.success,
@@ -151,9 +151,9 @@ export function ResultScreen({
               label="Save Result"
               onPress={onSave}
               loading={saveState === 'saving'}
-              disabled={saveState === 'saving'}
+              disabled={saveState === 'saving' || saveState === 'timed-out'}
             />
-            {saveState === 'error' && saveError ? (
+            {(saveState === 'error' || saveState === 'timed-out') && saveError ? (
               <Text style={styles.saveErrorText}>{saveError}</Text>
             ) : null}
           </>
