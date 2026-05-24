@@ -5,6 +5,7 @@ import { Accessibility, ChevronDown, ClipboardList, LayoutDashboard, Users } fro
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
+import EditPatientModal from '../components/EditPatientModal'
 import ProfileModal from '../components/ProfileModal'
 import PatientHeader from '../components/PatientHeader'
 import SummaryTab from '../components/SummaryTab'
@@ -15,6 +16,7 @@ import WheelchairPrescriptionTool from '../components/WheelchairPrescriptionTool
 import ThreeBarMotif from '../components/ThreeBarMotif'
 import { buildPatientPathway } from '../lib/clinical/pathways'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
+import { sortPatientsByLabel } from '../lib/patientDetails'
 
 export async function getServerSideProps() { return { props: {} } }
 
@@ -29,6 +31,7 @@ export default function App() {
   const [selectedPatient, setSelectedPatient] = useState(null)
   const [assessments, setAssessments] = useState([])
   const [showNewPatient, setShowNewPatient] = useState(false)
+  const [editingPatient, setEditingPatient] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
   const [profileData, setProfileData] = useState({ firstName: '', lastName: '', avatarUrl: null })
   const [view, setView] = useState('patients')
@@ -263,14 +266,24 @@ export default function App() {
   }, [assessmentDirty])
 
   const handlePatientCreated = useCallback((patient) => {
-    setPatients(prev =>
-      [...prev, patient].sort((a, b) =>
-        (a.initials ?? '').localeCompare(b.initials ?? '')
-      )
-    )
+    setPatients(prev => [...prev, patient].sort(sortPatientsByLabel))
     setShowNewPatient(false)
     handlePatientSelect(patient)
   }, [handlePatientSelect])
+
+  const handlePatientUpdated = useCallback((patient) => {
+    if (!patient) return
+    setPatients(prev => prev
+      .map(item => item.id === patient.id ? patient : item)
+      .sort(sortPatientsByLabel)
+    )
+    setSelectedPatient(prev => prev?.id === patient.id ? patient : prev)
+    setEditingPatient(null)
+    setNotification('patient-updated')
+    setTimeout(() => {
+      setNotification(prev => prev === 'patient-updated' ? null : prev)
+    }, 3200)
+  }, [])
 
   function handleConfirmClose() {
     setConfirmDialog({ open: false, message: '', onConfirm: null })
@@ -330,6 +343,14 @@ export default function App() {
           onClose={() => setShowNewPatient(false)}
         />
       )}
+      {editingPatient && (
+        <EditPatientModal
+          userId={user.id}
+          patient={editingPatient}
+          onUpdated={handlePatientUpdated}
+          onClose={() => setEditingPatient(null)}
+        />
+      )}
       {showProfile && (
         <ProfileModal
           user={user}
@@ -365,7 +386,9 @@ export default function App() {
             <div data-notification={notification}>
               {notification === 'success'
                 ? 'Subscription active — welcome to RehabMetrics IQ!'
-                : 'Payment cancelled. Your plan has not changed.'}
+                : notification === 'patient-updated'
+                  ? 'Patient details updated.'
+                  : 'Payment cancelled. Your plan has not changed.'}
             </div>
           )}
 
@@ -388,6 +411,7 @@ export default function App() {
                 onNew={() => setShowNewPatient(true)}
                 onNewAssessment={() => selectedPatient ? requestViewChange('assessment') : setShowNewPatient(true)}
                 onDashboard={() => selectedPatient ? requestViewChange('summary') : null}
+                onEditPatient={() => selectedPatient ? setEditingPatient(selectedPatient) : null}
               />
             ) : selectedPatient ? (
               <>
@@ -397,6 +421,7 @@ export default function App() {
                     assessments={assessments}
                     onViewReport={handleExportFullReport}
                     reportLoading={reportLoading}
+                    onEditPatient={() => setEditingPatient(selectedPatient)}
                   />
                 )}
                 {view === 'summary' ? (
@@ -471,7 +496,16 @@ function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, 
   )
 }
 
-function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onSelect, onNew, onNewAssessment, onDashboard }) {
+export function PatientsWorkspace({
+  patients,
+  selectedPatient,
+  selectedAssessments,
+  onSelect,
+  onNew,
+  onNewAssessment,
+  onDashboard,
+  onEditPatient,
+}) {
   const latestAssessment = selectedAssessments?.[0] ?? null
   const measureCount = new Set((selectedAssessments ?? []).map(a => a.measure)).size
   const latestDate = latestAssessment?.created_at
@@ -519,6 +553,11 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
                   <p className="pathway-mini-card__explanation">{pathway.explanation.short}</p>
                   {nextPathwayAction?.detail && <p>{nextPathwayAction.detail}</p>}
                 </div>
+                {nextPathwayAction?.type === 'diagnosis' && onEditPatient && (
+                  <button type="button" onClick={onEditPatient}>
+                    Add diagnosis
+                  </button>
+                )}
                 {nextPathwayAction?.measureId && (
                   <button type="button" onClick={onNewAssessment}>
                     {nextPathwayAction.label}
@@ -528,6 +567,9 @@ function PatientsWorkspace({ patients, selectedPatient, selectedAssessments, onS
             )}
             <div className="patient-workspace-actions">
               <button type="button" onClick={onNewAssessment}>New Assessment</button>
+              {onEditPatient && (
+                <button type="button" onClick={onEditPatient}>Edit details</button>
+              )}
               <button type="button" onClick={onDashboard}>Open Dashboard</button>
             </div>
             <div className="patient-workspace-recent">
@@ -644,6 +686,7 @@ const globalStyles = `
   /* Payment notification banner */
   [data-notification] { padding: 12px 16px; font-size: 13px; font-weight: 500; border-radius: var(--radius-sm); margin-bottom: 20px; }
   [data-notification="success"] { background: #e8f4ef; color: #2d6a4f; border: 1px solid #b7dfc9; }
+  [data-notification="patient-updated"] { background: #e8f4ef; color: #2d6a4f; border: 1px solid #b7dfc9; }
   [data-notification="cancelled"] { background: var(--color-surface-soft); color: var(--color-muted); border: 1px solid var(--color-border); }
 
   /* ── PATIENT CARD ── */
@@ -719,6 +762,13 @@ const globalStyles = `
   }
   .field-input::placeholder { color: var(--color-subtle); }
   select.field-input { cursor: pointer; }
+
+  .field-note {
+    margin: 0;
+    color: var(--color-subtle);
+    font-size: 11px;
+    line-height: 1.45;
+  }
 
   /* PatientHeader: value spans inside field-group */
   .field-group > span:not(.field-label) {
@@ -1058,6 +1108,14 @@ const globalStyles = `
     flex-shrink: 0;
   }
   .modal-content button[aria-label="Close"]:hover { color: var(--color-ink); background: var(--color-border); }
+
+  .modal-helper {
+    margin: 0;
+    padding: 18px 28px 0;
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
 
   /* Inline panel — measure-header padding */
   [data-measure-panel] > .measure-header { padding: 20px 24px; margin-bottom: 0; }
@@ -1725,6 +1783,26 @@ const globalStyles = `
     color: #fff;
     cursor: pointer;
     font-weight: 700;
+  }
+
+  .patient-summary-card__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .patient-summary-card__actions button[data-secondary] {
+    border: 1px solid var(--color-border);
+    background: rgba(255,255,255,0.84);
+    box-shadow: none;
+    color: var(--color-primary);
+  }
+
+  .patient-summary-card__actions button[data-secondary]:hover {
+    border-color: rgba(35,100,153,0.3);
+    background: #fff;
   }
 
   .patient-summary-card__body {

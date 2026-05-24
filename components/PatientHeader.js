@@ -13,7 +13,7 @@ function genderLabel(gender) {
   return gender || '-'
 }
 
-export default function PatientHeader({ patient, assessments, onViewReport, reportLoading }) {
+export default function PatientHeader({ patient, assessments, onViewReport, reportLoading, onEditPatient }) {
   const age = calculateAge(patient.dob_year)
   const summary = buildPatientSummary(patient, assessments)
   const coverage = Math.min(100, Math.round((summary.totals.domains / 5) * 100))
@@ -27,14 +27,21 @@ export default function PatientHeader({ patient, assessments, onViewReport, repo
           <h2>{patient.initials || 'Unnamed patient'}</h2>
           <p>{patient.diagnosis || 'Diagnosis not recorded'}</p>
         </div>
-        <button type="button" onClick={onViewReport} disabled={reportLoading || assessments.length === 0}>
-          {reportLoading ? (
-            <span className="button-loading">
-              <ThreeBarMotif size="xs" tone="light" loading label="Generating report" />
-              Generating…
-            </span>
-          ) : 'View Full Report'}
-        </button>
+        <div className="patient-summary-card__actions">
+          {onEditPatient && (
+            <button type="button" data-secondary="" onClick={onEditPatient}>
+              Edit details
+            </button>
+          )}
+          <button type="button" onClick={onViewReport} disabled={reportLoading || assessments.length === 0}>
+            {reportLoading ? (
+              <span className="button-loading">
+                <ThreeBarMotif size="xs" tone="light" loading label="Generating report" />
+                Generating…
+              </span>
+            ) : 'View Full Report'}
+          </button>
+        </div>
       </div>
 
       <div className="patient-summary-card__body patient-summary-card__body--real">

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { CONDITION_OPTIONS } from '../lib/clinical'
+import { dobYearFromDateInput, PATIENT_GENDER_OPTIONS } from '../lib/patientDetails'
 import ThreeBarMotif from './ThreeBarMotif'
 
 export default function NewPatientModal({ userId, onCreated, onClose }) {
@@ -30,7 +31,7 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
       form.lastInitial.trim() ? form.lastInitial.trim().charAt(0).toUpperCase() + '.' : '',
     ].filter(Boolean).join(' ')
 
-    const dobYear = form.dob ? new Date(form.dob).getFullYear() : null
+    const dobYear = dobYearFromDateInput(form.dob)
 
     setLoading(true)
     setError('')
@@ -116,9 +117,9 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
                 onChange={e => set('gender', e.target.value)}
               >
                 <option value="">— Select —</option>
-                <option value="M">Male</option>
-                <option value="F">Female</option>
-                <option value="Other">Other</option>
+                {PATIENT_GENDER_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
             </div>
             <div className="field-group">
