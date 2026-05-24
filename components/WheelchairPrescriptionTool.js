@@ -1,4 +1,4 @@
-import { ClipboardCopy, FileText, Printer, RotateCcw, Save } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ClipboardCopy, FileText, Printer, RotateCcw, Save } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import ThreeBarMotif from './ThreeBarMotif'
@@ -6,6 +6,51 @@ import ThreeBarMotif from './ThreeBarMotif'
 const WHEELCHAIR_PRESCRIPTION_MEASURE = 'Wheelchair Prescription'
 const WHEELCHAIR_PRESCRIPTION_TOOL = 'wheelchair-prescription'
 const WHEELCHAIR_PRESCRIPTION_SCHEMA_VERSION = 1
+
+const WHEELCHAIR_STEPS = [
+  {
+    id: 'goals-risk',
+    number: '01',
+    title: 'Goals and risks',
+    shortTitle: 'Goals',
+    description: 'Referral reason, client goals, medical context, skin risk and funding pathway.',
+  },
+  {
+    id: 'current-environment',
+    number: '02',
+    title: 'Current equipment and environment',
+    shortTitle: 'Current',
+    description: 'Current base, seating system, home access, community terrain and transport needs.',
+  },
+  {
+    id: 'measurements-posture',
+    number: '03',
+    title: 'Measurements and posture',
+    shortTitle: 'Measure',
+    description: 'Proposed-position dimensions, functional activities, posture, MAT and balance.',
+  },
+  {
+    id: 'mobility-direction',
+    number: '04',
+    title: 'Mobility base and seating direction',
+    shortTitle: 'Direction',
+    description: 'Trial pathway, dimensions, seating supports and conditional manual or power details.',
+  },
+  {
+    id: 'trial-fitting',
+    number: '05',
+    title: 'Trial, quote, fitting and training',
+    shortTitle: 'Trial',
+    description: 'Supplier trial request, quote detail, delivery checks, training and follow-up.',
+  },
+  {
+    id: 'review-brief',
+    number: '06',
+    title: 'Review and supplier brief',
+    shortTitle: 'Review',
+    description: 'Readiness check, supplier-facing brief preview, copy and print actions.',
+  },
+]
 
 function isWheelchairPrescriptionRecord(record) {
   return record?.measure === WHEELCHAIR_PRESCRIPTION_MEASURE ||
@@ -200,6 +245,9 @@ function summarizePrescriptionState(formState) {
 export default function WheelchairPrescriptionTool({ patient, patients = [], onPatientSelect, userId, assessments = [], onSaved }) {
   const rootRef = useRef(null)
   const activeVersionIdRef = useRef(null)
+  const toastTimeoutRef = useRef(null)
+  const [activeStepId, setActiveStepId] = useState(WHEELCHAIR_STEPS[0].id)
+  const [toastStatus, setToastStatus] = useState(null)
   const [draftStatus, setDraftStatus] = useState({
     tone: 'muted',
     title: 'Local draft ready',
@@ -220,6 +268,16 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
   )
   const latestSavedVersion = savedVersions[0] ?? null
   const selectedPatientId = patient?.id != null ? String(patient.id) : ''
+
+  const announceStatus = useCallback((message, tone = 'success') => {
+    if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current)
+    setToastStatus({ message, tone })
+    toastTimeoutRef.current = window.setTimeout(() => setToastStatus(null), 3600)
+  }, [])
+
+  useEffect(() => () => {
+    if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current)
+  }, [])
 
   const handlePatientChange = useCallback((event) => {
     const nextPatient = patients.find(item => String(item.id) === event.target.value)
@@ -260,7 +318,8 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
       title: 'Saved version loaded',
       detail: `Loaded ${formatDateTime(getRecordSavedAt(version))}. Continue editing, then save a new version when ready.`,
     })
-  }, [patient, storageKey])
+    announceStatus('Saved version loaded into the workspace.')
+  }, [announceStatus, patient, storageKey])
 
   const handleSaveVersion = useCallback(async () => {
     const root = rootRef.current
@@ -272,6 +331,7 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
         title: 'Local draft only',
         detail: 'Select a patient to save longitudinal prescription versions.',
       })
+      announceStatus('Select a patient before saving a patient-record version.', 'warning')
       return
     }
 
@@ -334,6 +394,7 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
         detail: 'Could not save a patient-record version. Your local autosave is still available on this device.',
       })
       writePersistentDraft(storageKey, formState)
+      announceStatus(error?.message || 'The prescription version could not be saved.', 'warning')
       return
     }
 
@@ -353,9 +414,10 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
       title: 'Version saved to patient record',
       detail: `Saved ${formatDateTime(now)}. Continue refining and save another version when new information arrives.`,
     })
+    announceStatus('Wheelchair prescription version saved to the patient record.')
     onSaved?.(savedRecord)
     window.setTimeout(() => setSaveState('idle'), 1800)
-  }, [canSaveToPatient, onSaved, patient?.id, storageKey, userId])
+  }, [announceStatus, canSaveToPatient, onSaved, patient?.id, storageKey, userId])
 
   useEffect(() => {
     const root = rootRef.current
@@ -468,7 +530,7 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
       text += line('ROM notes', val('romNotes'))
       text += line('Simulation findings/proposed posture', val('simulationFindings'))
       text += '\n7. PROPOSED PRODUCT PARAMETERS\n'
-      text += 'Auto-calculation note: Dimension fields are starting points generated from Section 2 measurements. Overall wheelchair width is estimated from seat width + 200 mm unless overwritten with the supplier\'s confirmed outside-to-outside width. Overwrite any auto field where MAT findings, posture, pressure care, transfers, propulsion, supplier measurement conventions or trial outcomes indicate a better fit.\n'
+      text += 'Auto-calculation note: Dimension fields are starting points generated from the Measurements and posture step. Overall wheelchair width is estimated from seat width + 200 mm unless overwritten with the supplier\'s confirmed outside-to-outside width. Overwrite any auto field where MAT findings, posture, pressure care, transfers, propulsion, supplier measurement conventions or trial outcomes indicate a better fit.\n'
       text += line('Likely prescription pathway', rad('proposedPathway'))
       text += line('Preferred suppliers to contact', val('supplierPreference') || join(checks('suppliers')))
       text += line('Reason for base direction', val('baseDirectionReason'))
@@ -836,32 +898,71 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
       const el = $('manualSourceSummary')
       if (!el) return
       const pathway = rad('proposedPathway') || 'No prescription pathway selected yet'
-      const selectedManual = join(checks('manualCurrentType')) || 'No manual chair class selected in Section 2 yet'
-      el.innerHTML = `<strong>Linked source:</strong> Proposed pathway: ${escapeHtml(pathway)}. Manual chair class already captured in Section 2: ${escapeHtml(selectedManual)}. Use the configuration notes below to specify the proposed frame setup, axle/CxG, transport needs, material and trial changes.`
+      const selectedManual = join(checks('manualCurrentType')) || 'No manual chair class selected in the Current equipment step yet'
+      el.innerHTML = `<strong>Linked source:</strong> Proposed pathway: ${escapeHtml(pathway)}. Manual chair class already captured in Current equipment: ${escapeHtml(selectedManual)}. Use the configuration notes below to specify the proposed frame setup, axle/CxG, transport needs, material and trial changes.`
     }
 
-    function toggleSection(sectionId, button) {
-      const section = $(sectionId)
-      if (!section) return
-      const collapsed = section.classList.toggle('is-collapsed')
-      if (button) button.textContent = collapsed ? 'Expand' : 'Minimise'
-    }
+    function renderReadinessSummary() {
+      const readinessItems = [
+        ['Goals and referral reason', !!(val('mobilityGoals') && val('reasonReferral'))],
+        ['Funding pathway and client context', !!(val('fundingBody') && (rad('wcTime') || val('productivity') || val('recreation')))],
+        ['Pressure and skin risk', !!(rad('historyPI') && rad('sensation') && rad('currentPI'))],
+        ['Current equipment limits', !!(rad('seatingBase') || val('currentModel') || rad('currentBaseMeets') || val('currentSeatingInfo'))],
+        ['Environment and transport constraints', !!(val('doorWidths') || val('communityEnvironment') || checks('externalTerrain').length || checks('transport').length)],
+        ['Proposed-position measurements', !!(val('measA_L') || val('measA_R')) && !!(val('measB_L') || val('measB_R')) && !!(val('measM_L') || val('measM_R'))],
+        ['Posture, MAT and sitting balance', !!(rad('sittingBalance') || rad('matCompleted') || val('simulationFindings'))],
+        ['Mobility base direction', !!rad('proposedPathway')],
+        ['Key seating dimensions', !!(val('reqSeatWidth') && val('reqSeatDepth') && val('reqSeatHeight'))],
+        ['Cushion and backrest rationale', !!(val('proposedCushion') && val('proposedBackrest'))],
+        ['Trial equipment and location', !!(val('trialEquipment') && checks('trialLocations').length)],
+        ['Training and follow-up plan', !!(checks('trainingChecklist').length || val('trainingNotes'))],
+      ]
+      const completed = readinessItems.filter(([, done]) => done).length
+      const percent = Math.round((completed / readinessItems.length) * 100)
+      const label = percent >= 85 ? 'Supplier-ready draft' : percent >= 55 ? 'Developing prescription' : 'Information gathering'
 
-    function setAllSectionsCollapsed(collapsed = true) {
-      qsa('.section').forEach(section => {
-        section.classList.toggle('is-collapsed', collapsed)
-        const btn = section.querySelector('.section-toggle')
-        if (btn) btn.textContent = collapsed ? 'Expand' : 'Minimise'
+      const list = $('readinessChecklist')
+      if (list) {
+        list.innerHTML = readinessItems.map(([text, done]) => (
+          `<li data-complete="${done ? 'true' : 'false'}"><span>${done ? 'Ready' : 'Needed'}</span>${escapeHtml(text)}</li>`
+        )).join('')
+      }
+
+      ;['readinessScore', 'readinessScoreAside'].forEach(id => {
+        const score = $(id)
+        if (score) score.textContent = `${completed}/${readinessItems.length} domains ready`
+      })
+      ;['readinessLabel', 'readinessLabelAside'].forEach(id => {
+        const readinessLabel = $(id)
+        if (readinessLabel) readinessLabel.textContent = label
+      })
+      ;['readinessMeter', 'readinessMeterAside'].forEach(id => {
+        const meter = $(id)
+        if (meter) {
+          meter.style.width = `${percent}%`
+          meter.parentElement?.setAttribute('aria-valuenow', String(percent))
+        }
+      })
+
+      const risks = []
+      if (boolHighRiskPressure()) risks.push('Pressure care active')
+      if (hasComplexPosture()) risks.push('Complex posture')
+      if (hasBariatricFlag()) risks.push('Bariatric considerations')
+      if (rad('travelPosition') === 'In wheelchair') risks.push('Transport restraint check')
+      const doorWidth = narrowestDoorWidth()
+      const overallWidth = proposedWheelchairWidth()
+      if (overallWidth && doorWidth && overallWidth >= doorWidth) risks.push('Doorway access escalation')
+      ;['riskFlagSummary', 'riskFlagSummaryAside'].forEach(id => {
+        const riskList = $(id)
+        if (!riskList) return
+        riskList.innerHTML = risks.length
+          ? risks.map(risk => `<li>${escapeHtml(risk)}</li>`).join('')
+          : '<li>No major flags recorded yet</li>'
       })
     }
 
     function setInitialSectionState() {
-      qsa('.section').forEach((section, index) => {
-        const collapsed = index !== 0
-        section.classList.toggle('is-collapsed', collapsed)
-        const btn = section.querySelector('.section-toggle')
-        if (btn) btn.textContent = collapsed ? 'Expand' : 'Minimise'
-      })
+      setActiveStepId(WHEELCHAIR_STEPS[0].id)
     }
 
     function toggleBariatricPanel() {
@@ -872,6 +973,19 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
 
     function syncConditionalPanels() {
       toggleBariatricPanel()
+      const pathway = rad('proposedPathway')
+      const manualValuesPresent = checks('frameMaterial').length ||
+        checks('manualWheels').length ||
+        checks('manualAccessories').length ||
+        !!val('manualConfigNotes')
+      const powerValuesPresent = !!rad('proposedDrive') ||
+        checks('proposedSeatFunctions').length ||
+        !!(val('powerControls') || val('powerBaseNotes') || val('powerChargingNotes'))
+      const showManual = /manual|power assist/i.test(pathway) || manualValuesPresent
+      const showPower = /power wheelchair/i.test(pathway) || powerValuesPresent
+      qsa('[data-pathway-panel="manual"]').forEach(panel => { panel.hidden = !showManual })
+      qsa('[data-pathway-panel="power"]').forEach(panel => { panel.hidden = !showPower })
+      qsa('[data-pathway-empty]').forEach(panel => { panel.hidden = !!pathway })
     }
 
     function saveFormState() {
@@ -948,21 +1062,28 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
       const supplierBrief = $('supplierBrief')
       if (supplierBrief) supplierBrief.textContent = buildSupplierBriefText()
       renderGuidance()
+      renderReadinessSummary()
       updateManualSourceSummary()
       if (shouldSave) saveFormState()
     }
 
     function writeClipboard(text, successMessage) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => window.alert(successMessage))
-      } else {
+        navigator.clipboard.writeText(text)
+          .then(() => announceStatus(successMessage))
+          .catch(() => announceStatus('Copy failed. Select the generated text and copy it manually.', 'warning'))
+        return
+      }
+      try {
         const ta = document.createElement('textarea')
         ta.value = text
         document.body.appendChild(ta)
         ta.select()
         document.execCommand('copy')
         ta.remove()
-        window.alert(successMessage)
+        announceStatus(successMessage)
+      } catch {
+        announceStatus('Copy failed. Select the generated text and copy it manually.', 'warning')
       }
     }
 
@@ -1011,6 +1132,7 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
         title: 'Draft cleared',
         detail: 'The local workspace is empty. Saved patient-record versions remain available in the progress panel.',
       })
+      announceStatus('Draft cleared. Saved patient-record versions were kept.', 'warning')
       updateAll(false)
     }
 
@@ -1034,7 +1156,6 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
     window.addEventListener('afterprint', handleAfterPrint)
 
     const globals = {
-      toggleSection,
       toggleBariatricPanel,
       reapplyAutoCalculations,
       copySupplierBrief,
@@ -1057,15 +1178,15 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
         if (window[key] === fn) delete window[key]
       })
     }
-  }, [latestSavedVersion, patient?.diagnosis, patient?.dob, patient?.initials, storageKey])
+  }, [announceStatus, latestSavedVersion, patient?.diagnosis, patient?.dob, patient?.initials, storageKey])
 
   return (
     <section className="wc-tool" ref={rootRef}>
       <style>{wheelchairToolStyles}</style>
       <div className="wc-tool__header">
         <div className="wc-tool__header-main">
-          <span className="wc-tool__eyebrow">Clinical Support Tool</span>
-          <h2>Prescription Workspace</h2>
+          <span className="wc-tool__eyebrow">Wheelchair prescription</span>
+          <h2>Assessment to supplier-ready brief</h2>
           <p>Decision support only. Confirm recommendations through trial, clinical review, supplier specifications and local funding requirements.</p>
           <div className="wc-tool__patient-picker">
             <label className="wc-tool__patient-field" htmlFor="wcPatientSelect">
@@ -1090,7 +1211,6 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
             )}
           </div>
         </div>
-        <div className="brand-iq-mark wc-tool__iq-mark" aria-hidden="true">IQ</div>
         <div className="wc-tool__actions">
           <button
             type="button"
@@ -1123,12 +1243,19 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
           </button>
         </div>
       </div>
+      {toastStatus && (
+        <div className="wc-tool__toast" data-tone={toastStatus.tone} role="status" aria-live="polite">
+          {toastStatus.message}
+        </div>
+      )}
       <WheelchairPrescriptionForm
+        activeStepId={activeStepId}
         activeVersionId={activeVersionId}
         canSaveToPatient={canSaveToPatient}
         draftStatus={draftStatus}
         latestSavedVersion={latestSavedVersion}
         onLoadVersion={handleLoadVersion}
+        onStepChange={setActiveStepId}
         saveError={saveError}
         savedVersions={savedVersions}
       />
@@ -1137,14 +1264,25 @@ export default function WheelchairPrescriptionTool({ patient, patients = [], onP
   )
 }
 
-function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftStatus, latestSavedVersion, onLoadVersion, saveError, savedVersions }) {
+function WheelchairPrescriptionForm({ activeStepId, activeVersionId, canSaveToPatient, draftStatus, latestSavedVersion, onLoadVersion, onStepChange, saveError, savedVersions }) {
+  const activeIndex = WHEELCHAIR_STEPS.findIndex(step => step.id === activeStepId)
+  const safeActiveIndex = activeIndex >= 0 ? activeIndex : 0
+  const activeStep = WHEELCHAIR_STEPS[safeActiveIndex]
+  const goToStep = (index) => {
+    const nextStep = WHEELCHAIR_STEPS[Math.max(0, Math.min(index, WHEELCHAIR_STEPS.length - 1))]
+    if (nextStep) onStepChange(nextStep.id)
+  }
+
   return (
     <div className="wc-tool__content">
       <form autoComplete="off" className="main-panel" id="wcForm">
-        <FormSection
-          id="section1"
-          title="Section 1: Client profile, medical background and goals"
-          description="Captures the reason for referral, person-context and clinical risks that must shape any equipment direction."
+        <StepNavigation activeStepId={activeStep.id} onStepChange={onStepChange} />
+
+        <StepPanel
+          activeStepId={activeStep.id}
+          description="Start with the person-context and risks that should shape every equipment decision."
+          stepId="goals-risk"
+          title="Client goals and risk screen"
         >
           <Grid>
             <TextField id="clientName" label="Client name" span="span-4" />
@@ -1191,39 +1329,24 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
             <div className="span-12 pressure-actions">
               <label className="check bariatric-flag">
                 <input id="bariatricFlag" name="bariatricFlag" type="checkbox" value="Bariatric flag" />
-                Flag bariatric considerations
+                <span className="choice-copy">Flag bariatric considerations</span>
               </label>
             </div>
-            <div className="span-12 conditional-panel" hidden id="bariatricPanel">
+            <div className="span-12 conditional-panel advanced-inline" hidden id="bariatricPanel">
               <Subhead inline>Bariatric features</Subhead>
               <Grid compact className="wc-tool__nested-grid">
                 <OptionGroup title="Bariatric features" name="bariatricFeatures" type="checkbox" options={OPTIONS.bariatricFeatures} span="span-12" />
               </Grid>
             </div>
           </Grid>
-        </FormSection>
+        </StepPanel>
 
-        <FormSection
-          id="section2"
-          defaultCollapsed
-          title="Section 2: Proposed-position measurements and current seating/mobility base"
-          description="Measurements are placed first so the supplier-ready output starts with what suppliers most need to size and shortlist trial equipment."
+        <StepPanel
+          activeStepId={activeStep.id}
+          description="Record what is already in use and the real-world spaces the next prescription must work inside."
+          stepId="current-environment"
+          title="Current equipment and environment"
         >
-          <Subhead>Client measurements in proposed position</Subhead>
-          <div className="measurement-layout">
-            <div>
-              <MeasurementTable />
-              <TextAreaField id="overallWidthNotes" label="Overall width / asymmetrical width notes" placeholder="Include windswept legs, scoliosis, thigh position, abducted/adducted posture, pannus/gluteal shelf implications." className="wc-tool__field-offset" />
-            </div>
-            <div className="measurement-side">
-              <div className="visual-card body-chart-card">
-                <img alt="Body landmark reference chart for A-P seating measurements" className="body-chart-img" src="/assets/wheelchair-prescription/body-landmark-reference.png" />
-                <div className="visual-caption">Body landmark reference for A-P measurements. Use the proposed seated posture for dimensions and document accommodated overall width where posture or tissue shape changes fit.</div>
-              </div>
-              <div className="note">Use the proposed seated posture for measurements before sending through seat width, seat depth, back height and support requirements. If posture is asymmetrical, document the accommodated overall width in the notes.</div>
-            </div>
-          </div>
-
           <Subhead>Current seating base</Subhead>
           <Grid compact>
             <OptionGroup title="Seating base" name="seatingBase" options={['Manual', 'Power']} span="span-3" columns="two" />
@@ -1234,7 +1357,7 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
             <TextAreaField id="currentBaseComments" label="Client comments about current base" span="span-9" />
           </Grid>
 
-          <Subhead>Current seating and mobility base - manual</Subhead>
+          <Subhead>Current manual base and propulsion</Subhead>
           <div className="selection-cards">
             {MANUAL_SELECTIONS.map(card => <SelectionCard key={card.value} {...card} type="checkbox" name="manualCurrentType" />)}
           </div>
@@ -1249,7 +1372,7 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
             </OptionPanel>
           </div>
 
-          <Subhead>Current seating and mobility base - power</Subhead>
+          <Subhead>Current power base</Subhead>
           <div className="selection-cards">
             {POWER_DRIVE_SELECTIONS.map(card => <SelectionCard key={card.value} {...card} type="radio" name="driveConfig" />)}
           </div>
@@ -1259,7 +1382,7 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
             <OptionGroup title="Current power seat functions" name="currentSeatFunctions" type="checkbox" options={OPTIONS.currentSeatFunctions} span="span-6" columns="four" />
           </Grid>
 
-          <Subhead>Current seating system and accessories</Subhead>
+          <Subhead>Current seating system</Subhead>
           <Grid compact>
             <TextField id="currentCushion" label="Current cushion" span="span-4" />
             <TextField id="currentCushionSize" label="Cushion size" span="span-3" />
@@ -1272,29 +1395,8 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
             <OptionGroup title="Current accessories" name="currentAccessories" type="checkbox" options={OPTIONS.currentAccessories} span="span-12" columns="four" />
             <TextAreaField id="currentSeatingInfo" label="Current seating information / issues" span="span-12" />
           </Grid>
-        </FormSection>
 
-        <FormSection
-          id="section3"
-          defaultCollapsed
-          title="Section 3: Functional assessment, seated posture and MAT"
-          description="Records what the client can do, how they sit now, what is reducible, and what the proposed posture needs to accommodate or support."
-        >
-          <Subhead>Current seated position</Subhead>
-          <Grid compact className="mat-grid">
-            <OptionGroup title="Pelvis sagittal" name="pelvisSag" options={OPTIONS.pelvisSag} span="span-4" />
-            <OptionGroup title="Pelvis frontal" name="pelvisFront" options={OPTIONS.pelvisFront} span="span-4" />
-            <OptionGroup title="Pelvis transverse" name="pelvisTrans" options={OPTIONS.pelvisTrans} span="span-4" />
-            <TextAreaField id="pelvisNotes" label="Pelvic position notes" span="span-12" />
-            <OptionGroup title="Lower extremity / foot posture" name="lowerExt" type="checkbox" options={OPTIONS.lowerExt} span="span-6" columns="four" />
-            <OptionGroup title="Spine, cervical and shoulder posture" name="spineCervical" type="checkbox" options={OPTIONS.spineCervical} span="span-6" columns="four" />
-            <TextAreaField id="postureImpactNotes" label="Impact on pressure, function, comfort or equipment fit" span="span-12" />
-          </Grid>
-
-          <Subhead>Functional activities</Subhead>
-          <ActivityTable />
-
-          <Subhead>Home, community and transport environment</Subhead>
+          <Subhead>Home, community and transport</Subhead>
           <Grid compact>
             <OptionGroup title="Household" name="household" options={OPTIONS.household} span="span-3" columns="two" />
             <OptionGroup title="Support" name="support" options={OPTIONS.support} span="span-5" />
@@ -1311,6 +1413,42 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
             <OptionGroup title="Travel position" name="travelPosition" options={OPTIONS.travelPosition} span="span-6" />
             <TextAreaField id="transportDetails" label="Transport details / restraints / vehicle access" span="span-12" />
           </Grid>
+        </StepPanel>
+
+        <StepPanel
+          activeStepId={activeStep.id}
+          description="Use proposed-position measurements and MAT findings to define the trial starting point."
+          stepId="measurements-posture"
+          title="Measurements and posture/MAT"
+        >
+          <Subhead>Client measurements in proposed position</Subhead>
+          <div className="measurement-layout">
+            <div>
+              <MeasurementTable />
+              <TextAreaField id="overallWidthNotes" label="Overall width / asymmetrical width notes" placeholder="Include windswept legs, scoliosis, thigh position, abducted/adducted posture, pannus/gluteal shelf implications." className="wc-tool__field-offset" />
+            </div>
+            <div className="measurement-side">
+              <div className="visual-card body-chart-card">
+                <img alt="Body landmark reference chart for A-P seating measurements" className="body-chart-img" src="/assets/wheelchair-prescription/body-landmark-reference.png" />
+                <div className="visual-caption">Use the proposed seated posture for dimensions, then document accommodated overall width where asymmetry, tissue shape or posture changes fit.</div>
+              </div>
+              <div className="note">Measurements drive seat width, depth, back height and support requirements, but they are still trial starting points. Supplier conventions, transfers, pressure care and posture may change the final dimensions.</div>
+            </div>
+          </div>
+
+          <Subhead>Current seated position</Subhead>
+          <Grid compact className="mat-grid">
+            <OptionGroup title="Pelvis sagittal" name="pelvisSag" options={OPTIONS.pelvisSag} span="span-4" />
+            <OptionGroup title="Pelvis frontal" name="pelvisFront" options={OPTIONS.pelvisFront} span="span-4" />
+            <OptionGroup title="Pelvis transverse" name="pelvisTrans" options={OPTIONS.pelvisTrans} span="span-4" />
+            <TextAreaField id="pelvisNotes" label="Pelvic position notes" span="span-12" />
+            <OptionGroup title="Lower extremity / foot posture" name="lowerExt" type="checkbox" options={OPTIONS.lowerExt} span="span-6" columns="four" />
+            <OptionGroup title="Spine, cervical and shoulder posture" name="spineCervical" type="checkbox" options={OPTIONS.spineCervical} span="span-6" columns="four" />
+            <TextAreaField id="postureImpactNotes" label="Impact on pressure, function, comfort or equipment fit" span="span-12" />
+          </Grid>
+
+          <Subhead>Functional activities</Subhead>
+          <ActivityTable />
 
           <Subhead>Supine MAT evaluation and sitting balance</Subhead>
           <Grid compact className="mat-grid">
@@ -1326,13 +1464,13 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
             <TextAreaField id="romNotes" label="ROM notes" span="span-6" />
             <TextAreaField id="simulationFindings" label="Simulation findings / proposed posture" span="span-6" />
           </Grid>
-        </FormSection>
+        </StepPanel>
 
-        <FormSection
-          id="section4"
-          defaultCollapsed
-          title="Section 4: Proposed product parameters"
-          description="This is the supplier-facing prescription frame. Complete as a proposed trial direction first; finalise after trial, fitting and review."
+        <StepPanel
+          activeStepId={activeStep.id}
+          description="Choose one proposed direction, then only complete the manual or power details that apply to the trial."
+          stepId="mobility-direction"
+          title="Mobility base and seating direction"
         >
           <Subhead>Base direction and trial class</Subhead>
           <Grid compact>
@@ -1367,30 +1505,38 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
             <TextAreaField id="posturalSupportDescriptors" label="Postural support descriptors / mounting notes" span="span-12" />
           </Grid>
 
-          <Subhead>Manual wheelchair parameters</Subhead>
-          <Grid compact>
-            <div className="note span-12 manual-source-note" id="manualSourceSummary">Manual type and frame are not repeated here. Use the prescription pathway above and manual chair selection in Section 2, then record any proposed frame/configuration changes in the notes below.</div>
-            <OptionGroup title="Frame material" name="frameMaterial" type="checkbox" options={OPTIONS.frameMaterial} span="span-4" columns="two" />
-            <OptionGroup title="Wheels / drive" name="manualWheels" type="checkbox" options={OPTIONS.manualWheels} span="span-6" columns="two" />
-            <OptionGroup title="Manual accessories" name="manualAccessories" type="checkbox" options={OPTIONS.manualAccessories} span="span-6" columns="two" />
-            <TextAreaField id="manualConfigNotes" label="Manual wheelchair configuration notes" placeholder="Rear axle position, centre of gravity, seat-to-floor height, foot propulsion needs, shoulder preservation, carer handling, transport/storage." span="span-12" />
-          </Grid>
+          <div className="note wc-tool__field-offset" data-pathway-empty="">
+            Choose a proposed pathway above to show the relevant manual or power configuration fields.
+          </div>
 
-          <Subhead>Power wheelchair parameters</Subhead>
-          <Grid compact>
-            <OptionGroup title="Drive configuration to trial" name="proposedDrive" options={OPTIONS.proposedDrive} span="span-4" />
-            <OptionGroup title="Power seat functions requested for trial" name="proposedSeatFunctions" type="checkbox" options={OPTIONS.proposedSeatFunctions} span="span-8" columns="four" />
-            <TextField id="powerControls" label="Controls" placeholder="Joystick, attendant control, alternate drive control, tray mount, swing-away" span="span-4" />
-            <TextField id="powerBaseNotes" label="Power base / seating notes" span="span-4" />
-            <TextField id="powerChargingNotes" label="Battery/charging/storage considerations" span="span-4" />
-          </Grid>
-        </FormSection>
+          <div className="conditional-panel pathway-panel" data-pathway-panel="manual" hidden>
+            <Subhead inline>Manual wheelchair parameters</Subhead>
+            <Grid compact>
+              <div className="note span-12 manual-source-note" id="manualSourceSummary">Manual type and frame are not repeated here. Use the prescription pathway above and manual chair selection in Current equipment, then record any proposed frame/configuration changes in the notes below.</div>
+              <OptionGroup title="Frame material" name="frameMaterial" type="checkbox" options={OPTIONS.frameMaterial} span="span-4" columns="two" />
+              <OptionGroup title="Wheels / drive" name="manualWheels" type="checkbox" options={OPTIONS.manualWheels} span="span-6" columns="two" />
+              <OptionGroup title="Manual accessories" name="manualAccessories" type="checkbox" options={OPTIONS.manualAccessories} span="span-6" columns="two" />
+              <TextAreaField id="manualConfigNotes" label="Manual wheelchair configuration notes" placeholder="Rear axle position, centre of gravity, seat-to-floor height, foot propulsion needs, shoulder preservation, carer handling, transport/storage." span="span-12" />
+            </Grid>
+          </div>
 
-        <FormSection
-          id="section5"
-          defaultCollapsed
-          title="Section 5: Trial plan, supplier handover, fitting and training"
-          description="Turns assessment findings into a practical trial and quote request, then captures what must be checked at delivery."
+          <div className="conditional-panel pathway-panel" data-pathway-panel="power" hidden>
+            <Subhead inline>Power wheelchair parameters</Subhead>
+            <Grid compact>
+              <OptionGroup title="Drive configuration to trial" name="proposedDrive" options={OPTIONS.proposedDrive} span="span-4" />
+              <OptionGroup title="Power seat functions requested for trial" name="proposedSeatFunctions" type="checkbox" options={OPTIONS.proposedSeatFunctions} span="span-8" columns="four" />
+              <TextField id="powerControls" label="Controls" placeholder="Joystick, attendant control, alternate drive control, tray mount, swing-away" span="span-4" />
+              <TextField id="powerBaseNotes" label="Power base / seating notes" span="span-4" />
+              <TextField id="powerChargingNotes" label="Battery/charging/storage considerations" span="span-4" />
+            </Grid>
+          </div>
+        </StepPanel>
+
+        <StepPanel
+          activeStepId={activeStep.id}
+          description="Turn the prescription direction into a practical trial, quote request and delivery plan."
+          stepId="trial-fitting"
+          title="Trial, quote, fitting and training plan"
         >
           <Subhead>Trial and quote request</Subhead>
           <Grid compact>
@@ -1408,19 +1554,67 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
             <TextAreaField id="trainingNotes" label="Training / follow-up notes" span="span-12" />
           </Grid>
 
-          <Subhead>Final supplier handover comments</Subhead>
-          <Grid compact>
-            <TextAreaField id="barriersToGoals" label="Identified barriers to goals" span="span-4" />
-            <TextAreaField id="identifiedIssues" label="Identified postural / mobility issues" span="span-4" />
-            <TextAreaField id="productParametersSummary" label="Potential product parameters summary" span="span-4" />
-          </Grid>
-          <div className="note wc-tool__field-offset">Supplier output is generated from the fields above. It deliberately leaves live clinical guidance out of the copied brief, while retaining risk flags and trial requirements relevant to supplier shortlisting.</div>
-        </FormSection>
+          <details className="advanced-details">
+            <summary>Advanced handover notes</summary>
+            <Grid compact>
+              <TextAreaField id="barriersToGoals" label="Identified barriers to goals" span="span-4" />
+              <TextAreaField id="identifiedIssues" label="Identified postural / mobility issues" span="span-4" />
+              <TextAreaField id="productParametersSummary" label="Potential product parameters summary" span="span-4" />
+            </Grid>
+          </details>
+        </StepPanel>
+
+        <StepPanel
+          activeStepId={activeStep.id}
+          description="Check readiness before copying or printing the supplier-facing handover."
+          stepId="review-brief"
+          title="Review and supplier brief"
+        >
+          <div className="review-layout">
+            <div>
+              <Subhead>Supplier brief readiness</Subhead>
+              <div className="readiness-review">
+                <div className="readiness-scoreline">
+                  <strong id="readinessScore">0/12 domains ready</strong>
+                  <span id="readinessLabel">Information gathering</span>
+                </div>
+                <div className="readiness-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <span id="readinessMeter" />
+                </div>
+                <ul className="readiness-list" id="readinessChecklist" />
+              </div>
+
+              <Subhead>Risk flags</Subhead>
+              <ul className="risk-flag-list" id="riskFlagSummary">
+                <li>No major flags recorded yet</li>
+              </ul>
+
+              <Subhead>Reference basis</Subhead>
+              <div className="reference-panel">
+                <ul className="links-list">
+                  <li><a href="https://www.who.int/publications/i/item/9789240074521" rel="noreferrer" target="_blank">WHO Wheelchair provision guidelines, 2023</a></li>
+                  <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK600090/" rel="noreferrer" target="_blank">WHO appropriate wheelchair definition</a></li>
+                  <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK600091/" rel="noreferrer" target="_blank">WHO wheelchair service recommendations</a></li>
+                  <li><a href="https://www.resna.org/Portals/0/Documents/Position%20Papers/RESNAWheelchairServiceProvisionGuide.pdf" rel="noreferrer" target="_blank">RESNA wheelchair service provision guide</a></li>
+                  <li><a href="https://wheelchairskillsprogram.ca/" rel="noreferrer" target="_blank">Wheelchair Skills Program</a></li>
+                </ul>
+                <div className="footer-note">Use these as the guidance basis only. The tool still requires clinical judgement, trial confirmation, supplier specification checks and local funding review.</div>
+              </div>
+            </div>
+            <div>
+              <Subhead>Supplier brief preview</Subhead>
+              <div className="brief-preview" id="supplierBrief" />
+              <div className="footer-note">Use "Supplier brief" to copy an email-ready handover or "Brief" to print/PDF.</div>
+            </div>
+          </div>
+        </StepPanel>
+
+        <StepControls activeIndex={safeActiveIndex} onStepChange={goToStep} />
       </form>
 
-      <aside className="sidebar">
+      <aside className="sidebar" aria-label="Prescription readiness and reasoning">
         <div className="side-card progress-card">
-          <h3>Prescription progress</h3>
+          <h3>Workspace status</h3>
           <div className="side-body">
             <div className="progress-status" data-tone={draftStatus.tone}>
               <strong>{draftStatus.title}</strong>
@@ -1431,13 +1625,40 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
                 Select a patient before saving longitudinal prescription versions. The current workspace still autosaves locally on this device.
               </div>
             )}
-            {saveError && <div className="progress-error">{saveError}</div>}
+            {saveError && <div className="progress-error" role="alert">{saveError}</div>}
             <div className="version-summary">
               <span>Latest patient version</span>
               <strong>{latestSavedVersion ? formatDateTime(getRecordSavedAt(latestSavedVersion)) : 'None saved yet'}</strong>
             </div>
+          </div>
+        </div>
+
+        <div className="side-card readiness-card">
+          <h3>Readiness</h3>
+          <div className="side-body">
+            <div className="readiness-scoreline">
+              <strong id="readinessScoreAside">Track required domains</strong>
+              <span id="readinessLabelAside">Information gathering</span>
+            </div>
+            <div className="readiness-meter compact-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span id="readinessMeterAside" />
+            </div>
+            <ul className="risk-flag-list compact-risk-list" aria-label="Current risk flags" id="riskFlagSummaryAside">
+              <li>Risk flags update as fields are completed</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="side-card">
+          <h3>Clinical reasoning guidance</h3>
+          <div className="side-body" id="guidanceOutput" />
+        </div>
+
+        <div className="side-card versions-card">
+          <h3>Saved versions</h3>
+          <div className="side-body">
             <div className="version-list">
-              {savedVersions.length > 0 ? savedVersions.slice(0, 6).map((version, index) => {
+              {savedVersions.length > 0 ? savedVersions.slice(0, 5).map((version, index) => {
                 const meta = version.results?.meta || {}
                 return (
                   <button
@@ -1458,45 +1679,72 @@ function WheelchairPrescriptionForm({ activeVersionId, canSaveToPatient, draftSt
             </div>
           </div>
         </div>
-        <div className="side-card">
-          <h3>Live clinical reasoning guidance</h3>
-          <div className="side-body" id="guidanceOutput" />
-        </div>
-        <div className="side-card">
-          <h3>Supplier brief preview</h3>
-          <div className="side-body">
-            <div className="brief-preview" id="supplierBrief" />
-            <div className="footer-note">Use "Copy supplier brief" for email handover or "Print supplier brief" for PDF/printing.</div>
-          </div>
-        </div>
-        <div className="side-card">
-          <h3>Reference basis</h3>
-          <div className="side-body wc-tool__reference-body">
-            <ul className="links-list">
-              <li><a href="https://www.who.int/publications/i/item/9789240074521" rel="noreferrer" target="_blank">WHO Wheelchair provision guidelines, 2023</a></li>
-              <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK143782/" rel="noreferrer" target="_blank">WHO manual wheelchair guideline definition of appropriate wheelchair</a></li>
-              <li><a href="https://www.resna.org/Resources/Position-Papers-and-Service-Provision-Guidelines" rel="noreferrer" target="_blank">RESNA service provision framework</a></li>
-              <li><a href="https://wheelchairskillsprogram.ca/" rel="noreferrer" target="_blank">Wheelchair Skills Program</a></li>
-            </ul>
-            <div className="footer-note">Use these as the guidance basis only. The tool still requires clinical judgement, trial confirmation, supplier specification checks and local funding review.</div>
-          </div>
-        </div>
       </aside>
     </div>
   )
 }
 
-function FormSection({ id, title, description, defaultCollapsed = false, children }) {
-  const toggle = event => window.toggleSection?.(id, event.currentTarget)
+function StepNavigation({ activeStepId, onStepChange }) {
   return (
-    <section className={`card section${defaultCollapsed ? ' is-collapsed' : ''}`} id={id}>
-      <div className="section-header">
-        <h2>{title}</h2>
-        <p>{description}</p>
-        <button className="section-toggle" onClick={toggle} type="button">{defaultCollapsed ? 'Expand' : 'Minimise'}</button>
+    <nav className="step-nav" aria-label="Wheelchair prescription workflow">
+      {WHEELCHAIR_STEPS.map(step => {
+        const active = activeStepId === step.id
+        return (
+          <button
+            aria-current={active ? 'step' : undefined}
+            className="step-nav__item"
+            data-active={active ? '' : undefined}
+            key={step.id}
+            onClick={() => onStepChange(step.id)}
+            type="button"
+          >
+            <span className="step-nav__number">{step.number}</span>
+            <span className="step-nav__copy">
+              <strong>{step.shortTitle}</strong>
+              <small>{step.title}</small>
+            </span>
+          </button>
+        )
+      })}
+    </nav>
+  )
+}
+
+function StepPanel({ activeStepId, children, description, stepId, title }) {
+  const active = activeStepId === stepId
+  return (
+    <section
+      aria-labelledby={`${stepId}-title`}
+      className="workflow-step"
+      data-active={active ? '' : undefined}
+      hidden={!active}
+      id={stepId}
+    >
+      <div className="workflow-step__header">
+        <span>{WHEELCHAIR_STEPS.find(step => step.id === stepId)?.number}</span>
+        <div>
+          <h2 id={`${stepId}-title`}>{title}</h2>
+          <p>{description}</p>
+        </div>
       </div>
-      <div className="section-body">{children}</div>
+      <div className="workflow-step__body">{children}</div>
     </section>
+  )
+}
+
+function StepControls({ activeIndex, onStepChange }) {
+  const isFirst = activeIndex === 0
+  const isLast = activeIndex === WHEELCHAIR_STEPS.length - 1
+  return (
+    <div className="step-controls">
+      <button disabled={isFirst} onClick={() => onStepChange(activeIndex - 1)} type="button">
+        <ChevronLeft size={16} /> Previous
+      </button>
+      <span>Step {activeIndex + 1} of {WHEELCHAIR_STEPS.length}</span>
+      <button disabled={isLast} onClick={() => onStepChange(activeIndex + 1)} type="button" data-primary="">
+        Next <ChevronRight size={16} />
+      </button>
+    </div>
   )
 }
 
@@ -1562,7 +1810,7 @@ function OptionChoices({ name, options, type = 'radio', columns = '' }) {
       {options.map(option => (
         <label className={type === 'checkbox' ? 'check' : 'radio'} key={`${name}-${optionValue(option)}`}>
           <input name={name} type={type} value={optionValue(option)} />
-          {optionLabel(option)}
+          <span className="choice-copy">{optionLabel(option)}</span>
         </label>
       ))}
     </div>
@@ -1571,58 +1819,59 @@ function OptionChoices({ name, options, type = 'radio', columns = '' }) {
 
 function SelectionCard({ title, value, label, caption, src, type, name }) {
   return (
-    <div className="selection-card">
-      <img alt="" src={src} />
-      <h4>{title}</h4>
-      <label className={type === 'checkbox' ? 'check' : 'radio'}>
-        <input name={name} type={type} value={value} />
-        {label}
-      </label>
-      <div className="card-caption">{caption}</div>
-    </div>
+    <label className="selection-card">
+      <input className="selection-card__input" name={name} type={type} value={value} />
+      <span className="selection-card__image">
+        <img alt={`${title} wheelchair example`} src={src} />
+      </span>
+      <span className="selection-card__title">{title}</span>
+      <span className="selection-card__label">{label}</span>
+      <span className="card-caption">{caption}</span>
+    </label>
   )
 }
 
 function MeasurementTable() {
   return (
-    <table className="measurement-table">
-      <thead>
-        <tr><th>Measurement</th><th>Left / value mm</th><th>Right mm</th></tr>
-      </thead>
-      <tbody>
-        {MEASUREMENT_ROWS.map(row => (
-          <tr key={row.code}>
-            <td><span className="measure-label"><span className="measure-code">{row.code}</span><span className="measure-desc">{row.label}</span></span></td>
-            <td><input id={`meas${row.code}_L`} min="0" step="1" type="number" /></td>
-            <td><input id={`meas${row.code}_R`} min="0" step="1" type="number" /></td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="table-scroll measurement-table-scroll">
+      <table className="measurement-table">
+        <thead>
+          <tr><th>Code and landmark</th><th>Left / value mm</th><th>Right mm</th></tr>
+        </thead>
+        <tbody>
+          {MEASUREMENT_ROWS.map(row => (
+            <tr key={row.code}>
+              <td><span className="measure-label"><span className="measure-code">{row.code}</span><span className="measure-desc">{row.label}</span></span></td>
+              <td><input id={`meas${row.code}_L`} min="0" step="1" type="number" /></td>
+              <td><input id={`meas${row.code}_R`} min="0" step="1" type="number" /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
 function ActivityTable() {
   return (
-    <table className="activity-table">
-      <thead>
-        <tr><th>Activity</th><th>Performance</th><th>Notes</th></tr>
-      </thead>
-      <tbody>
-        {ACTIVITY_ROWS.map((activity, index) => (
-          <tr key={activity}>
-            <td>{activity}</td>
-            <td>
-              <select id={`act_${index}`}>
-                <option value="" />
-                {OPTIONS.activityLevels.map(level => <option key={level} value={level}>{level}</option>)}
-              </select>
-            </td>
-            <td><input id={`actNote_${index}`} type="text" /></td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="activity-list" role="group" aria-label="Functional activity performance">
+      {ACTIVITY_ROWS.map((activity, index) => (
+        <div className="activity-row" key={activity}>
+          <strong>{activity}</strong>
+          <label>
+            <span>Performance</span>
+            <select id={`act_${index}`}>
+              <option value="" />
+              {OPTIONS.activityLevels.map(level => <option key={level} value={level}>{level}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>Notes</span>
+            <input id={`actNote_${index}`} type="text" />
+          </label>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -1785,8 +2034,6 @@ const wheelchairToolStyles = `
 
   .wc-tool__header {
     position: relative;
-    isolation: isolate;
-    overflow: hidden;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -1800,29 +2047,12 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool__header::after {
-    content: '';
-    position: absolute;
-    inset: 0 0 0 auto;
-    z-index: 0;
-    width: min(38%, 340px);
-    pointer-events: none;
-    background: url('/assets/wheelchair-prescription/mid-wheel-drive-power-wheelchair.jpg') right center / 330px auto no-repeat;
-    opacity: 0.16;
+    content: none;
   }
 
   .wc-tool__header > * {
     position: relative;
     z-index: 1;
-  }
-
-  .wc-tool__iq-mark {
-    position: absolute !important;
-    right: 28px;
-    bottom: 18px;
-    z-index: 0 !important;
-    color: rgba(127,179,230,0.32);
-    font-size: 82px;
-    pointer-events: none;
   }
 
   .button-loading {
@@ -1920,8 +2150,7 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool__actions button,
-  .wc-tool .btn,
-  .wc-tool .section-toggle {
+  .wc-tool .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1940,8 +2169,7 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool__actions button:hover,
-  .wc-tool .btn:hover,
-  .wc-tool .section-toggle:hover {
+  .wc-tool .btn:hover {
     border-color: rgba(23,61,104,0.35);
     background: #fff;
   }
@@ -1968,6 +2196,203 @@ const wheelchairToolStyles = `
     grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
     gap: 22px;
     align-items: start;
+  }
+
+  .wc-tool__toast {
+    display: inline-flex;
+    align-items: center;
+    max-width: min(680px, 100%);
+    min-height: 38px;
+    margin: -6px 0 16px;
+    padding: 8px 12px;
+    border: 1px solid #b7dfc9;
+    border-radius: var(--wc-radius-control);
+    background: #e8f4ef;
+    color: #14523a;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+
+  .wc-tool__toast[data-tone="warning"] {
+    border-color: #f5d49a;
+    background: #fef3e2;
+    color: #8d4f12;
+  }
+
+  .wc-tool .step-nav {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .wc-tool .step-nav__item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    min-height: 58px;
+    padding: 10px;
+    border: 1px solid var(--wc-card-border);
+    border-radius: var(--wc-radius-inner);
+    background: var(--wc-surface);
+    color: var(--wc-muted);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+  }
+
+  .wc-tool .step-nav__item:hover {
+    border-color: rgba(23,61,104,0.32);
+    background: #f7fafc;
+  }
+
+  .wc-tool .step-nav__item:active {
+    transform: translateY(1px);
+  }
+
+  .wc-tool .step-nav__item[data-active] {
+    border-color: rgba(23,61,104,0.42);
+    background: var(--wc-primary-soft);
+    color: var(--wc-primary);
+  }
+
+  .wc-tool .step-nav__number {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(23,61,104,0.18);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.72);
+    color: var(--wc-primary);
+    font-size: 11px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wc-tool .step-nav__copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .wc-tool .step-nav__copy strong {
+    color: inherit;
+    font-size: 12px;
+    font-weight: 900;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .wc-tool .step-nav__copy small {
+    color: var(--wc-muted);
+    font-size: 10px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .wc-tool .workflow-step {
+    overflow: hidden;
+    margin-bottom: 14px;
+    border: 1px solid var(--wc-card-border);
+    border-radius: var(--wc-radius-panel);
+    background: var(--wc-surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .wc-tool .workflow-step[hidden],
+  .wc-tool .conditional-panel[hidden] {
+    display: none !important;
+  }
+
+  .wc-tool .workflow-step__header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--wc-line);
+    background: var(--wc-nested-surface);
+  }
+
+  .wc-tool .workflow-step__header > span {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(23,61,104,0.18);
+    border-radius: 50%;
+    background: var(--wc-surface);
+    color: var(--wc-primary);
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .wc-tool .workflow-step__header h2 {
+    color: var(--wc-ink);
+    font-size: 18px;
+    line-height: 1.2;
+    font-weight: 900;
+  }
+
+  .wc-tool .workflow-step__header p {
+    max-width: 74ch;
+    margin-top: 4px;
+    color: var(--wc-muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .wc-tool .workflow-step__body {
+    padding: 18px 20px 22px;
+  }
+
+  .wc-tool .step-controls {
+    display: grid;
+    grid-template-columns: minmax(120px, max-content) minmax(0, 1fr) minmax(120px, max-content);
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+    padding: 12px;
+    border: 1px solid var(--wc-card-border);
+    border-radius: var(--wc-radius-panel);
+    background: var(--wc-surface);
+  }
+
+  .wc-tool .step-controls span {
+    color: var(--wc-muted);
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .wc-tool .step-controls button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 38px;
+    padding: 0 13px;
+    border: 1px solid var(--wc-line);
+    border-radius: var(--wc-radius-control);
+    background: rgba(255,255,255,0.86);
+    color: var(--wc-primary);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .wc-tool .step-controls button[data-primary] {
+    border-color: transparent;
+    background: var(--wc-primary);
+    color: #fff;
+  }
+
+  .wc-tool .step-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
   }
 
   .wc-tool .main-panel,
@@ -1998,48 +2423,6 @@ const wheelchairToolStyles = `
 
   .wc-tool .side-card {
     margin-bottom: 0;
-  }
-
-  .wc-tool .section-header {
-    position: relative;
-    min-height: 70px;
-    padding: 18px 120px 16px 20px;
-    border-bottom: 1px solid var(--wc-line);
-    background: var(--wc-nested-surface);
-  }
-
-  .wc-tool .section-header h2 {
-    margin: 0;
-    color: var(--wc-ink);
-    font-size: 18px;
-    line-height: 1.2;
-    font-weight: 800;
-  }
-
-  .wc-tool .section-header p {
-    margin-top: 5px;
-    color: var(--wc-muted);
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  .wc-tool .section-toggle {
-    position: absolute;
-    top: 16px;
-    right: 18px;
-    min-width: 88px;
-  }
-
-  .wc-tool .section.is-collapsed .section-body {
-    display: none;
-  }
-
-  .wc-tool .section.is-collapsed .section-header {
-    border-bottom: 0;
-  }
-
-  .wc-tool .section-body {
-    padding: 18px 20px 22px;
   }
 
   .wc-tool .side-card h3 {
@@ -2248,6 +2631,15 @@ const wheelchairToolStyles = `
     background: #fff;
   }
 
+  .wc-tool button:focus-visible,
+  .wc-tool .check:focus-within,
+  .wc-tool .radio:focus-within,
+  .wc-tool .selection-card:focus-within,
+  .wc-tool .advanced-details summary:focus-visible {
+    outline: 3px solid rgba(23,61,104,0.18);
+    outline-offset: 2px;
+  }
+
   .wc-tool .subhead {
     display: flex;
     align-items: center;
@@ -2273,13 +2665,13 @@ const wheelchairToolStyles = `
 
   .wc-tool .check-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 9px;
   }
 
-  .wc-tool .check-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .wc-tool .check-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .wc-tool .check-grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .wc-tool .check-grid.two { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+  .wc-tool .check-grid.three { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .wc-tool .check-grid.four { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 
   .wc-tool .check,
   .wc-tool .radio {
@@ -2294,6 +2686,10 @@ const wheelchairToolStyles = `
     color: var(--wc-muted);
     font-size: 12px;
     line-height: 1.3;
+    cursor: pointer;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
   }
 
   .wc-tool .check:hover,
@@ -2314,6 +2710,11 @@ const wheelchairToolStyles = `
     flex: 0 0 auto;
     margin-top: 2px;
     accent-color: var(--wc-primary);
+  }
+
+  .wc-tool .choice-copy {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .wc-tool .note,
@@ -2358,8 +2759,16 @@ const wheelchairToolStyles = `
     font-size: 12px;
   }
 
+  .wc-tool .table-scroll {
+    overflow: auto;
+    border-radius: var(--wc-radius-inner);
+  }
+
   .wc-tool .measurement-table th,
   .wc-tool .activity-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
     padding: 9px;
     background: var(--wc-soft);
     color: var(--wc-subtle);
@@ -2389,6 +2798,40 @@ const wheelchairToolStyles = `
     padding: 6px 8px;
   }
 
+  .wc-tool .activity-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .wc-tool .activity-row {
+    display: grid;
+    grid-template-columns: minmax(180px, 0.9fr) minmax(170px, 0.65fr) minmax(220px, 1fr);
+    gap: 10px;
+    align-items: end;
+    padding: 10px;
+    border: 1px solid var(--wc-line);
+    border-radius: var(--wc-radius-inner);
+    background: rgba(255,255,255,0.72);
+  }
+
+  .wc-tool .activity-row > strong {
+    align-self: center;
+    color: var(--wc-primary);
+    font-size: 12px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .wc-tool .activity-row label {
+    display: grid;
+    gap: 5px;
+    color: var(--wc-muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
   .wc-tool .measure-label {
     display: flex;
     align-items: center;
@@ -2415,6 +2858,11 @@ const wheelchairToolStyles = `
     border-radius: var(--wc-radius-inner);
     background: var(--wc-nested-surface);
     padding: 12px;
+  }
+
+  .wc-tool .pathway-panel,
+  .wc-tool .advanced-inline {
+    margin-top: 14px;
   }
 
   .wc-tool .conditional-panel[hidden] {
@@ -2469,14 +2917,18 @@ const wheelchairToolStyles = `
 
   .wc-tool .selection-cards {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 12px;
   }
 
   .wc-tool .selection-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 9px;
+    min-height: 100%;
+    cursor: pointer;
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, background 180ms ease;
   }
 
   .wc-tool .selection-card:hover {
@@ -2484,15 +2936,59 @@ const wheelchairToolStyles = `
     box-shadow: 0 10px 24px rgba(21,34,56,0.08);
   }
 
-  .wc-tool .selection-card img {
-    aspect-ratio: 1 / 1;
+  .wc-tool .selection-card:active {
+    transform: translateY(1px);
   }
 
-  .wc-tool .selection-card h4 {
-    margin: 0;
+  .wc-tool .selection-card:has(.selection-card__input:checked) {
+    border-color: rgba(23,61,104,0.44);
+    background: var(--wc-primary-soft);
+    box-shadow: 0 10px 24px rgba(21,34,56,0.10);
+  }
+
+  .wc-tool .selection-card__input {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--wc-primary);
+  }
+
+  .wc-tool .selection-card__image {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1 / 1;
+    padding: 10px;
+    border: 1px solid #edf3f7;
+    border-radius: var(--wc-radius-control);
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .wc-tool .selection-card__image img {
+    width: 100%;
+    height: 100%;
+    max-height: 210px;
+    border: 0;
+    object-fit: contain;
+  }
+
+  .wc-tool .selection-card__title {
     color: var(--wc-primary);
     font-size: 13px;
     font-weight: 800;
+    line-height: 1.25;
+  }
+
+  .wc-tool .selection-card__label {
+    display: inline-flex;
+    color: var(--wc-muted);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
   }
 
   .wc-tool .manual-propulsion-layout {
@@ -2509,6 +3005,121 @@ const wheelchairToolStyles = `
     display: grid;
     grid-template-columns: repeat(3, minmax(220px, 1fr));
     gap: 12px;
+  }
+
+  .wc-tool .review-layout {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.8fr) minmax(420px, 1.2fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .wc-tool .readiness-review,
+  .wc-tool .reference-panel,
+  .wc-tool .advanced-details {
+    border: 1px solid var(--wc-line);
+    border-radius: var(--wc-radius-inner);
+    background: var(--wc-nested-surface);
+    padding: 12px;
+  }
+
+  .wc-tool .readiness-scoreline {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .wc-tool .readiness-scoreline strong {
+    color: var(--wc-primary);
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .wc-tool .readiness-scoreline span {
+    color: var(--wc-muted);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .wc-tool .readiness-meter {
+    overflow: hidden;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(216,225,234,0.78);
+  }
+
+  .wc-tool .readiness-meter span {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--wc-primary);
+    transition: width 180ms ease;
+  }
+
+  .wc-tool .compact-meter {
+    margin-bottom: 12px;
+  }
+
+  .wc-tool .readiness-list,
+  .wc-tool .risk-flag-list {
+    display: grid;
+    gap: 7px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .wc-tool .readiness-list li,
+  .wc-tool .risk-flag-list li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+    color: var(--wc-muted);
+    font-size: 12px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .wc-tool .readiness-list li::before,
+  .wc-tool .risk-flag-list li::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d8e1ea;
+  }
+
+  .wc-tool .readiness-list li[data-complete="true"]::before {
+    background: #2e7d58;
+  }
+
+  .wc-tool .readiness-list li[data-complete="false"]::before,
+  .wc-tool .risk-flag-list li::before {
+    background: #d77a35;
+  }
+
+  .wc-tool .readiness-list li span {
+    display: none;
+  }
+
+  .wc-tool .advanced-details {
+    margin-top: 16px;
+  }
+
+  .wc-tool .advanced-details summary {
+    cursor: pointer;
+    color: var(--wc-primary);
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .wc-tool .advanced-details .grid {
+    margin-top: 12px;
   }
 
   .wc-tool .guidance-card {
@@ -2553,8 +3164,8 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .brief-preview {
-    min-height: 520px;
-    max-height: calc(100vh - 310px);
+    min-height: 620px;
+    max-height: 74vh;
     overflow: auto;
     white-space: pre-wrap;
     border: 1px solid var(--wc-line);
@@ -2657,7 +3268,8 @@ const wheelchairToolStyles = `
 
   @media (max-width: 1320px) {
     .wc-tool__content,
-    .wc-tool .measurement-layout {
+    .wc-tool .measurement-layout,
+    .wc-tool .review-layout {
       grid-template-columns: 1fr;
     }
 
@@ -2678,6 +3290,18 @@ const wheelchairToolStyles = `
       flex-direction: column;
     }
 
+    .wc-tool .step-nav {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .wc-tool .workflow-step__header {
+      grid-template-columns: 1fr;
+    }
+
+    .wc-tool .step-controls {
+      grid-template-columns: 1fr;
+    }
+
     .wc-tool__patient-picker {
       grid-template-columns: 1fr;
       max-width: none;
@@ -2693,7 +3317,8 @@ const wheelchairToolStyles = `
     .wc-tool .grid,
     .wc-tool .dimension-grid,
     .wc-tool .selection-cards,
-    .wc-tool .manual-propulsion-layout {
+    .wc-tool .manual-propulsion-layout,
+    .wc-tool .activity-row {
       grid-template-columns: 1fr;
     }
 
@@ -2749,17 +3374,20 @@ const wheelchairToolStyles = `
       display: none !important;
     }
 
-    body[data-wc-print="assessment"] .wc-tool .card {
+    body[data-wc-print="assessment"] .wc-tool .step-nav,
+    body[data-wc-print="assessment"] .wc-tool .step-controls {
+      display: none !important;
+    }
+
+    body[data-wc-print="assessment"] .wc-tool .workflow-step[hidden] {
+      display: block !important;
+    }
+
+    body[data-wc-print="assessment"] .wc-tool .card,
+    body[data-wc-print="assessment"] .wc-tool .workflow-step {
       box-shadow: none !important;
       break-inside: avoid;
     }
 
-    body[data-wc-print="assessment"] .wc-tool .section.is-collapsed .section-body {
-      display: block !important;
-    }
-
-    body[data-wc-print="assessment"] .wc-tool .section-toggle {
-      display: none !important;
-    }
   }
 `
