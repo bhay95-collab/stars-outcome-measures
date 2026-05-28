@@ -1,7 +1,5 @@
 import { supabase } from './client';
-import type { Patient } from '../types/domain';
-
-type PatientGender = 'M' | 'F' | 'Other';
+import type { Patient, PatientGender } from '../types/domain';
 
 export interface CreatePatientInput {
   firstName: string;
@@ -62,10 +60,18 @@ function isValidDOB(dob: string): boolean {
   return date <= today;
 }
 
+async function getSession() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) throw new Error('Your session has expired. Please sign in again.');
+  return session;
+}
+
 export async function listPatients(): Promise<Patient[]> {
+  const session = await getSession();
   const { data, error } = await supabase
     .from('patients')
     .select('*')
+    .eq('user_id', session.user.id)
     .order('initials', { ascending: true });
 
   if (error) throw new Error(mapPatientReadError('list', error.code));
@@ -73,10 +79,12 @@ export async function listPatients(): Promise<Patient[]> {
 }
 
 export async function getPatient(id: string): Promise<Patient | null> {
+  const session = await getSession();
   const { data, error } = await supabase
     .from('patients')
     .select('*')
     .eq('id', id)
+    .eq('user_id', session.user.id)
     .maybeSingle();
 
   if (error) throw new Error(mapPatientReadError('detail', error.code));
@@ -94,11 +102,7 @@ export async function createPatient(input: CreatePatientInput): Promise<void> {
     throw new Error('Please complete the required patient details.');
   }
 
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-  if (sessionError || !session) {
-    throw new Error('Your session has expired. Please sign in again.');
-  }
+  const session = await getSession();
 
   const dobYear = Number(dob.slice(0, 4));
   const initials = `${firstName} ${lastInitial}.`;
@@ -131,11 +135,7 @@ function mapPatientUpdateError(code: string | undefined): string {
 }
 
 export async function updatePatient(patientId: string, input: UpdatePatientInput): Promise<Patient> {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-  if (sessionError || !session) {
-    throw new Error('Your session has expired. Please sign in again.');
-  }
+  const session = await getSession();
 
   const { data, error } = await supabase
     .from('patients')

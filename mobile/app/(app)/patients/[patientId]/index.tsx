@@ -22,17 +22,10 @@ import {
 } from '../../../../src/clinical/comparisons';
 import type { AssessmentComparison } from '../../../../src/clinical/comparisons';
 import { PatientEditSheet } from '../../../../src/components/forms/PatientEditSheet';
+import { getValidPatientId } from '../../../../src/utils/routing';
 import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
 const HISTORY_LIMIT = 8;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function getValidPatientId(value: string | string[] | undefined): string | null {
-  const candidate = Array.isArray(value) ? value[0] : value;
-  const patientId = candidate?.trim();
-  if (!patientId || !UUID_PATTERN.test(patientId)) return null;
-  return patientId;
-}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;

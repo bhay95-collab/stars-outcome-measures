@@ -17,7 +17,8 @@ import { SIGN_OUT_ERROR_MESSAGE, useAuth } from '../../../src/auth/AuthProvider'
 import { withTimeout, DATA_FETCH_TIMEOUT_MS } from '../../../src/utils/withTimeout';
 import { supabase } from '../../../src/supabase/client';
 import { createPatient, listPatients } from '../../../src/supabase/patients';
-import type { Patient } from '../../../src/types/domain';
+import type { Patient, PatientGender } from '../../../src/types/domain';
+import { parseDOBInput, formatDOBInput, isoToDisplayDOB } from '../../../src/utils/dob';
 import { Screen } from '../../../src/components/ui/Screen';
 import { Card } from '../../../src/components/ui/Card';
 import { Button } from '../../../src/components/ui/Button';
@@ -29,8 +30,6 @@ import { ThreeBarMotif } from '../../../src/components/ui/ThreeBarMotif';
 import { TextInput as ClinicalTextInput } from '../../../src/components/ui/TextInput';
 import { colors, fonts, spacing, typography, radii } from '../../../src/theme/tokens';
 import { CONDITION_OPTIONS } from '@clinical/constants';
-
-type PatientGender = 'M' | 'F' | 'Other';
 
 const GENDER_OPTIONS: { value: PatientGender; label: string }[] = [
   { value: 'M', label: 'Male' },
@@ -132,11 +131,6 @@ function SettingsSheet({
   );
 }
 
-function formatDOB(iso: string): string {
-  const [year, month, day] = iso.split('-');
-  return `${day}/${month}/${year}`;
-}
-
 function getPatientClinicalLabel(patient: Patient): string | null {
   return patient.diagnosis ?? patient.condition ?? null;
 }
@@ -172,7 +166,7 @@ function PatientCard({ patient, index }: { patient: Patient; index: number }) {
             <Text style={styles.name}>{patient.initials}</Text>
             <View style={styles.patientMetaRow}>
               {patient.dob ? (
-                <Text style={styles.dob}>{formatDOB(patient.dob)}</Text>
+                <Text style={styles.dob}>{isoToDisplayDOB(patient.dob)}</Text>
               ) : null}
               {clinicalLabel ? (
                 <View style={styles.conditionPill}>
@@ -188,37 +182,6 @@ function PatientCard({ patient, index }: { patient: Patient; index: number }) {
       </TouchableOpacity>
     </Animated.View>
   );
-}
-
-function parseDOBInput(dob: string): string | null {
-  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dob);
-  if (!match) return null;
-
-  const day = Number(match[1]);
-  const month = Number(match[2]);
-  const year = Number(match[3]);
-  const date = new Date(year, month - 1, day);
-
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
-    return null;
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  if (date > today) return null;
-
-  return `${match[3]}-${match[2]}-${match[1]}`;
-}
-
-function formatDOBInput(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
 
 function CreatePatientSheet({
@@ -504,9 +467,14 @@ export default function PatientsScreen() {
   }
 
   async function refreshPatients() {
+    setIsLoading(true);
     setError(null);
-    const nextPatients = await withTimeout(listPatients(), DATA_FETCH_TIMEOUT_MS);
-    setPatients(nextPatients);
+    try {
+      const nextPatients = await withTimeout(listPatients(), DATA_FETCH_TIMEOUT_MS);
+      setPatients(nextPatients);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -515,14 +483,17 @@ export default function PatientsScreen() {
 
   useEffect(() => {
     if (!user) return;
+    let isActive = true;
     supabase
       .from('profiles')
       .select('avatar_url')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
       .then(({ data }) => {
-        if (data?.avatar_url) setProfileAvatarUrl(data.avatar_url);
-      });
+        if (isActive && data?.avatar_url) setProfileAvatarUrl(data.avatar_url);
+      })
+      .catch(() => null);
+    return () => { isActive = false; };
   }, [user?.id]);
 
   const resolvedAvatarUrl: string | null =
@@ -538,7 +509,7 @@ export default function PatientsScreen() {
         patient.initials,
         clinicalLabel ?? '',
         patient.dob ?? '',
-        patient.dob ? formatDOB(patient.dob) : '',
+        patient.dob ? isoToDisplayDOB(patient.dob) : '',
       ].join(' ').toLowerCase();
       return searchable.includes(query);
     });

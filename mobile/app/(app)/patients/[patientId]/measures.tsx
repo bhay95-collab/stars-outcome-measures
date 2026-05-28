@@ -12,23 +12,16 @@ import { Screen } from '../../../../src/components/ui/Screen';
 import { Card } from '../../../../src/components/ui/Card';
 import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
 import { ThreeBarMotif } from '../../../../src/components/ui/ThreeBarMotif';
+import { getValidPatientId } from '../../../../src/utils/routing';
 import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
 type Category = 'performance' | 'independence' | 'questionnaire';
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const GROUPS: { label: string; category: Category }[] = [
   { label: 'Performance', category: 'performance' },
   { label: 'Independence', category: 'independence' },
   { label: 'Questionnaire', category: 'questionnaire' },
 ];
-
-function getValidPatientId(value: string | string[] | undefined): string | null {
-  const candidate = Array.isArray(value) ? value[0] : value;
-  const patientId = candidate?.trim();
-  if (!patientId || !UUID_PATTERN.test(patientId)) return null;
-  return patientId;
-}
 
 function MeasureRow({
   measure,

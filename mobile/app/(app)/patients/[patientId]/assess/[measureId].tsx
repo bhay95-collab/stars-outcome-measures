@@ -24,6 +24,7 @@ import { TUGForm }      from '../../../../../src/components/forms/TUGForm';
 import { MWTForm }      from '../../../../../src/components/forms/MWTForm';
 import { SixMWTForm }   from '../../../../../src/components/forms/SixMWTForm';
 import { FACForm }      from '../../../../../src/components/forms/FACForm';
+import { isValidUUID } from '../../../../../src/utils/routing';
 import { Screen } from '../../../../../src/components/ui/Screen';
 import { Card } from '../../../../../src/components/ui/Card';
 import { NavyHeader } from '../../../../../src/components/ui/NavyHeader';
@@ -55,8 +56,9 @@ const SCIM_ID    = 'SCIM';
 
 export default function AssessScreen() {
   const params = useLocalSearchParams<{ patientId: string; measureId: string }>();
+  const rawPatientId = Array.isArray(params.patientId) ? params.patientId[0] : params.patientId;
   const measureId = Array.isArray(params.measureId) ? params.measureId[0] : params.measureId;
-  const patientId = Array.isArray(params.patientId) ? params.patientId[0] : params.patientId;
+  const patientId = isValidUUID(rawPatientId) ? rawPatientId : null;
 
   if (!patientId || !measureId) {
     return (

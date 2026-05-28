@@ -1,3 +1,5 @@
+export type PatientGender = 'M' | 'F' | 'Other';
+
 export interface Patient {
   id: string;
   user_id: string;

@@ -10,10 +10,14 @@ function mapAssessmentReadError(code: string | undefined): string {
 }
 
 export async function getAssessmentsForPatient(patientId: string): Promise<Assessment[]> {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !session) throw new Error('Your session has expired. Please sign in again.');
+
   const { data, error } = await supabase
     .from('assessments')
     .select('*')
     .eq('patient_id', patientId)
+    .eq('user_id', session.user.id)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(mapAssessmentReadError(error.code));
