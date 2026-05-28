@@ -16,6 +16,7 @@ import { PatientAvatar } from '../../../../src/components/ui/PatientAvatar';
 import { EmptyState } from '../../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../../src/components/ui/LoadingState';
 import { MEASURES, buildPatientPathway } from '../../../../src/clinical/adapter';
+import { PatientEditSheet } from '../../../../src/components/forms/PatientEditSheet';
 import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
 const HISTORY_LIMIT = 8;
@@ -161,7 +162,13 @@ export default function PatientSummaryScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const [editSheetVisible, setEditSheetVisible] = useState(false);
   const hasLoadedPatientData = useRef(false);
+
+  function handlePatientUpdated(updated: Patient) {
+    setPatient(updated);
+    setEditSheetVisible(false);
+  }
 
   function handleRetry() {
     hasLoadedPatientData.current = false;
@@ -278,6 +285,15 @@ export default function PatientSummaryScreen() {
                 <Text style={styles.condition}>{clinicalLabel}</Text>
               ) : null}
             </View>
+            <TouchableOpacity
+              onPress={() => setEditSheetVisible(true)}
+              style={styles.editButton}
+              accessibilityRole="button"
+              accessibilityLabel="Edit patient details"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.editButtonText}>Edit</Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.summaryGrid}>
             <View style={styles.summaryTile}>
@@ -346,6 +362,13 @@ export default function PatientSummaryScreen() {
           />
         </View>
       </ScrollView>
+
+      <PatientEditSheet
+        visible={editSheetVisible}
+        patient={patient}
+        onUpdated={handlePatientUpdated}
+        onDismiss={() => setEditSheetVisible(false)}
+      />
     </Screen>
   );
 }
@@ -407,6 +430,22 @@ const styles = StyleSheet.create({
   },
   patientInfo: {
     flex: 1,
+  },
+  editButton: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editButtonText: {
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
   },
   patientName: {
     fontSize: typography.sizeLg,

@@ -11,6 +11,14 @@ export interface CreatePatientInput {
   gender?: PatientGender | null;
 }
 
+export interface UpdatePatientInput {
+  initials: string;
+  dob: string | null;
+  dob_year: number | null;
+  gender: PatientGender | null;
+  diagnosis: string | null;
+}
+
 function mapPatientWriteError(code: string | undefined): string {
   switch (code) {
     case '42501':
@@ -109,4 +117,41 @@ export async function createPatient(input: CreatePatientInput): Promise<void> {
   if (error) {
     throw new Error(mapPatientWriteError(error.code));
   }
+}
+
+function mapPatientUpdateError(code: string | undefined): string {
+  switch (code) {
+    case '42501':
+      return 'Unable to update patient. Please check your access and try again.';
+    case '23502':
+      return 'Please complete the required patient details.';
+    default:
+      return 'Unable to update patient. Please try again.';
+  }
+}
+
+export async function updatePatient(patientId: string, input: UpdatePatientInput): Promise<Patient> {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    throw new Error('Your session has expired. Please sign in again.');
+  }
+
+  const { data, error } = await supabase
+    .from('patients')
+    .update({
+      initials: input.initials,
+      dob: input.dob,
+      dob_year: input.dob_year,
+      gender: input.gender,
+      diagnosis: input.diagnosis,
+    })
+    .eq('id', patientId)
+    .eq('user_id', session.user.id)
+    .select()
+    .single();
+
+  if (error) throw new Error(mapPatientUpdateError(error.code));
+  if (!data) throw new Error('Patient record could not be updated. Please try again.');
+  return data as Patient;
 }
