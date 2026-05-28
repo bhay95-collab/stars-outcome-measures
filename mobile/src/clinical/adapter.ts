@@ -3,6 +3,8 @@ import {
   SMART_REHAB_PATHWAY_COPY as _SMART_REHAB_PATHWAY_COPY,
   buildPatientPathway as _buildPatientPathway,
 } from '@clinical/pathways';
+// @ts-ignore — JS clinical module, no type declarations
+import { calcChange as _calcChange, getMCIDStatus as _getMCIDStatus } from '@clinical/mcid';
 
 export interface MeasureDefinition {
   id: string;
@@ -54,6 +56,31 @@ export interface PatientPathway {
   reassessmentDays: number;
   explanation: PathwayExplanation;
 }
+
+export interface ChangeResult {
+  delta: number;
+  improved: boolean;
+  rawStr: string;
+  pctStr: string;
+}
+
+export interface MCIDStatus {
+  improved: boolean;
+  meetsThreshold: boolean;
+  label: string;
+}
+
+export const calcChange = _calcChange as (
+  current: number,
+  previous: number,
+  higherIsBetter: boolean,
+) => ChangeResult | null;
+
+export const getMCIDStatus = _getMCIDStatus as (
+  mcidKey: string,
+  current: number,
+  previous: number,
+) => MCIDStatus | null;
 
 export const MEASURES = _MEASURES as Record<string, MeasureDefinition>;
 export const SMART_REHAB_PATHWAY_COPY = _SMART_REHAB_PATHWAY_COPY as PathwayExplanation;

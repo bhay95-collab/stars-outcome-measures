@@ -16,6 +16,11 @@ import { PatientAvatar } from '../../../../src/components/ui/PatientAvatar';
 import { EmptyState } from '../../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../../src/components/ui/LoadingState';
 import { MEASURES, buildPatientPathway } from '../../../../src/clinical/adapter';
+import {
+  buildPreviousAssessmentMap,
+  getAssessmentComparison,
+} from '../../../../src/clinical/comparisons';
+import type { AssessmentComparison } from '../../../../src/clinical/comparisons';
 import { PatientEditSheet } from '../../../../src/components/forms/PatientEditSheet';
 import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
@@ -113,12 +118,26 @@ function getLatestDate(assessments: Assessment[]): string | null {
     .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
 }
 
-function AssessmentHistoryCard({ assessment }: { assessment: Assessment }) {
+function getChangeLabel(comparison: AssessmentComparison): string {
+  if (comparison.mcid) return comparison.mcid.label;
+  const trendWord = comparison.trend === 'improved' ? 'Improved' : 'Declined';
+  return `${trendWord} ${comparison.deltaLabel}`;
+}
+
+function AssessmentHistoryCard({
+  assessment,
+  comparison,
+}: {
+  assessment: Assessment;
+  comparison: AssessmentComparison | null;
+}) {
   const measureName = MEASURES[assessment.measure]?.name ?? assessment.measure;
   const measureShortName = MEASURES[assessment.measure]?.id ?? assessment.measure;
   const primary = formatPrimaryParts(assessment.results);
   const interpretation = getInterpretation(assessment.results);
   const metaLabel = getAssessmentMetaLabel(assessment);
+
+  const showChangePill = comparison !== null && comparison.trend !== 'unchanged';
 
   return (
     <Card style={styles.historyCard}>
@@ -145,6 +164,28 @@ function AssessmentHistoryCard({ assessment }: { assessment: Assessment }) {
               <Text style={styles.metaPillText}>{metaLabel}</Text>
             </View>
           ) : null}
+        </View>
+      ) : null}
+      {showChangePill ? (
+        <View style={
+          comparison.trend === 'declined'
+            ? styles.changePillDeclined
+            : comparison.mcid?.meetsThreshold
+              ? styles.changePillMCID
+              : styles.changePillImproved
+        }>
+          <Text
+            style={
+              comparison.trend === 'declined'
+                ? styles.changePillTextDeclined
+                : comparison.mcid?.meetsThreshold
+                  ? styles.changePillTextMCID
+                  : styles.changePillTextImproved
+            }
+            numberOfLines={1}
+          >
+            {getChangeLabel(comparison)}
+          </Text>
         </View>
       ) : null}
     </Card>
@@ -268,6 +309,7 @@ export default function PatientSummaryScreen() {
   const pathwayActions = pathway.nextActions.filter(action => action.detail).slice(0, 3);
   const recentHistory = assessments.slice(0, HISTORY_LIMIT);
   const clinicalLabel = getPatientClinicalLabel(patient);
+  const previousMap = buildPreviousAssessmentMap(assessments);
 
   return (
     <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
@@ -351,7 +393,13 @@ export default function PatientSummaryScreen() {
           </Card>
         ) : (
           <View style={styles.historyList}>
-            {recentHistory.map(a => <AssessmentHistoryCard key={a.id} assessment={a} />)}
+            {recentHistory.map(a => {
+              const prev = previousMap.get(a.id) ?? null;
+              const comparison = prev && MEASURES[a.measure]
+                ? getAssessmentComparison(a, prev, MEASURES[a.measure])
+                : null;
+              return <AssessmentHistoryCard key={a.id} assessment={a} comparison={comparison} />;
+            })}
           </View>
         )}
 
@@ -647,6 +695,51 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     padding: 0,
+  },
+  changePillMCID: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.secondarySoft,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.secondary,
+    maxWidth: '100%',
+  },
+  changePillImproved: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.secondarySoft,
+    maxWidth: '100%',
+  },
+  changePillDeclined: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#fdf1ee',
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: '#f0c9be',
+    maxWidth: '100%',
+  },
+  changePillTextMCID: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
+    color: colors.secondary,
+  },
+  changePillTextImproved: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  changePillTextDeclined: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
+    color: colors.coral,
   },
   actions: {
     marginTop: spacing.sm,
