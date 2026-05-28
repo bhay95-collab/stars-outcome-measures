@@ -11,7 +11,7 @@ export default function DataDeletion() {
           </div>
 
           <h1 className="title">Data Deletion</h1>
-          <p className="meta">Last updated: April 2026</p>
+          <p className="meta">Last updated: May 2026</p>
 
           <p className="intro">
             You have the right to delete your data from RehabMetrics IQ at any time. This page explains
@@ -20,15 +20,20 @@ export default function DataDeletion() {
 
           <h2>Delete Individual Patient Records</h2>
           <p>
-            You can delete individual patient records and their associated assessments directly within the app:
+            You can delete individual patient records and their associated assessments from the{' '}
+            <strong>RehabMetrics IQ web app</strong> at rehabmetricsiq.com:
           </p>
           <ol>
-            <li>Log in to your RehabMetrics IQ account.</li>
+            <li>Log in to your account at rehabmetricsiq.com.</li>
             <li>Select the patient from the sidebar.</li>
             <li>Click the <strong>Delete patient</strong> button next to their name.</li>
             <li>Confirm the deletion. This permanently removes the patient and all of their assessments.</li>
           </ol>
-          <p>Individual assessment entries can also be deleted from within a patient&apos;s record.</p>
+          <p>Individual assessment entries can also be deleted from within a patient&apos;s record in the web app.</p>
+          <p>
+            If you use the RehabMetrics IQ mobile app, patient records are shared with your web account.
+            Deleting a patient via the web app removes their data across all platforms.
+          </p>
 
           <h2>Delete Your Account and All Data</h2>
           <p>

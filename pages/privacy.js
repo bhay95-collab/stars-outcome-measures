@@ -11,7 +11,7 @@ export default function Privacy() {
           </div>
 
           <h1 className="title">Privacy Policy</h1>
-          <p className="meta">Last updated: April 2026</p>
+          <p className="meta">Last updated: May 2026</p>
 
           <p className="intro">
             RehabMetrics IQ (&ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;) is committed to protecting the privacy of our users.
@@ -23,7 +23,8 @@ export default function Privacy() {
           <ul>
             <li><strong>Account information:</strong> Your email address and encrypted password when you register, or your Google account details if you sign in with Google.</li>
             <li><strong>Patient data you enter:</strong> Patient initials (no full names), date of birth, diagnosis category, and clinical outcome measure scores and inputs.</li>
-            <li><strong>Usage data:</strong> Basic information about how you interact with the service to help us improve the product.</li>
+            <li><strong>Payment information:</strong> When you subscribe, payments are processed by Stripe, Inc. We do not store your full payment card details. Stripe may collect card details, billing address, and transaction history. See Stripe&apos;s privacy policy for how they handle this data.</li>
+            <li><strong>Usage data:</strong> Basic information about how you interact with the service, such as feature usage and error reports, to help us improve the product.</li>
           </ul>
 
           <h2>2. How We Use Your Information</h2>
@@ -36,13 +37,22 @@ export default function Privacy() {
           </ul>
           <p>We do not sell your data. We do not share your data with third parties except as required to operate the service or as required by law.</p>
 
-          <h2>3. Data Storage</h2>
+          <h2>3. Data Storage and Sub-Processors</h2>
           <p>
-            Your data is stored securely using <strong>Supabase</strong>, a managed cloud database platform.
-            Data is encrypted in transit (TLS) and at rest. Access is restricted to authenticated users.
+            Your account and clinical data is stored securely using <strong>Supabase</strong>, a managed cloud
+            database platform. Data is encrypted in transit (TLS) and at rest. Access is restricted to
+            authenticated users.
+          </p>
+          <p>
+            Subscription payments are processed by <strong>Stripe, Inc.</strong> Stripe operates under its own
+            privacy policy and security certifications. We do not store payment card numbers on our servers.
           </p>
 
-          <h2>4. Clinical Disclaimer</h2>
+          <h2>4. Intended Users and Clinical Disclaimer</h2>
+          <p>
+            RehabMetrics IQ is designed for use by licensed clinicians and healthcare professionals. This service
+            is not intended for use by individuals under the age of 17 or by patients directly.
+          </p>
           <p>
             RehabMetrics IQ is a documentation and scoring tool for qualified clinicians. It is not a medical device
             and does not provide clinical diagnoses or treatment recommendations. All clinical decisions remain
@@ -69,10 +79,17 @@ export default function Privacy() {
             <li>Export your data in a portable format — contact us to request this.</li>
           </ul>
 
-          <h2>7. Cookies and Session Storage</h2>
+          <h2>7. Sessions and Cookies</h2>
           <p>
-            We use a secure cookie to maintain your login session. This cookie expires after 30 days of inactivity.
-            We do not use tracking cookies or third-party advertising cookies.
+            On our web platform, we use a secure cookie to maintain your login session. This cookie expires after
+            30 days of inactivity.
+          </p>
+          <p>
+            On our mobile app, we use a secure authentication token stored on your device. We do not use
+            cookies in the mobile app.
+          </p>
+          <p>
+            We do not use tracking cookies or third-party advertising cookies on any platform.
           </p>
 
           <h2>8. Contact</h2>
