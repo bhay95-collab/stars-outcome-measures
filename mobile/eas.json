@@ -24,6 +24,27 @@
       "environment": "production",
       "channel": "production",
       "autoIncrement": true
+    },
+    "development-simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "environment": "development"
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "bhay95@gmail.com",
+        "ascAppId": "6774467740",
+        "appleTeamId": "U3KB3BY59J"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-key.json",
+        "track": "internal"
+      }
     }
   }
 }
