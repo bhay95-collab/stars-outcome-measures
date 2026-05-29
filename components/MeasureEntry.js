@@ -46,6 +46,10 @@ function getInitialMeasure(pathway) {
   return candidates.find(id => id && IMPLEMENTED.has(id) && MEASURES[id]) ?? '10MWT'
 }
 
+function getSelectableMeasure(measureId) {
+  return measureId && IMPLEMENTED.has(measureId) && MEASURES[measureId] ? measureId : null
+}
+
 function getPathwayStatus(pathway, measureId) {
   if (!pathway?.recommendedMeasures?.some(item => item.id === measureId)) return null
   if (pathway.dueMeasures?.some(item => item.id === measureId)) return { state: 'due', label: 'Due' }
@@ -62,8 +66,17 @@ function makeEncounterId() {
   return `encounter-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
-export default function MeasureEntry({ patient, userId, pathway, onSaved, onDone, onDirtyChange }) {
-  const initialMeasure = getInitialMeasure(pathway)
+export default function MeasureEntry({
+  patient,
+  userId,
+  pathway,
+  initialMeasureId,
+  activeMeasureId,
+  onSaved,
+  onDone,
+  onDirtyChange,
+}) {
+  const initialMeasure = getSelectableMeasure(activeMeasureId) ?? getSelectableMeasure(initialMeasureId) ?? getInitialMeasure(pathway)
   const [activeMeasure, setActiveMeasure] = useState(initialMeasure)
   const [activeCategory, setActiveCategory] = useState(MEASURES[initialMeasure]?.category ?? 'performance')
   const [completed, setCompleted] = useState(new Set())
@@ -90,12 +103,12 @@ export default function MeasureEntry({ patient, userId, pathway, onSaved, onDone
   useEffect(() => clearAssessmentSaveTimer, [])
 
   useEffect(() => {
-    const nextMeasure = getInitialMeasure(pathway)
+    const nextMeasure = getSelectableMeasure(activeMeasureId) ?? getSelectableMeasure(initialMeasureId) ?? getInitialMeasure(pathway)
     if (!drafts.length && nextMeasure && MEASURES[nextMeasure]) {
       setActiveMeasure(nextMeasure)
       setActiveCategory(MEASURES[nextMeasure].category)
     }
-  }, [drafts.length, patient?.id, pathway?.preferredMeasureId])
+  }, [activeMeasureId, drafts.length, initialMeasureId, patient?.id, pathway?.preferredMeasureId])
 
   function handleSubmit(inputs, results) {
     if (assessmentSaveState === 'saving') return

@@ -46,9 +46,10 @@ function trendSeriesColor(index) {
   return TREND_SERIES_COLORS[index % TREND_SERIES_COLORS.length]
 }
 
-export default function SummaryTab({ patient, assessments, onDeleteAssessment, onDeletePatient }) {
+export default function SummaryTab({ patient, assessments, onDeleteAssessment, onDeletePatient, mode = 'full' }) {
   const summary = buildPatientSummary(patient, assessments)
   const pathway = buildPatientPathway(patient, assessments)
+  const reportMode = mode === 'reports'
   const mcidContext = patient.diagnosis ? getMCIDContext(patient.diagnosis) : null
   const selectableMeasures = summary.entries.filter(entry => summary.groups[entry.measureId]?.some(a => toFiniteNumber(a.results?.primaryValue) != null))
   const [selectedMeasureId, setSelectedMeasureId] = useState(selectableMeasures[0]?.measureId ?? '')
@@ -81,37 +82,39 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
   }
 
   return (
-    <section className="summary-dashboard" aria-label="Patient dashboard">
-      <section className="dashboard-zone dashboard-zone--progress" aria-labelledby="dashboard-progress-heading">
-        <div className="dashboard-zone__head">
-          <div>
-            <span className="section-label">Progress and pathway</span>
-            <h2 id="dashboard-progress-heading">Outcome trajectory and next action</h2>
-          </div>
-          <p>Recent change and pathway coverage to prioritise the next assessment.</p>
-        </div>
-
-        <div className="dashboard-progress-grid">
-          <div className="summary-card summary-card--wide summary-card--anchor">
-            <div className="summary-card__head">
-              <div>
-                <h3>Outcome Measure Trend</h3>
-                <p>Recorded outcome values over time, with clinically meaningful change highlighted where thresholds exist.</p>
-              </div>
-              {selectableMeasures.length > 0 && (
-                <select value={activeMeasureId} onChange={event => setSelectedMeasureId(event.target.value)} aria-label="Select outcome measure trend">
-                  {selectableMeasures.map(entry => (
-                    <option key={entry.measureId} value={entry.measureId}>{entry.measure.id} - {entry.measure.name}</option>
-                  ))}
-                </select>
-              )}
+    <section className="summary-dashboard" aria-label={reportMode ? 'Reports and notes' : 'Patient dashboard'}>
+      {!reportMode && (
+        <section className="dashboard-zone dashboard-zone--progress" aria-labelledby="dashboard-progress-heading">
+          <div className="dashboard-zone__head">
+            <div>
+              <span className="section-label">Progress and pathway</span>
+              <h2 id="dashboard-progress-heading">Outcome trajectory and next action</h2>
             </div>
-            <MeasureTrendChart series={trendSeries} measureId={activeMeasureId} />
+            <p>Recent change and pathway coverage to prioritise the next assessment.</p>
           </div>
 
-          <PathwayPanel pathway={pathway} />
-        </div>
-      </section>
+          <div className="dashboard-progress-grid">
+            <div className="summary-card summary-card--wide summary-card--anchor">
+              <div className="summary-card__head">
+                <div>
+                  <h3>Outcome Measure Trend</h3>
+                  <p>Recorded outcome values over time, with clinically meaningful change highlighted where thresholds exist.</p>
+                </div>
+                {selectableMeasures.length > 0 && (
+                  <select value={activeMeasureId} onChange={event => setSelectedMeasureId(event.target.value)} aria-label="Select outcome measure trend">
+                    {selectableMeasures.map(entry => (
+                      <option key={entry.measureId} value={entry.measureId}>{entry.measure.id} - {entry.measure.name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <MeasureTrendChart series={trendSeries} measureId={activeMeasureId} />
+            </div>
+
+            <PathwayPanel pathway={pathway} />
+          </div>
+        </section>
+      )}
 
       <section className="dashboard-zone dashboard-zone--review" aria-labelledby="dashboard-review-heading">
         <div className="dashboard-zone__head">
@@ -153,33 +156,35 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
         </div>
       </section>
 
-      <section className="dashboard-zone dashboard-zone--signals" aria-labelledby="dashboard-signals-heading">
-        <div className="dashboard-zone__head">
-          <div>
-            <span className="section-label">Signals and measures</span>
-            <h2 id="dashboard-signals-heading">Current status tiles</h2>
-          </div>
-          <p>Latest flags, values, and covered domains from recorded assessments.</p>
-        </div>
-
-        <div className="dashboard-signals-grid">
-          <div className="summary-card signal-card">
-            <h3>Current Clinical Signals</h3>
-            <ClinicalSignals flags={summary.flags} onSelectMeasure={setSelectedMeasureId} />
+      {!reportMode && (
+        <section className="dashboard-zone dashboard-zone--signals" aria-labelledby="dashboard-signals-heading">
+          <div className="dashboard-zone__head">
+            <div>
+              <span className="section-label">Signals and measures</span>
+              <h2 id="dashboard-signals-heading">Current status tiles</h2>
+            </div>
+            <p>Latest flags, values, and covered domains from recorded assessments.</p>
           </div>
 
-          <div className="summary-card latest-card">
-            <h3>Latest Recorded Measures</h3>
-            <LatestMeasures entries={summary.entries} onSelectMeasure={setSelectedMeasureId} />
-          </div>
-        </div>
+          <div className="dashboard-signals-grid">
+            <div className="summary-card signal-card">
+              <h3>Current Clinical Signals</h3>
+              <ClinicalSignals flags={summary.flags} onSelectMeasure={setSelectedMeasureId} />
+            </div>
 
-        <div className="domain-grid">
-          {summary.domains.map(domain => (
-            <DomainCard key={domain.id} domain={domain} />
-          ))}
-        </div>
-      </section>
+            <div className="summary-card latest-card">
+              <h3>Latest Recorded Measures</h3>
+              <LatestMeasures entries={summary.entries} onSelectMeasure={setSelectedMeasureId} />
+            </div>
+          </div>
+
+          <div className="domain-grid">
+            {summary.domains.map(domain => (
+              <DomainCard key={domain.id} domain={domain} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="dashboard-zone dashboard-zone--records" aria-labelledby="dashboard-records-heading">
         <div className="dashboard-zone__head">

@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { Accessibility, ChevronDown, ClipboardList, LayoutDashboard, Users } from 'lucide-react'
+import { Accessibility, ChevronDown, ClipboardList, FileText, LayoutDashboard, Route, Search, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
@@ -13,19 +13,71 @@ import MeasureEntry from '../components/MeasureEntry'
 import SubscriptionWall from '../components/SubscriptionWall'
 import LogoWordmark from '../components/LogoWordmark'
 import WheelchairPrescriptionTool from '../components/WheelchairPrescriptionTool'
-import ThreeBarMotif from '../components/ThreeBarMotif'
 import AuthGateway from '../components/AuthGateway'
+import { MEASURES } from '../lib/clinical'
 import { buildPatientPathway } from '../lib/clinical/pathways'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
+import { buildPatientSummary, fmtDate } from '../lib/clinical/patientSummary'
 import { sortPatientsByLabel } from '../lib/patientDetails'
 
 export async function getServerSideProps() { return { props: {} } }
+
+const APP_SECTIONS = ['directory', 'overview', 'pathway', 'measures', 'reports', 'wheelchair']
+const PATIENT_SECTIONS = new Set(['overview', 'pathway', 'measures', 'reports', 'wheelchair'])
+const DEFAULT_PATIENT_SECTION = 'overview'
+
+function getQueryValue(value) {
+  return Array.isArray(value) ? value[0] : value
+}
+
+function normalizeSection(value) {
+  const section = getQueryValue(value)
+  return APP_SECTIONS.includes(section) ? section : DEFAULT_PATIENT_SECTION
+}
+
+function normalizeMeasureId(value) {
+  const measureId = getQueryValue(value)
+  return measureId && MEASURES[measureId] ? measureId : null
+}
+
+function buildAppRoute({ section, patientId, measureId }) {
+  const query = { section }
+  if (patientId && PATIENT_SECTIONS.has(section)) query.patient = patientId
+  if (measureId && section === 'measures') query.measure = measureId
+  return { pathname: '/app', query }
+}
+
+function getSectionTitle(section) {
+  switch (section) {
+    case 'directory': return 'Patient Directory'
+    case 'pathway': return 'Smart Pathway'
+    case 'measures': return 'Outcome Measures'
+    case 'reports': return 'Reports & Notes'
+    case 'wheelchair': return 'Wheelchair Prescription'
+    default: return 'Patient Overview'
+  }
+}
+
+function patientLabel(patient) {
+  return patient?.initials || patient?.name || 'Unnamed patient'
+}
+
+function formatAssessmentDate(iso) {
+  return iso ? fmtDate(iso) : 'No assessments'
+}
+
+function pathwayActionLabel(action) {
+  if (!action) return 'Review pathway'
+  if (action.type === 'diagnosis') return 'Add diagnosis'
+  if (action.measureId) return action.label
+  if (action.type === 'current') return 'Open reports'
+  return action.label || 'Review pathway'
+}
 
 export default function App() {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [bootState, setBootState] = useState('checking-auth')
-  const [trialValid, setTrialValid] = useState(null)
   const [hasAccess, setHasAccess] = useState(null)
   const [subscription, setSubscription] = useState(null)
   const [patients, setPatients] = useState([])
@@ -35,38 +87,27 @@ export default function App() {
   const [editingPatient, setEditingPatient] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
   const [profileData, setProfileData] = useState({ firstName: '', lastName: '', avatarUrl: null })
-  const [view, setView] = useState('patients')
+  const [activeSection, setActiveSection] = useState('directory')
+  const [requestedMeasureId, setRequestedMeasureId] = useState(null)
   const [notification, setNotification] = useState(null)
   const [reportLoading, setReportLoading] = useState(false)
   const [assessmentDirty, setAssessmentDirty] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState({ open: false, message: '', onConfirm: null })
 
-  const handleAssessmentSaved = useCallback((assessment) => {
+  function handleAssessmentSaved(assessment) {
     if (Array.isArray(assessment)) {
       setAssessments(prev => [...assessment, ...prev])
     } else if (assessment) {
       setAssessments(prev => [assessment, ...prev])
     }
     setAssessmentDirty(false)
-    setView('summary')
-  }, [])
+    goToSection('overview', { replace: true })
+  }
 
   const handleWheelchairPrescriptionSaved = useCallback((assessment) => {
     if (!assessment) return
     setAssessments(prev => [assessment, ...prev.filter(item => item.id !== assessment.id)])
   }, [])
-
-  const requestViewChange = useCallback((nextView) => {
-    if (assessmentDirty && view === 'assessment') {
-      setConfirmDialog({
-        open: true,
-        message: 'You have unsaved assessments. Leave without saving?',
-        onConfirm: () => { setAssessmentDirty(false); setView(nextView) },
-      })
-      return
-    }
-    setView(nextView)
-  }, [assessmentDirty, view])
 
   const handleDeleteAssessment = useCallback((assessmentId) => {
     if (!user?.id) return
@@ -171,7 +212,6 @@ export default function App() {
         subData?.current_period_end &&
         new Date(subData.current_period_end) > new Date()
 
-      setTrialValid(isTrialActive)
       setSubscription(subData ?? null)
       setHasAccess(isTrialActive || isSubscriptionActive)
 
@@ -252,11 +292,8 @@ export default function App() {
   }, [router.isReady, router.query.payment])
 
   const handlePatientSelect = useCallback(async (patient) => {
+    if (!patient) return
     setSelectedPatient(patient)
-    setView(prev => {
-      if (prev === 'assessment' || prev === 'patients' || prev === 'wheelchair') return prev
-      return 'summary'
-    })
     const { data } = await supabase
       .from('assessments')
       .select('*')
@@ -266,10 +303,65 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (view === 'summary' && !selectedPatient && patients.length > 0) {
-      handlePatientSelect(patients[0])
+    if (bootState !== 'ready' || !hasAccess || !router.isReady) return
+
+    const routeSection = normalizeSection(router.query.section)
+    const routePatientId = getQueryValue(router.query.patient)
+    const routeMeasureId = normalizeMeasureId(router.query.measure)
+
+    if (!patients.length) {
+      setSelectedPatient(null)
+      setAssessments([])
+      setActiveSection('directory')
+      setRequestedMeasureId(null)
+      if (routeSection !== 'directory') {
+        router.replace(buildAppRoute({ section: 'directory' }), undefined, { shallow: true })
+      }
+      return
     }
-  }, [patients, selectedPatient, view, handlePatientSelect])
+
+    if (routeSection === 'directory') {
+      setActiveSection('directory')
+      setRequestedMeasureId(null)
+      return
+    }
+
+    const routePatient = routePatientId
+      ? patients.find(patient => String(patient.id) === String(routePatientId))
+      : null
+    const nextPatient = routePatient ?? selectedPatient ?? patients[0]
+
+    if (nextPatient && selectedPatient?.id !== nextPatient.id) {
+      handlePatientSelect(nextPatient)
+    }
+
+    setActiveSection(routeSection)
+    setRequestedMeasureId(routeSection === 'measures' ? routeMeasureId : null)
+
+    if (!routePatientId || (routePatientId && !routePatient)) {
+      router.replace(
+        buildAppRoute({
+          section: routeSection,
+          patientId: nextPatient?.id,
+          measureId: routeSection === 'measures' ? routeMeasureId : null,
+        }),
+        undefined,
+        { shallow: true },
+      )
+    }
+  }, [
+    bootState,
+    hasAccess,
+    router.isReady,
+    router.query.section,
+    router.query.patient,
+    router.query.measure,
+    patients,
+    selectedPatient,
+    selectedPatient?.id,
+    handlePatientSelect,
+    router,
+  ])
 
   useEffect(() => {
     if (!assessmentDirty) return
@@ -281,11 +373,68 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [assessmentDirty])
 
-  const handlePatientCreated = useCallback((patient) => {
+  function updateAppRoute(section, patient, measureId, replace = false) {
+    if (!router.isReady) return
+    const method = replace ? router.replace : router.push
+    method.call(
+      router,
+      buildAppRoute({
+        section,
+        patientId: patient?.id,
+        measureId: section === 'measures' ? normalizeMeasureId(measureId) : null,
+      }),
+      undefined,
+      { shallow: true },
+    )
+  }
+
+  async function performSectionChange(section, options = {}) {
+    const nextSection = normalizeSection(section)
+    const explicitPatient = options.patient
+    const explicitPatientId = options.patientId
+    const nextPatient = explicitPatient
+      ?? (explicitPatientId ? patients.find(patient => String(patient.id) === String(explicitPatientId)) : null)
+      ?? selectedPatient
+    const nextMeasureId = nextSection === 'measures' ? normalizeMeasureId(options.measureId) : null
+
+    if (PATIENT_SECTIONS.has(nextSection) && !nextPatient) {
+      setActiveSection('directory')
+      setRequestedMeasureId(null)
+      updateAppRoute('directory', null, null, options.replace)
+      return
+    }
+
+    if (nextPatient && selectedPatient?.id !== nextPatient.id) {
+      await handlePatientSelect(nextPatient)
+    }
+
+    setActiveSection(nextSection)
+    setRequestedMeasureId(nextMeasureId)
+    updateAppRoute(nextSection, nextPatient, nextMeasureId, options.replace)
+  }
+
+  function goToSection(section, options = {}) {
+    const nextSection = normalizeSection(section)
+    if (assessmentDirty && activeSection === 'measures') {
+      setConfirmDialog({
+        open: true,
+        message: 'You have unsaved assessments in this encounter. Leave without saving?',
+        onConfirm: () => {
+          setAssessmentDirty(false)
+          performSectionChange(nextSection, options)
+        },
+      })
+      return
+    }
+
+    performSectionChange(nextSection, options)
+  }
+
+  function handlePatientCreated(patient) {
     setPatients(prev => [...prev, patient].sort(sortPatientsByLabel))
     setShowNewPatient(false)
-    handlePatientSelect(patient)
-  }, [handlePatientSelect])
+    goToSection('overview', { patient })
+  }
 
   const handlePatientUpdated = useCallback((patient) => {
     if (!patient) return
@@ -314,11 +463,7 @@ export default function App() {
     router.push('/')
   }
 
-  const viewTitle =
-    view === 'assessment' ? 'New Assessment'
-    : view === 'patients' ? 'Patients'
-    : view === 'wheelchair' ? 'Wheelchair Prescription'
-    : 'Patient Overview'
+  const viewTitle = getSectionTitle(activeSection)
   const selectedPathway = selectedPatient ? buildPatientPathway(selectedPatient, assessments) : null
 
   if (bootState === 'checking-auth' || bootState === 'unauthenticated') {
@@ -393,13 +538,15 @@ export default function App() {
       )}
       <div className="app-shell">
         <AppSidebar
-          activeView={view}
+          activeSection={activeSection}
+          patients={patients}
+          selectedPatient={selectedPatient}
+          pathway={selectedPathway}
           profileData={profileData}
           user={user}
-          onDashboard={() => requestViewChange('summary')}
-          onAssessment={() => selectedPatient ? requestViewChange('assessment') : requestViewChange('assessment')}
-          onPatients={() => requestViewChange('patients')}
-          onWheelchair={() => requestViewChange('wheelchair')}
+          onNavigate={goToSection}
+          onPatientSelect={(patient) => goToSection(DEFAULT_PATIENT_SECTION, { patient })}
+          onNewPatient={() => setShowNewPatient(true)}
           onProfile={() => setShowProfile(true)}
           onSignOut={handleSignOut}
         />
@@ -418,65 +565,66 @@ export default function App() {
             </div>
           )}
 
-          <div key={view} className="app-view">
-            {view === 'wheelchair' ? (
+          <div key={`${activeSection}-${selectedPatient?.id ?? 'none'}`} className="app-view">
+            {activeSection === 'directory' || !selectedPatient ? (
+              <PatientDirectoryWorkspace
+                patients={patients}
+                selectedPatient={selectedPatient}
+                selectedAssessments={assessments}
+                onSelect={(patient) => goToSection(DEFAULT_PATIENT_SECTION, { patient })}
+                onNew={() => setShowNewPatient(true)}
+                onMeasure={(measureId) => goToSection('measures', { measureId })}
+                onDashboard={() => goToSection('overview')}
+                onEditPatient={() => selectedPatient ? setEditingPatient(selectedPatient) : null}
+              />
+            ) : activeSection === 'wheelchair' ? (
               <WheelchairPrescriptionTool
                 patient={selectedPatient}
                 patients={patients}
-                onPatientSelect={handlePatientSelect}
+                onPatientSelect={(patient) => goToSection('wheelchair', { patient, replace: true })}
                 userId={user?.id}
                 assessments={assessments}
                 onSaved={handleWheelchairPrescriptionSaved}
               />
-            ) : view === 'patients' ? (
-              <PatientsWorkspace
-                patients={patients}
-                selectedPatient={selectedPatient}
-                selectedAssessments={assessments}
-                onSelect={handlePatientSelect}
-                onNew={() => setShowNewPatient(true)}
-                onNewAssessment={() => selectedPatient ? requestViewChange('assessment') : setShowNewPatient(true)}
-                onDashboard={() => selectedPatient ? requestViewChange('summary') : null}
-                onEditPatient={() => selectedPatient ? setEditingPatient(selectedPatient) : null}
+            ) : activeSection === 'pathway' ? (
+              <SmartPathwayWorkspace
+                patient={selectedPatient}
+                pathway={selectedPathway}
+                onEditPatient={() => setEditingPatient(selectedPatient)}
+                onMeasure={(measureId) => goToSection('measures', { measureId })}
+                onReports={() => goToSection('reports')}
               />
-            ) : selectedPatient ? (
-              <>
-                {view === 'summary' && (
-                  <PatientHeader
-                    patient={selectedPatient}
-                    assessments={assessments}
-                    onViewReport={handleExportFullReport}
-                    reportLoading={reportLoading}
-                    onEditPatient={() => setEditingPatient(selectedPatient)}
-                  />
-                )}
-                {view === 'summary' ? (
-                  <SummaryTab
-                    patient={selectedPatient}
-                    assessments={assessments}
-                    onDeleteAssessment={handleDeleteAssessment}
-                    onDeletePatient={handleDeletePatient}
-                  />
-                ) : (
-                  <MeasureEntry
-                    patient={selectedPatient}
-                    userId={user.id}
-                    pathway={selectedPathway}
-                    onSaved={handleAssessmentSaved}
-                    onDone={() => requestViewChange('summary')}
-                    onDirtyChange={setAssessmentDirty}
-                  />
-                )}
-              </>
+            ) : activeSection === 'measures' ? (
+              <OutcomeMeasuresWorkspace
+                patient={selectedPatient}
+                userId={user.id}
+                pathway={selectedPathway}
+                requestedMeasureId={requestedMeasureId}
+                onMeasure={(measureId) => goToSection('measures', { measureId, replace: true })}
+                onSaved={handleAssessmentSaved}
+                onDone={() => goToSection('overview')}
+                onDirtyChange={setAssessmentDirty}
+              />
+            ) : activeSection === 'reports' ? (
+              <ReportsWorkspace
+                patient={selectedPatient}
+                assessments={assessments}
+                reportLoading={reportLoading}
+                onViewReport={handleExportFullReport}
+                onEditPatient={() => setEditingPatient(selectedPatient)}
+                onDeleteAssessment={handleDeleteAssessment}
+                onDeletePatient={handleDeletePatient}
+              />
             ) : (
-              <div className="patient-directory-card">
-                <PatientList
-                  patients={patients}
-                  selectedId={selectedPatient?.id ?? null}
-                  onSelect={handlePatientSelect}
-                  onNew={() => setShowNewPatient(true)}
-                />
-              </div>
+              <PatientOverview
+                patient={selectedPatient}
+                assessments={assessments}
+                pathway={selectedPathway}
+                onEditPatient={() => setEditingPatient(selectedPatient)}
+                onMeasure={(measureId) => goToSection('measures', { measureId })}
+                onPathway={() => goToSection('pathway')}
+                onReports={() => goToSection('reports')}
+              />
             )}
           </div>
         </main>
@@ -485,27 +633,133 @@ export default function App() {
   )
 }
 
-function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, onPatients, onWheelchair, onProfile, onSignOut }) {
+function AppSidebar({
+  activeSection,
+  patients,
+  selectedPatient,
+  pathway,
+  profileData,
+  user,
+  onNavigate,
+  onPatientSelect,
+  onNewPatient,
+  onProfile,
+  onSignOut,
+}) {
   const displayName = profileData.firstName
     ? `${profileData.firstName} ${profileData.lastName}`.trim()
     : user?.email ?? 'User Profile'
   const initial = (profileData.firstName?.[0] || user?.email?.[0] || '?').toUpperCase()
+  const pathwayCount = (pathway?.missingMeasures?.length ?? 0) + (pathway?.dueMeasures?.length ?? 0)
+  const patientSectionsDisabled = !selectedPatient
+
+  const navItems = [
+    {
+      section: 'overview',
+      label: 'Overview',
+      job: 'Status and next action',
+      icon: LayoutDashboard,
+      disabled: patientSectionsDisabled,
+    },
+    {
+      section: 'pathway',
+      label: 'Smart Pathway',
+      job: 'Choose what to record next',
+      icon: Route,
+      badge: pathwayCount > 0 ? pathwayCount : null,
+      disabled: patientSectionsDisabled,
+    },
+    {
+      section: 'measures',
+      label: 'Outcome Measures',
+      job: 'Record the encounter',
+      icon: ClipboardList,
+      disabled: patientSectionsDisabled,
+    },
+    {
+      section: 'reports',
+      label: 'Reports & Notes',
+      job: 'Summaries, exports, history',
+      icon: FileText,
+      disabled: patientSectionsDisabled,
+    },
+    {
+      section: 'wheelchair',
+      label: 'Wheelchair Prescription',
+      job: 'Specialist seating workflow',
+      icon: Accessibility,
+      disabled: patientSectionsDisabled,
+    },
+  ]
+
+  function handlePatientChange(event) {
+    const patient = patients.find(item => String(item.id) === event.target.value)
+    if (patient) onPatientSelect(patient)
+  }
 
   return (
     <aside className="app-sidebar">
       <LogoWordmark className="app-sidebar__logo" size="md" />
-      <nav className="app-nav" aria-label="Dashboard navigation">
-        <button type="button" data-active={activeView === 'summary' ? '' : undefined} onClick={onDashboard}>
-          <LayoutDashboard size={21} /> Dashboard
-        </button>
-        <button type="button" data-active={activeView === 'patients' ? '' : undefined} onClick={onPatients}>
-          <Users size={21} /> Patients
-        </button>
-        <button type="button" data-active={activeView === 'assessment' ? '' : undefined} onClick={onAssessment}>
-          <ClipboardList size={21} /> Assessments
-        </button>
-        <button type="button" data-active={activeView === 'wheelchair' ? '' : undefined} onClick={onWheelchair}>
-          <Accessibility size={21} /> Wheelchair Prescription
+      <div className="patient-switcher">
+        <div className="patient-switcher__head">
+          <span className="section-label">Selected patient</span>
+          <button type="button" onClick={onNewPatient}>New</button>
+        </div>
+        <label className="patient-switcher__select">
+          <Search size={16} aria-hidden="true" />
+          <select
+            value={selectedPatient?.id ?? ''}
+            onChange={handlePatientChange}
+            disabled={!patients.length}
+            aria-label="Change selected patient"
+          >
+            <option value="">{patients.length ? 'Select patient' : 'No patients yet'}</option>
+            {patients.map(patient => (
+              <option key={patient.id} value={patient.id}>
+                {patientLabel(patient)}
+              </option>
+            ))}
+          </select>
+        </label>
+        {selectedPatient && (
+          <p className="patient-switcher__meta">
+            {selectedPatient.diagnosis || 'Diagnosis not recorded'}
+          </p>
+        )}
+      </div>
+
+      <nav className="app-nav" aria-label="Patient workspace navigation">
+        <span className="app-nav__group-label">Patient workspace</span>
+        {navItems.map(item => {
+          const Icon = item.icon
+          return (
+            <button
+              key={item.section}
+              type="button"
+              data-active={activeSection === item.section ? '' : undefined}
+              disabled={item.disabled}
+              onClick={() => onNavigate(item.section)}
+            >
+              <Icon size={21} aria-hidden="true" />
+              <span className="app-nav__copy">
+                <strong>{item.label}</strong>
+                <span>{item.job}</span>
+              </span>
+              {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
+            </button>
+          )
+        })}
+        <span className="app-nav__group-label app-nav__group-label--separate">Records</span>
+        <button
+          type="button"
+          data-active={activeSection === 'directory' ? '' : undefined}
+          onClick={() => onNavigate('directory')}
+        >
+          <Users size={21} aria-hidden="true" />
+          <span className="app-nav__copy">
+            <strong>Patient Directory</strong>
+            <span>Find or create patients</span>
+          </span>
         </button>
       </nav>
       <div className="app-sidebar__bottom">
@@ -528,10 +782,7 @@ function AppShellSkeleton() {
       <aside className="app-sidebar">
         <LogoWordmark className="app-sidebar__logo" size="md" />
         <nav className="app-nav" aria-label="Loading dashboard navigation">
-          <span className="skeleton-nav skeleton-line" />
-          <span className="skeleton-nav skeleton-line" />
-          <span className="skeleton-nav skeleton-line" />
-          <span className="skeleton-nav skeleton-line" />
+          {[0, 1, 2, 3, 4, 5].map(item => <span className="skeleton-nav skeleton-line" key={item} />)}
         </nav>
         <div className="app-sidebar__bottom">
           <span className="skeleton-profile">
@@ -570,6 +821,379 @@ function AppShellSkeleton() {
         </section>
       </main>
     </div>
+  )
+}
+
+function PatientDirectoryWorkspace({
+  patients,
+  selectedPatient,
+  selectedAssessments,
+  onSelect,
+  onNew,
+  onMeasure,
+  onDashboard,
+  onEditPatient,
+}) {
+  const summary = selectedPatient ? buildPatientSummary(selectedPatient, selectedAssessments) : null
+  const pathway = selectedPatient ? buildPatientPathway(selectedPatient, selectedAssessments) : null
+  const nextAction = pathway?.nextActions?.[0] ?? null
+  const latestAssessment = summary?.assessments?.[0] ?? null
+
+  function handleNextAction() {
+    if (nextAction?.measureId) {
+      onMeasure(nextAction.measureId)
+      return
+    }
+    if (nextAction?.type === 'diagnosis') {
+      onEditPatient?.()
+      return
+    }
+    onDashboard()
+  }
+
+  return (
+    <div className="patients-workspace patient-directory-workspace">
+      <div className="patient-directory-card">
+        <PatientList
+          patients={patients}
+          selectedId={selectedPatient?.id ?? null}
+          onSelect={onSelect}
+          onNew={onNew}
+        />
+      </div>
+
+      <section className="workspace-shell directory-focus-panel">
+        {selectedPatient ? (
+          <>
+            <div className="workspace-head">
+              <div>
+                <span className="section-label">Selected patient</span>
+                <h2>{patientLabel(selectedPatient)}</h2>
+                <p>{selectedPatient.diagnosis || 'Diagnosis not recorded'}</p>
+              </div>
+              {onEditPatient && (
+                <button type="button" className="secondary-action" onClick={onEditPatient}>
+                  Edit details
+                </button>
+              )}
+            </div>
+
+            <div className="workspace-stat-grid">
+              <div><span>Assessments</span><strong>{summary.totals.assessments}</strong></div>
+              <div><span>Measures</span><strong>{summary.totals.measures}</strong></div>
+              <div><span>Domains</span><strong>{summary.totals.domains}</strong></div>
+              <div><span>Latest</span><strong>{formatAssessmentDate(latestAssessment?.created_at)}</strong></div>
+            </div>
+
+            {pathway && (
+              <article className="next-action-panel" data-tone={pathway.statusTone}>
+                <div>
+                  <span className="section-label">Next best action</span>
+                  <h3>{nextAction?.label ?? pathway.statusLabel}</h3>
+                  <p>{nextAction?.detail ?? pathway.explanation.short}</p>
+                </div>
+                <button type="button" onClick={handleNextAction}>
+                  {pathwayActionLabel(nextAction)}
+                </button>
+              </article>
+            )}
+
+            <div className="directory-quick-actions">
+              <button type="button" onClick={onDashboard}>Open Overview</button>
+              <button type="button" onClick={() => onMeasure(pathway?.preferredMeasureId ?? '10MWT')}>
+                Record Outcome
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="patient-workspace-empty">
+            <div className="brand-iq-mark patient-workspace-empty__iq" aria-hidden="true">IQ</div>
+            <h2>{patients.length ? 'Select a patient' : 'Create your first patient'}</h2>
+            <p>
+              {patients.length
+                ? 'Choose a patient to open their overview, pathway, measures, reports, and wheelchair workflow.'
+                : 'Start with the patient record, then the workspace will guide assessment and reporting.'}
+            </p>
+            <button type="button" onClick={onNew}>New Patient</button>
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function PatientOverview({ patient, assessments, pathway, onEditPatient, onMeasure, onPathway, onReports }) {
+  const summary = buildPatientSummary(patient, assessments)
+  const nextAction = pathway?.nextActions?.[0] ?? null
+  const latestAssessment = summary.assessments[0] ?? null
+  const prioritySignal = summary.flags[0] ?? null
+  const latestEntries = summary.entries.slice(0, 4)
+
+  function handleNextAction() {
+    if (nextAction?.measureId) {
+      onMeasure(nextAction.measureId)
+      return
+    }
+    if (nextAction?.type === 'diagnosis') {
+      onEditPatient()
+      return
+    }
+    if (nextAction?.type === 'current') {
+      onReports()
+      return
+    }
+    onPathway()
+  }
+
+  return (
+    <section className="workspace-shell overview-workspace">
+      <div className="workspace-head">
+        <div>
+          <span className="section-label">Patient overview</span>
+          <h2>{patientLabel(patient)}</h2>
+          <p>{patient.diagnosis || 'Diagnosis not recorded'}</p>
+        </div>
+        <div className="workspace-head__actions">
+          <button type="button" className="secondary-action" onClick={onEditPatient}>Edit details</button>
+          <button type="button" onClick={onPathway}>Smart Pathway</button>
+        </div>
+      </div>
+
+      <div className="overview-grid">
+        <article className="next-action-panel overview-next-action" data-tone={pathway?.statusTone}>
+          <div>
+            <span className="section-label">Next best action</span>
+            <h3>{nextAction?.label ?? 'Open Smart Pathway'}</h3>
+            <p>{nextAction?.detail ?? 'Review the pathway to choose the next useful clinical action.'}</p>
+          </div>
+          <button type="button" onClick={handleNextAction}>
+            {pathwayActionLabel(nextAction)}
+          </button>
+        </article>
+
+        <div className="workspace-stat-grid overview-stat-grid">
+          <div><span>Assessments</span><strong>{summary.totals.assessments}</strong></div>
+          <div><span>Measures</span><strong>{summary.totals.measures}</strong></div>
+          <div><span>Domains</span><strong>{summary.totals.domains}</strong></div>
+          <div><span>Latest</span><strong>{formatAssessmentDate(latestAssessment?.created_at)}</strong></div>
+        </div>
+
+        <article className="overview-card">
+          <div className="summary-card__head">
+            <div>
+              <h3>Clinical signal</h3>
+              <p>Highest current flag from recorded measures.</p>
+            </div>
+          </div>
+          {prioritySignal ? (
+            <div className="overview-signal" data-tone={prioritySignal.tone}>
+              <strong>{prioritySignal.title}</strong>
+              <span>{prioritySignal.value}</span>
+              <p>{prioritySignal.text}</p>
+            </div>
+          ) : (
+            <p className="empty-hint">No elevated clinical signal is currently recorded.</p>
+          )}
+        </article>
+
+        <article className="overview-card">
+          <div className="summary-card__head">
+            <div>
+              <h3>Latest measures</h3>
+              <p>Recent recorded outcome values for fast scanning.</p>
+            </div>
+            <button type="button" onClick={onReports}>History</button>
+          </div>
+          <div className="overview-measure-list">
+            {latestEntries.length ? latestEntries.map(entry => (
+              <button key={entry.measureId} type="button" onClick={() => onMeasure(entry.measureId)}>
+                <span>{entry.measure.id}</span>
+                <strong>{entry.valueLabel}</strong>
+                <em>{entry.interpretation}</em>
+              </button>
+            )) : (
+              <p className="empty-hint">Record a baseline measure to populate this view.</p>
+            )}
+          </div>
+        </article>
+      </div>
+    </section>
+  )
+}
+
+function SmartPathwayWorkspace({ patient, pathway, onEditPatient, onMeasure, onReports }) {
+  const nextActions = pathway?.nextActions ?? []
+  const measureGroups = [
+    {
+      title: 'Missing baseline',
+      empty: 'Recommended baseline measures are recorded.',
+      state: 'missing',
+      items: pathway?.missingMeasures ?? [],
+    },
+    {
+      title: 'Due reassessment',
+      empty: 'No pathway reassessments are due.',
+      state: 'due',
+      items: pathway?.dueMeasures ?? [],
+    },
+    {
+      title: 'Recorded/current',
+      empty: 'No pathway measures have been recorded yet.',
+      state: 'recorded',
+      items: pathway?.recordedMeasures ?? [],
+    },
+  ]
+
+  function handleAction(action) {
+    if (action.measureId) {
+      onMeasure(action.measureId)
+      return
+    }
+    if (action.type === 'diagnosis') {
+      onEditPatient()
+      return
+    }
+    onReports()
+  }
+
+  return (
+    <section className="workspace-shell pathway-workspace">
+      <div className="workspace-head">
+        <div>
+          <span className="section-label">Smart pathway</span>
+          <h2>{patientLabel(patient)}</h2>
+          <p>{pathway?.diagnosisLabel ?? patient.diagnosis ?? 'Diagnosis not recorded'} pathway</p>
+        </div>
+        <button type="button" className="secondary-action" onClick={onEditPatient}>Edit diagnosis</button>
+      </div>
+
+      <div className="pathway-hero" data-tone={pathway?.statusTone}>
+        <div>
+          <span className="section-label">Pathway status</span>
+          <h3>{pathway?.statusLabel ?? 'Pathway unavailable'}</h3>
+          <p>{pathway?.explanation.detail}</p>
+        </div>
+        <div className="pathway-coverage">
+          <strong>{pathway?.coveragePercent ?? 0}%</strong>
+          <span>Baseline coverage</span>
+        </div>
+      </div>
+
+      <div className="pathway-action-grid">
+        {nextActions.map((action, index) => (
+          <article key={`${action.type}-${action.measureId ?? index}`} data-tone={action.tone}>
+            <span>{action.type === 'reassess' ? 'Reassessment' : action.type === 'baseline' ? 'Baseline' : 'Pathway action'}</span>
+            <strong>{action.label}</strong>
+            <p>{action.detail}</p>
+            <button type="button" onClick={() => handleAction(action)}>
+              {pathwayActionLabel(action)}
+            </button>
+          </article>
+        ))}
+      </div>
+
+      <div className="pathway-measure-columns">
+        {measureGroups.map(group => (
+          <section key={group.title} className="pathway-measure-column">
+            <h3>{group.title}</h3>
+            {group.items.length ? group.items.map(item => (
+              <button
+                key={`${group.state}-${item.id}`}
+                type="button"
+                data-state={group.state}
+                onClick={() => onMeasure(item.id)}
+              >
+                <span>{item.id}</span>
+                <strong>{item.name}</strong>
+                <em>
+                  {item.lastRecordedLabel
+                    ? `Last recorded ${item.lastRecordedLabel}`
+                    : 'Not yet recorded'}
+                </em>
+              </button>
+            )) : (
+              <p className="empty-hint">{group.empty}</p>
+            )}
+          </section>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function OutcomeMeasuresWorkspace({
+  patient,
+  userId,
+  pathway,
+  requestedMeasureId,
+  onMeasure,
+  onSaved,
+  onDone,
+  onDirtyChange,
+}) {
+  const priorityMeasures = [
+    ...(pathway?.dueMeasures ?? []),
+    ...(pathway?.missingMeasures ?? []),
+  ].slice(0, 8)
+
+  return (
+    <section className="outcome-measures-workspace">
+      {priorityMeasures.length > 0 && (
+        <div className="measure-priority-strip" aria-label="Pathway priority measures">
+          <span>Pathway priorities</span>
+          {priorityMeasures.map(item => (
+            <button
+              key={`${item.isDue ? 'due' : 'missing'}-${item.id}`}
+              type="button"
+              data-state={item.isDue ? 'due' : 'missing'}
+              data-active={requestedMeasureId === item.id ? '' : undefined}
+              onClick={() => onMeasure(item.id)}
+            >
+              {item.isDue ? `Repeat ${item.id}` : `Record ${item.id}`}
+            </button>
+          ))}
+        </div>
+      )}
+      <MeasureEntry
+        patient={patient}
+        userId={userId}
+        pathway={pathway}
+        activeMeasureId={requestedMeasureId}
+        initialMeasureId={requestedMeasureId}
+        onSaved={onSaved}
+        onDone={onDone}
+        onDirtyChange={onDirtyChange}
+      />
+    </section>
+  )
+}
+
+function ReportsWorkspace({
+  patient,
+  assessments,
+  reportLoading,
+  onViewReport,
+  onEditPatient,
+  onDeleteAssessment,
+  onDeletePatient,
+}) {
+  return (
+    <section className="reports-workspace">
+      <PatientHeader
+        patient={patient}
+        assessments={assessments}
+        onViewReport={onViewReport}
+        reportLoading={reportLoading}
+        onEditPatient={onEditPatient}
+      />
+      <SummaryTab
+        patient={patient}
+        assessments={assessments}
+        onDeleteAssessment={onDeleteAssessment}
+        onDeletePatient={onDeletePatient}
+        mode="reports"
+      />
+    </section>
   )
 }
 
@@ -1642,9 +2266,95 @@ const globalStyles = `
     gap: 0.16em;
   }
 
+  .patient-switcher {
+    display: grid;
+    gap: 9px;
+    margin: 0 2px 22px;
+    padding: 12px;
+    border: 1px solid rgba(216,225,234,0.9);
+    border-radius: 10px;
+    background: var(--color-surface-raised);
+  }
+
+  .patient-switcher__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .patient-switcher__head .section-label {
+    margin-bottom: 0;
+  }
+
+  .patient-switcher__head button {
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid rgba(35,100,153,0.24);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .patient-switcher__select {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--color-muted);
+  }
+
+  .patient-switcher__select select {
+    min-width: 0;
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--color-ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .patient-switcher__select select:disabled {
+    color: var(--color-subtle);
+  }
+
+  .patient-switcher__meta {
+    overflow: hidden;
+    color: var(--color-muted);
+    font-size: 12px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .app-nav {
     display: grid;
     gap: 8px;
+  }
+
+  .app-nav__group-label {
+    margin: 4px 12px 0;
+    color: var(--color-subtle);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .app-nav__group-label--separate {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border);
   }
 
   .app-nav button,
@@ -1667,6 +2377,58 @@ const globalStyles = `
     text-align: left;
   }
 
+  .app-nav button {
+    min-height: 58px;
+  }
+
+  .app-nav button:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+  }
+
+  .app-nav button:disabled:hover {
+    background: transparent;
+  }
+
+  .app-nav__copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .app-nav__copy strong {
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app-nav__copy span {
+    overflow: hidden;
+    color: var(--color-muted);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav-badge {
+    min-width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
   .app-nav button:hover,
   .app-sidebar__settings:hover,
   .profile-strip:hover {
@@ -1677,6 +2439,10 @@ const globalStyles = `
     background: var(--color-primary);
     box-shadow: 0 1px 2px rgba(23,61,104,0.22);
     color: #fff;
+  }
+
+  .app-nav button[data-active] .app-nav__copy span {
+    color: rgba(255,255,255,0.78);
   }
 
   .app-sidebar__bottom {
@@ -3207,6 +3973,461 @@ const globalStyles = `
     font-weight: 800;
   }
 
+  .workspace-shell,
+  .reports-workspace {
+    width: min(100%, 1320px);
+    margin: 0 auto;
+  }
+
+  .workspace-shell {
+    display: grid;
+    gap: 20px;
+    padding: 24px;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .workspace-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .workspace-head h2 {
+    color: var(--color-ink);
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 800;
+    line-height: 1.04;
+  }
+
+  .workspace-head p {
+    margin-top: 8px;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .workspace-head__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .workspace-head button,
+  .next-action-panel button,
+  .directory-quick-actions button,
+  .summary-card__head button,
+  .pathway-action-grid button {
+    min-height: 38px;
+    padding: 0 15px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--color-primary);
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .workspace-head button.secondary-action,
+  .directory-quick-actions button + button,
+  .summary-card__head button {
+    border: 1px solid var(--color-border);
+    background: #fff;
+    color: var(--color-primary);
+  }
+
+  .workspace-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .workspace-stat-grid div {
+    min-height: 84px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: rgba(247,250,252,0.82);
+  }
+
+  .workspace-stat-grid span {
+    display: block;
+    color: var(--color-muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .workspace-stat-grid strong {
+    display: block;
+    margin-top: 8px;
+    color: var(--color-ink);
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1.16;
+  }
+
+  .next-action-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px;
+    border: 1px solid rgba(127,179,230,0.38);
+    border-left: 4px solid var(--color-primary);
+    border-radius: 10px;
+    background: var(--color-surface-raised);
+  }
+
+  .next-action-panel[data-tone="good"] {
+    border-left-color: #2f855a;
+  }
+
+  .next-action-panel[data-tone="attention"],
+  .next-action-panel[data-tone="due"] {
+    border-left-color: #d97706;
+  }
+
+  .next-action-panel h3 {
+    margin: 0;
+    color: var(--color-ink);
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .next-action-panel p {
+    max-width: 780px;
+    margin-top: 6px;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .directory-focus-panel {
+    align-content: start;
+    min-height: 360px;
+  }
+
+  .directory-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .overview-next-action,
+  .overview-stat-grid {
+    grid-column: 1 / -1;
+  }
+
+  .overview-card {
+    min-height: 260px;
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .overview-signal {
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-left: 4px solid #7b8794;
+    border-radius: 8px;
+    background: var(--color-surface-raised);
+  }
+
+  .overview-signal[data-tone="red"] {
+    border-left-color: #b5451b;
+  }
+
+  .overview-signal[data-tone="amber"] {
+    border-left-color: #d97706;
+  }
+
+  .overview-signal strong,
+  .overview-signal span {
+    display: inline-block;
+    margin-right: 10px;
+    color: var(--color-ink);
+    font-weight: 800;
+  }
+
+  .overview-signal p {
+    margin-top: 8px;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .overview-measure-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .overview-measure-list button {
+    display: grid;
+    grid-template-columns: 72px minmax(90px, 0.5fr) minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    min-height: 58px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface-raised);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .overview-measure-list span {
+    color: var(--color-primary);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .overview-measure-list strong {
+    color: var(--color-ink);
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .overview-measure-list em {
+    overflow: hidden;
+    color: var(--color-muted);
+    font-size: 12px;
+    font-style: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pathway-workspace {
+    gap: 22px;
+  }
+
+  .pathway-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    padding: 20px;
+    border: 1px solid rgba(127,179,230,0.38);
+    border-left: 4px solid var(--color-primary);
+    border-radius: 10px;
+    background: var(--color-surface-raised);
+  }
+
+  .pathway-hero[data-tone="good"] {
+    border-left-color: #2f855a;
+  }
+
+  .pathway-hero[data-tone="attention"],
+  .pathway-hero[data-tone="due"] {
+    border-left-color: #d97706;
+  }
+
+  .pathway-hero h3 {
+    margin: 0;
+    color: var(--color-ink);
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .pathway-hero p {
+    max-width: 780px;
+    margin-top: 8px;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .pathway-coverage {
+    min-width: 156px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: #fff;
+    text-align: center;
+  }
+
+  .pathway-coverage strong {
+    display: block;
+    color: var(--color-primary);
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .pathway-coverage span {
+    display: block;
+    margin-top: 8px;
+    color: var(--color-muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .pathway-action-grid,
+  .pathway-measure-columns {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .pathway-action-grid article,
+  .pathway-measure-column {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+  }
+
+  .pathway-action-grid article {
+    border-top: 4px solid var(--color-primary);
+  }
+
+  .pathway-action-grid article[data-tone="attention"],
+  .pathway-action-grid article[data-tone="due"] {
+    border-top-color: #d97706;
+  }
+
+  .pathway-action-grid article[data-tone="good"] {
+    border-top-color: #2f855a;
+  }
+
+  .pathway-action-grid span {
+    color: var(--color-subtle);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .pathway-action-grid strong,
+  .pathway-measure-column h3 {
+    color: var(--color-ink);
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .pathway-action-grid p {
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .pathway-action-grid button {
+    justify-self: start;
+  }
+
+  .pathway-measure-column button {
+    display: grid;
+    gap: 3px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-primary);
+    border-radius: 8px;
+    background: var(--color-surface-raised);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .pathway-measure-column button[data-state="missing"],
+  .pathway-measure-column button[data-state="due"] {
+    border-left-color: #d97706;
+  }
+
+  .pathway-measure-column button[data-state="recorded"] {
+    border-left-color: #2f855a;
+  }
+
+  .pathway-measure-column span {
+    color: var(--color-primary);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .pathway-measure-column strong {
+    color: var(--color-ink);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .pathway-measure-column em {
+    color: var(--color-muted);
+    font-size: 12px;
+    font-style: normal;
+  }
+
+  .outcome-measures-workspace {
+    display: grid;
+    gap: 14px;
+  }
+
+  .measure-priority-strip {
+    width: min(100%, 1320px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+  }
+
+  .measure-priority-strip > span {
+    margin-right: 4px;
+    color: var(--color-subtle);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .measure-priority-strip button {
+    min-height: 30px;
+    padding: 0 11px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .measure-priority-strip button[data-state="due"],
+  .measure-priority-strip button[data-state="missing"] {
+    color: #a05c00;
+  }
+
+  .measure-priority-strip button[data-active] {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+    color: var(--color-primary-dark);
+  }
+
   .patients-workspace {
     display: grid;
     grid-template-columns: minmax(360px, 520px) minmax(0, 1fr);
@@ -3588,21 +4809,19 @@ const globalStyles = `
 
   @media (max-width: 1100px) {
     .app-shell {
-      grid-template-columns: 86px minmax(0, 1fr);
+      grid-template-columns: 238px minmax(0, 1fr);
     }
     .app-sidebar__logo {
       margin-inline: 8px;
       overflow: hidden;
-      width: 36px;
+      width: auto;
     }
     .app-nav button,
     .app-sidebar__settings {
-      justify-content: center;
-      padding: 0;
-      font-size: 0;
+      justify-content: flex-start;
+      padding: 0 12px;
     }
-    .profile-strip strong,
-    .profile-strip svg {
+    .app-nav__copy span {
       display: none;
     }
     .summary-grid {
@@ -3621,6 +4840,12 @@ const globalStyles = `
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .patient-workspace-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .workspace-stat-grid,
+    .pathway-action-grid,
+    .pathway-measure-columns,
+    .overview-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .patient-summary-card__body {
@@ -3653,11 +4878,18 @@ const globalStyles = `
       margin: 0 0 14px;
     }
     .app-nav {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .app-nav button {
       justify-content: center;
-      font-size: 0;
+      min-height: 46px;
+      padding: 0 10px;
+      font-size: 13px;
+    }
+    .app-nav__group-label,
+    .app-nav__copy span,
+    .nav-badge {
+      display: none;
     }
     .app-sidebar__bottom {
       display: none;
@@ -3695,6 +4927,12 @@ const globalStyles = `
       align-items: stretch;
       flex-direction: column;
     }
+    .workspace-head,
+    .next-action-panel,
+    .pathway-hero {
+      align-items: stretch;
+      flex-direction: column;
+    }
     .patient-workspace-hero {
       grid-template-columns: 1fr;
       justify-items: start;
@@ -3718,10 +4956,17 @@ const globalStyles = `
     .dashboard-records-grid,
     .domain-grid,
     .patients-workspace,
+    .workspace-stat-grid,
+    .pathway-action-grid,
+    .pathway-measure-columns,
+    .overview-grid,
     .skeleton-workspace,
     [data-measure-layout] {
       grid-template-columns: 1fr;
       display: grid;
+    }
+    .overview-measure-list button {
+      grid-template-columns: 1fr;
     }
     .skeleton-stat-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
