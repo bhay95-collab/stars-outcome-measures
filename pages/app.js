@@ -14,6 +14,7 @@ import SubscriptionWall from '../components/SubscriptionWall'
 import LogoWordmark from '../components/LogoWordmark'
 import WheelchairPrescriptionTool from '../components/WheelchairPrescriptionTool'
 import ThreeBarMotif from '../components/ThreeBarMotif'
+import AuthGateway from '../components/AuthGateway'
 import { buildPatientPathway } from '../lib/clinical/pathways'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
 import { sortPatientsByLabel } from '../lib/patientDetails'
@@ -23,7 +24,7 @@ export async function getServerSideProps() { return { props: {} } }
 export default function App() {
   const router = useRouter()
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [bootState, setBootState] = useState('checking-auth')
   const [trialValid, setTrialValid] = useState(null)
   const [hasAccess, setHasAccess] = useState(null)
   const [subscription, setSubscription] = useState(null)
@@ -126,10 +127,18 @@ export default function App() {
 
   useEffect(() => {
     let loaded = false
+    let active = true
+
+    function redirectToLogin() {
+      if (!active) return
+      setBootState('unauthenticated')
+      router.replace('/login')
+    }
 
     async function loadUserData(sessionUser) {
-      if (loaded) return
+      if (loaded || !active) return
       loaded = true
+      setBootState('loading-workspace')
       setUser(sessionUser)
 
       const [
@@ -148,9 +157,11 @@ export default function App() {
           .maybeSingle(),
       ])
 
+      if (!active) return
+
       if (profileError) {
         setHasAccess(false)
-        setLoading(false)
+        setBootState('ready')
         return
       }
 
@@ -180,28 +191,33 @@ export default function App() {
         setPatients(pats ?? [])
       }
 
-      setLoading(false)
+      if (!active) return
+      setBootState('ready')
     }
 
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user) loadUserData(data.session.user)
-    }).catch(() => router.replace('/login'))
+      if (data.session?.user) {
+        loadUserData(data.session.user)
+        return
+      }
+
+      redirectToLogin()
+    }).catch(redirectToLogin)
 
     const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
         loadUserData(session.user)
       } else if (event === 'INITIAL_SESSION' && !session) {
-        // Don't redirect during an OAuth callback — wait for SIGNED_IN instead
-        const isOAuthCallback =
-          typeof window !== 'undefined' &&
-          (window.location.search.includes('code=') || window.location.hash.includes('access_token='))
-        if (!isOAuthCallback) router.replace('/login')
+        redirectToLogin()
       } else if (event === 'SIGNED_OUT') {
-        router.replace('/login')
+        redirectToLogin()
       }
     })
 
-    return () => authSub.unsubscribe()
+    return () => {
+      active = false
+      authSub.unsubscribe()
+    }
   }, [router])
 
   // Handle Stripe redirect query params
@@ -305,15 +321,25 @@ export default function App() {
     : 'Patient Overview'
   const selectedPathway = selectedPatient ? buildPatientPathway(selectedPatient, assessments) : null
 
-  if (loading) {
+  if (bootState === 'checking-auth' || bootState === 'unauthenticated') {
     return (
       <>
         <AppHead />
         <style jsx global>{globalStyles}</style>
-        <div className="loading-page">
-          <ThreeBarMotif size="lg" loading label="Loading RehabMetrics IQ" />
-          <p className="loading-text">Loading RehabMetrics IQ…</p>
-        </div>
+        <AuthGateway
+          title={bootState === 'unauthenticated' ? 'Redirecting to sign in' : 'Opening RehabMetrics IQ'}
+          message={bootState === 'unauthenticated' ? 'Taking you back to the secure login page.' : 'Checking your secure session.'}
+        />
+      </>
+    )
+  }
+
+  if (bootState === 'loading-workspace') {
+    return (
+      <>
+        <AppHead />
+        <style jsx global>{globalStyles}</style>
+        <AppShellSkeleton />
       </>
     )
   }
@@ -493,6 +519,57 @@ function AppSidebar({ activeView, profileData, user, onAssessment, onDashboard, 
         <button type="button" className="sidebar-signout" onClick={onSignOut}>Sign out</button>
       </div>
     </aside>
+  )
+}
+
+function AppShellSkeleton() {
+  return (
+    <div className="app-shell app-shell--skeleton" aria-busy="true">
+      <aside className="app-sidebar">
+        <LogoWordmark className="app-sidebar__logo" size="md" />
+        <nav className="app-nav" aria-label="Loading dashboard navigation">
+          <span className="skeleton-nav skeleton-line" />
+          <span className="skeleton-nav skeleton-line" />
+          <span className="skeleton-nav skeleton-line" />
+          <span className="skeleton-nav skeleton-line" />
+        </nav>
+        <div className="app-sidebar__bottom">
+          <span className="skeleton-profile">
+            <span className="skeleton-avatar" />
+            <span className="skeleton-line" />
+          </span>
+          <span className="skeleton-button skeleton-line" />
+        </div>
+      </aside>
+      <main className="app-main">
+        <div className="page-toolbar">
+          <span className="skeleton-title skeleton-line" />
+        </div>
+        <section className="skeleton-workspace" aria-label="Loading workspace">
+          <div className="skeleton-directory">
+            <span className="skeleton-heading skeleton-line" />
+            {[0, 1, 2, 3].map(item => (
+              <span className="skeleton-patient-row" key={item}>
+                <span className="skeleton-avatar" />
+                <span>
+                  <span className="skeleton-line" />
+                  <span className="skeleton-line skeleton-line--short" />
+                </span>
+              </span>
+            ))}
+          </div>
+          <div className="skeleton-panel">
+            <span className="skeleton-hero" />
+            <span className="skeleton-heading skeleton-line" />
+            <div className="skeleton-stat-grid">
+              {[0, 1, 2, 3].map(item => <span className="skeleton-stat" key={item} />)}
+            </div>
+            <span className="skeleton-block" />
+            <span className="skeleton-block skeleton-block--small" />
+          </div>
+        </section>
+      </main>
+    </div>
   )
 }
 
@@ -1699,6 +1776,156 @@ const globalStyles = `
     font-size: clamp(34px, 4vw, 42px);
     font-weight: 800;
     line-height: 1.04;
+  }
+
+  .app-shell--skeleton {
+    color: transparent;
+  }
+
+  .skeleton-line,
+  .skeleton-avatar,
+  .skeleton-stat,
+  .skeleton-hero,
+  .skeleton-block {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #e4ebf2 0%, #f3f7fb 46%, #e4ebf2 100%);
+    background-size: 220% 100%;
+  }
+
+  .skeleton-line {
+    display: block;
+    width: 100%;
+    height: 14px;
+  }
+
+  .skeleton-line--short {
+    width: 54%;
+  }
+
+  .skeleton-nav {
+    width: 100%;
+    height: 44px;
+  }
+
+  .skeleton-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 52px;
+    padding: 0 10px;
+  }
+
+  .skeleton-profile .skeleton-line {
+    flex: 1;
+  }
+
+  .skeleton-avatar {
+    display: block;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 50%;
+  }
+
+  .skeleton-button {
+    height: 34px;
+  }
+
+  .skeleton-title {
+    width: min(52vw, 340px);
+    height: 42px;
+  }
+
+  .skeleton-workspace {
+    display: grid;
+    grid-template-columns: minmax(260px, 330px) minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .skeleton-directory,
+  .skeleton-panel {
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .skeleton-directory {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+    padding: 18px;
+  }
+
+  .skeleton-heading {
+    width: 44%;
+    height: 18px;
+    margin-bottom: 4px;
+  }
+
+  .skeleton-patient-row {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    min-height: 58px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(210,220,232,0.72);
+  }
+
+  .skeleton-patient-row > span:last-child {
+    display: grid;
+    gap: 9px;
+  }
+
+  .skeleton-panel {
+    display: grid;
+    gap: 18px;
+    align-content: start;
+    padding: 22px;
+  }
+
+  .skeleton-hero {
+    width: 100%;
+    height: 148px;
+  }
+
+  .skeleton-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .skeleton-stat {
+    display: block;
+    height: 74px;
+  }
+
+  .skeleton-block {
+    display: block;
+    width: 100%;
+    height: 132px;
+  }
+
+  .skeleton-block--small {
+    height: 86px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .skeleton-line,
+    .skeleton-avatar,
+    .skeleton-stat,
+    .skeleton-hero,
+    .skeleton-block {
+      animation: skeleton-sheen 1.4s ease-in-out infinite;
+    }
+  }
+
+  @keyframes skeleton-sheen {
+    0% { background-position: 120% 0; }
+    100% { background-position: -120% 0; }
   }
 
   .brand-iq-mark {
@@ -3389,7 +3616,8 @@ const globalStyles = `
     }
     .summary-grid--real,
     .domain-grid,
-    .patients-workspace {
+    .patients-workspace,
+    .skeleton-workspace {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .patient-workspace-stats {
@@ -3490,9 +3718,13 @@ const globalStyles = `
     .dashboard-records-grid,
     .domain-grid,
     .patients-workspace,
+    .skeleton-workspace,
     [data-measure-layout] {
       grid-template-columns: 1fr;
       display: grid;
+    }
+    .skeleton-stat-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .assessment-detail-grid,
     .patient-summary-card__body--real {

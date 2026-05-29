@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { Accessibility, ArrowRight, Check, ChevronDown, ClipboardCheck, FileText, LineChart, Route, Smartphone } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { hasSupabaseAuthErrorUrl, isSupabaseAuthCallbackUrl } from '../lib/auth-routing'
+import AuthGateway from '../components/AuthGateway'
 import LogoWordmark from '../components/LogoWordmark'
 
 const MEASURES = [
@@ -89,6 +91,34 @@ const MCID_STROKE = 0.06
 const PATIENT_AGE = 68
 const PREV_TIME = 12.9
 const CANONICAL_HOME = 'https://www.rehabmetricsiq.com/'
+const AUTH_CALLBACK_BOOTSTRAP_SCRIPT = `
+try {
+  var url = new URL(window.location.href);
+  var hash = new URLSearchParams((url.hash || '').replace(/^#/, ''));
+  var search = url.searchParams;
+  if (
+    search.has('code') ||
+    search.has('error') ||
+    search.has('error_code') ||
+    search.has('error_description') ||
+    hash.has('access_token') ||
+    hash.has('refresh_token') ||
+    hash.has('error') ||
+    hash.has('error_code') ||
+    hash.has('error_description')
+  ) {
+    document.documentElement.setAttribute('data-auth-callback', 'true');
+  }
+} catch (error) {}
+`
+
+export async function getServerSideProps({ resolvedUrl = '/' } = {}) {
+  return {
+    props: {
+      initialAuthCallback: isSupabaseAuthCallbackUrl(resolvedUrl),
+    },
+  }
+}
 
 function getClassificationColor(s) {
   if (s < 0.4) return 'var(--danger)'
@@ -96,20 +126,41 @@ function getClassificationColor(s) {
   return 'var(--mint)'
 }
 
-export default function Landing() {
+export default function Landing({ initialAuthCallback = false }) {
   const router = useRouter()
+  const [authGatewayVisible, setAuthGatewayVisible] = useState(initialAuthCallback)
   const [billing, setBilling] = useState('monthly')
   const [showDemoModal, setShowDemoModal] = useState(false)
   const [time, setTime] = useState(8.2)
   const [steps, setSteps] = useState(12)
 
   useEffect(() => {
+    const currentUrl = window.location.href
+    const isAuthCallback = isSupabaseAuthCallbackUrl(currentUrl)
+    if (isAuthCallback) {
+      document.documentElement.setAttribute('data-auth-callback', 'true')
+      setAuthGatewayVisible(true)
+    } else {
+      document.documentElement.removeAttribute('data-auth-callback')
+    }
+
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.replace('/app')
+      if (data.session) {
+        setAuthGatewayVisible(true)
+        router.replace('/app')
+        return
+      }
+
+      if (isAuthCallback && hasSupabaseAuthErrorUrl(currentUrl)) {
+        router.replace('/login')
+      }
+    }).catch(() => {
+      if (isAuthCallback) router.replace('/login')
     })
   }, [router])
 
   useEffect(() => {
+    if (authGatewayVisible) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const observer = new IntersectionObserver(
       entries => entries.forEach(entry => {
@@ -122,7 +173,7 @@ export default function Landing() {
     )
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
     return () => observer.disconnect()
-  }, [])
+  }, [authGatewayVisible])
 
   const speed = time > 0 ? 10 / time : 0
   const cadence = time > 0 ? (steps / time) * 60 : 0
@@ -152,100 +203,109 @@ export default function Landing() {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet" />
+        <script dangerouslySetInnerHTML={{ __html: AUTH_CALLBACK_BOOTSTRAP_SCRIPT }} />
       </Head>
 
       <style>{styles}</style>
 
-      <header className="site-header">
-        <div className="site-header__inner">
-          <LogoWordmark href="/" size="xl" />
-          <a href="/login">Log in</a>
-        </div>
-      </header>
+      <AuthGateway
+        active={authGatewayVisible}
+        landingGateway
+        title="Opening RehabMetrics IQ"
+        message="Checking your secure session."
+      />
 
-      <main>
-        <section className="hero">
-          <video
-            className="hero__video"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            poster="/assets/landing-hero-physio.jpg"
-            aria-hidden="true"
-          >
-            <source src="/assets/videos/hero-loop.mp4" type="video/mp4" />
-          </video>
-          <div className="hero__focus-blur" />
-          <div className="hero__scrim" />
-          <div className="hero__inner">
-            <div className="hero__copy">
-              <p className="eyebrow">AUTOMATED SCORING. CLINICAL-GRADE REPORTING.</p>
-              <h1>Data-driven outcomes. <span>Better patient care.</span></h1>
-              <p className="hero__sub">
-                RehabMetrics IQ helps physiotherapists track what matters most with automated scoring, Smart Rehab Pathways, Minimally Clinically Important Difference tracking, wheelchair prescription support, and clinical-grade reports.
-              </p>
-              <div className="hero__actions">
-                <a className="primary-btn" href="/signup">Start 14-day free trial</a>
-                <button className="text-btn" type="button" onClick={() => setShowDemoModal(true)}>
-                  See how it works <ArrowRight size={15} />
-                </button>
+      <div className="landing-frame" data-auth-hidden={authGatewayVisible ? 'true' : undefined}>
+        <header className="site-header">
+          <div className="site-header__inner">
+            <LogoWordmark href="/" size="xl" />
+            <a href="/login">Log in</a>
+          </div>
+        </header>
+
+        <main>
+          <section className="hero">
+            <video
+              className="hero__video"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              poster="/assets/landing-hero-physio.jpg"
+              aria-hidden="true"
+            >
+              <source src="/assets/videos/hero-loop.mp4" type="video/mp4" />
+            </video>
+            <div className="hero__focus-blur" />
+            <div className="hero__scrim" />
+            <div className="hero__inner">
+              <div className="hero__copy">
+                <p className="eyebrow">AUTOMATED SCORING. CLINICAL-GRADE REPORTING.</p>
+                <h1>Data-driven outcomes. <span>Better patient care.</span></h1>
+                <p className="hero__sub">
+                  RehabMetrics IQ helps physiotherapists track what matters most with automated scoring, Smart Rehab Pathways, Minimally Clinically Important Difference tracking, wheelchair prescription support, and clinical-grade reports.
+                </p>
+                <div className="hero__actions">
+                  <a className="primary-btn" href="/signup">Start 14-day free trial</a>
+                  <button className="text-btn" type="button" onClick={() => setShowDemoModal(true)}>
+                    See how it works <ArrowRight size={15} />
+                  </button>
+                </div>
+                <div className="hero__proof" aria-label="Included product capabilities">
+                  <span>Physiotherapy-focused measures</span>
+                  <span>Smart Rehab Pathways</span>
+                  <span>Wheelchair prescription support</span>
+                  <span>Phone app coming soon</span>
+                </div>
               </div>
-              <div className="hero__proof" aria-label="Included product capabilities">
-                <span>Physiotherapy-focused measures</span>
-                <span>Smart Rehab Pathways</span>
-                <span>Wheelchair prescription support</span>
-                <span>Phone app coming soon</span>
+
+              <ProductPreview />
+            </div>
+          </section>
+
+          <section className="measure-strip" aria-label="Measures included">
+            <div className="measure-strip__inner">
+              <span>PHYSIO-FOCUSED MEASURES</span>
+              <div>
+                {MEASURES.map(measure => <small key={measure}>{measure}</small>)}
               </div>
             </div>
+          </section>
 
-            <ProductPreview />
-          </div>
-        </section>
-
-        <section className="measure-strip" aria-label="Measures included">
-          <div className="measure-strip__inner">
-            <span>PHYSIO-FOCUSED MEASURES</span>
-            <div>
-              {MEASURES.map(measure => <small key={measure}>{measure}</small>)}
-            </div>
-          </div>
-        </section>
-
-        <section id="workflow" className="section">
-          <div className="workflow-layout">
-            <div>
-              <div className="section-head reveal">
-                <p className="eyebrow">CLINICAL WORKFLOW</p>
-                <h2>Outcome measures without the spreadsheet drift.</h2>
-                <p>Built around the physiotherapy problems clinicians repeatedly measure: gait speed, balance, endurance, neurological recovery, independence, symptoms, and meaningful change over time.</p>
+          <section id="workflow" className="section">
+            <div className="workflow-layout">
+              <div>
+                <div className="section-head reveal">
+                  <p className="eyebrow">CLINICAL WORKFLOW</p>
+                  <h2>Outcome measures without the spreadsheet drift.</h2>
+                  <p>Built around the physiotherapy problems clinicians repeatedly measure: gait speed, balance, endurance, neurological recovery, independence, symptoms, and meaningful change over time.</p>
+                </div>
+                <div className="workflow-grid">
+                  {WORKFLOW.map(({ Icon, title, text }, index) => (
+                    <article className="soft-card reveal" key={title} style={{ '--reveal-delay': `${index * 0.1}s` }}>
+                      <Icon size={22} />
+                      <h3>{title}</h3>
+                      <p>{text}</p>
+                    </article>
+                  ))}
+                </div>
               </div>
-              <div className="workflow-grid">
-                {WORKFLOW.map(({ Icon, title, text }, index) => (
-                  <article className="soft-card reveal" key={title} style={{ '--reveal-delay': `${index * 0.1}s` }}>
-                    <Icon size={22} />
-                    <h3>{title}</h3>
-                    <p>{text}</p>
-                  </article>
-                ))}
-              </div>
+              <figure className="image-panel image-panel--workflow reveal">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  poster="/assets/videos/workflow-poster.jpg"
+                  aria-hidden="true"
+                >
+                  <source src="/assets/videos/workflow-loop.mp4" type="video/mp4" />
+                </video>
+              </figure>
             </div>
-            <figure className="image-panel image-panel--workflow reveal">
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
-                poster="/assets/videos/workflow-poster.jpg"
-                aria-hidden="true"
-              >
-                <source src="/assets/videos/workflow-loop.mp4" type="video/mp4" />
-              </video>
-            </figure>
-          </div>
-        </section>
+          </section>
 
         <section className="clinical-band">
           <div className="clinical-band__inner">
@@ -381,6 +441,7 @@ export default function Landing() {
           time={time}
         />
       )}
+      </div>
     </>
   )
 }
@@ -628,6 +689,9 @@ function Metric({ label, value, unit }) {
 
 const styles = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html:not([data-auth-callback="true"]) [data-landing-auth-gateway]:not([data-active="true"]) { display: none; }
+  html[data-auth-callback="true"] .landing-frame,
+  .landing-frame[data-auth-hidden="true"] { display: none; }
   :root {
     --navy: #236499;
     --navy-dark: #17496F;
