@@ -34,44 +34,56 @@ export default function Signup() {
     }
   }
 
+  function toErrorMessage(err) {
+    if (!err) return 'Something went wrong. Please try again.'
+    if (typeof err === 'string') return err
+    if (typeof err.message === 'string' && err.message) return err.message
+    return 'Something went wrong. Please try again.'
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    // Block emails that previously deleted their account from claiming a new trial
     try {
-      const checkRes = await fetch('/api/check-deleted', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+      // Block emails that previously deleted their account from claiming a new trial
+      try {
+        const checkRes = await fetch('/api/check-deleted', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+        const checkData = await checkRes.json()
+        if (checkData.blocked) {
+          setError('An account with this email has been permanently deleted and is not eligible for a new free trial.')
+          setLoading(false)
+          return
+        }
+      } catch {
+        // If the check fails, allow signup to proceed rather than blocking legitimate users
+      }
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: getAppRedirectUrl() }
       })
-      const checkData = await checkRes.json()
-      if (checkData.blocked) {
-        setError('An account with this email has been permanently deleted and is not eligible for a new free trial.')
+
+      if (signUpError) {
+        setError(toErrorMessage(signUpError))
         setLoading(false)
         return
       }
-    } catch {
-      // If the check fails, allow signup to proceed rather than blocking legitimate users
-    }
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: getAppRedirectUrl() }
-    })
-
-    if (signUpError) {
-      setError(signUpError.message)
-      setLoading(false)
-      return
-    }
-
-    if (data.session) {
-      router.push('/app')
-    } else {
-      setEmailSent(true)
+      if (data.session) {
+        router.push('/app')
+      } else {
+        setEmailSent(true)
+        setLoading(false)
+      }
+    } catch (err) {
+      setError(toErrorMessage(err))
       setLoading(false)
     }
   }
