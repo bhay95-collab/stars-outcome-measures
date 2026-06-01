@@ -111,6 +111,10 @@ describe('patient-first app navigation', () => {
     jest.clearAllMocks()
     mockRouter.isReady = true
     mockRouter.query = {}
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ followups: [] }),
+    })
   })
 
   it('restores patient, section, and active measure from query params', async () => {
@@ -149,6 +153,7 @@ describe('patient-first app navigation', () => {
     expect(await screen.findByRole('heading', { name: /create your first patient/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Overview/i })).toBeDisabled()
     expect(screen.getByRole('button', { name: /Smart Pathway/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Follow-Up/i })).toBeDisabled()
     await waitFor(() => {
       expect(mockRouter.replace).toHaveBeenCalledWith(
         { pathname: '/app', query: { section: 'directory' } },
@@ -170,5 +175,110 @@ describe('patient-first app navigation', () => {
     await user.click(screen.getByRole('button', { name: /Patient Directory/i }))
 
     expect(screen.getByText(/unsaved assessments in this encounter/i)).toBeInTheDocument()
+  })
+
+  it('restores the Follow-Up workspace from query params', async () => {
+    mockRouter.query = { patient: 'patient-1', section: 'followup' }
+    mockAuthenticatedApp({ patients: [patientOne] })
+
+    render(<App />)
+
+    expect(await screen.findByText(/secure check-ins for falls/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /follow-up/i })).toBeInTheDocument()
+  })
+
+  it('creates a secure follow-up link from the patient workspace', async () => {
+    const user = userEvent.setup()
+    mockRouter.query = { patient: 'patient-1', section: 'followup' }
+    global.fetch = jest.fn((url, options = {}) => {
+      if (url === '/api/followups' && options.method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            publicUrl: 'http://localhost:3000/followup/raw-token',
+            followup: {
+              id: 'followup-1',
+              patient_id: 'patient-1',
+              status: 'pending',
+              displayStatus: 'pending',
+              overdue: false,
+              due_at: '2999-06-05T00:00:00.000Z',
+              expires_at: '2999-06-12T00:00:00.000Z',
+              created_at: '2999-05-29T00:00:00.000Z',
+              completed_at: null,
+              cancelled_at: null,
+              response: null,
+            },
+          }),
+        })
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ followups: [] }),
+      })
+    })
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: jest.fn() },
+    })
+    mockAuthenticatedApp({ patients: [patientOne] })
+
+    render(<App />)
+
+    await screen.findByText(/secure check-ins for falls/i)
+    await user.click(screen.getByRole('button', { name: /create secure link/i }))
+
+    expect(await screen.findByDisplayValue('http://localhost:3000/followup/raw-token')).toBeInTheDocument()
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('http://localhost:3000/followup/raw-token')
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/followups',
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('surfaces completed follow-up responses in Overview and Reports', async () => {
+    const completedFollowup = {
+      id: 'followup-1',
+      patient_id: 'patient-1',
+      status: 'completed',
+      displayStatus: 'completed',
+      overdue: false,
+      due_at: '2999-06-05T00:00:00.000Z',
+      expires_at: '2999-06-12T00:00:00.000Z',
+      created_at: '2999-05-29T00:00:00.000Z',
+      completed_at: '2999-05-30T00:00:00.000Z',
+      cancelled_at: null,
+      response: {
+        id: 'response-1',
+        request_id: 'followup-1',
+        patient_id: 'patient-1',
+        falls_count: 1,
+        confidence_score: 6,
+        fatigue_score: 5,
+        symptoms_change: 'same',
+        adherence_level: 'most',
+        global_status: 'same',
+        concern_text: 'Had a fall outside.',
+        attention_level: 'red',
+        created_at: '2999-05-30T00:00:00.000Z',
+      },
+    }
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ followups: [completedFollowup] }),
+    })
+    mockRouter.query = { patient: 'patient-1', section: 'overview' }
+    mockAuthenticatedApp({ patients: [patientOne] })
+
+    const { rerender } = render(<App />)
+
+    expect(await screen.findByText(/review patient-reported concern/i)).toBeInTheDocument()
+    expect(screen.getByText(/1 fall, confidence 6\/10/i)).toBeInTheDocument()
+
+    mockRouter.query = { patient: 'patient-1', section: 'reports' }
+    rerender(<App />)
+
+    expect(await screen.findByText(/Patient-Reported Follow-Up/i)).toBeInTheDocument()
+    expect(screen.getByText(/Had a fall outside/i)).toBeInTheDocument()
   })
 })

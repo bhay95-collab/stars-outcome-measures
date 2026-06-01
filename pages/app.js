@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { Accessibility, ChevronDown, ClipboardList, FileText, LayoutDashboard, Route, Search, Users } from 'lucide-react'
+import { Accessibility, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, MessageSquare, RefreshCw, Route, Search, Users, XCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
@@ -18,12 +18,22 @@ import { MEASURES } from '../lib/clinical'
 import { buildPatientPathway } from '../lib/clinical/pathways'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
 import { buildPatientSummary, fmtDate } from '../lib/clinical/patientSummary'
+import {
+  FOLLOWUP_ATTENTION,
+  FOLLOWUP_STATUS,
+  dateInputValueInDays,
+  followUpAttentionLabel,
+  followUpStatusLabel,
+  formatFollowUpDate,
+  isoFromDateInput,
+  summarizeFollowUpRecords,
+} from '../lib/followups'
 import { sortPatientsByLabel } from '../lib/patientDetails'
 
 export async function getServerSideProps() { return { props: {} } }
 
-const APP_SECTIONS = ['directory', 'overview', 'pathway', 'measures', 'reports', 'wheelchair']
-const PATIENT_SECTIONS = new Set(['overview', 'pathway', 'measures', 'reports', 'wheelchair'])
+const APP_SECTIONS = ['directory', 'overview', 'pathway', 'followup', 'measures', 'reports', 'wheelchair']
+const PATIENT_SECTIONS = new Set(['overview', 'pathway', 'followup', 'measures', 'reports', 'wheelchair'])
 const DEFAULT_PATIENT_SECTION = 'overview'
 
 function getQueryValue(value) {
@@ -51,6 +61,7 @@ function getSectionTitle(section) {
   switch (section) {
     case 'directory': return 'Patient Directory'
     case 'pathway': return 'Smart Pathway'
+    case 'followup': return 'Follow-Up'
     case 'measures': return 'Outcome Measures'
     case 'reports': return 'Reports & Notes'
     case 'wheelchair': return 'Wheelchair Prescription'
@@ -74,6 +85,42 @@ function pathwayActionLabel(action) {
   return action.label || 'Review pathway'
 }
 
+function getFollowUpOverviewAction(summary) {
+  if (!summary) return null
+  const latest = summary.latestResponse
+  if (latest?.response?.attention_level === FOLLOWUP_ATTENTION.RED) {
+    return {
+      label: 'Review patient-reported concern',
+      detail: 'A recent follow-up includes a red attention signal. Review the response and consider recording an outcome measure.',
+      button: 'Record outcome measure',
+      action: 'measure',
+    }
+  }
+  if (latest?.response?.attention_level === FOLLOWUP_ATTENTION.AMBER) {
+    return {
+      label: 'Check follow-up signal',
+      detail: 'A recent follow-up includes a watch signal. Review the response before the next encounter.',
+      button: 'Open follow-up',
+      action: 'followup',
+    }
+  }
+  if (summary.overdueCount > 0) {
+    return {
+      label: 'Follow-up overdue',
+      detail: `${summary.overdueCount} patient check-in${summary.overdueCount === 1 ? ' is' : 's are'} past the due date.`,
+      button: 'Open follow-up',
+      action: 'followup',
+    }
+  }
+  return null
+}
+
+function responseOneLine(response) {
+  if (!response) return 'No response recorded'
+  const falls = Number(response.falls_count) === 1 ? '1 fall' : `${response.falls_count} falls`
+  return `${falls}, confidence ${response.confidence_score}/10, fatigue ${response.fatigue_score}/10, overall ${response.global_status}`
+}
+
 export default function App() {
   const router = useRouter()
   const [user, setUser] = useState(null)
@@ -83,6 +130,9 @@ export default function App() {
   const [patients, setPatients] = useState([])
   const [selectedPatient, setSelectedPatient] = useState(null)
   const [assessments, setAssessments] = useState([])
+  const [followups, setFollowups] = useState([])
+  const [followupsLoading, setFollowupsLoading] = useState(false)
+  const [latestFollowUpUrl, setLatestFollowUpUrl] = useState('')
   const [showNewPatient, setShowNewPatient] = useState(false)
   const [editingPatient, setEditingPatient] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
@@ -149,6 +199,8 @@ export default function App() {
           setPatients(prev => prev.filter(p => p.id !== patientId))
           setSelectedPatient(null)
           setAssessments([])
+          setFollowups([])
+          setLatestFollowUpUrl('')
         }
       },
     })
@@ -158,13 +210,13 @@ export default function App() {
     if (!selectedPatient || reportLoading) return
     setReportLoading(true)
     try {
-      await exportPatientSummaryPdf({ patient: selectedPatient, assessments })
+      await exportPatientSummaryPdf({ patient: selectedPatient, assessments, followups })
     } catch (error) {
       alert(`Report export failed: ${error.message}`)
     } finally {
       setReportLoading(false)
     }
-  }, [selectedPatient, assessments, reportLoading])
+  }, [selectedPatient, assessments, followups, reportLoading])
 
   useEffect(() => {
     let loaded = false
@@ -291,16 +343,41 @@ export default function App() {
     router.replace('/app', undefined, { shallow: true })
   }, [router.isReady, router.query.payment])
 
+  const loadPatientFollowUps = useCallback(async (patientId) => {
+    if (!patientId || typeof fetch !== 'function') {
+      setFollowups([])
+      return []
+    }
+    setFollowupsLoading(true)
+    try {
+      const response = await fetch(`/api/followups?patientId=${encodeURIComponent(patientId)}`)
+      if (!response.ok) throw new Error('Could not load follow-ups')
+      const data = await response.json()
+      const nextFollowups = data.followups ?? []
+      setFollowups(nextFollowups)
+      return nextFollowups
+    } catch {
+      setFollowups([])
+      return []
+    } finally {
+      setFollowupsLoading(false)
+    }
+  }, [])
+
   const handlePatientSelect = useCallback(async (patient) => {
     if (!patient) return
     setSelectedPatient(patient)
-    const { data } = await supabase
-      .from('assessments')
-      .select('*')
-      .eq('patient_id', patient.id)
-      .order('created_at', { ascending: false })
+    setLatestFollowUpUrl('')
+    const [{ data }] = await Promise.all([
+      supabase
+        .from('assessments')
+        .select('*')
+        .eq('patient_id', patient.id)
+        .order('created_at', { ascending: false }),
+      loadPatientFollowUps(patient.id),
+    ])
     setAssessments(data ?? [])
-  }, [])
+  }, [loadPatientFollowUps])
 
   useEffect(() => {
     if (bootState !== 'ready' || !hasAccess || !router.isReady) return
@@ -312,6 +389,8 @@ export default function App() {
     if (!patients.length) {
       setSelectedPatient(null)
       setAssessments([])
+      setFollowups([])
+      setLatestFollowUpUrl('')
       setActiveSection('directory')
       setRequestedMeasureId(null)
       if (routeSection !== 'directory') {
@@ -450,6 +529,32 @@ export default function App() {
     }, 3200)
   }, [])
 
+  async function handleCreateFollowUp({ dueDate, expiresDate }) {
+    if (!selectedPatient) throw new Error('Select a patient first.')
+    const response = await fetch('/api/followups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patientId: selectedPatient.id,
+        dueAt: isoFromDateInput(dueDate),
+        expiresAt: isoFromDateInput(expiresDate),
+      }),
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error || 'Could not create follow-up link.')
+    setFollowups(prev => [data.followup, ...prev.filter(item => item.id !== data.followup.id)])
+    setLatestFollowUpUrl(data.publicUrl || '')
+    return data
+  }
+
+  async function handleCancelFollowUp(followupId) {
+    const response = await fetch(`/api/followups/${encodeURIComponent(followupId)}`, { method: 'DELETE' })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error || 'Could not cancel follow-up.')
+    setFollowups(prev => prev.map(item => item.id === data.followup.id ? data.followup : item))
+    return data.followup
+  }
+
   function handleConfirmClose() {
     setConfirmDialog({ open: false, message: '', onConfirm: null })
   }
@@ -465,6 +570,7 @@ export default function App() {
 
   const viewTitle = getSectionTitle(activeSection)
   const selectedPathway = selectedPatient ? buildPatientPathway(selectedPatient, assessments) : null
+  const selectedFollowUpSummary = summarizeFollowUpRecords(followups)
 
   if (bootState === 'checking-auth' || bootState === 'unauthenticated') {
     return (
@@ -542,6 +648,7 @@ export default function App() {
           patients={patients}
           selectedPatient={selectedPatient}
           pathway={selectedPathway}
+          followUpSummary={selectedFollowUpSummary}
           profileData={profileData}
           user={user}
           onNavigate={goToSection}
@@ -594,6 +701,17 @@ export default function App() {
                 onMeasure={(measureId) => goToSection('measures', { measureId })}
                 onReports={() => goToSection('reports')}
               />
+            ) : activeSection === 'followup' ? (
+              <FollowUpWorkspace
+                patient={selectedPatient}
+                followups={followups}
+                loading={followupsLoading}
+                latestFollowUpUrl={latestFollowUpUrl}
+                onCreate={handleCreateFollowUp}
+                onCancel={handleCancelFollowUp}
+                onRefresh={() => loadPatientFollowUps(selectedPatient.id)}
+                onMeasure={() => goToSection('measures', { measureId: selectedPathway?.preferredMeasureId ?? 'TUG' })}
+              />
             ) : activeSection === 'measures' ? (
               <OutcomeMeasuresWorkspace
                 patient={selectedPatient}
@@ -609,6 +727,7 @@ export default function App() {
               <ReportsWorkspace
                 patient={selectedPatient}
                 assessments={assessments}
+                followups={followups}
                 reportLoading={reportLoading}
                 onViewReport={handleExportFullReport}
                 onEditPatient={() => setEditingPatient(selectedPatient)}
@@ -619,10 +738,12 @@ export default function App() {
               <PatientOverview
                 patient={selectedPatient}
                 assessments={assessments}
+                followups={followups}
                 pathway={selectedPathway}
                 onEditPatient={() => setEditingPatient(selectedPatient)}
                 onMeasure={(measureId) => goToSection('measures', { measureId })}
                 onPathway={() => goToSection('pathway')}
+                onFollowUp={() => goToSection('followup')}
                 onReports={() => goToSection('reports')}
               />
             )}
@@ -638,6 +759,7 @@ function AppSidebar({
   patients,
   selectedPatient,
   pathway,
+  followUpSummary,
   profileData,
   user,
   onNavigate,
@@ -651,6 +773,7 @@ function AppSidebar({
     : user?.email ?? 'User Profile'
   const initial = (profileData.firstName?.[0] || user?.email?.[0] || '?').toUpperCase()
   const pathwayCount = (pathway?.missingMeasures?.length ?? 0) + (pathway?.dueMeasures?.length ?? 0)
+  const followUpCount = (followUpSummary?.pendingCount ?? 0) + (followUpSummary?.overdueCount ?? 0)
   const patientSectionsDisabled = !selectedPatient
 
   const navItems = [
@@ -667,6 +790,14 @@ function AppSidebar({
       job: 'Choose what to record next',
       icon: Route,
       badge: pathwayCount > 0 ? pathwayCount : null,
+      disabled: patientSectionsDisabled,
+    },
+    {
+      section: 'followup',
+      label: 'Follow-Up',
+      job: 'Patient-reported check-ins',
+      icon: MessageSquare,
+      badge: followUpCount > 0 ? followUpCount : null,
       disabled: patientSectionsDisabled,
     },
     {
@@ -922,14 +1053,24 @@ function PatientDirectoryWorkspace({
   )
 }
 
-function PatientOverview({ patient, assessments, pathway, onEditPatient, onMeasure, onPathway, onReports }) {
+function PatientOverview({ patient, assessments, followups, pathway, onEditPatient, onMeasure, onPathway, onFollowUp, onReports }) {
   const summary = buildPatientSummary(patient, assessments)
+  const followUpSummary = summarizeFollowUpRecords(followups)
+  const followUpAction = getFollowUpOverviewAction(followUpSummary)
   const nextAction = pathway?.nextActions?.[0] ?? null
   const latestAssessment = summary.assessments[0] ?? null
   const prioritySignal = summary.flags[0] ?? null
   const latestEntries = summary.entries.slice(0, 4)
 
   function handleNextAction() {
+    if (followUpAction?.action === 'measure') {
+      onMeasure(pathway?.preferredMeasureId ?? 'TUG')
+      return
+    }
+    if (followUpAction?.action === 'followup') {
+      onFollowUp()
+      return
+    }
     if (nextAction?.measureId) {
       onMeasure(nextAction.measureId)
       return
@@ -963,11 +1104,11 @@ function PatientOverview({ patient, assessments, pathway, onEditPatient, onMeasu
         <article className="next-action-panel overview-next-action" data-tone={pathway?.statusTone}>
           <div>
             <span className="section-label">Next best action</span>
-            <h3>{nextAction?.label ?? 'Open Smart Pathway'}</h3>
-            <p>{nextAction?.detail ?? 'Review the pathway to choose the next useful clinical action.'}</p>
+            <h3>{followUpAction?.label ?? nextAction?.label ?? 'Open Smart Pathway'}</h3>
+            <p>{followUpAction?.detail ?? nextAction?.detail ?? 'Review the pathway to choose the next useful clinical action.'}</p>
           </div>
           <button type="button" onClick={handleNextAction}>
-            {pathwayActionLabel(nextAction)}
+            {followUpAction?.button ?? pathwayActionLabel(nextAction)}
           </button>
         </article>
 
@@ -1014,6 +1155,31 @@ function PatientOverview({ patient, assessments, pathway, onEditPatient, onMeasu
             )) : (
               <p className="empty-hint">Record a baseline measure to populate this view.</p>
             )}
+          </div>
+        </article>
+
+        <article className="overview-card">
+          <div className="summary-card__head">
+            <div>
+              <h3>Patient follow-up</h3>
+              <p>Remote check-ins and patient-reported attention signals.</p>
+            </div>
+            <button type="button" onClick={onFollowUp}>Open</button>
+          </div>
+          <div className="followup-overview-status" data-attention={followUpSummary.attentionLevel}>
+            <span>{followUpAttentionLabel(followUpSummary.attentionLevel)}</span>
+            <strong>
+              {followUpSummary.latestResponse
+                ? responseOneLine(followUpSummary.latestResponse.response)
+                : 'No patient-reported follow-up yet'}
+            </strong>
+            <p>
+              {followUpSummary.overdueCount
+                ? `${followUpSummary.overdueCount} check-in${followUpSummary.overdueCount === 1 ? '' : 's'} overdue.`
+                : followUpSummary.pendingCount
+                  ? `${followUpSummary.pendingCount} secure link${followUpSummary.pendingCount === 1 ? '' : 's'} pending.`
+                  : 'Create a secure link when you want the patient to report between sessions.'}
+            </p>
           </div>
         </article>
       </div>
@@ -1121,6 +1287,181 @@ function SmartPathwayWorkspace({ patient, pathway, onEditPatient, onMeasure, onR
   )
 }
 
+function FollowUpWorkspace({
+  patient,
+  followups,
+  loading,
+  latestFollowUpUrl,
+  onCreate,
+  onCancel,
+  onRefresh,
+  onMeasure,
+}) {
+  const [dueDate, setDueDate] = useState(dateInputValueInDays(7))
+  const [expiresDate, setExpiresDate] = useState(dateInputValueInDays(14))
+  const [creating, setCreating] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [error, setError] = useState('')
+  const summary = summarizeFollowUpRecords(followups)
+  const latestResponse = summary.latestResponse?.response ?? null
+
+  async function handleCreate(event) {
+    event.preventDefault()
+    setCreating(true)
+    setError('')
+    setCopied(false)
+    try {
+      const data = await onCreate({ dueDate, expiresDate })
+      if (data.publicUrl && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(data.publicUrl)
+        setCopied(true)
+      }
+    } catch (createError) {
+      setError(createError.message)
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  async function handleCopy() {
+    if (!latestFollowUpUrl || !navigator.clipboard?.writeText) return
+    await navigator.clipboard.writeText(latestFollowUpUrl)
+    setCopied(true)
+  }
+
+  async function handleCancel(id) {
+    setError('')
+    try {
+      await onCancel(id)
+    } catch (cancelError) {
+      setError(cancelError.message)
+    }
+  }
+
+  return (
+    <section className="workspace-shell followup-workspace">
+      <div className="workspace-head">
+        <div>
+          <span className="section-label">Patient-reported follow-up</span>
+          <h2>{patientLabel(patient)}</h2>
+          <p>Secure check-ins for falls, confidence, fatigue, symptoms, adherence, and overall status.</p>
+        </div>
+        <button type="button" className="secondary-action" onClick={onRefresh} disabled={loading}>
+          <RefreshCw size={16} aria-hidden="true" /> Refresh
+        </button>
+      </div>
+
+      <div className="followup-stat-grid">
+        <div>
+          <span>Last response</span>
+          <strong>{latestResponse ? formatFollowUpDate(latestResponse.created_at) : 'None yet'}</strong>
+          <small>{latestResponse ? responseOneLine(latestResponse) : 'Awaiting first check-in'}</small>
+        </div>
+        <div>
+          <span>Pending links</span>
+          <strong>{summary.pendingCount}</strong>
+          <small>{summary.overdueCount ? `${summary.overdueCount} overdue` : 'Manual copy and send'}</small>
+        </div>
+        <div>
+          <span>Attention</span>
+          <strong>{followUpAttentionLabel(summary.attentionLevel)}</strong>
+          <small>{summary.completedCount} completed check-in{summary.completedCount === 1 ? '' : 's'}</small>
+        </div>
+      </div>
+
+      {latestResponse?.attention_level && latestResponse.attention_level !== FOLLOWUP_ATTENTION.GREEN && (
+        <article className="followup-attention-panel" data-attention={latestResponse.attention_level}>
+          <div>
+            <span className="section-label">Patient-reported signal</span>
+            <h3>{followUpAttentionLabel(latestResponse.attention_level)}</h3>
+            <p>{responseOneLine(latestResponse)}</p>
+            {latestResponse.concern_text && <p>{latestResponse.concern_text}</p>}
+          </div>
+          <button type="button" onClick={onMeasure}>Record outcome measure</button>
+        </article>
+      )}
+
+      <form className="followup-create-panel" onSubmit={handleCreate}>
+        <div>
+          <span className="section-label">Create secure link</span>
+          <h3>Weekly patient check-in</h3>
+          <p>The raw link is shown once after creation. If it is lost, cancel the pending request and create a new link.</p>
+        </div>
+        <label>
+          <span>Due date</span>
+          <input className="field-input" type="date" value={dueDate} onChange={event => setDueDate(event.target.value)} />
+        </label>
+        <label>
+          <span>Link expires</span>
+          <input className="field-input" type="date" value={expiresDate} onChange={event => setExpiresDate(event.target.value)} />
+        </label>
+        <button type="submit" disabled={creating}>{creating ? 'Creating...' : 'Create secure link'}</button>
+      </form>
+
+      {latestFollowUpUrl && (
+        <div className="followup-link-panel">
+          <Link2 size={18} aria-hidden="true" />
+          <input value={latestFollowUpUrl} readOnly aria-label="Secure follow-up link" />
+          <button type="button" onClick={handleCopy}>
+            <Copy size={16} aria-hidden="true" /> {copied ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+      )}
+
+      {error && <p className="followup-inline-error" role="alert">{error}</p>}
+
+      <FollowUpTimeline
+        records={summary.records}
+        loading={loading}
+        onCancel={handleCancel}
+      />
+    </section>
+  )
+}
+
+function FollowUpTimeline({ records, loading, onCancel }) {
+  if (loading) {
+    return (
+      <section className="followup-timeline">
+        <h3>Follow-up timeline</h3>
+        {[0, 1, 2].map(item => <span key={item} className="followup-skeleton" />)}
+      </section>
+    )
+  }
+
+  return (
+    <section className="followup-timeline">
+      <h3>Follow-up timeline</h3>
+      {records.length ? records.map(record => (
+        <article key={record.id} data-status={record.displayStatus} data-attention={record.response?.attention_level}>
+          <div className="followup-row__icon" aria-hidden="true">
+            {record.displayStatus === FOLLOWUP_STATUS.PENDING ? <Bell size={16} /> : record.displayStatus === FOLLOWUP_STATUS.COMPLETED ? <MessageSquare size={16} /> : <XCircle size={16} />}
+          </div>
+          <div>
+            <span>{followUpStatusLabel(record.displayStatus, record.overdue)}</span>
+            <strong>
+              {record.response
+                ? responseOneLine(record.response)
+                : `Due ${formatFollowUpDate(record.due_at)}. Expires ${formatFollowUpDate(record.expires_at)}.`}
+            </strong>
+            {record.response?.concern_text && <p>{record.response.concern_text}</p>}
+            <small>
+              {record.response
+                ? `Completed ${formatFollowUpDate(record.response.created_at)}`
+                : `Created ${formatFollowUpDate(record.created_at)}`}
+            </small>
+          </div>
+          {record.displayStatus === FOLLOWUP_STATUS.PENDING && (
+            <button type="button" onClick={() => onCancel(record.id)}>Cancel</button>
+          )}
+        </article>
+      )) : (
+        <p className="empty-hint">No follow-up links have been created for this patient yet.</p>
+      )}
+    </section>
+  )
+}
+
 function OutcomeMeasuresWorkspace({
   patient,
   userId,
@@ -1171,6 +1512,7 @@ function OutcomeMeasuresWorkspace({
 function ReportsWorkspace({
   patient,
   assessments,
+  followups,
   reportLoading,
   onViewReport,
   onEditPatient,
@@ -1186,6 +1528,7 @@ function ReportsWorkspace({
         reportLoading={reportLoading}
         onEditPatient={onEditPatient}
       />
+      <FollowUpReportSection followups={followups} />
       <SummaryTab
         patient={patient}
         assessments={assessments}
@@ -1193,6 +1536,35 @@ function ReportsWorkspace({
         onDeletePatient={onDeletePatient}
         mode="reports"
       />
+    </section>
+  )
+}
+
+function FollowUpReportSection({ followups }) {
+  const summary = summarizeFollowUpRecords(followups)
+  const latest = summary.latestResponse?.response ?? null
+  return (
+    <section className="summary-card followup-report-section">
+      <div className="summary-card__head">
+        <div>
+          <h3>Patient-Reported Follow-Up</h3>
+          <p>Remote check-ins, attention level, and recent patient-reported context.</p>
+        </div>
+        <span data-attention={summary.attentionLevel}>{followUpAttentionLabel(summary.attentionLevel)}</span>
+      </div>
+      {latest ? (
+        <div className="followup-report-grid">
+          <div><span>Last response</span><strong>{formatFollowUpDate(latest.created_at)}</strong></div>
+          <div><span>Falls</span><strong>{latest.falls_count}</strong></div>
+          <div><span>Confidence</span><strong>{latest.confidence_score}/10</strong></div>
+          <div><span>Fatigue</span><strong>{latest.fatigue_score}/10</strong></div>
+          <div><span>Symptoms</span><strong>{latest.symptoms_change}</strong></div>
+          <div><span>Overall</span><strong>{latest.global_status}</strong></div>
+        </div>
+      ) : (
+        <p className="empty-hint">No patient-reported follow-up responses have been submitted yet.</p>
+      )}
+      {latest?.concern_text && <p className="followup-report-concern">{latest.concern_text}</p>}
     </section>
   )
 }
@@ -4428,6 +4800,330 @@ const globalStyles = `
     color: var(--color-primary-dark);
   }
 
+  .followup-workspace {
+    gap: 18px;
+  }
+
+  .followup-workspace .workspace-head button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .followup-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .followup-stat-grid > div,
+  .followup-report-grid > div {
+    display: grid;
+    gap: 6px;
+    min-height: 86px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface-raised);
+  }
+
+  .followup-stat-grid span,
+  .followup-report-grid span {
+    color: var(--color-subtle);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .followup-stat-grid strong,
+  .followup-report-grid strong {
+    color: var(--color-ink);
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.18;
+  }
+
+  .followup-stat-grid small {
+    color: var(--color-muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .followup-attention-panel,
+  .followup-create-panel,
+  .followup-link-panel,
+  .followup-report-section {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+  }
+
+  .followup-attention-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px;
+    box-shadow: inset 0 0 0 1px rgba(35,100,153,0.06);
+  }
+
+  .followup-attention-panel[data-attention="amber"] {
+    background: #fff8ec;
+    border-color: #f2d8a8;
+  }
+
+  .followup-attention-panel[data-attention="red"] {
+    background: #fff3ef;
+    border-color: #f0c4b8;
+  }
+
+  .followup-attention-panel h3,
+  .followup-create-panel h3 {
+    margin: 0;
+    color: var(--color-ink);
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .followup-attention-panel p,
+  .followup-create-panel p {
+    margin-top: 6px;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .followup-attention-panel button,
+  .followup-create-panel button,
+  .followup-link-panel button,
+  .followup-timeline article button {
+    min-height: 36px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--color-primary);
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .followup-create-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(160px, 220px) minmax(160px, 220px) auto;
+    gap: 14px;
+    align-items: end;
+    padding: 18px;
+  }
+
+  .followup-create-panel label {
+    display: grid;
+    gap: 7px;
+  }
+
+  .followup-create-panel label span {
+    color: var(--color-muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .followup-create-panel button:disabled,
+  .followup-link-panel button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+
+  .followup-link-panel {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 12px;
+    background: var(--color-surface-raised);
+  }
+
+  .followup-link-panel input {
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--color-ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+
+  .followup-link-panel button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .followup-inline-error {
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid #f0c4b8;
+    border-radius: 8px;
+    background: #fff3ef;
+    color: #9a3a16;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .followup-timeline {
+    display: grid;
+    gap: 10px;
+  }
+
+  .followup-timeline h3 {
+    color: var(--color-ink);
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .followup-timeline article {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface-raised);
+  }
+
+  .followup-timeline article[data-attention="amber"] {
+    background: #fff8ec;
+    border-color: #f2d8a8;
+  }
+
+  .followup-timeline article[data-attention="red"] {
+    background: #fff3ef;
+    border-color: #f0c4b8;
+  }
+
+  .followup-row__icon {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--color-primary);
+  }
+
+  .followup-timeline article span {
+    color: var(--color-primary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .followup-timeline article strong {
+    display: block;
+    margin-top: 4px;
+    color: var(--color-ink);
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .followup-timeline article p,
+  .followup-timeline article small {
+    display: block;
+    margin-top: 4px;
+    color: var(--color-muted);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .followup-timeline article button {
+    border: 1px solid var(--color-border);
+    background: #fff;
+    color: var(--color-primary);
+  }
+
+  .followup-skeleton {
+    display: block;
+    height: 66px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #e4ebf2 0%, #f3f7fb 46%, #e4ebf2 100%);
+    background-size: 220% 100%;
+  }
+
+  .followup-overview-status {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface-raised);
+  }
+
+  .followup-overview-status[data-attention="amber"] {
+    background: #fff8ec;
+    border-color: #f2d8a8;
+  }
+
+  .followup-overview-status[data-attention="red"] {
+    background: #fff3ef;
+    border-color: #f0c4b8;
+  }
+
+  .followup-overview-status span,
+  .followup-report-section [data-attention] {
+    justify-self: start;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: var(--color-primary-soft);
+    color: var(--color-primary-dark);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .followup-overview-status strong {
+    color: var(--color-ink);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .followup-overview-status p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .followup-report-section {
+    display: grid;
+    gap: 14px;
+    margin: 0 auto 20px;
+    padding: 20px;
+  }
+
+  .followup-report-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .followup-report-concern {
+    margin: 0;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface-raised);
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
   .patients-workspace {
     display: grid;
     grid-template-columns: minmax(360px, 520px) minmax(0, 1fr);
@@ -4845,6 +5541,9 @@ const globalStyles = `
     .workspace-stat-grid,
     .pathway-action-grid,
     .pathway-measure-columns,
+    .followup-stat-grid,
+    .followup-create-panel,
+    .followup-report-grid,
     .overview-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -4929,6 +5628,7 @@ const globalStyles = `
     }
     .workspace-head,
     .next-action-panel,
+    .followup-attention-panel,
     .pathway-hero {
       align-items: stretch;
       flex-direction: column;
@@ -4959,6 +5659,9 @@ const globalStyles = `
     .workspace-stat-grid,
     .pathway-action-grid,
     .pathway-measure-columns,
+    .followup-stat-grid,
+    .followup-create-panel,
+    .followup-report-grid,
     .overview-grid,
     .skeleton-workspace,
     [data-measure-layout] {
@@ -4966,6 +5669,10 @@ const globalStyles = `
       display: grid;
     }
     .overview-measure-list button {
+      grid-template-columns: 1fr;
+    }
+    .followup-link-panel,
+    .followup-timeline article {
       grid-template-columns: 1fr;
     }
     .skeleton-stat-grid {
