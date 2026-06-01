@@ -108,10 +108,17 @@ export default async function handler(req, res) {
     .from('profiles')
     .upsert({
       id: user.id,
+      email,
       trial_end_date: trialEndDate(),
-    })
+    }, { onConflict: 'id' })
 
   if (profileError) {
+    console.error('Signup profile setup failed', {
+      userId: user.id,
+      code: profileError.code,
+      message: profileError.message,
+      details: profileError.details,
+    })
     await admin.auth.admin.deleteUser(user.id)
     return res.status(500).json({ error: 'Account setup failed. Please try again.' })
   }

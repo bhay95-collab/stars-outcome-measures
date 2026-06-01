@@ -99,6 +99,7 @@ describe('/api/signup', () => {
     }))
     expect(state.profilePayload).toEqual(expect.objectContaining({
       id: 'user-1',
+      email: 'new.user@example.com',
       trial_end_date: expect.any(String),
     }))
   })
