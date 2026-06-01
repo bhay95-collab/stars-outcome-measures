@@ -13,7 +13,7 @@ export default function Signup() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
-  const [emailSent, setEmailSent] = useState(false)
+  const [accountCreated, setAccountCreated] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -29,7 +29,7 @@ export default function Signup() {
       options: { redirectTo: getAppRedirectUrl() }
     })
     if (oauthError) {
-      setError(oauthError.message)
+      setError(toErrorMessage(oauthError))
       setGoogleLoading(false)
     }
   }
@@ -37,7 +37,8 @@ export default function Signup() {
   function toErrorMessage(err) {
     if (!err) return 'Something went wrong. Please try again.'
     if (typeof err === 'string') return err
-    if (typeof err.message === 'string' && err.message) return err.message
+    if (typeof err.message === 'string' && err.message && err.message !== '{}') return err.message
+    if (typeof err.error === 'string' && err.error && err.error !== '{}') return err.error
     return 'Something went wrong. Please try again.'
   }
 
@@ -47,58 +48,45 @@ export default function Signup() {
     setError('')
 
     try {
-      // Block emails that previously deleted their account from claiming a new trial
-      try {
-        const checkRes = await fetch('/api/check-deleted', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        })
-        const checkData = await checkRes.json()
-        if (checkData.blocked) {
-          setError('An account with this email has been permanently deleted and is not eligible for a new free trial.')
-          setLoading(false)
-          return
-        }
-      } catch {
-        // If the check fails, allow signup to proceed rather than blocking legitimate users
-      }
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: getAppRedirectUrl() }
+      const normalizedEmail = email.trim().toLowerCase()
+      const signupRes = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, password }),
       })
+      const signupData = await signupRes.json().catch(() => ({}))
 
-      if (signUpError) {
-        setError(toErrorMessage(signUpError))
+      if (!signupRes.ok) {
+        setError(toErrorMessage(signupData))
         setLoading(false)
         return
       }
 
-      if (data.session) {
-        router.push('/app')
-      } else {
-        setEmailSent(true)
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
+      if (signInError) {
+        setAccountCreated(true)
         setLoading(false)
+        return
       }
+
+      router.replace('/app')
     } catch (err) {
       setError(toErrorMessage(err))
       setLoading(false)
     }
   }
 
-  if (emailSent) {
+  if (accountCreated) {
     return (
       <>
         <style jsx>{pageStyles}</style>
         <div className="page">
           <div className="card">
             <LogoWordmark size="md" spaceAfter />
-            <h1 className="heading">Check your email</h1>
+            <h1 className="heading">Account created</h1>
             <p className="subtext">
-              We sent a confirmation link to <strong>{email}</strong>.
-              Click it to activate your account and start your 14-day trial.
+              Your account for <strong>{email}</strong> is ready.
+              Log in to start your 14-day trial.
             </p>
             <a href="/login" className="btn" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: '24px' }}>
               Go to log in
