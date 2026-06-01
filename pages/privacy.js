@@ -11,7 +11,7 @@ export default function Privacy() {
           </div>
 
           <h1 className="title">Privacy Policy</h1>
-          <p className="meta">Last updated: May 2026</p>
+          <p className="meta">Last updated: June 2026</p>
 
           <p className="intro">
             RehabMetrics IQ (&ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;) is committed to protecting the privacy of our users.
@@ -39,9 +39,31 @@ export default function Privacy() {
 
           <h2>3. Data Storage and Sub-Processors</h2>
           <p>
-            Your account and clinical data is stored securely using <strong>Supabase</strong>, a managed cloud
-            database platform. Data is encrypted in transit (TLS) and at rest. Access is restricted to
-            authenticated users.
+            Your account and clinical data is stored using <strong>Supabase</strong>, a managed cloud database
+            platform built on Amazon Web Services. Our primary database is hosted in{' '}
+            <strong>Tokyo, Japan (AWS Asia Pacific &mdash; Tokyo region)</strong>.
+          </p>
+          <p>
+            Because this is outside Australia, your data is subject to a cross-border disclosure under
+            Australian Privacy Principle 8 (APP 8) of the <em>Privacy Act 1988</em> (Cth). By creating an
+            account and entering patient data, you consent to that disclosure. Supabase and AWS operate under
+            recognised international security standards, including SOC 2 Type II and ISO 27001. Data is
+            encrypted in transit (TLS 1.2 or higher) and at rest (AES-256). Access to your data is restricted
+            to your authenticated account and the small number of Supabase and AWS engineers required to
+            maintain the underlying platform.
+          </p>
+          <p>
+            We do not transfer your data to any other country, and we will publish notice on this page at
+            least 30 days before changing data location.
+          </p>
+          <p>
+            <strong>
+              If your professional indemnity insurer, employer, or governing body (for example a public
+              health service or large NDIS provider) requires Australian-only data residency, RehabMetrics IQ
+              in its current form may not meet that requirement.
+            </strong>{' '}
+            Please contact us at <a href="mailto:Support@RehabMetricsIQ.com">Support@RehabMetricsIQ.com</a>{' '}
+            before subscribing.
           </p>
           <p>
             Subscription payments are processed by <strong>Stripe, Inc.</strong> Stripe operates under its own

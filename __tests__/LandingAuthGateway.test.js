@@ -57,7 +57,7 @@ describe('Landing auth gateway', () => {
   it('leaves normal anonymous visitors on the landing page', () => {
     const { container } = render(<Landing />)
 
-    expect(screen.getByRole('heading', { name: /data-driven outcomes/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /you scored the test/i })).toBeInTheDocument()
     expect(container.querySelector('.landing-frame')).not.toHaveAttribute('data-auth-hidden')
   })
 })

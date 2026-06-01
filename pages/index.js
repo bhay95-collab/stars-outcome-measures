@@ -185,19 +185,19 @@ export default function Landing({ initialAuthCallback = false }) {
   const meetsMCID = speedChange >= MCID_STANDARD
   const classificationColor = speed > 0 ? getClassificationColor(speed) : 'var(--navy)'
 
-  const price = billing === 'monthly' ? '2.99' : '24.99'
+  const price = billing === 'monthly' ? '29' : '250'
   const period = billing === 'monthly' ? 'per month' : 'per year'
 
   return (
     <>
       <Head>
         <title>RehabMetrics IQ | Clinical Outcome Measures</title>
-        <meta name="description" content="Physiotherapy-focused outcome measure software with automated scoring, Smart Rehab Pathways, wheelchair prescription support, Minimally Clinically Important Difference tracking, and clinical-grade reports." />
+        <meta name="description" content="You scored the test. Now what does it mean? RehabMetrics IQ turns rehabilitation outcome measures into clinical interpretation, MCID-aware progress, and reports your team, GP, and funder can actually use." />
         <meta name="robots" content="index,follow" />
         <link rel="canonical" href={CANONICAL_HOME} />
         <meta property="og:url" content={CANONICAL_HOME} />
         <meta property="og:title" content="RehabMetrics IQ | Clinical Outcome Measures" />
-        <meta property="og:description" content="Physiotherapy-focused outcome measure software with automated scoring, Smart Rehab Pathways, wheelchair prescription support, Minimally Clinically Important Difference tracking, and clinical-grade reports." />
+        <meta property="og:description" content="You scored the test. Now what does it mean? RehabMetrics IQ turns rehabilitation outcome measures into clinical interpretation, MCID-aware progress, and reports your team, GP, and funder can actually use." />
         <meta property="og:type" content="website" />
         <link rel="icon" href="/SquareLogo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -241,10 +241,10 @@ export default function Landing({ initialAuthCallback = false }) {
             <div className="hero__scrim" />
             <div className="hero__inner">
               <div className="hero__copy">
-                <p className="eyebrow">AUTOMATED SCORING. CLINICAL-GRADE REPORTING.</p>
-                <h1>Data-driven outcomes. <span>Better patient care.</span></h1>
+                <p className="eyebrow">FOR REHABILITATION PHYSIOTHERAPISTS</p>
+                <h1>You scored the test. <span>Now what does it mean?</span></h1>
                 <p className="hero__sub">
-                  RehabMetrics IQ helps physiotherapists track what matters most with automated scoring, Smart Rehab Pathways, Minimally Clinically Important Difference tracking, wheelchair prescription support, and clinical-grade reports.
+                  RehabMetrics IQ turns rehabilitation outcome measures into clinical interpretation, MCID-aware progress, and reports your team, GP, and funder can actually use.
                 </p>
                 <div className="hero__actions">
                   <a className="primary-btn" href="/signup">Start 14-day free trial</a>
@@ -361,13 +361,13 @@ export default function Landing({ initialAuthCallback = false }) {
             <div className="pricing-controls">
               <div className="billing-toggle" aria-label="Billing period">
                 <button type="button" data-active={billing === 'monthly' ? '' : undefined} onClick={() => setBilling('monthly')}>Monthly</button>
-                <button type="button" data-active={billing === 'yearly' ? '' : undefined} onClick={() => setBilling('yearly')}>Yearly <span>Save 30%</span></button>
+                <button type="button" data-active={billing === 'yearly' ? '' : undefined} onClick={() => setBilling('yearly')}>Yearly <span>Save over 3 months</span></button>
               </div>
 
               <article className="pricing-card reveal" style={{ '--reveal-delay': '0.1s' }}>
                 <div>
                   <span>{billing === 'monthly' ? 'Monthly' : 'Annual'}</span>
-                  <strong><em>$</em>{price}</strong>
+                  <strong><em>A$</em>{price}</strong>
                   <p>{period}</p>
                 </div>
                 <ul>
