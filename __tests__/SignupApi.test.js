@@ -1,8 +1,12 @@
 import signupHandler from '../pages/api/signup'
 import { getAdminClient } from '../lib/supabase-admin'
+import { createClient } from '@supabase/supabase-js'
 
 jest.mock('../lib/supabase-admin', () => ({
   getAdminClient: jest.fn(),
+}))
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(),
 }))
 
 function makeReq(body, ip = '127.0.0.1') {
@@ -32,6 +36,9 @@ function makeRes() {
 }
 
 function queryFor(table, state) {
+  const deleteQuery = {
+    eq: jest.fn(() => Promise.resolve({ error: state.profileDeleteError ?? null })),
+  }
   const query = {
     payload: null,
     select: jest.fn(() => query),
@@ -45,6 +52,7 @@ function queryFor(table, state) {
       state.profilePayload = payload
       return Promise.resolve({ data: payload, error: state.profileError ?? null })
     }),
+    delete: jest.fn(() => deleteQuery),
   }
   return query
 }
@@ -54,8 +62,7 @@ function mockAdmin(state = {}) {
     deletedAccount: null,
     deletedError: null,
     profileError: null,
-    createdUser: { id: 'user-1' },
-    createError: null,
+    profileDeleteError: null,
     deletedUsers: [],
     ...state,
   }
@@ -63,10 +70,6 @@ function mockAdmin(state = {}) {
     from: jest.fn(table => queryFor(table, adminState)),
     auth: {
       admin: {
-        createUser: jest.fn(() => Promise.resolve({
-          data: { user: adminState.createdUser },
-          error: adminState.createError,
-        })),
         deleteUser: jest.fn(id => {
           adminState.deletedUsers.push(id)
           return Promise.resolve({ error: null })
@@ -78,25 +81,65 @@ function mockAdmin(state = {}) {
   return { admin, state: adminState }
 }
 
+function mockSignupClient(state = {}) {
+  const signupState = {
+    createdUser: { id: 'user-1', email: 'new.user@example.com' },
+    signUpError: null,
+    ...state,
+  }
+  const client = {
+    auth: {
+      signUp: jest.fn(() => Promise.resolve({
+        data: { user: signupState.createdUser },
+        error: signupState.signUpError,
+      })),
+    },
+  }
+  createClient.mockReturnValue(client)
+  return { client, state: signupState }
+}
+
 describe('/api/signup', () => {
+  let consoleErrorSpy
+
   beforeEach(() => {
     jest.clearAllMocks()
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
+    mockAdmin()
+    mockSignupClient()
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
   })
 
-  it('creates a confirmed auth user and provisions a trial profile', async () => {
+  afterEach(() => {
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('creates an unconfirmed auth user, provisions a trial profile, and sends verification', async () => {
     const { admin, state } = mockAdmin()
     const req = makeReq({ email: 'New.User@Example.com', password: 'TestPassword123!' }, '1.1.1.1')
+    req.headers.host = 'localhost:3000'
+    req.headers['x-forwarded-proto'] = 'http'
     const res = makeRes()
 
     await signupHandler(req, res)
 
     expect(res.statusCode).toBe(201)
-    expect(res.body).toEqual({ ok: true })
-    expect(admin.auth.admin.createUser).toHaveBeenCalledWith(expect.objectContaining({
+    expect(res.body).toEqual({ ok: true, needsEmailConfirmation: true })
+    expect(createClient).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      { auth: { autoRefreshToken: false, persistSession: false } },
+    )
+    const signupClient = createClient.mock.results[0].value
+    expect(signupClient.auth.signUp).toHaveBeenCalledWith({
       email: 'new.user@example.com',
       password: 'TestPassword123!',
-      email_confirm: true,
-    }))
+      options: {
+        emailRedirectTo: 'http://localhost:3000/app',
+        data: { signup_source: 'web' },
+      },
+    })
     expect(state.profilePayload).toEqual(expect.objectContaining({
       id: 'user-1',
       email: 'new.user@example.com',
@@ -116,7 +159,7 @@ describe('/api/signup', () => {
   })
 
   it('returns a friendly message for existing accounts', async () => {
-    mockAdmin({ createError: { message: 'User already registered' } })
+    mockSignupClient({ signUpError: { message: 'User already registered' } })
     const req = makeReq({ email: 'existing@example.com', password: 'TestPassword123!' }, '3.3.3.3')
     const res = makeRes()
 
@@ -136,5 +179,19 @@ describe('/api/signup', () => {
     expect(res.statusCode).toBe(500)
     expect(admin.auth.admin.deleteUser).toHaveBeenCalledWith('user-1')
     expect(state.deletedUsers).toEqual(['user-1'])
+  })
+
+  it('does not create a profile when verification email sending fails', async () => {
+    const { admin } = mockAdmin()
+    mockSignupClient({ signUpError: { message: '{}', status: 504 } })
+    const req = makeReq({ email: 'mail-fail@example.com', password: 'TestPassword123!' }, '5.5.5.5')
+    const res = makeRes()
+
+    await signupHandler(req, res)
+
+    expect(res.statusCode).toBe(502)
+    expect(res.body.error).toMatch(/verification email/i)
+    expect(admin.from).not.toHaveBeenCalledWith('profiles')
+    expect(admin.auth.admin.deleteUser).not.toHaveBeenCalled()
   })
 })

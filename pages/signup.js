@@ -13,7 +13,8 @@ export default function Signup() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
-  const [accountCreated, setAccountCreated] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const [submittedEmail, setSubmittedEmail] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -62,31 +63,26 @@ export default function Signup() {
         return
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
-      if (signInError) {
-        setAccountCreated(true)
-        setLoading(false)
-        return
-      }
-
-      router.replace('/app')
+      setSubmittedEmail(normalizedEmail)
+      setEmailSent(true)
+      setLoading(false)
     } catch (err) {
       setError(toErrorMessage(err))
       setLoading(false)
     }
   }
 
-  if (accountCreated) {
+  if (emailSent) {
     return (
       <>
         <style jsx>{pageStyles}</style>
         <div className="page">
           <div className="card">
             <LogoWordmark size="md" spaceAfter />
-            <h1 className="heading">Account created</h1>
+            <h1 className="heading">Check your email</h1>
             <p className="subtext">
-              Your account for <strong>{email}</strong> is ready.
-              Log in to start your 14-day trial.
+              We sent a verification link to <strong>{submittedEmail}</strong>.
+              Open it to activate your account and start your 14-day trial.
             </p>
             <a href="/login" className="btn" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: '24px' }}>
               Go to log in

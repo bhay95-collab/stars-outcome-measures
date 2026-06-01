@@ -42,7 +42,10 @@ export default function Login() {
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (signInError) {
-      setError(signInError.message)
+      const message = signInError.message || ''
+      setError(message.toLowerCase().includes('email not confirmed')
+        ? 'Please verify your email before logging in. Check your inbox for the RehabMetrics IQ verification link.'
+        : message)
       setLoading(false)
       return
     }

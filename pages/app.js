@@ -768,9 +768,9 @@ function AppSidebar({
   onProfile,
   onSignOut,
 }) {
-  const displayName = profileData.firstName
-    ? `${profileData.firstName} ${profileData.lastName}`.trim()
-    : user?.email ?? 'User Profile'
+  const profileName = `${profileData.firstName ?? ''} ${profileData.lastName ?? ''}`.trim()
+  const displayName = profileName || 'Account'
+  const displayEmail = user?.email ?? ''
   const initial = (profileData.firstName?.[0] || user?.email?.[0] || '?').toUpperCase()
   const pathwayCount = (pathway?.missingMeasures?.length ?? 0) + (pathway?.dueMeasures?.length ?? 0)
   const followUpCount = (followUpSummary?.pendingCount ?? 0) + (followUpSummary?.overdueCount ?? 0)
@@ -894,12 +894,20 @@ function AppSidebar({
         </button>
       </nav>
       <div className="app-sidebar__bottom">
-        <button type="button" className="profile-strip" onClick={onProfile}>
+        <button
+          type="button"
+          className="profile-strip"
+          onClick={onProfile}
+          title={displayEmail ? `Account: ${displayEmail}` : 'Account settings'}
+        >
           {profileData.avatarUrl
-            ? <img src={profileData.avatarUrl} alt="" />
-            : <span>{initial}</span>}
-          <strong>{displayName}</strong>
-          <ChevronDown size={16} />
+            ? <img className="profile-strip__avatar" src={profileData.avatarUrl} alt="" />
+            : <span className="profile-strip__avatar">{initial}</span>}
+          <span className="profile-strip__copy">
+            <strong>{displayName}</strong>
+            {displayEmail ? <small>{displayEmail}</small> : null}
+          </span>
+          <ChevronDown className="profile-strip__chevron" size={16} aria-hidden="true" />
         </button>
         <button type="button" className="sidebar-signout" onClick={onSignOut}>Sign out</button>
       </div>
@@ -2622,6 +2630,8 @@ const globalStyles = `
     position: sticky;
     top: 0;
     height: 100vh;
+    min-width: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     padding: 28px 14px 18px;
@@ -2818,6 +2828,7 @@ const globalStyles = `
   }
 
   .app-sidebar__bottom {
+    min-width: 0;
     display: grid;
     gap: 10px;
     margin-top: auto;
@@ -2828,11 +2839,11 @@ const globalStyles = `
   .profile-strip {
     justify-content: flex-start;
     min-height: 52px;
+    min-width: 0;
     padding: 0 10px;
   }
 
-  .profile-strip img,
-  .profile-strip span {
+  .profile-strip__avatar {
     width: 34px;
     height: 34px;
     border-radius: 50%;
@@ -2840,7 +2851,7 @@ const globalStyles = `
     flex: 0 0 auto;
   }
 
-  .profile-strip span {
+  .profile-strip span.profile-strip__avatar {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2849,19 +2860,42 @@ const globalStyles = `
     font-weight: 800;
   }
 
-  .profile-strip strong {
+  .profile-strip__copy {
     min-width: 0;
     flex: 1;
+    display: grid;
+    gap: 2px;
+  }
+
+  .profile-strip__copy strong {
     overflow: hidden;
     color: #1f2937;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 700;
+    line-height: 1.1;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
+  .profile-strip__copy small {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--color-muted);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .profile-strip__chevron {
+    flex: 0 0 auto;
+    color: var(--color-muted);
+  }
+
   .sidebar-signout {
     width: 100%;
+    max-width: 100%;
     min-height: 34px;
     border: 1px solid var(--color-border);
     border-radius: 8px;

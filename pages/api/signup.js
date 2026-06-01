@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+import { createClient } from '@supabase/supabase-js'
 import { getAdminClient } from '../../lib/supabase-admin'
 
 const RATE_LIMIT_WINDOW_MS = 60_000
@@ -42,6 +43,17 @@ function trialEndDate() {
   return new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString()
 }
 
+function getEmailRedirectUrl(req) {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL
+  if (configuredUrl) return `${configuredUrl.replace(/\/$/, '')}/app`
+
+  const forwardedProto = req.headers['x-forwarded-proto']
+  const proto = Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto
+  const protocol = proto || 'http'
+  const host = req.headers.host || 'localhost:3000'
+  return `${protocol}://${host}/app`
+}
+
 function isAlreadyRegistered(error) {
   const text = [
     error?.message,
@@ -50,6 +62,34 @@ function isAlreadyRegistered(error) {
     error?.status,
   ].filter(Boolean).join(' ').toLowerCase()
   return text.includes('already') || text.includes('registered') || text.includes('exists')
+}
+
+function getSignupClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !anonKey) throw new Error('Supabase public credentials not configured')
+
+  return createClient(url, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
+async function deleteCreatedAccount(admin, userId) {
+  const { error: profileDeleteError } = await admin
+    .from('profiles')
+    .delete()
+    .eq('id', userId)
+
+  if (profileDeleteError) {
+    console.error('Signup rollback profile delete failed', {
+      userId,
+      code: profileDeleteError.code,
+      message: profileDeleteError.message,
+      details: profileDeleteError.details,
+    })
+  }
+
+  await admin.auth.admin.deleteUser(userId)
 }
 
 export default async function handler(req, res) {
@@ -84,21 +124,28 @@ export default async function handler(req, res) {
     })
   }
 
-  const { data, error: createError } = await admin.auth.admin.createUser({
+  const signupClient = getSignupClient()
+  const { data, error: signUpError } = await signupClient.auth.signUp({
     email,
     password,
-    email_confirm: true,
-    user_metadata: {
-      email_verified: true,
-      signup_source: 'web',
+    options: {
+      emailRedirectTo: getEmailRedirectUrl(req),
+      data: { signup_source: 'web' },
     },
   })
 
-  if (createError) {
-    if (isAlreadyRegistered(createError)) {
+  if (signUpError) {
+    if (isAlreadyRegistered(signUpError)) {
       return res.status(409).json({ error: 'An account with this email already exists. Try logging in instead.' })
     }
-    return res.status(502).json({ error: 'Account creation is temporarily unavailable. Please try again.' })
+    console.error('Signup verification email failed', {
+      code: signUpError.code,
+      message: signUpError.message,
+      status: signUpError.status,
+    })
+    return res.status(502).json({
+      error: 'Account creation is temporarily unavailable because the verification email could not be sent. Please try again later.',
+    })
   }
 
   const user = data?.user
@@ -119,9 +166,9 @@ export default async function handler(req, res) {
       message: profileError.message,
       details: profileError.details,
     })
-    await admin.auth.admin.deleteUser(user.id)
+    await deleteCreatedAccount(admin, user.id)
     return res.status(500).json({ error: 'Account setup failed. Please try again.' })
   }
 
-  return res.status(201).json({ ok: true })
+  return res.status(201).json({ ok: true, needsEmailConfirmation: true })
 }

@@ -62,7 +62,14 @@ jest.mock('../lib/clinical/patientReportPdf', () => ({
 const patientOne = { id: 'patient-1', initials: 'AB', diagnosis: 'Stroke', dob_year: 1970 }
 const patientTwo = { id: 'patient-2', initials: 'CD', diagnosis: 'SCI', dob_year: 1980 }
 
-function queryForTable(table, { patients = [], assessmentsByPatient = {} }) {
+const defaultProfile = {
+  trial_end_date: '2999-01-01T00:00:00.000Z',
+  first_name: 'Ada',
+  last_name: 'Clinician',
+  avatar_url: null,
+}
+
+function queryForTable(table, { patients = [], assessmentsByPatient = {}, profile = defaultProfile }) {
   const filters = {}
   const query = {
     select: jest.fn(() => query),
@@ -73,12 +80,7 @@ function queryForTable(table, { patients = [], assessmentsByPatient = {} }) {
     maybeSingle: jest.fn(() => {
       if (table === 'profiles') {
         return Promise.resolve({
-          data: {
-            trial_end_date: '2999-01-01T00:00:00.000Z',
-            first_name: 'Ada',
-            last_name: 'Clinician',
-            avatar_url: null,
-          },
+          data: profile,
           error: null,
         })
       }
@@ -96,14 +98,14 @@ function queryForTable(table, { patients = [], assessmentsByPatient = {} }) {
   return query
 }
 
-function mockAuthenticatedApp({ patients = [], assessmentsByPatient = {} } = {}) {
+function mockAuthenticatedApp({ patients = [], assessmentsByPatient = {}, profile = defaultProfile, userEmail = 'clinician@example.com' } = {}) {
   supabase.auth.getSession.mockResolvedValue({
-    data: { session: { user: { id: 'user-1', email: 'clinician@example.com' } } },
+    data: { session: { user: { id: 'user-1', email: userEmail } } },
   })
   supabase.auth.onAuthStateChange.mockReturnValue({
     data: { subscription: { unsubscribe: jest.fn() } },
   })
-  supabase.from.mockImplementation(table => queryForTable(table, { patients, assessmentsByPatient }))
+  supabase.from.mockImplementation(table => queryForTable(table, { patients, assessmentsByPatient, profile }))
 }
 
 describe('patient-first app navigation', () => {
@@ -161,6 +163,25 @@ describe('patient-first app navigation', () => {
         { shallow: true },
       )
     })
+  })
+
+  it('keeps long account emails contained in the sidebar footer', async () => {
+    mockAuthenticatedApp({
+      patients: [],
+      profile: {
+        trial_end_date: '2999-01-01T00:00:00.000Z',
+        first_name: null,
+        last_name: null,
+        avatar_url: null,
+      },
+      userEmail: 'benjamin.hay@health.qld.gov.au',
+    })
+
+    render(<App />)
+
+    expect(await screen.findByRole('button', { name: /Account benjamin\.hay@health\.qld\.gov\.au/i })).toBeInTheDocument()
+    expect(screen.getByText('Account')).toBeInTheDocument()
+    expect(screen.getByText('benjamin.hay@health.qld.gov.au')).toBeInTheDocument()
   })
 
   it('prompts before leaving Outcome Measures with unsaved encounter drafts', async () => {

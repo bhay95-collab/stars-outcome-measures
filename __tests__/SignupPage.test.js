@@ -30,13 +30,12 @@ describe('Signup page', () => {
     global.fetch = jest.fn()
   })
 
-  it('creates the account through the server API and signs in', async () => {
+  it('creates the account through the server API and asks for email verification', async () => {
     const user = userEvent.setup()
     global.fetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ ok: true }),
+      json: async () => ({ ok: true, needsEmailConfirmation: true }),
     })
-    supabase.auth.signInWithPassword.mockResolvedValue({ error: null })
 
     render(<Signup />)
 
@@ -53,11 +52,11 @@ describe('Signup page', () => {
         }),
       }))
     })
-    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
-      email: 'new.user@example.com',
-      password: 'TestPassword123!',
-    })
-    expect(mockRouter.replace).toHaveBeenCalledWith('/app')
+    expect(await screen.findByRole('heading', { name: /check your email/i })).toBeInTheDocument()
+    expect(screen.getByText(/verification link to/i)).toBeInTheDocument()
+    expect(screen.getByText('new.user@example.com')).toBeInTheDocument()
+    expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled()
+    expect(mockRouter.replace).not.toHaveBeenCalled()
   })
 
   it('renders server signup errors as useful text', async () => {
