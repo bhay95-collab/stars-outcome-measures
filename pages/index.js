@@ -346,7 +346,7 @@ export default function Landing({ initialAuthCallback = false }) {
           <div className="founder-layout">
             <figure className="founder-portrait reveal">
               <img
-                src="/founder-ben.png"
+                src="/founder-ben.jpg"
                 alt="Ben, founder of RehabMetrics IQ, an Australian physiotherapist"
                 loading="lazy"
               />
