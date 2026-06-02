@@ -23,7 +23,6 @@ const MEASURE_REFERENCES = [
   ['HADS',    'Hospital Anxiety and Depression Scale',                      'Zigmond AS, Snaith RP. Acta Psychiatr Scand. 1983;67(6):361-70.'],
   ['PDQ-8',   "Parkinson's Disease Questionnaire (8-item)",                 'Jenkinson C et al. Psychol Health. 1997;12(6):805-14.'],
   ['RPQ',     'Rivermead Post Concussion Symptoms Questionnaire',           'King NS et al. J Neurol. 1995;242(9):587-92.'],
-  ['BIVI',    'Brain Injury Vision Inventory',                              'Original validation reference pending — please confirm citation before publication.'],
   ['ISNCSCI', 'International Standards for Neurological Classification of SCI', 'American Spinal Injury Association. ASIA International Standards Worksheet, 2019 revision.'],
 ]
 
