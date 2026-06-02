@@ -342,6 +342,39 @@ export default function Landing({ initialAuthCallback = false }) {
           </div>
         </section>
 
+        <section className="section founder-section">
+          <div className="founder-layout">
+            <figure className="founder-portrait reveal">
+              <img
+                src="/founder-ben.jpg"
+                alt="Ben, founder of RehabMetrics IQ, an Australian physiotherapist"
+                loading="lazy"
+              />
+            </figure>
+            <div className="founder-copy reveal">
+              <p className="eyebrow">WHY THIS EXISTS</p>
+              <h2>A note from the founder.</h2>
+              <p>
+                Hi — I&apos;m Ben, an Australian physiotherapist. Practicing since 2016, most recently
+                as a Senior Physiotherapist in specialist rehabilitation focused on hypertonicity
+                management, after years in inpatient cardiorespiratory and neurological services.
+              </p>
+              <p>
+                Across every team I worked in, the same gap showed up. Physios collecting outcome
+                measures we knew the literature recommended — then struggling to interpret the score
+                in front of the patient, or not knowing what other options were available at all.
+                Juniors especially.
+              </p>
+              <p>
+                RehabMetrics IQ is the tool I wished I had as a junior, and the one I started
+                building as a senior. Clearer visibility of the measures we have. Clearer
+                interpretation of what the scores tell us. More complete patient journeys.
+              </p>
+              <p className="founder-signature">— Ben</p>
+            </div>
+          </div>
+        </section>
+
         <MobileAppShowcase />
 
         <section id="pricing" className="section pricing-section">
@@ -1183,6 +1216,56 @@ const styles = `
     gap: 18px;
   }
 
+  .founder-section {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+  .founder-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 360px) 1fr;
+    gap: 56px;
+    align-items: center;
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+  .founder-portrait {
+    margin: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    background: var(--soft);
+    aspect-ratio: 4 / 5;
+  }
+  .founder-portrait img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .founder-copy .eyebrow {
+    margin-bottom: 12px;
+  }
+  .founder-copy h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 30px;
+    line-height: 1.15;
+    color: var(--navy-dark);
+    margin-bottom: 18px;
+    font-weight: 600;
+  }
+  .founder-copy p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .founder-signature {
+    margin-top: 8px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    color: var(--ink);
+  }
+
   .capability-card {
     min-height: 236px;
     padding: 24px;
@@ -1981,6 +2064,9 @@ const styles = `
     .preview-card { justify-self: start; }
     .workflow-grid,
     .capability-grid { grid-template-columns: 1fr; }
+    .founder-layout { grid-template-columns: 1fr; gap: 28px; }
+    .founder-portrait { max-width: 280px; margin: 0 auto; }
+    .founder-copy h2 { font-size: 26px; }
     .image-panel--workflow,
     .image-panel--pricing {
       min-height: 320px;
