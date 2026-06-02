@@ -418,6 +418,7 @@ export default function Landing({ initialAuthCallback = false }) {
 
       <footer className="footer">
         <span>© {new Date().getFullYear()} RehabMetrics IQ</span>
+        <a href="/reference-card">Free reference card</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
         <a href="/data-deletion">Data Deletion</a>
