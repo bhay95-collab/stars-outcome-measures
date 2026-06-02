@@ -453,6 +453,7 @@ export default function Landing({ initialAuthCallback = false }) {
         <span>© {new Date().getFullYear()} RehabMetrics IQ</span>
         <a href="/reference-card">Free reference card</a>
         <a href="/pilot">Pilot programme</a>
+        <a href="/clinical-use">Clinical use</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
         <a href="/data-deletion">Data Deletion</a>

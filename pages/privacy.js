@@ -122,6 +122,7 @@ export default function Privacy() {
 
           <div className="footer-links">
             <a href="/terms">Terms of Service</a>
+            <a href="/clinical-use">Clinical Use &amp; Limitations</a>
             <a href="/data-deletion">Data Deletion</a>
             <a href="/">Back to home</a>
           </div>
