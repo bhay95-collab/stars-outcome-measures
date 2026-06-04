@@ -35,14 +35,14 @@ export function PatientAvatar({ name, size = 'md' }: PatientAvatarProps) {
 
 const styles = StyleSheet.create({
   circle: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.surfaceSoft,
     borderWidth: 1,
-    borderColor: colors.secondarySoft,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
-    color: colors.primary,
+    color: colors.muted,
     fontWeight: typography.weightBold,
     textTransform: 'uppercase',
   },

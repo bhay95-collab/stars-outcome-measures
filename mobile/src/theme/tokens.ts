@@ -18,6 +18,13 @@ export const colors = {
   surfaceSoft:   '#F6F9FC',  // Clinical Surface
   panel:         '#F8FBFE',
   border:        '#D9E6F2',  // Border Blue
+  // Tonal status fills — mirrors web token system
+  successSoft:   '#f2faf5',
+  successBorder: '#c5e6d2',
+  amberSoft:     '#fef9ef',
+  amberBorder:   '#f0d9a8',
+  dangerSoft:    '#fef7f5',
+  dangerBorder:  '#edcabb',
 } as const;
 
 export const radii = {

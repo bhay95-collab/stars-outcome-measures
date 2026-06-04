@@ -11,7 +11,6 @@ import { withTimeout, DATA_FETCH_TIMEOUT_MS } from '../../../../src/utils/withTi
 import { Screen } from '../../../../src/components/ui/Screen';
 import { Card } from '../../../../src/components/ui/Card';
 import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
-import { ThreeBarMotif } from '../../../../src/components/ui/ThreeBarMotif';
 import { getValidPatientId } from '../../../../src/utils/routing';
 import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
@@ -56,7 +55,14 @@ function MeasureRow({
               ? styles.pathwayBadge_recorded
               : styles.pathwayBadge_missing,
         ]}>
-          <Text style={styles.pathwayBadgeText}>{pathwayStatus.label}</Text>
+          <Text style={[
+            styles.pathwayBadgeText,
+            pathwayStatus.state === 'due'
+              ? styles.pathwayBadgeText_due
+              : pathwayStatus.state === 'recorded'
+                ? styles.pathwayBadgeText_recorded
+                : null,
+          ]}>{pathwayStatus.label}</Text>
         </View>
       ) : null}
       <Text style={styles.chevron}>›</Text>
@@ -171,16 +177,13 @@ export default function MeasureSelectorScreen() {
       />
       <ScrollView style={styles.panel} contentContainerStyle={styles.content}>
         <View style={styles.hero}>
-          <View style={styles.heroCopy}>
-            <Text style={styles.heroTitle}>New Assessment</Text>
-            {pathway ? (
-              <Text style={styles.heroStatus}>{pathway.statusLabel}</Text>
-            ) : null}
-            <Text style={styles.heroSubtitle}>
-              {pathway ? pathway.explanation.badgeHelp : 'Choose the next measure to record.'}
-            </Text>
-          </View>
-          <ThreeBarMotif size="md" tone="soft" />
+          <Text style={styles.heroTitle}>New Assessment</Text>
+          {pathway ? (
+            <Text style={styles.heroStatus}>{pathway.statusLabel}</Text>
+          ) : null}
+          <Text style={styles.heroSubtitle}>
+            {pathway ? pathway.explanation.badgeHelp : 'Choose the next measure to record.'}
+          </Text>
         </View>
 
         {GROUPS.map(group => {
@@ -225,18 +228,8 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   hero: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-  },
-  heroCopy: {
-    flex: 1,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   heroTitle: {
     fontSize: typography.sizeXl,
@@ -263,11 +256,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   groupTitle: {
-    fontSize: typography.sizeXs,
-    fontWeight: typography.weightSemibold,
-    color: colors.primary,
-    letterSpacing: typography.trackingWide,
-    textTransform: 'uppercase',
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightMedium,
+    color: colors.muted,
+    letterSpacing: 0.2,
   },
   countPill: {
     minWidth: 28,
@@ -275,14 +267,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.surfaceSoft,
     borderWidth: 1,
-    borderColor: colors.secondarySoft,
+    borderColor: colors.border,
   },
   countText: {
     fontSize: typography.sizeXs,
-    fontWeight: typography.weightBold,
-    color: colors.primary,
+    fontWeight: typography.weightMedium,
+    color: colors.subtle,
   },
   groupCard: {
     padding: 0,
@@ -320,25 +312,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.secondarySoft,
+    backgroundColor: colors.surfaceSoft,
+    borderColor: colors.border,
   },
   pathwayBadge_missing: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.secondarySoft,
+    backgroundColor: colors.surfaceSoft,
+    borderColor: colors.border,
   },
   pathwayBadge_due: {
-    backgroundColor: colors.surface,
-    borderColor: colors.primary,
+    backgroundColor: colors.amberSoft,
+    borderColor: colors.amberBorder,
   },
   pathwayBadge_recorded: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
+    backgroundColor: colors.successSoft,
+    borderColor: colors.successBorder,
   },
   pathwayBadgeText: {
     fontSize: typography.sizeXs,
-    fontWeight: typography.weightBold,
-    color: colors.primary,
+    fontWeight: typography.weightMedium,
+    color: colors.subtle,
+  },
+  pathwayBadgeText_due: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
+    color: '#a05c00',
+  },
+  pathwayBadgeText_recorded: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightSemibold,
+    color: '#1a7340',
   },
   chevron: {
     fontSize: typography.sizeLg,

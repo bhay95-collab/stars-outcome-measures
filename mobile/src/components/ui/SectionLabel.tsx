@@ -12,11 +12,10 @@ export function SectionLabel({ children }: SectionLabelProps) {
 
 const styles = StyleSheet.create({
   label: {
-    fontSize: typography.sizeXs,
-    fontWeight: typography.weightSemibold,
-    color: colors.primary,
-    letterSpacing: typography.trackingWide,
-    textTransform: 'uppercase',
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightMedium,
+    color: colors.muted,
+    letterSpacing: 0.2,
     marginBottom: spacing.sm,
   },
 });

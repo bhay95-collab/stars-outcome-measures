@@ -13,7 +13,7 @@ import { Screen } from '../src/components/ui/Screen';
 import { TextInput } from '../src/components/ui/TextInput';
 import { LogoWordmark } from '../src/components/ui/LogoWordmark';
 import { ThreeBarLoading } from '../src/components/ui/ThreeBarMotif';
-import { colors, fonts, spacing, typography, radii } from '../src/theme/tokens';
+import { colors, spacing, typography, radii } from '../src/theme/tokens';
 
 import { GOOGLE_SIGN_IN_ERROR_MESSAGE, signInWithGoogle } from '../src/auth/googleAuth';
 
@@ -142,7 +142,6 @@ export default function SignInScreen() {
 
           <View style={[styles.formPanel, { paddingBottom: Math.max(insets.bottom + spacing.lg, spacing.xl) }]}>
             <View style={styles.formHeader}>
-              <Text style={styles.formKicker}>SECURE CLINICAL WORKSPACE</Text>
               <Text style={styles.formHeading}>Welcome back</Text>
               <Text style={styles.formSubtitle}>Log in to continue to your account.</Text>
             </View>
@@ -305,15 +304,8 @@ const styles = StyleSheet.create({
   formHeader: {
     gap: spacing.xs,
   },
-  formKicker: {
-    fontSize: typography.sizeXs,
-    fontWeight: typography.weightBold,
-    color: colors.primary,
-    letterSpacing: typography.trackingWide,
-  },
   formHeading: {
-    fontFamily: fonts.serif,
-    fontSize: typography.sizeLg,
+    fontSize: typography.sizeXl,
     fontWeight: typography.weightBold,
     color: colors.ink,
   },

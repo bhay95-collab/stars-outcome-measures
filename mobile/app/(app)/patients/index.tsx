@@ -26,9 +26,8 @@ import { NavyHeader } from '../../../src/components/ui/NavyHeader';
 import { PatientAvatar } from '../../../src/components/ui/PatientAvatar';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
-import { ThreeBarMotif } from '../../../src/components/ui/ThreeBarMotif';
 import { TextInput as ClinicalTextInput } from '../../../src/components/ui/TextInput';
-import { colors, fonts, spacing, typography, radii } from '../../../src/theme/tokens';
+import { colors, spacing, typography, radii } from '../../../src/theme/tokens';
 import { CONDITION_OPTIONS } from '@clinical/constants';
 
 const GENDER_OPTIONS: { value: PatientGender; label: string }[] = [
@@ -553,7 +552,6 @@ export default function PatientsScreen() {
               <Text style={styles.heading}>Patient Directory</Text>
               <Text style={styles.subtitle}>Manage and monitor patient progress.</Text>
             </View>
-            <ThreeBarMotif size="md" tone="soft" />
           </View>
           <View style={styles.searchRow}>
             <RNTextInput
@@ -716,14 +714,16 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.surfaceSoft,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sheetAvatarInitials: {
     fontSize: typography.sizeLg,
     fontWeight: typography.weightBold,
-    color: colors.primary,
+    color: colors.muted,
   },
   sheetUserInfo: {
     flex: 1,
@@ -773,7 +773,6 @@ const styles = StyleSheet.create({
     letterSpacing: typography.trackingWide,
   },
   createTitle: {
-    fontFamily: fonts.serif,
     fontSize: typography.sizeLg,
     fontWeight: typography.weightBold,
     color: colors.ink,
@@ -913,24 +912,19 @@ const styles = StyleSheet.create({
   overview: {
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
-    padding: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   overviewHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
     gap: spacing.md,
   },
   overviewCopy: {
     flex: 1,
   },
   heading: {
-    fontFamily: fonts.serif,
-    fontSize: typography.size2xl,
+    fontSize: typography.sizeXl,
     fontWeight: typography.weightBold,
     color: colors.ink,
     marginBottom: spacing.xs,
@@ -997,17 +991,17 @@ const styles = StyleSheet.create({
   },
   conditionPill: {
     maxWidth: '72%',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.surfaceSoft,
     borderRadius: radii.sm,
     paddingHorizontal: spacing.xs,
     paddingVertical: 3,
     borderWidth: 1,
-    borderColor: colors.secondarySoft,
+    borderColor: colors.border,
   },
   condition: {
     fontSize: typography.sizeXs,
-    color: colors.primary,
-    fontWeight: typography.weightSemibold,
+    color: colors.muted,
+    fontWeight: typography.weightMedium,
   },
   chevron: {
     fontSize: typography.sizeLg,

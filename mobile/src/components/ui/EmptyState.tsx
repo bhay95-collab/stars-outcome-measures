@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,7 +7,6 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import { colors, spacing, typography, animation } from '../../theme/tokens';
-import { ThreeBarMotif } from './ThreeBarMotif';
 
 interface EmptyStateProps {
   title: string;
@@ -27,7 +26,10 @@ export function EmptyState({ title, hint }: EmptyStateProps) {
 
   return (
     <Animated.View style={[styles.container, animStyle]}>
-      <ThreeBarMotif size="sm" tone="soft" />
+      <View style={styles.icon} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <View style={styles.iconLine} />
+        <View style={[styles.iconLine, styles.iconLineShort]} />
+      </View>
       <Text style={styles.title}>{title}</Text>
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
     </Animated.View>
@@ -41,6 +43,19 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.lg,
+  },
+  icon: {
+    gap: 6,
+    marginBottom: spacing.xs,
+  },
+  iconLine: {
+    width: 32,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.border,
+  },
+  iconLineShort: {
+    width: 20,
   },
   title: {
     fontSize: typography.sizeMd,
