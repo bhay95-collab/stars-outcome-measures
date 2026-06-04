@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { Accessibility, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, MessageSquare, RefreshCw, Route, Search, Users, XCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -123,6 +123,8 @@ function responseOneLine(response) {
 
 export default function App() {
   const router = useRouter()
+  const routerRef = useRef(router)
+  useEffect(() => { routerRef.current = router }, [router])
   const [user, setUser] = useState(null)
   const [bootState, setBootState] = useState('checking-auth')
   const [hasAccess, setHasAccess] = useState(null)
@@ -225,7 +227,7 @@ export default function App() {
     function redirectToLogin() {
       if (!active) return
       setBootState('unauthenticated')
-      router.replace('/login')
+      routerRef.current.replace('/login')
     }
 
     async function loadUserData(sessionUser) {
@@ -310,7 +312,7 @@ export default function App() {
       active = false
       authSub.unsubscribe()
     }
-  }, [router])
+  }, [])
 
   // Handle Stripe redirect query params
   useEffect(() => {
