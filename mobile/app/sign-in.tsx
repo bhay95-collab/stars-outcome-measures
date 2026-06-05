@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, Image, StyleSheet, KeyboardAvoidingView, Platform,
-  ScrollView, Pressable,
+  ScrollView, Pressable, useWindowDimensions,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -26,6 +26,8 @@ const squareLogo = require('../assets/SquareLogo.png');
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 600;
   const { reason } = useLocalSearchParams<{ reason?: string }>();
   const isAccessExpired = reason === 'access_expired';
 
@@ -114,6 +116,16 @@ export default function SignInScreen() {
 
   return (
     <Screen padded={false} style={styles.navyRoot} rootBackground={colors.primaryDark} safeEdges={['left', 'right']}>
+      <VideoView
+        player={videoPlayer}
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.primaryDark }]}
+        pointerEvents="none"
+        contentFit="cover"
+        fullscreenOptions={{ enable: false }}
+        allowsPictureInPicture={false}
+        nativeControls={false}
+      />
+      <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, styles.heroScrim]} />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -124,15 +136,6 @@ export default function SignInScreen() {
           contentInsetAdjustmentBehavior="never"
         >
           <View style={[styles.hero, { paddingTop: insets.top + spacing.xl }]}>
-            <VideoView
-              player={videoPlayer}
-              style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.primaryDark }]}
-              contentFit="cover"
-              fullscreenOptions={{ enable: false }}
-              allowsPictureInPicture={false}
-              nativeControls={false}
-            />
-            <View style={styles.heroScrim} />
             <Image source={squareLogo} style={styles.logo} resizeMode="contain" />
             <LogoWordmark size="lg" tone="light" />
             <Text style={styles.tagline}>
@@ -140,7 +143,11 @@ export default function SignInScreen() {
             </Text>
           </View>
 
-          <View style={[styles.formPanel, { paddingBottom: Math.max(insets.bottom + spacing.lg, spacing.xl) }]}>
+          <View style={[
+            styles.formPanel,
+            { paddingBottom: Math.max(insets.bottom + spacing.lg, spacing.xl) },
+            isTablet && styles.formPanelTablet,
+          ]}>
             <View style={styles.formHeader}>
               <Text style={styles.formHeading}>Welcome back</Text>
               <Text style={styles.formSubtitle}>Log in to continue to your account.</Text>
@@ -272,19 +279,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg + radii.sheet,
     gap: spacing.sm,
-    overflow: 'hidden',
-    backgroundColor: colors.primaryDark,
     marginBottom: -radii.sheet,
   },
   heroScrim: {
-    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(16, 41, 71, 0.62)',
   },
   logo: {
     width: 120,
     height: 120,
-    borderRadius: radii.card,
+    borderRadius: 26,
     marginBottom: spacing.xs,
+    overflow: 'hidden',
   },
   tagline: {
     fontSize: typography.sizeSm,
@@ -300,6 +305,14 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     borderTopWidth: 1,
     borderColor: colors.border,
+  },
+  formPanelTablet: {
+    alignSelf: 'center',
+    width: '92%',
+    maxWidth: 480,
+    borderRadius: radii.sheet,
+    borderWidth: 1,
+    marginBottom: spacing.xl,
   },
   formHeader: {
     gap: spacing.xs,

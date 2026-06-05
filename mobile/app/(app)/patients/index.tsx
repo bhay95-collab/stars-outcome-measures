@@ -483,15 +483,22 @@ export default function PatientsScreen() {
   useEffect(() => {
     if (!user) return;
     let isActive = true;
-    supabase
-      .from('profiles')
-      .select('avatar_url')
-      .eq('id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
+    const userId = user.id;
+
+    async function loadProfileAvatar() {
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
         if (isActive && data?.avatar_url) setProfileAvatarUrl(data.avatar_url);
-      })
-      .catch(() => null);
+      } catch {
+        // Avatar loading is non-critical; keep the initials fallback.
+      }
+    }
+
+    loadProfileAvatar();
     return () => { isActive = false; };
   }, [user?.id]);
 
