@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test:clinical": "jest --config jest.clinical.config.js --runInBand",
-    "expo:config": "expo config --type public"
+    "expo:config": "expo config --type public",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@babel/runtime": "^7.29.2",
@@ -41,10 +42,11 @@
     "@types/jest": "29.5.14",
     "@types/react": "~19.1.0",
     "babel-plugin-module-resolver": "^5.0.3",
+    "babel-preset-expo": "~54.0.10",
     "jest": "29.7.0",
     "jest-expo": "~54.0.17",
-    "typescript": "~5.9.2",
-    "babel-preset-expo": "~54.0.10"
+    "patch-package": "^8.0.1",
+    "typescript": "~5.9.2"
   },
   "private": true,
   "jest": {

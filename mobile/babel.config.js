@@ -11,7 +11,6 @@ module.exports = function (api) {
           },
         },
       ],
-      '@babel/plugin-transform-dynamic-import',
       'react-native-reanimated/plugin',
     ],
   };
