@@ -1,13 +1,20 @@
 import { getAdminClient } from '../../../../lib/supabase-admin'
-import { expirePendingRequest } from '../../../../lib/followupServer'
+import {
+  expirePendingRequest,
+  FOLLOWUP_ASSESSMENT_SELECT,
+  FOLLOWUP_REQUEST_SELECT,
+} from '../../../../lib/followupServer'
 import { hashFollowUpToken } from '../../../../lib/followupTokens'
 import {
-  FOLLOWUP_QUESTION_CONFIG,
   FOLLOWUP_STATUS,
   getFollowUpRequestStatus,
   shapeFollowUpRecord,
-  validateFollowUpAnswers,
 } from '../../../../lib/followups'
+import {
+  getFollowUpQuestionnaire,
+  questionnaireAttentionLevel,
+  validateFollowUpQuestionnaireAnswers,
+} from '../../../../lib/followupQuestionnaires'
 
 function unavailable(res, reason, status = 200) {
   return res.status(status).json({ state: 'unavailable', reason })
@@ -25,7 +32,7 @@ export default async function handler(req, res) {
   const tokenHash = hashFollowUpToken(token)
   const { data: rawRequest, error } = await admin
     .from('followup_requests')
-    .select('id, user_id, patient_id, status, due_at, expires_at, created_at, completed_at, cancelled_at')
+    .select(FOLLOWUP_REQUEST_SELECT)
     .eq('token_hash', tokenHash)
     .maybeSingle()
 
@@ -39,11 +46,15 @@ export default async function handler(req, res) {
     if (status !== FOLLOWUP_STATUS.PENDING) {
       return unavailable(res, status)
     }
+    const questionnaire = getFollowUpQuestionnaire(request.measure_id)
+    if (!questionnaire) return unavailable(res, 'unsupported', 404)
+
     return res.status(200).json({
       state: 'ready',
       dueAt: request.due_at,
       expiresAt: request.expires_at,
-      questions: FOLLOWUP_QUESTION_CONFIG,
+      questionnaire,
+      questions: questionnaire.questions,
     })
   }
 
@@ -51,38 +62,64 @@ export default async function handler(req, res) {
     return unavailable(res, status, 409)
   }
 
-  const validation = validateFollowUpAnswers(req.body ?? {})
+  const questionnaire = getFollowUpQuestionnaire(request.measure_id)
+  if (!questionnaire) return unavailable(res, 'unsupported', 404)
+
+  const validation = validateFollowUpQuestionnaireAnswers(request.measure_id, req.body?.answers ?? req.body ?? {})
   if (validation.error) return res.status(400).json({ error: validation.error })
 
-  const { data: responseData, error: insertError } = await admin
-    .from('followup_responses')
+  const completedAt = new Date().toISOString()
+  const { data: assessmentData, error: insertError } = await admin
+    .from('assessments')
     .insert({
-      request_id: request.id,
       user_id: request.user_id,
       patient_id: request.patient_id,
-      ...validation.data,
+      measure: request.measure_id,
+      inputs: validation.inputs,
+      results: {
+        ...validation.results,
+        meta: {
+          ...(validation.results?.meta ?? {}),
+          patientReported: true,
+          source: 'patient_reported_followup',
+          followUpRequestId: request.id,
+          followUpSourceAssessmentId: request.source_assessment_id ?? null,
+          encounterId: `followup-${request.id}`,
+          encounterDate: completedAt,
+        },
+      },
     })
-    .select('id, request_id, patient_id, falls_count, confidence_score, fatigue_score, symptoms_change, adherence_level, global_status, concern_text, attention_level, created_at')
+    .select(FOLLOWUP_ASSESSMENT_SELECT)
     .single()
 
   if (insertError) {
-    return unavailable(res, 'completed', 409)
+    return res.status(500).json({ error: 'Your responses could not be saved. Please try again.' })
   }
 
-  const completedAt = new Date().toISOString()
   const { data: completedRequest } = await admin
     .from('followup_requests')
     .update({
       status: FOLLOWUP_STATUS.COMPLETED,
       completed_at: completedAt,
+      completed_assessment_id: assessmentData.id,
     })
     .eq('id', request.id)
     .eq('status', FOLLOWUP_STATUS.PENDING)
-    .select('id, patient_id, status, due_at, expires_at, created_at, completed_at, cancelled_at')
+    .select(FOLLOWUP_REQUEST_SELECT)
     .maybeSingle()
+
+  if (!completedRequest) {
+    await admin
+      .from('assessments')
+      .delete()
+      .eq('id', assessmentData.id)
+      .eq('user_id', request.user_id)
+    return unavailable(res, 'completed', 409)
+  }
 
   return res.status(200).json({
     state: 'submitted',
-    followup: shapeFollowUpRecord(completedRequest ?? { ...request, status: FOLLOWUP_STATUS.COMPLETED, completed_at: completedAt }, responseData),
+    attentionLevel: questionnaireAttentionLevel(request.measure_id, assessmentData.results),
+    followup: shapeFollowUpRecord(completedRequest, null, assessmentData),
   })
 }

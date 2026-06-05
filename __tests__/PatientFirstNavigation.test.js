@@ -61,6 +61,14 @@ jest.mock('../lib/clinical/patientReportPdf', () => ({
 
 const patientOne = { id: 'patient-1', initials: 'AB', diagnosis: 'Stroke', dob_year: 1970 }
 const patientTwo = { id: 'patient-2', initials: 'CD', diagnosis: 'SCI', dob_year: 1980 }
+const abcAssessment = {
+  id: 'abc-assessment-1',
+  patient_id: 'patient-1',
+  measure: 'ABC',
+  inputs: { items: Array(16).fill(80) },
+  results: { primaryValue: 80, primaryUnit: '%', interpretation: 'Moderate functioning', meta: { classColor: 'amber' } },
+  created_at: '2999-05-28T00:00:00.000Z',
+}
 
 const defaultProfile = {
   trial_end_date: '2999-01-01T00:00:00.000Z',
@@ -204,7 +212,7 @@ describe('patient-first app navigation', () => {
 
     render(<App />)
 
-    expect(await screen.findByText(/secure check-ins for falls/i)).toBeInTheDocument()
+    expect(await screen.findByText(/secure links for patients to repeat questionnaires/i)).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1, name: /follow-up/i })).toBeInTheDocument()
   })
 
@@ -228,7 +236,11 @@ describe('patient-first app navigation', () => {
               created_at: '2999-05-29T00:00:00.000Z',
               completed_at: null,
               cancelled_at: null,
+              measure_id: 'ABC',
+              source_assessment_id: 'abc-assessment-1',
+              completed_assessment_id: null,
               response: null,
+              assessment: null,
             },
           }),
         })
@@ -242,19 +254,27 @@ describe('patient-first app navigation', () => {
       configurable: true,
       value: { writeText: jest.fn() },
     })
-    mockAuthenticatedApp({ patients: [patientOne] })
+    mockAuthenticatedApp({ patients: [patientOne], assessmentsByPatient: { 'patient-1': [abcAssessment] } })
 
     render(<App />)
 
-    await screen.findByText(/secure check-ins for falls/i)
+    await screen.findByText(/secure links for patients to repeat questionnaires/i)
     await user.click(screen.getByRole('button', { name: /create secure link/i }))
 
     expect(await screen.findByDisplayValue('http://localhost:3000/followup/raw-token')).toBeInTheDocument()
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('http://localhost:3000/followup/raw-token')
     expect(global.fetch).toHaveBeenCalledWith(
       '/api/followups',
-      expect.objectContaining({ method: 'POST' }),
+      expect.objectContaining({
+        method: 'POST',
+      }),
     )
+    const createCall = global.fetch.mock.calls.find(([url, options]) => url === '/api/followups' && options?.method === 'POST')
+    expect(JSON.parse(createCall[1].body)).toEqual(expect.objectContaining({
+      patientId: 'patient-1',
+      measureId: 'ABC',
+      sourceAssessmentId: 'abc-assessment-1',
+    }))
   })
 
   it('surfaces completed follow-up responses in Overview and Reports', async () => {

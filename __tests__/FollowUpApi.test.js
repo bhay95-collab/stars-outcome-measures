@@ -16,6 +16,18 @@ jest.mock('../lib/followupTokens', () => ({
 const user = { id: 'user-1', email: 'clinician@example.com' }
 const patientId = '11111111-1111-4111-8111-111111111111'
 const requestId = '22222222-2222-4222-8222-222222222222'
+const sourceAssessmentId = '33333333-3333-4333-8333-333333333333'
+const completedAssessmentId = '44444444-4444-4444-8444-444444444444'
+
+const sourceAssessment = {
+  id: sourceAssessmentId,
+  user_id: user.id,
+  patient_id: patientId,
+  measure: 'ABC',
+  inputs: { items: Array(16).fill(70) },
+  results: { primaryValue: 70, primaryUnit: '%', interpretation: 'Moderate functioning', meta: { classColor: 'amber' } },
+  created_at: '2026-05-28T00:00:00.000Z',
+}
 
 function makeReq({ method = 'GET', query = {}, body = {}, headers = { host: 'localhost:3000' } } = {}) {
   return { method, query, body, headers, cookies: {}, socket: { remoteAddress: '127.0.0.1' } }
@@ -57,16 +69,29 @@ function makeQuery(table, state) {
       state.updates.push({ table, payload })
       return query
     }),
+    delete: jest.fn(() => query),
     order: jest.fn(() => {
       if (table === 'followup_requests') return Promise.resolve({ data: state.requests ?? [], error: null })
       if (table === 'followup_responses') return Promise.resolve({ data: state.responses ?? [], error: null })
+      if (table === 'assessments') {
+        const rows = (state.assessments ?? []).filter(assessment => Object.entries(query.filters).every(([field, value]) => assessment[field] === value))
+        return Promise.resolve({ data: rows, error: null })
+      }
       return Promise.resolve({ data: [], error: null })
     }),
     maybeSingle: jest.fn(() => {
       if (table === 'profiles') return Promise.resolve({ data: state.profile, error: null })
       if (table === 'subscriptions') return Promise.resolve({ data: state.subscription, error: null })
       if (table === 'patients') return Promise.resolve({ data: state.patient, error: null })
-      if (table === 'followup_requests') return Promise.resolve({ data: state.request, error: null })
+      if (table === 'followup_requests') {
+        if (query.payload) {
+          return Promise.resolve({
+            data: state.request ? { ...state.request, ...query.payload } : null,
+            error: null,
+          })
+        }
+        return Promise.resolve({ data: state.request, error: null })
+      }
       return Promise.resolve({ data: null, error: null })
     }),
     single: jest.fn(() => {
@@ -74,7 +99,11 @@ function makeQuery(table, state) {
         return Promise.resolve({
           data: {
             id: requestId,
+            user_id: query.payload.user_id,
             patient_id: patientId,
+            measure_id: query.payload.measure_id,
+            source_assessment_id: query.payload.source_assessment_id,
+            completed_assessment_id: null,
             status: 'pending',
             due_at: query.payload.due_at,
             expires_at: query.payload.expires_at,
@@ -85,20 +114,15 @@ function makeQuery(table, state) {
           error: null,
         })
       }
-      if (table === 'followup_responses') {
+      if (table === 'assessments') {
         return Promise.resolve({
           data: {
-            id: 'response-1',
-            request_id: query.payload.request_id,
+            id: completedAssessmentId,
+            user_id: query.payload.user_id,
             patient_id: query.payload.patient_id,
-            falls_count: query.payload.falls_count,
-            confidence_score: query.payload.confidence_score,
-            fatigue_score: query.payload.fatigue_score,
-            symptoms_change: query.payload.symptoms_change,
-            adherence_level: query.payload.adherence_level,
-            global_status: query.payload.global_status,
-            concern_text: query.payload.concern_text,
-            attention_level: query.payload.attention_level,
+            measure: query.payload.measure,
+            inputs: query.payload.inputs,
+            results: query.payload.results,
             created_at: '2026-05-29T00:00:00.000Z',
           },
           error: null,
@@ -117,6 +141,7 @@ function mockAdmin(state = {}) {
     patient: { id: patientId, user_id: user.id },
     requests: [],
     responses: [],
+    assessments: [sourceAssessment],
     inserts: [],
     updates: [],
     ...state,
@@ -142,6 +167,8 @@ describe('follow-up API routes', () => {
       method: 'POST',
       body: {
         patientId,
+        measureId: 'ABC',
+        sourceAssessmentId,
         dueAt: '2026-06-05T00:00:00.000Z',
         expiresAt: '2026-06-12T00:00:00.000Z',
       },
@@ -158,9 +185,30 @@ describe('follow-up API routes', () => {
       payload: expect.objectContaining({
         user_id: user.id,
         patient_id: patientId,
+        measure_id: 'ABC',
+        source_assessment_id: sourceAssessmentId,
         token_hash: 'hashed-token',
       }),
     }))
+  })
+
+  it('requires the selected questionnaire to have been completed for the patient', async () => {
+    mockAdmin({ assessments: [] })
+    const req = makeReq({
+      method: 'POST',
+      body: {
+        patientId,
+        measureId: 'ABC',
+        dueAt: '2026-06-05T00:00:00.000Z',
+        expiresAt: '2026-06-12T00:00:00.000Z',
+      },
+    })
+    const res = makeRes()
+
+    await followupsHandler(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect(res.body.error).toMatch(/complete this questionnaire/i)
   })
 
   it('blocks creating a follow-up for a patient the clinician does not own', async () => {
@@ -169,6 +217,7 @@ describe('follow-up API routes', () => {
       method: 'POST',
       body: {
         patientId,
+        measureId: 'ABC',
         dueAt: '2026-06-05T00:00:00.000Z',
         expiresAt: '2026-06-12T00:00:00.000Z',
       },
@@ -187,6 +236,9 @@ describe('follow-up API routes', () => {
         id: requestId,
         user_id: user.id,
         patient_id: patientId,
+        measure_id: 'ABC',
+        source_assessment_id: sourceAssessmentId,
+        completed_assessment_id: null,
         status: 'pending',
         due_at: '2026-06-05T00:00:00.000Z',
         expires_at: '2999-06-12T00:00:00.000Z',
@@ -202,7 +254,8 @@ describe('follow-up API routes', () => {
 
     expect(res.statusCode).toBe(200)
     expect(res.body.state).toBe('ready')
-    expect(res.body.questions.length).toBeGreaterThan(0)
+    expect(res.body.questionnaire.id).toBe('ABC')
+    expect(res.body.questions).toHaveLength(16)
     expect(JSON.stringify(res.body)).not.toContain(patientId)
   })
 
@@ -212,6 +265,9 @@ describe('follow-up API routes', () => {
         id: requestId,
         user_id: user.id,
         patient_id: patientId,
+        measure_id: 'ABC',
+        source_assessment_id: sourceAssessmentId,
+        completed_assessment_id: null,
         status: 'pending',
         due_at: '2000-01-01T00:00:00.000Z',
         expires_at: '2000-01-02T00:00:00.000Z',
@@ -235,6 +291,9 @@ describe('follow-up API routes', () => {
         id: requestId,
         user_id: user.id,
         patient_id: patientId,
+        measure_id: 'ABC',
+        source_assessment_id: sourceAssessmentId,
+        completed_assessment_id: null,
         status: 'pending',
         due_at: '2026-06-05T00:00:00.000Z',
         expires_at: '2999-06-12T00:00:00.000Z',
@@ -247,13 +306,7 @@ describe('follow-up API routes', () => {
       method: 'POST',
       query: { token: 'raw-public-token-with-length' },
       body: {
-        falls_count: 1,
-        confidence_score: 6,
-        fatigue_score: 5,
-        symptoms_change: 'same',
-        adherence_level: 'most',
-        global_status: 'same',
-        concern_text: '',
+        answers: { items: Array(16).fill(40) },
       },
     })
     const res = makeRes()
@@ -262,13 +315,23 @@ describe('follow-up API routes', () => {
 
     expect(res.statusCode).toBe(200)
     expect(res.body.state).toBe('submitted')
-    expect(state.inserts.find(item => item.table === 'followup_responses').payload).toEqual(expect.objectContaining({
-      request_id: requestId,
+    const assessmentInsert = state.inserts.find(item => item.table === 'assessments').payload
+    expect(assessmentInsert).toEqual(expect.objectContaining({
       patient_id: patientId,
-      attention_level: 'red',
+      measure: 'ABC',
+      inputs: { items: Array(16).fill(40) },
+    }))
+    expect(assessmentInsert.results).toEqual(expect.objectContaining({
+      primaryValue: 40,
+      meta: expect.objectContaining({
+        source: 'patient_reported_followup',
+        followUpRequestId: requestId,
+        followUpSourceAssessmentId: sourceAssessmentId,
+      }),
     }))
     expect(state.updates.find(item => item.table === 'followup_requests').payload).toEqual(expect.objectContaining({
       status: 'completed',
+      completed_assessment_id: completedAssessmentId,
     }))
   })
 })

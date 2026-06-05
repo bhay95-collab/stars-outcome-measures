@@ -1,6 +1,6 @@
 import { getAdminClient, getUserFromRequest } from '../../../lib/supabase-admin'
 import { FOLLOWUP_STATUS, isValidUuid, shapeFollowUpRecord } from '../../../lib/followups'
-import { userHasActiveAccess } from '../../../lib/followupServer'
+import { FOLLOWUP_REQUEST_SELECT, userHasActiveAccess } from '../../../lib/followupServer'
 
 export default async function handler(req, res) {
   if (req.method !== 'DELETE') return res.status(405).end()
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     .eq('id', id)
     .eq('user_id', user.id)
     .eq('status', FOLLOWUP_STATUS.PENDING)
-    .select('id, patient_id, status, due_at, expires_at, created_at, completed_at, cancelled_at')
+    .select(FOLLOWUP_REQUEST_SELECT)
     .maybeSingle()
 
   if (error) return res.status(500).json({ error: error.message })

@@ -1,9 +1,11 @@
 import { getAdminClient, getUserFromRequest } from '../../../lib/supabase-admin'
 import {
   buildPublicFollowUpUrl,
+  FOLLOWUP_REQUEST_SELECT,
   listFollowUpsForPatient,
   normalizeFollowUpDates,
   requireOwnedPatient,
+  resolveFollowUpSourceAssessment,
   userHasActiveAccess,
 } from '../../../lib/followupServer'
 import { createFollowUpToken, hashFollowUpToken } from '../../../lib/followupTokens'
@@ -32,9 +34,12 @@ export default async function handler(req, res) {
     }
   }
 
-  const { patientId, dueAt, expiresAt } = req.body ?? {}
+  const { patientId, dueAt, expiresAt, measureId, sourceAssessmentId } = req.body ?? {}
   const patient = await requireOwnedPatient(admin, user.id, patientId)
   if (!patient) return res.status(404).json({ error: 'Patient not found' })
+
+  const source = await resolveFollowUpSourceAssessment(admin, user.id, patient.id, measureId, sourceAssessmentId)
+  if (source.error) return res.status(400).json({ error: source.error })
 
   const dates = normalizeFollowUpDates({ dueAt, expiresAt })
   if (dates.error) return res.status(400).json({ error: dates.error })
@@ -47,12 +52,14 @@ export default async function handler(req, res) {
     .insert({
       user_id: user.id,
       patient_id: patient.id,
+      measure_id: source.assessment.measure,
+      source_assessment_id: source.assessment.id,
       token_hash: tokenHash,
       status: FOLLOWUP_STATUS.PENDING,
       due_at: dates.due_at,
       expires_at: dates.expires_at,
     })
-    .select('id, patient_id, status, due_at, expires_at, created_at, completed_at, cancelled_at')
+    .select(FOLLOWUP_REQUEST_SELECT)
     .single()
 
   if (error) return res.status(500).json({ error: error.message })

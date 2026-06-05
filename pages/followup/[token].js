@@ -3,47 +3,98 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import LogoWordmark from '../../components/LogoWordmark'
 import {
-  ADHERENCE_OPTIONS,
-  FOLLOWUP_QUESTION_CONFIG,
-  GLOBAL_STATUS_OPTIONS,
-  SYMPTOMS_CHANGE_OPTIONS,
   formatFollowUpDate,
 } from '../../lib/followups'
-
-const initialForm = {
-  falls_count: 0,
-  confidence_score: 5,
-  fatigue_score: 5,
-  symptoms_change: 'same',
-  adherence_level: 'most',
-  global_status: 'same',
-  concern_text: '',
-}
+import {
+  formatQuestionnaireResult,
+  validateFollowUpQuestionnaireAnswers,
+} from '../../lib/followupQuestionnaires'
 
 function unavailableCopy(reason) {
   if (reason === 'completed') return 'This check-in has already been submitted.'
   if (reason === 'expired') return 'This check-in link has expired.'
   if (reason === 'cancelled') return 'This check-in link is no longer active.'
+  if (reason === 'unsupported') return 'This follow-up link is no longer supported. Please contact your clinician.'
   return 'This check-in link is not available.'
 }
 
-function SegmentedControl({ label, value, options, onChange }) {
+function buildInitialItems(questionnaire) {
+  return Array(questionnaire?.questions?.length ?? 0).fill('')
+}
+
+function QuestionnaireQuestion({ question, value, onChange }) {
   return (
-    <fieldset className="followup-segment">
-      <legend>{label}</legend>
-      <div>
-        {options.map(option => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={value === option.value}
-            onClick={() => onChange(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
+    <label className="followup-question">
+      <span className="followup-question__head">
+        <strong>{question.index + 1}</strong>
+        <span>{question.label}</span>
+      </span>
+      {question.type === 'number' ? (
+        <span className="followup-number-field">
+          <input
+            type="number"
+            inputMode="numeric"
+            min={question.min}
+            max={question.max}
+            step={question.step ?? 1}
+            value={value}
+            onChange={event => onChange(event.target.value)}
+            required
+          />
+          {question.suffix && <em>{question.suffix}</em>}
+        </span>
+      ) : (
+        <select value={value} onChange={event => onChange(event.target.value)} required>
+          <option value="">Choose</option>
+          {question.options?.map(option => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      )}
+    </label>
+  )
+}
+
+function QuestionnaireForm({ questionnaire, items, onItemChange, preview, error, submitting, onSubmit }) {
+  let currentSection = ''
+
+  return (
+    <form className="followup-form" onSubmit={onSubmit}>
+      <div className="followup-question-list">
+        {questionnaire.questions.map(question => {
+          const showSection = question.section && question.section !== currentSection
+          if (showSection) currentSection = question.section
+          return (
+            <div key={question.id} className="followup-question-wrap">
+              {showSection && <h2>{question.section}</h2>}
+              <QuestionnaireQuestion
+                question={question}
+                value={items[question.index] ?? ''}
+                onChange={value => onItemChange(question.index, value)}
+              />
+            </div>
+          )
+        })}
       </div>
-    </fieldset>
+
+      <div className="followup-result-preview" data-ready={preview?.results ? '' : undefined}>
+        {preview?.results ? (
+          <>
+            <span>Calculated result</span>
+            <strong>{formatQuestionnaireResult(questionnaire.id, preview.results)}</strong>
+            <p>{preview.results.interpretation}</p>
+          </>
+        ) : (
+          <p>{preview?.error ?? 'Complete every item to calculate the result.'}</p>
+        )}
+      </div>
+
+      {error && <p className="followup-error" role="alert">{error}</p>}
+
+      <button type="submit" disabled={submitting || !preview?.results}>
+        {submitting ? 'Submitting...' : 'Submit questionnaire'}
+      </button>
+    </form>
   )
 }
 
@@ -53,7 +104,7 @@ export default function PublicFollowUpPage() {
   const [state, setState] = useState('loading')
   const [reason, setReason] = useState('')
   const [meta, setMeta] = useState(null)
-  const [form, setForm] = useState(initialForm)
+  const [items, setItems] = useState([])
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -74,6 +125,7 @@ export default function PublicFollowUpPage() {
           return
         }
         setMeta(data)
+        setItems(buildInitialItems(data.questionnaire))
         setState('ready')
       } catch {
         if (!active) return
@@ -88,8 +140,12 @@ export default function PublicFollowUpPage() {
     }
   }, [router.isReady, token])
 
-  function update(field, value) {
-    setForm(prev => ({ ...prev, [field]: value }))
+  function updateItem(index, value) {
+    setItems(prev => {
+      const next = [...prev]
+      next[index] = value
+      return next
+    })
   }
 
   async function handleSubmit(event) {
@@ -102,7 +158,7 @@ export default function PublicFollowUpPage() {
       const response = await fetch(`/api/followups/public/${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ answers: { items } }),
       })
       const data = await response.json()
       if (!response.ok || data.state !== 'submitted') {
@@ -121,7 +177,10 @@ export default function PublicFollowUpPage() {
     }
   }
 
-  const questions = meta?.questions ?? FOLLOWUP_QUESTION_CONFIG
+  const questionnaire = meta?.questionnaire
+  const preview = questionnaire
+    ? validateFollowUpQuestionnaireAnswers(questionnaire.id, { items })
+    : null
 
   return (
     <>
@@ -158,97 +217,26 @@ export default function PublicFollowUpPage() {
           {state === 'ready' && (
             <>
               <header className="followup-public__head">
-                <span>Secure patient check-in</span>
-                <h1>Weekly follow-up</h1>
+                <span>Secure patient questionnaire</span>
+                <h1>{questionnaire?.name ?? 'Follow-up questionnaire'}</h1>
                 <p>
-                  Answer these short questions for your clinician. Do not use this form for urgent concerns or emergencies.
+                  Complete this questionnaire for your clinician. Do not use this form for urgent concerns or emergencies.
                 </p>
+                {questionnaire?.instructions && <p>{questionnaire.instructions}</p>}
                 {meta?.expiresAt && <small>Link expires {formatFollowUpDate(meta.expiresAt)}</small>}
               </header>
 
-              <form className="followup-form" onSubmit={handleSubmit}>
-                <label>
-                  <span>{questions.find(item => item.id === 'falls_count')?.label}</span>
-                  <small>{questions.find(item => item.id === 'falls_count')?.help}</small>
-                  <input
-                    type="number"
-                    min="0"
-                    max="99"
-                    value={form.falls_count}
-                    onChange={event => update('falls_count', event.target.value)}
-                  />
-                </label>
-
-                <label>
-                  <span>{questions.find(item => item.id === 'confidence_score')?.label}: {form.confidence_score}/10</span>
-                  <small>{questions.find(item => item.id === 'confidence_score')?.help}</small>
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    value={form.confidence_score}
-                    onChange={event => update('confidence_score', Number(event.target.value))}
-                  />
-                </label>
-
-                <label>
-                  <span>{questions.find(item => item.id === 'fatigue_score')?.label}: {form.fatigue_score}/10</span>
-                  <small>{questions.find(item => item.id === 'fatigue_score')?.help}</small>
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    value={form.fatigue_score}
-                    onChange={event => update('fatigue_score', Number(event.target.value))}
-                  />
-                </label>
-
-                <SegmentedControl
-                  label="Symptoms"
-                  value={form.symptoms_change}
-                  options={SYMPTOMS_CHANGE_OPTIONS}
-                  onChange={value => update('symptoms_change', value)}
+              {questionnaire && (
+                <QuestionnaireForm
+                  questionnaire={questionnaire}
+                  items={items}
+                  onItemChange={updateItem}
+                  preview={preview}
+                  error={error}
+                  submitting={submitting}
+                  onSubmit={handleSubmit}
                 />
-
-                <fieldset className="followup-radio">
-                  <legend>Home program</legend>
-                  {ADHERENCE_OPTIONS.map(option => (
-                    <label key={option.value}>
-                      <input
-                        type="radio"
-                        name="adherence"
-                        checked={form.adherence_level === option.value}
-                        onChange={() => update('adherence_level', option.value)}
-                      />
-                      <span>{option.label}</span>
-                    </label>
-                  ))}
-                </fieldset>
-
-                <SegmentedControl
-                  label="Overall status"
-                  value={form.global_status}
-                  options={GLOBAL_STATUS_OPTIONS}
-                  onChange={value => update('global_status', value)}
-                />
-
-                <label>
-                  <span>Anything you want your clinician to know?</span>
-                  <textarea
-                    value={form.concern_text}
-                    maxLength={1000}
-                    rows={4}
-                    onChange={event => update('concern_text', event.target.value)}
-                    placeholder="Optional"
-                  />
-                </label>
-
-                {error && <p className="followup-error" role="alert">{error}</p>}
-
-                <button type="submit" disabled={submitting}>
-                  {submitting ? 'Submitting...' : 'Submit check-in'}
-                </button>
-              </form>
+              )}
             </>
           )}
         </section>
@@ -259,6 +247,11 @@ export default function PublicFollowUpPage() {
           background: #f4f7fb;
           color: #17212b;
           font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        *,
+        *::before,
+        *::after {
+          box-sizing: border-box;
         }
         .followup-public {
           min-height: 100vh;
@@ -312,30 +305,70 @@ export default function PublicFollowUpPage() {
           display: grid;
           gap: 16px;
         }
-        .followup-form label,
-        .followup-segment,
-        .followup-radio {
+        .followup-question-list {
+          display: grid;
+          gap: 12px;
+        }
+        .followup-question-wrap {
           display: grid;
           gap: 8px;
-          margin: 0;
-          padding: 0;
-          border: 0;
         }
-        .followup-form label span,
-        .followup-segment legend,
-        .followup-radio legend {
+        .followup-question-wrap h2 {
+          margin: 10px 0 0;
+          color: #17496f;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .followup-question {
+          display: grid;
+          gap: 10px;
+          min-width: 0;
+          margin: 0;
+          padding: 14px;
+          border: 1px solid #d8e1ea;
+          border-radius: 8px;
+          background: #f6f9fc;
+        }
+        .followup-question__head {
+          display: grid;
+          grid-template-columns: 30px minmax(0, 1fr);
+          gap: 10px;
+          align-items: start;
           color: #17212b;
           font-size: 14px;
+          font-weight: 700;
+          line-height: 1.45;
+        }
+        .followup-question__head strong {
+          width: 30px;
+          height: 30px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          background: #eaf3fb;
+          color: #17496f;
+          font-size: 12px;
+          font-weight: 900;
+        }
+        .followup-number-field {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 8px;
+          align-items: center;
+        }
+        .followup-number-field em {
+          color: #526273;
+          font-size: 13px;
+          font-style: normal;
           font-weight: 800;
         }
-        .followup-form label small {
-          color: #526273;
-          font-size: 12px;
-          line-height: 1.4;
-        }
         .followup-form input[type="number"],
-        .followup-form textarea {
+        .followup-form select {
           width: 100%;
+          min-width: 0;
           border: 1px solid #d2dce8;
           border-radius: 8px;
           background: #fbfdff;
@@ -344,47 +377,35 @@ export default function PublicFollowUpPage() {
           font-size: 15px;
           padding: 10px 12px;
         }
-        .followup-form input[type="range"] {
-          width: 100%;
-          accent-color: #236499;
-        }
-        .followup-segment div {
+        .followup-result-preview {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 8px;
-        }
-        .followup-segment button {
-          min-height: 42px;
-          border: 1px solid #d2dce8;
+          gap: 4px;
+          padding: 12px 14px;
+          border: 1px solid #d8e1ea;
           border-radius: 8px;
-          background: #fbfdff;
+          background: #f7fafc;
+        }
+        .followup-result-preview[data-ready] {
+          border-color: #b7dfc9;
+          background: #eef8f2;
+        }
+        .followup-result-preview span {
           color: #526273;
-          cursor: pointer;
-          font: inherit;
-          font-size: 13px;
+          font-size: 11px;
           font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
         }
-        .followup-segment button[aria-pressed="true"] {
-          border-color: #236499;
-          background: #eaf3fb;
-          color: #17496f;
+        .followup-result-preview strong {
+          color: #17212b;
+          font-size: 18px;
+          font-weight: 900;
         }
-        .followup-radio {
-          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-          gap: 10px;
-        }
-        .followup-radio legend {
-          grid-column: 1 / -1;
-        }
-        .followup-radio label {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          min-height: 38px;
-          padding: 0 10px;
-          border: 1px solid #d2dce8;
-          border-radius: 8px;
-          background: #f6f9fc;
+        .followup-result-preview p {
+          margin: 0;
+          color: #526273;
+          font-size: 13px;
+          line-height: 1.45;
         }
         .followup-error {
           margin: 0;
@@ -414,8 +435,11 @@ export default function PublicFollowUpPage() {
           .followup-public__panel {
             padding: 20px;
           }
-          .followup-segment div {
-            grid-template-columns: 1fr;
+          .followup-question {
+            padding: 12px;
+          }
+          .followup-question__head {
+            grid-template-columns: 26px minmax(0, 1fr);
           }
         }
       `}</style>

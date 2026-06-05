@@ -23,11 +23,19 @@ import {
   FOLLOWUP_STATUS,
   dateInputValueInDays,
   followUpAttentionLabel,
+  followUpRecordOneLine,
   followUpStatusLabel,
   formatFollowUpDate,
+  getFollowUpRecordAttention,
+  getFollowUpRecordCompletedAt,
   isoFromDateInput,
   summarizeFollowUpRecords,
 } from '../lib/followups'
+import {
+  FOLLOWUP_QUESTIONNAIRE_MEASURE_IDS,
+  getEligibleFollowUpQuestionnaireOptions,
+  getFollowUpQuestionnaire,
+} from '../lib/followupQuestionnaires'
 import { sortPatientsByLabel } from '../lib/patientDetails'
 
 export async function getServerSideProps() { return { props: {} } }
@@ -88,18 +96,18 @@ function pathwayActionLabel(action) {
 function getFollowUpOverviewAction(summary) {
   if (!summary) return null
   const latest = summary.latestResponse
-  if (latest?.response?.attention_level === FOLLOWUP_ATTENTION.RED) {
+  if (getFollowUpRecordAttention(latest) === FOLLOWUP_ATTENTION.RED) {
     return {
       label: 'Review patient-reported concern',
-      detail: 'A recent follow-up includes a red attention signal. Review the response and consider recording an outcome measure.',
-      button: 'Record outcome measure',
-      action: 'measure',
+      detail: 'A recent patient-completed questionnaire includes a red attention signal. Review the submitted assessment before the next encounter.',
+      button: 'Open reports',
+      action: 'reports',
     }
   }
-  if (latest?.response?.attention_level === FOLLOWUP_ATTENTION.AMBER) {
+  if (getFollowUpRecordAttention(latest) === FOLLOWUP_ATTENTION.AMBER) {
     return {
       label: 'Check follow-up signal',
-      detail: 'A recent follow-up includes a watch signal. Review the response before the next encounter.',
+      detail: 'A recent patient-completed questionnaire includes a watch signal. Review the response before the next encounter.',
       button: 'Open follow-up',
       action: 'followup',
     }
@@ -115,10 +123,17 @@ function getFollowUpOverviewAction(summary) {
   return null
 }
 
-function responseOneLine(response) {
-  if (!response) return 'No response recorded'
-  const falls = Number(response.falls_count) === 1 ? '1 fall' : `${response.falls_count} falls`
-  return `${falls}, confidence ${response.confidence_score}/10, fatigue ${response.fatigue_score}/10, overall ${response.global_status}`
+function latestFollowUpLine(record) {
+  return followUpRecordOneLine(record)
+}
+
+function followUpMeasureLabel(record) {
+  if (!record?.measure_id) return 'General check-in'
+  return getFollowUpQuestionnaire(record.measure_id)?.name ?? record.measure_id
+}
+
+function completedFollowUpDate(record) {
+  return formatFollowUpDate(getFollowUpRecordCompletedAt(record))
 }
 
 export default function App() {
@@ -531,13 +546,15 @@ export default function App() {
     }, 3200)
   }, [])
 
-  async function handleCreateFollowUp({ dueDate, expiresDate }) {
+  async function handleCreateFollowUp({ dueDate, expiresDate, measureId, sourceAssessmentId }) {
     if (!selectedPatient) throw new Error('Select a patient first.')
     const response = await fetch('/api/followups', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         patientId: selectedPatient.id,
+        measureId,
+        sourceAssessmentId,
         dueAt: isoFromDateInput(dueDate),
         expiresAt: isoFromDateInput(expiresDate),
       }),
@@ -706,13 +723,15 @@ export default function App() {
             ) : activeSection === 'followup' ? (
               <FollowUpWorkspace
                 patient={selectedPatient}
+                assessments={assessments}
                 followups={followups}
                 loading={followupsLoading}
                 latestFollowUpUrl={latestFollowUpUrl}
                 onCreate={handleCreateFollowUp}
                 onCancel={handleCancelFollowUp}
                 onRefresh={() => loadPatientFollowUps(selectedPatient.id)}
-                onMeasure={() => goToSection('measures', { measureId: selectedPathway?.preferredMeasureId ?? 'TUG' })}
+                onMeasure={(measureId) => goToSection('measures', { measureId: measureId ?? selectedPathway?.preferredMeasureId ?? 'TUG' })}
+                onReports={() => goToSection('reports')}
               />
             ) : activeSection === 'measures' ? (
               <OutcomeMeasuresWorkspace
@@ -1077,6 +1096,10 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
       onMeasure(pathway?.preferredMeasureId ?? 'TUG')
       return
     }
+    if (followUpAction?.action === 'reports') {
+      onReports()
+      return
+    }
     if (followUpAction?.action === 'followup') {
       onFollowUp()
       return
@@ -1172,7 +1195,7 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
           <div className="summary-card__head">
             <div>
               <h3>Patient follow-up</h3>
-              <p>Remote check-ins and patient-reported attention signals.</p>
+              <p>Remote questionnaire links and patient-reported attention signals.</p>
             </div>
             <button type="button" onClick={onFollowUp}>Open</button>
           </div>
@@ -1180,15 +1203,15 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
             <span>{followUpAttentionLabel(followUpSummary.attentionLevel)}</span>
             <strong>
               {followUpSummary.latestResponse
-                ? responseOneLine(followUpSummary.latestResponse.response)
+                ? latestFollowUpLine(followUpSummary.latestResponse)
                 : 'No patient-reported follow-up yet'}
             </strong>
             <p>
               {followUpSummary.overdueCount
-                ? `${followUpSummary.overdueCount} check-in${followUpSummary.overdueCount === 1 ? '' : 's'} overdue.`
+                ? `${followUpSummary.overdueCount} questionnaire link${followUpSummary.overdueCount === 1 ? '' : 's'} overdue.`
                 : followUpSummary.pendingCount
                   ? `${followUpSummary.pendingCount} secure link${followUpSummary.pendingCount === 1 ? '' : 's'} pending.`
-                  : 'Create a secure link when you want the patient to report between sessions.'}
+                  : 'Create a secure link when you want the patient to repeat a completed questionnaire.'}
             </p>
           </div>
         </article>
@@ -1299,6 +1322,7 @@ function SmartPathwayWorkspace({ patient, pathway, onEditPatient, onMeasure, onR
 
 function FollowUpWorkspace({
   patient,
+  assessments,
   followups,
   loading,
   latestFollowUpUrl,
@@ -1306,22 +1330,46 @@ function FollowUpWorkspace({
   onCancel,
   onRefresh,
   onMeasure,
+  onReports,
 }) {
   const [dueDate, setDueDate] = useState(dateInputValueInDays(7))
   const [expiresDate, setExpiresDate] = useState(dateInputValueInDays(14))
+  const eligibleQuestionnaires = getEligibleFollowUpQuestionnaireOptions(assessments)
+  const [selectedMeasureId, setSelectedMeasureId] = useState(eligibleQuestionnaires[0]?.measureId ?? '')
   const [creating, setCreating] = useState(false)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
   const summary = summarizeFollowUpRecords(followups)
-  const latestResponse = summary.latestResponse?.response ?? null
+  const latestRecord = summary.latestResponse ?? null
+  const latestAttention = getFollowUpRecordAttention(latestRecord)
+  const selectedOption = eligibleQuestionnaires.find(option => option.measureId === selectedMeasureId) ?? eligibleQuestionnaires[0] ?? null
+
+  useEffect(() => {
+    if (!eligibleQuestionnaires.length) {
+      setSelectedMeasureId('')
+      return
+    }
+    if (!eligibleQuestionnaires.some(option => option.measureId === selectedMeasureId)) {
+      setSelectedMeasureId(eligibleQuestionnaires[0].measureId)
+    }
+  }, [eligibleQuestionnaires, selectedMeasureId])
 
   async function handleCreate(event) {
     event.preventDefault()
+    if (!selectedOption) {
+      setError('Record one eligible questionnaire before creating a patient follow-up link.')
+      return
+    }
     setCreating(true)
     setError('')
     setCopied(false)
     try {
-      const data = await onCreate({ dueDate, expiresDate })
+      const data = await onCreate({
+        dueDate,
+        expiresDate,
+        measureId: selectedOption.measureId,
+        sourceAssessmentId: selectedOption.sourceAssessmentId,
+      })
       if (data.publicUrl && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(data.publicUrl)
         setCopied(true)
@@ -1354,7 +1402,7 @@ function FollowUpWorkspace({
         <div>
           <span className="section-label">Patient-reported follow-up</span>
           <h2>{patientLabel(patient)}</h2>
-          <p>Secure check-ins for falls, confidence, fatigue, symptoms, adherence, and overall status.</p>
+          <p>Secure links for patients to repeat questionnaires already completed with their clinician.</p>
         </div>
         <button type="button" className="secondary-action" onClick={onRefresh} disabled={loading}>
           <RefreshCw size={16} aria-hidden="true" /> Refresh
@@ -1364,8 +1412,8 @@ function FollowUpWorkspace({
       <div className="followup-stat-grid">
         <div>
           <span>Last response</span>
-          <strong>{latestResponse ? formatFollowUpDate(latestResponse.created_at) : 'None yet'}</strong>
-          <small>{latestResponse ? responseOneLine(latestResponse) : 'Awaiting first check-in'}</small>
+          <strong>{latestRecord ? completedFollowUpDate(latestRecord) : 'None yet'}</strong>
+          <small>{latestRecord ? latestFollowUpLine(latestRecord) : 'Awaiting first questionnaire'}</small>
         </div>
         <div>
           <span>Pending links</span>
@@ -1379,24 +1427,44 @@ function FollowUpWorkspace({
         </div>
       </div>
 
-      {latestResponse?.attention_level && latestResponse.attention_level !== FOLLOWUP_ATTENTION.GREEN && (
-        <article className="followup-attention-panel" data-attention={latestResponse.attention_level}>
+      {latestRecord && latestAttention !== FOLLOWUP_ATTENTION.GREEN && (
+        <article className="followup-attention-panel" data-attention={latestAttention}>
           <div>
             <span className="section-label">Patient-reported signal</span>
-            <h3>{followUpAttentionLabel(latestResponse.attention_level)}</h3>
-            <p>{responseOneLine(latestResponse)}</p>
-            {latestResponse.concern_text && <p>{latestResponse.concern_text}</p>}
+            <h3>{followUpAttentionLabel(latestAttention)}</h3>
+            <p>{latestFollowUpLine(latestRecord)}</p>
+            {latestRecord.assessment?.interpretation && <p>{latestRecord.assessment.interpretation}</p>}
+            {latestRecord.response?.concern_text && <p>{latestRecord.response.concern_text}</p>}
           </div>
-          <button type="button" onClick={onMeasure}>Record outcome measure</button>
+          <button type="button" onClick={latestRecord.assessment ? onReports : onMeasure}>
+            {latestRecord.assessment ? 'Open reports' : 'Record outcome measure'}
+          </button>
         </article>
       )}
 
       <form className="followup-create-panel" onSubmit={handleCreate}>
         <div>
           <span className="section-label">Create secure link</span>
-          <h3>Weekly patient check-in</h3>
-          <p>The raw link is shown once after creation. If it is lost, cancel the pending request and create a new link.</p>
+          <h3>Patient questionnaire</h3>
+          <p>Choose a questionnaire already completed for this patient. The raw link is shown once after creation.</p>
         </div>
+        <label>
+          <span>Questionnaire</span>
+          <select
+            className="field-input"
+            value={selectedMeasureId}
+            disabled={!eligibleQuestionnaires.length || creating}
+            onChange={event => setSelectedMeasureId(event.target.value)}
+          >
+            {eligibleQuestionnaires.length ? eligibleQuestionnaires.map(option => (
+              <option key={option.measureId} value={option.measureId}>
+                {option.measureId} - {option.resultLabel} ({formatFollowUpDate(option.latestCreatedAt)})
+              </option>
+            )) : (
+              <option value="">No completed questionnaires</option>
+            )}
+          </select>
+        </label>
         <label>
           <span>Due date</span>
           <input className="field-input" type="date" value={dueDate} onChange={event => setDueDate(event.target.value)} />
@@ -1405,8 +1473,16 @@ function FollowUpWorkspace({
           <span>Link expires</span>
           <input className="field-input" type="date" value={expiresDate} onChange={event => setExpiresDate(event.target.value)} />
         </label>
-        <button type="submit" disabled={creating}>{creating ? 'Creating...' : 'Create secure link'}</button>
+        <button type="submit" disabled={creating || !selectedOption}>{creating ? 'Creating...' : 'Create secure link'}</button>
       </form>
+
+      {!eligibleQuestionnaires.length && (
+        <div className="followup-empty-panel">
+          <strong>No eligible questionnaire yet</strong>
+          <p>Complete one of {FOLLOWUP_QUESTIONNAIRE_MEASURE_IDS.join(', ')} with this patient, then send the same questionnaire as a follow-up.</p>
+          <button type="button" onClick={() => onMeasure('ABC')}>Record questionnaire</button>
+        </div>
+      )}
 
       {latestFollowUpUrl && (
         <div className="followup-link-panel">
@@ -1424,12 +1500,13 @@ function FollowUpWorkspace({
         records={summary.records}
         loading={loading}
         onCancel={handleCancel}
+        onReports={onReports}
       />
     </section>
   )
 }
 
-function FollowUpTimeline({ records, loading, onCancel }) {
+function FollowUpTimeline({ records, loading, onCancel, onReports }) {
   if (loading) {
     return (
       <section className="followup-timeline">
@@ -1450,19 +1527,24 @@ function FollowUpTimeline({ records, loading, onCancel }) {
           <div>
             <span>{followUpStatusLabel(record.displayStatus, record.overdue)}</span>
             <strong>
-              {record.response
-                ? responseOneLine(record.response)
+              {record.response || record.assessment
+                ? latestFollowUpLine(record)
                 : `Due ${formatFollowUpDate(record.due_at)}. Expires ${formatFollowUpDate(record.expires_at)}.`}
             </strong>
+            {record.measure_id && <p>{followUpMeasureLabel(record)}</p>}
+            {record.assessment?.interpretation && <p>{record.assessment.interpretation}</p>}
             {record.response?.concern_text && <p>{record.response.concern_text}</p>}
             <small>
-              {record.response
-                ? `Completed ${formatFollowUpDate(record.response.created_at)}`
+              {record.response || record.assessment
+                ? `Completed ${completedFollowUpDate(record)}`
                 : `Created ${formatFollowUpDate(record.created_at)}`}
             </small>
           </div>
           {record.displayStatus === FOLLOWUP_STATUS.PENDING && (
             <button type="button" onClick={() => onCancel(record.id)}>Cancel</button>
+          )}
+          {record.assessment && record.displayStatus === FOLLOWUP_STATUS.COMPLETED && (
+            <button type="button" onClick={onReports}>Open assessment</button>
           )}
         </article>
       )) : (
@@ -1552,29 +1634,41 @@ function ReportsWorkspace({
 
 function FollowUpReportSection({ followups }) {
   const summary = summarizeFollowUpRecords(followups)
-  const latest = summary.latestResponse?.response ?? null
+  const latestRecord = summary.latestResponse ?? null
+  const latestResponse = latestRecord?.response ?? null
+  const latestAssessment = latestRecord?.assessment ?? null
   return (
     <section className="summary-card followup-report-section">
       <div className="summary-card__head">
         <div>
           <h3>Patient-Reported Follow-Up</h3>
-          <p>Remote check-ins, attention level, and recent patient-reported context.</p>
+          <p>Remote questionnaires, attention level, and recent patient-reported context.</p>
         </div>
         <span data-attention={summary.attentionLevel}>{followUpAttentionLabel(summary.attentionLevel)}</span>
       </div>
-      {latest ? (
+      {latestAssessment ? (
         <div className="followup-report-grid">
-          <div><span>Last response</span><strong>{formatFollowUpDate(latest.created_at)}</strong></div>
-          <div><span>Falls</span><strong>{latest.falls_count}</strong></div>
-          <div><span>Confidence</span><strong>{latest.confidence_score}/10</strong></div>
-          <div><span>Fatigue</span><strong>{latest.fatigue_score}/10</strong></div>
-          <div><span>Symptoms</span><strong>{latest.symptoms_change}</strong></div>
-          <div><span>Overall</span><strong>{latest.global_status}</strong></div>
+          <div><span>Last response</span><strong>{completedFollowUpDate(latestRecord)}</strong></div>
+          <div><span>Questionnaire</span><strong>{latestAssessment.measure}</strong></div>
+          <div><span>Score</span><strong>{latestAssessment.resultLabel}</strong></div>
+          <div><span>Signal</span><strong>{followUpAttentionLabel(latestAssessment.attention_level)}</strong></div>
+          <div><span>Status</span><strong>{followUpStatusLabel(latestRecord.displayStatus)}</strong></div>
+          <div><span>Source</span><strong>Patient</strong></div>
+        </div>
+      ) : latestResponse ? (
+        <div className="followup-report-grid">
+          <div><span>Last response</span><strong>{formatFollowUpDate(latestResponse.created_at)}</strong></div>
+          <div><span>Falls</span><strong>{latestResponse.falls_count}</strong></div>
+          <div><span>Confidence</span><strong>{latestResponse.confidence_score}/10</strong></div>
+          <div><span>Fatigue</span><strong>{latestResponse.fatigue_score}/10</strong></div>
+          <div><span>Symptoms</span><strong>{latestResponse.symptoms_change}</strong></div>
+          <div><span>Overall</span><strong>{latestResponse.global_status}</strong></div>
         </div>
       ) : (
         <p className="empty-hint">No patient-reported follow-up responses have been submitted yet.</p>
       )}
-      {latest?.concern_text && <p className="followup-report-concern">{latest.concern_text}</p>}
+      {latestAssessment?.interpretation && <p className="followup-report-concern">{latestAssessment.interpretation}</p>}
+      {latestResponse?.concern_text && <p className="followup-report-concern">{latestResponse.concern_text}</p>}
     </section>
   )
 }
@@ -4905,6 +4999,7 @@ const globalStyles = `
     line-height: 1.18;
     font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
     letter-spacing: -0.3px;
+    overflow-wrap: anywhere;
   }
 
   .followup-stat-grid small {
@@ -4916,6 +5011,7 @@ const globalStyles = `
   .followup-attention-panel,
   .followup-create-panel,
   .followup-link-panel,
+  .followup-empty-panel,
   .followup-report-section {
     border: 1px solid var(--color-border);
     border-radius: 10px;
@@ -4975,7 +5071,7 @@ const globalStyles = `
 
   .followup-create-panel {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(160px, 220px) minmax(160px, 220px) auto;
+    grid-template-columns: minmax(240px, 1.2fr) minmax(240px, 0.9fr) minmax(150px, 180px) minmax(150px, 180px) auto;
     gap: 14px;
     align-items: end;
     padding: 18px;
@@ -4984,6 +5080,7 @@ const globalStyles = `
   .followup-create-panel label {
     display: grid;
     gap: 7px;
+    min-width: 0;
   }
 
   .followup-create-panel label span {
@@ -5000,6 +5097,42 @@ const globalStyles = `
     opacity: 0.65;
   }
 
+  .followup-empty-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--color-surface-raised);
+  }
+
+  .followup-empty-panel strong {
+    color: var(--color-ink);
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .followup-empty-panel p {
+    margin: 3px 0 0;
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .followup-empty-panel button {
+    min-height: 36px;
+    flex: 0 0 auto;
+    padding: 0 13px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-family: 'Geist', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
   .followup-link-panel {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -5010,6 +5143,7 @@ const globalStyles = `
   }
 
   .followup-link-panel input {
+    width: 100%;
     min-width: 0;
     border: 1px solid var(--color-border);
     border-radius: 8px;
@@ -5052,7 +5186,7 @@ const globalStyles = `
     display: grid;
     grid-template-columns: 34px minmax(0, 1fr) auto;
     gap: 12px;
-    align-items: center;
+    align-items: start;
     padding: 14px;
     border: 1px solid var(--color-border);
     border-radius: 10px;
@@ -5094,6 +5228,7 @@ const globalStyles = `
     color: var(--color-ink);
     font-size: 14px;
     font-weight: 800;
+    overflow-wrap: anywhere;
   }
 
   .followup-timeline article p,
@@ -5109,6 +5244,8 @@ const globalStyles = `
     border: 1px solid var(--color-border);
     background: #fff;
     color: var(--color-primary);
+    justify-self: end;
+    white-space: nowrap;
   }
 
   .followup-skeleton {
@@ -5692,6 +5829,7 @@ const globalStyles = `
     .workspace-head,
     .next-action-panel,
     .followup-attention-panel,
+    .followup-empty-panel,
     .pathway-hero {
       align-items: stretch;
       flex-direction: column;

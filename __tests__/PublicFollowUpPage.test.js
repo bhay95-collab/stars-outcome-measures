@@ -2,6 +2,7 @@ import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import PublicFollowUpPage from '../pages/followup/[token]'
+import { getFollowUpQuestionnaire } from '../lib/followupQuestionnaires'
 
 const mockRouter = {
   isReady: true,
@@ -19,15 +20,17 @@ describe('public follow-up page', () => {
     mockRouter.query = { token: 'raw-public-token-with-length' }
   })
 
-  it('renders a valid secure weekly check-in and submits it', async () => {
+  it('renders a valid secure ABC questionnaire and submits it', async () => {
     const user = userEvent.setup()
+    const questionnaire = getFollowUpQuestionnaire('ABC')
     global.fetch = jest.fn()
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           state: 'ready',
           expiresAt: '2999-06-12T00:00:00.000Z',
-          questions: [],
+          questionnaire,
+          questions: questionnaire.questions,
         }),
       })
       .mockResolvedValueOnce({
@@ -37,13 +40,23 @@ describe('public follow-up page', () => {
 
     render(<PublicFollowUpPage />)
 
-    expect(await screen.findByRole('heading', { name: /weekly follow-up/i })).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /submit check-in/i }))
+    expect(await screen.findByRole('heading', { name: /activities-specific balance confidence/i })).toBeInTheDocument()
+    const inputs = screen.getAllByRole('spinbutton')
+    expect(inputs).toHaveLength(16)
+    for (const input of inputs) {
+      await user.clear(input)
+      await user.type(input, '80')
+    }
+    expect(screen.getByText('80%')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /submit questionnaire/i }))
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenLastCalledWith(
         '/api/followups/public/raw-public-token-with-length',
-        expect.objectContaining({ method: 'POST' }),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ answers: { items: Array(16).fill('80') } }),
+        }),
       )
     })
     expect(await screen.findByRole('heading', { name: /check-in submitted/i })).toBeInTheDocument()
