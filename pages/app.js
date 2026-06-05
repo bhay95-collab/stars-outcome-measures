@@ -546,7 +546,7 @@ export default function App() {
     }, 3200)
   }, [])
 
-  async function handleCreateFollowUp({ dueDate, expiresDate, measureId, sourceAssessmentId }) {
+  async function handleCreateFollowUp({ dueDate, expiresDate, measureId, sourceAssessmentId, deliveryMode = 'manual' }) {
     if (!selectedPatient) throw new Error('Select a patient first.')
     const response = await fetch('/api/followups', {
       method: 'POST',
@@ -555,6 +555,7 @@ export default function App() {
         patientId: selectedPatient.id,
         measureId,
         sourceAssessmentId,
+        deliveryMode,
         dueAt: isoFromDateInput(dueDate),
         expiresAt: isoFromDateInput(expiresDate),
       }),
@@ -562,6 +563,19 @@ export default function App() {
     const data = await response.json()
     if (!response.ok) throw new Error(data.error || 'Could not create follow-up link.')
     setFollowups(prev => [data.followup, ...prev.filter(item => item.id !== data.followup.id)])
+    setLatestFollowUpUrl(data.publicUrl || '')
+    return data
+  }
+
+  async function handleSendFollowUp(followupId) {
+    const response = await fetch(`/api/followups/${encodeURIComponent(followupId)}/send`, { method: 'POST' })
+    const data = await response.json()
+    if (!response.ok) {
+      if (data.followup) setFollowups(prev => prev.map(item => item.id === data.followup.id ? data.followup : item))
+      if (data.publicUrl) setLatestFollowUpUrl(data.publicUrl)
+      throw new Error(data.email?.error || data.error || 'Could not send follow-up email.')
+    }
+    setFollowups(prev => prev.map(item => item.id === data.followup.id ? data.followup : item))
     setLatestFollowUpUrl(data.publicUrl || '')
     return data
   }
@@ -729,6 +743,7 @@ export default function App() {
                 latestFollowUpUrl={latestFollowUpUrl}
                 onCreate={handleCreateFollowUp}
                 onCancel={handleCancelFollowUp}
+                onResend={handleSendFollowUp}
                 onRefresh={() => loadPatientFollowUps(selectedPatient.id)}
                 onMeasure={(measureId) => goToSection('measures', { measureId: measureId ?? selectedPathway?.preferredMeasureId ?? 'TUG' })}
                 onReports={() => goToSection('reports')}
@@ -1328,6 +1343,7 @@ function FollowUpWorkspace({
   latestFollowUpUrl,
   onCreate,
   onCancel,
+  onResend,
   onRefresh,
   onMeasure,
   onReports,
@@ -1337,8 +1353,11 @@ function FollowUpWorkspace({
   const eligibleQuestionnaires = getEligibleFollowUpQuestionnaireOptions(assessments)
   const [selectedMeasureId, setSelectedMeasureId] = useState(eligibleQuestionnaires[0]?.measureId ?? '')
   const [creating, setCreating] = useState(false)
+  const [manualCreating, setManualCreating] = useState(false)
+  const [sendingId, setSendingId] = useState('')
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const summary = summarizeFollowUpRecords(followups)
   const latestRecord = summary.latestResponse ?? null
   const latestAttention = getFollowUpRecordAttention(latestRecord)
@@ -1354,14 +1373,19 @@ function FollowUpWorkspace({
     }
   }, [eligibleQuestionnaires, selectedMeasureId])
 
-  async function handleCreate(event) {
-    event.preventDefault()
+  async function createFollowUp(deliveryMode) {
     if (!selectedOption) {
       setError('Record one eligible questionnaire before creating a patient follow-up link.')
       return
     }
-    setCreating(true)
+    if (deliveryMode === 'email' && !patient?.email) {
+      setError('Add a patient email before sending a follow-up email.')
+      return
+    }
+    const setBusy = deliveryMode === 'email' ? setCreating : setManualCreating
+    setBusy(true)
     setError('')
+    setNotice('')
     setCopied(false)
     try {
       const data = await onCreate({
@@ -1369,7 +1393,14 @@ function FollowUpWorkspace({
         expiresDate,
         measureId: selectedOption.measureId,
         sourceAssessmentId: selectedOption.sourceAssessmentId,
+        deliveryMode,
       })
+      if (deliveryMode === 'email' && data.email?.status === 'sent') {
+        setNotice(`Email sent to ${patient.email}.`)
+      }
+      if (deliveryMode === 'email' && data.email?.status === 'failed') {
+        setError(`${data.email.error || 'Email could not be sent.'} The secure link is available below for manual sending.`)
+      }
       if (data.publicUrl && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(data.publicUrl)
         setCopied(true)
@@ -1377,8 +1408,17 @@ function FollowUpWorkspace({
     } catch (createError) {
       setError(createError.message)
     } finally {
-      setCreating(false)
+      setBusy(false)
     }
+  }
+
+  async function handleCreate(event) {
+    event.preventDefault()
+    await createFollowUp(patient?.email ? 'email' : 'manual')
+  }
+
+  async function handleManualCreate() {
+    await createFollowUp('manual')
   }
 
   async function handleCopy() {
@@ -1393,6 +1433,20 @@ function FollowUpWorkspace({
       await onCancel(id)
     } catch (cancelError) {
       setError(cancelError.message)
+    }
+  }
+
+  async function handleResend(id) {
+    setError('')
+    setNotice('')
+    setSendingId(id)
+    try {
+      const data = await onResend(id)
+      setNotice(data.email?.status === 'sent' ? 'Follow-up email sent.' : '')
+    } catch (sendError) {
+      setError(`${sendError.message} The latest secure link is available below for manual sending.`)
+    } finally {
+      setSendingId('')
     }
   }
 
@@ -1418,7 +1472,7 @@ function FollowUpWorkspace({
         <div>
           <span>Pending links</span>
           <strong>{summary.pendingCount}</strong>
-          <small>{summary.overdueCount ? `${summary.overdueCount} overdue` : 'Manual copy and send'}</small>
+          <small>{summary.overdueCount ? `${summary.overdueCount} overdue` : patient?.email ? `Email: ${patient.email}` : 'Manual copy and send'}</small>
         </div>
         <div>
           <span>Attention</span>
@@ -1446,7 +1500,12 @@ function FollowUpWorkspace({
         <div>
           <span className="section-label">Create secure link</span>
           <h3>Patient questionnaire</h3>
-          <p>Choose a questionnaire already completed for this patient. The raw link is shown once after creation.</p>
+          <p>Choose a completed questionnaire, then send by email or create a manual link.</p>
+        </div>
+        <div className="followup-email-target">
+          <span>Email</span>
+          <strong>{patient?.email || 'No patient email'}</strong>
+          <small>{patient?.email ? 'Stored on the patient record.' : 'Edit patient details to enable email sending.'}</small>
         </div>
         <label>
           <span>Questionnaire</span>
@@ -1473,7 +1532,14 @@ function FollowUpWorkspace({
           <span>Link expires</span>
           <input className="field-input" type="date" value={expiresDate} onChange={event => setExpiresDate(event.target.value)} />
         </label>
-        <button type="submit" disabled={creating || !selectedOption}>{creating ? 'Creating...' : 'Create secure link'}</button>
+        <div className="followup-create-actions">
+          <button type="submit" disabled={creating || manualCreating || !selectedOption || !patient?.email}>
+            {creating ? 'Sending...' : 'Create and send email'}
+          </button>
+          <button type="button" data-secondary="" disabled={creating || manualCreating || !selectedOption} onClick={handleManualCreate}>
+            {manualCreating ? 'Creating...' : 'Create secure link'}
+          </button>
+        </div>
       </form>
 
       {!eligibleQuestionnaires.length && (
@@ -1494,19 +1560,29 @@ function FollowUpWorkspace({
         </div>
       )}
 
+      {notice && <p className="followup-inline-success" role="status">{notice}</p>}
       {error && <p className="followup-inline-error" role="alert">{error}</p>}
 
       <FollowUpTimeline
         records={summary.records}
         loading={loading}
         onCancel={handleCancel}
+        onResend={handleResend}
+        sendingId={sendingId}
         onReports={onReports}
       />
     </section>
   )
 }
 
-function FollowUpTimeline({ records, loading, onCancel, onReports }) {
+function followUpEmailStatusLabel(record) {
+  if (record.email_status === 'sent') return `Email sent${record.sent_at ? ` ${formatFollowUpDate(record.sent_at)}` : ''}`
+  if (record.email_status === 'failed') return 'Email send failed'
+  if (record.email_status === 'manual') return 'Manual link created'
+  return record.recipient_email ? 'Email not sent yet' : 'Manual link created'
+}
+
+function FollowUpTimeline({ records, loading, onCancel, onResend, sendingId, onReports }) {
   if (loading) {
     return (
       <section className="followup-timeline">
@@ -1532,6 +1608,8 @@ function FollowUpTimeline({ records, loading, onCancel, onReports }) {
                 : `Due ${formatFollowUpDate(record.due_at)}. Expires ${formatFollowUpDate(record.expires_at)}.`}
             </strong>
             {record.measure_id && <p>{followUpMeasureLabel(record)}</p>}
+            <p>{followUpEmailStatusLabel(record)}{record.recipient_email ? ` · ${record.recipient_email}` : ''}</p>
+            {record.email_error && <p>{record.email_error}</p>}
             {record.assessment?.interpretation && <p>{record.assessment.interpretation}</p>}
             {record.response?.concern_text && <p>{record.response.concern_text}</p>}
             <small>
@@ -1541,7 +1619,14 @@ function FollowUpTimeline({ records, loading, onCancel, onReports }) {
             </small>
           </div>
           {record.displayStatus === FOLLOWUP_STATUS.PENDING && (
-            <button type="button" onClick={() => onCancel(record.id)}>Cancel</button>
+            <div className="followup-row-actions">
+              {record.recipient_email && (
+                <button type="button" onClick={() => onResend(record.id)} disabled={sendingId === record.id}>
+                  {sendingId === record.id ? 'Sending...' : 'Resend email'}
+                </button>
+              )}
+              <button type="button" onClick={() => onCancel(record.id)}>Cancel</button>
+            </div>
           )}
           {record.assessment && record.displayStatus === FOLLOWUP_STATUS.COMPLETED && (
             <button type="button" onClick={onReports}>Open assessment</button>
@@ -5071,10 +5156,26 @@ const globalStyles = `
 
   .followup-create-panel {
     display: grid;
-    grid-template-columns: minmax(240px, 1.2fr) minmax(240px, 0.9fr) minmax(150px, 180px) minmax(150px, 180px) auto;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: 14px;
     align-items: end;
     padding: 18px;
+  }
+
+  .followup-create-panel > * {
+    min-width: 0;
+  }
+
+  .followup-create-panel > div:first-child {
+    grid-column: span 3;
+  }
+
+  .followup-create-panel label:first-of-type {
+    grid-column: span 3;
+  }
+
+  .followup-create-panel label {
+    grid-column: span 2;
   }
 
   .followup-create-panel label {
@@ -5089,6 +5190,53 @@ const globalStyles = `
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+  }
+
+  .followup-email-target {
+    display: grid;
+    grid-column: span 2;
+    gap: 5px;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(216,225,234,0.82);
+    border-radius: 8px;
+    background: var(--color-surface-raised);
+  }
+
+  .followup-email-target span {
+    color: var(--color-muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .followup-email-target strong {
+    color: var(--color-ink);
+    font-size: 13px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+  }
+
+  .followup-email-target small {
+    color: var(--color-muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .followup-create-actions {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(150px, max-content));
+    justify-content: end;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .followup-create-actions button[data-secondary] {
+    border: 1px solid var(--color-border);
+    background: #fff;
+    color: var(--color-primary);
   }
 
   .followup-create-panel button:disabled,
@@ -5171,6 +5319,17 @@ const globalStyles = `
     font-weight: 700;
   }
 
+  .followup-inline-success {
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid #b7dfc9;
+    border-radius: 8px;
+    background: #eef8f2;
+    color: #2d6a4f;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
   .followup-timeline {
     display: grid;
     gap: 10px;
@@ -5184,7 +5343,7 @@ const globalStyles = `
 
   .followup-timeline article {
     display: grid;
-    grid-template-columns: 34px minmax(0, 1fr) auto;
+    grid-template-columns: 34px minmax(0, 1fr) minmax(120px, auto);
     gap: 12px;
     align-items: start;
     padding: 14px;
@@ -5238,6 +5397,7 @@ const globalStyles = `
     color: var(--color-muted);
     font-size: 12px;
     line-height: 1.4;
+    overflow-wrap: anywhere;
   }
 
   .followup-timeline article button {
@@ -5246,6 +5406,19 @@ const globalStyles = `
     color: var(--color-primary);
     justify-self: end;
     white-space: nowrap;
+  }
+
+  .followup-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .followup-row-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
   }
 
   .followup-skeleton {
@@ -5747,6 +5920,17 @@ const globalStyles = `
     .overview-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+    .followup-create-panel > div:first-child,
+    .followup-create-panel label:first-of-type,
+    .followup-create-panel label,
+    .followup-email-target,
+    .followup-create-actions {
+      grid-column: auto;
+    }
+    .followup-create-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      justify-content: stretch;
+    }
     .patient-summary-card__body {
       grid-template-columns: 130px 1fr;
     }
@@ -5871,6 +6055,15 @@ const globalStyles = `
     }
     .overview-measure-list button {
       grid-template-columns: 1fr;
+    }
+    .followup-create-actions,
+    .followup-row-actions {
+      justify-content: stretch;
+    }
+    .followup-create-actions button,
+    .followup-row-actions button {
+      width: 100%;
+      justify-content: center;
     }
     .followup-link-panel,
     .followup-timeline article {

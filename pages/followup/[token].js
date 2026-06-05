@@ -263,6 +263,7 @@ export default function PublicFollowUpPage() {
           width: min(100%, 620px);
           display: grid;
           gap: 24px;
+          min-width: 0;
           padding: 26px;
           border: 1px solid #d8e1ea;
           border-radius: 10px;
@@ -286,6 +287,7 @@ export default function PublicFollowUpPage() {
           color: #152238;
           font-size: 30px;
           line-height: 1.05;
+          overflow-wrap: anywhere;
         }
         .followup-public__head p,
         .followup-state p,
@@ -336,6 +338,7 @@ export default function PublicFollowUpPage() {
           grid-template-columns: 30px minmax(0, 1fr);
           gap: 10px;
           align-items: start;
+          min-width: 0;
           color: #17212b;
           font-size: 14px;
           font-weight: 700;
@@ -352,6 +355,10 @@ export default function PublicFollowUpPage() {
           color: #17496f;
           font-size: 12px;
           font-weight: 900;
+        }
+        .followup-question__head span {
+          min-width: 0;
+          overflow-wrap: anywhere;
         }
         .followup-number-field {
           display: grid;

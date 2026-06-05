@@ -75,6 +75,11 @@ export default function ClinicalUse() {
             RehabMetrics IQ is offered as <strong>context to inform</strong> — not to direct — your
             clinical reasoning.
           </p>
+          <p>
+            Patient-reported questionnaire links and email follow-ups are asynchronous documentation tools.
+            They are not monitored emergency channels and should not be used for urgent symptoms or new
+            medical concerns.
+          </p>
 
           <h2>3. Where calculations and thresholds come from</h2>
           <p>

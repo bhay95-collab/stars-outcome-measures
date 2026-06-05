@@ -239,9 +239,16 @@ describe('patient-first app navigation', () => {
               measure_id: 'ABC',
               source_assessment_id: 'abc-assessment-1',
               completed_assessment_id: null,
+              recipient_email: null,
+              sent_at: null,
+              email_status: 'manual',
+              email_provider_message_id: null,
+              email_error: null,
+              last_email_attempt_at: null,
               response: null,
               assessment: null,
             },
+            email: null,
           }),
         })
       }
@@ -274,7 +281,152 @@ describe('patient-first app navigation', () => {
       patientId: 'patient-1',
       measureId: 'ABC',
       sourceAssessmentId: 'abc-assessment-1',
+      deliveryMode: 'manual',
     }))
+  })
+
+  it('creates and sends a follow-up email when the patient has a stored email', async () => {
+    const user = userEvent.setup()
+    mockRouter.query = { patient: 'patient-1', section: 'followup' }
+    global.fetch = jest.fn((url, options = {}) => {
+      if (url === '/api/followups' && options.method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            publicUrl: 'http://localhost:3000/followup/email-token',
+            email: {
+              status: 'sent',
+              error: null,
+              providerMessageId: 'resend-message-1',
+            },
+            followup: {
+              id: 'followup-1',
+              patient_id: 'patient-1',
+              status: 'pending',
+              displayStatus: 'pending',
+              overdue: false,
+              due_at: '2999-06-05T00:00:00.000Z',
+              expires_at: '2999-06-12T00:00:00.000Z',
+              created_at: '2999-05-29T00:00:00.000Z',
+              completed_at: null,
+              cancelled_at: null,
+              measure_id: 'ABC',
+              source_assessment_id: 'abc-assessment-1',
+              completed_assessment_id: null,
+              recipient_email: 'patient@example.com',
+              sent_at: '2999-05-29T00:00:00.000Z',
+              email_status: 'sent',
+              email_provider_message_id: 'resend-message-1',
+              email_error: null,
+              last_email_attempt_at: '2999-05-29T00:00:00.000Z',
+              response: null,
+              assessment: null,
+            },
+          }),
+        })
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ followups: [] }),
+      })
+    })
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: jest.fn() },
+    })
+    mockAuthenticatedApp({
+      patients: [{ ...patientOne, email: 'patient@example.com' }],
+      assessmentsByPatient: { 'patient-1': [abcAssessment] },
+    })
+
+    render(<App />)
+
+    await screen.findByText(/secure links for patients to repeat questionnaires/i)
+    await user.click(screen.getByRole('button', { name: /create and send email/i }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Email sent to patient@example.com.')
+    expect(screen.getAllByText(/Email sent/i).length).toBeGreaterThan(0)
+    const createCall = global.fetch.mock.calls.find(([url, options]) => url === '/api/followups' && options?.method === 'POST')
+    expect(JSON.parse(createCall[1].body)).toEqual(expect.objectContaining({
+      patientId: 'patient-1',
+      measureId: 'ABC',
+      sourceAssessmentId: 'abc-assessment-1',
+      deliveryMode: 'email',
+    }))
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('http://localhost:3000/followup/email-token')
+  })
+
+  it('resends a pending follow-up email from the timeline', async () => {
+    const user = userEvent.setup()
+    mockRouter.query = { patient: 'patient-1', section: 'followup' }
+    const pendingFollowup = {
+      id: 'followup-1',
+      patient_id: 'patient-1',
+      status: 'pending',
+      displayStatus: 'pending',
+      overdue: false,
+      due_at: '2999-06-05T00:00:00.000Z',
+      expires_at: '2999-06-12T00:00:00.000Z',
+      created_at: '2999-05-29T00:00:00.000Z',
+      completed_at: null,
+      cancelled_at: null,
+      measure_id: 'ABC',
+      source_assessment_id: 'abc-assessment-1',
+      completed_assessment_id: null,
+      recipient_email: 'patient@example.com',
+      sent_at: null,
+      email_status: 'failed',
+      email_provider_message_id: null,
+      email_error: 'Previous send failed',
+      last_email_attempt_at: '2999-05-29T00:00:00.000Z',
+      response: null,
+      assessment: null,
+    }
+    global.fetch = jest.fn((url, options = {}) => {
+      if (url === '/api/followups?patientId=patient-1') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ followups: [pendingFollowup] }),
+        })
+      }
+      if (url === '/api/followups/followup-1/send' && options.method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            publicUrl: 'http://localhost:3000/followup/resend-token',
+            email: {
+              status: 'sent',
+              error: null,
+              providerMessageId: 'resend-message-2',
+            },
+            followup: {
+              ...pendingFollowup,
+              sent_at: '2999-05-30T00:00:00.000Z',
+              email_status: 'sent',
+              email_provider_message_id: 'resend-message-2',
+              email_error: null,
+              last_email_attempt_at: '2999-05-30T00:00:00.000Z',
+            },
+          }),
+        })
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ followups: [] }),
+      })
+    })
+    mockAuthenticatedApp({
+      patients: [{ ...patientOne, email: 'patient@example.com' }],
+      assessmentsByPatient: { 'patient-1': [abcAssessment] },
+    })
+
+    render(<App />)
+
+    expect(await screen.findByText(/previous send failed/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /resend email/i }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Follow-up email sent.')
+    expect(global.fetch).toHaveBeenCalledWith('/api/followups/followup-1/send', { method: 'POST' })
   })
 
   it('surfaces completed follow-up responses in Overview and Reports', async () => {

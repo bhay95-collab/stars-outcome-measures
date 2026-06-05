@@ -14,6 +14,7 @@ const patient = {
   id: 'patient-1',
   user_id: 'user-1',
   initials: 'Sophie H.',
+  email: 'sophie@example.com',
   dob: '1987-06-12',
   dob_year: 1987,
   gender: 'F',
@@ -61,6 +62,7 @@ describe('EditPatientModal', () => {
     renderModal()
 
     expect(screen.getByLabelText(/patient label/i)).toHaveValue('Sophie H.')
+    expect(screen.getByLabelText(/patient email/i)).toHaveValue('sophie@example.com')
     expect(screen.getByLabelText(/date of birth/i)).toHaveValue('1987-06-12')
     expect(screen.getByLabelText(/gender/i)).toHaveValue('F')
     expect(screen.getByLabelText(/diagnosis/i)).toHaveValue('Stroke')
@@ -83,6 +85,7 @@ describe('EditPatientModal', () => {
     const savedPatient = {
       ...patient,
       initials: 'Sophie Hay',
+      email: 'sophie.hay@example.com',
       dob: '1980-03-04',
       dob_year: 1980,
       gender: 'M',
@@ -93,6 +96,7 @@ describe('EditPatientModal', () => {
 
     await user.clear(screen.getByLabelText(/patient label/i))
     await user.type(screen.getByLabelText(/patient label/i), '  Sophie   Hay  ')
+    fireEvent.change(screen.getByLabelText(/patient email/i), { target: { value: '  SOPHIE.HAY@EXAMPLE.COM  ' } })
     fireEvent.change(screen.getByLabelText(/date of birth/i), { target: { value: '1980-03-04' } })
     fireEvent.change(screen.getByLabelText(/gender/i), { target: { value: 'M' } })
     fireEvent.change(screen.getByLabelText(/diagnosis/i), { target: { value: 'SCI' } })
@@ -104,6 +108,7 @@ describe('EditPatientModal', () => {
     expect(supabase.from).toHaveBeenCalledWith('patients')
     expect(query.update).toHaveBeenCalledWith({
       initials: 'Sophie Hay',
+      email: 'sophie.hay@example.com',
       dob: '1980-03-04',
       dob_year: 1980,
       gender: 'M',
@@ -113,6 +118,16 @@ describe('EditPatientModal', () => {
     expect(query.eq).toHaveBeenNthCalledWith(2, 'user_id', 'user-1')
     expect(query.select).toHaveBeenCalledTimes(1)
     expect(query.single).toHaveBeenCalledTimes(1)
+  })
+
+  it('blocks save when patient email is invalid', async () => {
+    renderModal()
+
+    fireEvent.change(screen.getByLabelText(/patient email/i), { target: { value: 'not-an-email' } })
+    fireEvent.submit(screen.getByRole('button', { name: /save changes/i }).closest('form'))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid patient email address.')
+    expect(query.update).not.toHaveBeenCalled()
   })
 
   it('shows inline errors on Supabase failure and keeps the modal open', async () => {

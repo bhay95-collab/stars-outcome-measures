@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { CONDITION_OPTIONS } from '../lib/clinical'
-import { dobYearFromDateInput, PATIENT_GENDER_OPTIONS } from '../lib/patientDetails'
+import { dobYearFromDateInput, PATIENT_GENDER_OPTIONS, validateOptionalPatientEmail } from '../lib/patientDetails'
 import ThreeBarMotif from './ThreeBarMotif'
 
 export default function NewPatientModal({ userId, onCreated, onClose }) {
   const [form, setForm] = useState({
     firstName: '',
     lastInitial: '',
+    email: '',
     dob: '',
     gender: '',
     diagnosis: '',
@@ -32,6 +33,11 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
     ].filter(Boolean).join(' ')
 
     const dobYear = dobYearFromDateInput(form.dob)
+    const patientEmail = validateOptionalPatientEmail(form.email)
+    if (patientEmail.error) {
+      setError(patientEmail.error)
+      return
+    }
 
     setLoading(true)
     setError('')
@@ -41,6 +47,7 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
       .insert({
         user_id: userId,
         initials,
+        email: patientEmail.email,
         dob: form.dob || null,
         dob_year: dobYear,
         gender: form.gender || null,
@@ -96,6 +103,20 @@ export default function NewPatientModal({ userId, onCreated, onClose }) {
                 placeholder="e.g. H"
                 maxLength={1}
               />
+            </div>
+            <div className="field-group">
+              <label htmlFor="np-email" className="field-label">Patient email</label>
+              <input
+                id="np-email"
+                className="field-input"
+                type="email"
+                value={form.email}
+                onChange={e => set('email', e.target.value)}
+                placeholder="patient@example.com"
+                maxLength={254}
+                autoComplete="email"
+              />
+              <p className="field-note">Optional. Used only to send secure questionnaire links.</p>
             </div>
             <div className="field-group">
               <label htmlFor="np-dob" className="field-label">Date of birth</label>

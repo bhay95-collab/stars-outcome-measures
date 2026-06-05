@@ -57,6 +57,11 @@ export default function Terms() {
             Medicare numbers or other government identifiers. See our <a href="/privacy">Privacy Policy</a> for
             details on how we handle data.
           </p>
+          <p>
+            If you use patient follow-up emails, you are responsible for entering the correct patient email
+            address and for ensuring the patient understands that emailed questionnaire links are not for urgent
+            symptoms, emergencies, or new medical concerns.
+          </p>
 
           <h2>6. Trial and Subscription</h2>
           <ul>

@@ -22,7 +22,7 @@ export default function Privacy() {
           <p>When you use RehabMetrics IQ, we collect the following information:</p>
           <ul>
             <li><strong>Account information:</strong> Your email address and encrypted password when you register, or your Google account details if you sign in with Google.</li>
-            <li><strong>Patient data you enter:</strong> Patient initials (no full names), date of birth, diagnosis category, and clinical outcome measure scores and inputs.</li>
+            <li><strong>Patient data you enter:</strong> Patient initials (no full names), optional patient email address, date of birth, diagnosis category, and clinical outcome measure scores and inputs.</li>
             <li><strong>Payment information:</strong> When you subscribe, payments are processed by Stripe, Inc. We do not store your full payment card details. Stripe may collect card details, billing address, and transaction history. See Stripe&apos;s privacy policy for how they handle this data.</li>
             <li><strong>Usage data:</strong> Basic information about how you interact with the service, such as feature usage and error reports, to help us improve the product.</li>
           </ul>
@@ -32,6 +32,7 @@ export default function Privacy() {
           <ul>
             <li>To authenticate your account and maintain your session.</li>
             <li>To store and display the clinical data you enter.</li>
+            <li>To send secure patient-reported questionnaire links when you choose to email a follow-up.</li>
             <li>To manage your subscription and trial period.</li>
             <li>To respond to support requests.</li>
           </ul>
@@ -69,6 +70,12 @@ export default function Privacy() {
             Subscription payments are processed by <strong>Stripe, Inc.</strong> Stripe operates under its own
             privacy policy and security certifications. We do not store payment card numbers on our servers.
           </p>
+          <p>
+            Patient questionnaire emails are sent through <strong>Resend</strong> when you choose to email a
+            secure follow-up link. Email content is limited to the secure link, questionnaire name, expiry date,
+            and safety disclaimer. We do not include diagnosis, date of birth, scores, or other clinical details
+            in the email body.
+          </p>
 
           <h2>4. Intended Users and Clinical Disclaimer</h2>
           <p>
@@ -83,6 +90,11 @@ export default function Privacy() {
           <p>
             We recommend that you do not enter patient full names, Medicare numbers, or other personally
             identifiable health information beyond what is needed for your clinical workflow.
+          </p>
+          <p>
+            Patient-reported questionnaire links are not monitored for emergencies. Patients should be directed
+            to contact emergency services or their treating clinician directly for urgent symptoms or new medical
+            concerns.
           </p>
 
           <h2>5. Data Retention</h2>

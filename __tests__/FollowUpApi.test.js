@@ -1,4 +1,5 @@
 import followupsHandler from '../pages/api/followups'
+import sendFollowupHandler from '../pages/api/followups/[id]/send'
 import publicFollowupHandler from '../pages/api/followups/public/[token]'
 import { getAdminClient, getUserFromRequest } from '../lib/supabase-admin'
 import { createFollowUpToken, hashFollowUpToken } from '../lib/followupTokens'
@@ -18,6 +19,7 @@ const patientId = '11111111-1111-4111-8111-111111111111'
 const requestId = '22222222-2222-4222-8222-222222222222'
 const sourceAssessmentId = '33333333-3333-4333-8333-333333333333'
 const completedAssessmentId = '44444444-4444-4444-8444-444444444444'
+const patientEmail = 'patient@example.com'
 
 const sourceAssessment = {
   id: sourceAssessmentId,
@@ -50,7 +52,43 @@ function makeRes() {
   return res
 }
 
+function baseFollowUpRequest(overrides = {}) {
+  return {
+    id: requestId,
+    user_id: user.id,
+    patient_id: patientId,
+    measure_id: 'ABC',
+    source_assessment_id: sourceAssessmentId,
+    completed_assessment_id: null,
+    recipient_email: null,
+    sent_at: null,
+    email_status: null,
+    email_provider_message_id: null,
+    email_error: null,
+    last_email_attempt_at: null,
+    status: 'pending',
+    due_at: '2026-06-05T00:00:00.000Z',
+    expires_at: '2999-06-12T00:00:00.000Z',
+    created_at: '2026-05-29T00:00:00.000Z',
+    completed_at: null,
+    cancelled_at: null,
+    ...overrides,
+  }
+}
+
 function makeQuery(table, state) {
+  function latestInsertedRequest() {
+    return [...state.inserts].reverse().find(item => item.table === 'followup_requests')?.payload ?? null
+  }
+
+  function persistRequest(row) {
+    if (!row) return row
+    state.request = row
+    const current = state.requests ?? []
+    state.requests = [row, ...current.filter(item => item.id !== row.id)]
+    return row
+  }
+
   const query = {
     payload: null,
     filters: {},
@@ -85,8 +123,10 @@ function makeQuery(table, state) {
       if (table === 'patients') return Promise.resolve({ data: state.patient, error: null })
       if (table === 'followup_requests') {
         if (query.payload) {
+          const base = state.request ?? (latestInsertedRequest() ? baseFollowUpRequest(latestInsertedRequest()) : null)
+          const updated = base ? persistRequest({ ...base, ...query.payload }) : null
           return Promise.resolve({
-            data: state.request ? { ...state.request, ...query.payload } : null,
+            data: updated,
             error: null,
           })
         }
@@ -96,23 +136,7 @@ function makeQuery(table, state) {
     }),
     single: jest.fn(() => {
       if (table === 'followup_requests') {
-        return Promise.resolve({
-          data: {
-            id: requestId,
-            user_id: query.payload.user_id,
-            patient_id: patientId,
-            measure_id: query.payload.measure_id,
-            source_assessment_id: query.payload.source_assessment_id,
-            completed_assessment_id: null,
-            status: 'pending',
-            due_at: query.payload.due_at,
-            expires_at: query.payload.expires_at,
-            created_at: '2026-05-29T00:00:00.000Z',
-            completed_at: null,
-            cancelled_at: null,
-          },
-          error: null,
-        })
+        return Promise.resolve({ data: persistRequest(baseFollowUpRequest(query.payload)), error: null })
       }
       if (table === 'assessments') {
         return Promise.resolve({
@@ -156,6 +180,9 @@ function mockAdmin(state = {}) {
 describe('follow-up API routes', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    delete process.env.RESEND_API_KEY
+    delete process.env.FOLLOWUP_EMAIL_FROM
+    global.fetch = jest.fn()
     getUserFromRequest.mockResolvedValue(user)
     createFollowUpToken.mockReturnValue('raw-public-token-with-length')
     hashFollowUpToken.mockReturnValue('hashed-token')
@@ -187,9 +214,141 @@ describe('follow-up API routes', () => {
         patient_id: patientId,
         measure_id: 'ABC',
         source_assessment_id: sourceAssessmentId,
+        recipient_email: null,
+        email_status: 'manual',
         token_hash: 'hashed-token',
       }),
     }))
+    expect(res.body.email).toBeNull()
+  })
+
+  it('creates and sends a follow-up email through Resend when a patient email is stored', async () => {
+    process.env.RESEND_API_KEY = 'resend-test-key'
+    process.env.FOLLOWUP_EMAIL_FROM = 'RehabMetrics IQ <followups@example.com>'
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'resend-message-1' }),
+    })
+    const { state } = mockAdmin({
+      patient: { id: patientId, user_id: user.id, email: ' PATIENT@EXAMPLE.COM ' },
+    })
+    const req = makeReq({
+      method: 'POST',
+      body: {
+        patientId,
+        measureId: 'ABC',
+        sourceAssessmentId,
+        deliveryMode: 'email',
+        dueAt: '2026-06-05T00:00:00.000Z',
+        expiresAt: '2026-06-12T00:00:00.000Z',
+      },
+    })
+    const res = makeRes()
+
+    await followupsHandler(req, res)
+
+    expect(res.statusCode).toBe(201)
+    expect(res.body.publicUrl).toBe('http://localhost:3000/followup/raw-public-token-with-length')
+    expect(res.body.email).toEqual({
+      status: 'sent',
+      error: null,
+      providerMessageId: 'resend-message-1',
+    })
+    expect(res.body.followup).toEqual(expect.objectContaining({
+      recipient_email: patientEmail,
+      email_status: 'sent',
+      email_provider_message_id: 'resend-message-1',
+    }))
+    expect(state.inserts[0].payload).toEqual(expect.objectContaining({
+      recipient_email: patientEmail,
+      email_status: null,
+      token_hash: 'hashed-token',
+    }))
+    expect(state.updates.find(item => item.table === 'followup_requests').payload).toEqual(expect.objectContaining({
+      email_status: 'sent',
+      email_provider_message_id: 'resend-message-1',
+      email_error: null,
+    }))
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.resend.com/emails',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer resend-test-key',
+          'Content-Type': 'application/json',
+        }),
+      }),
+    )
+    const resendBody = JSON.parse(global.fetch.mock.calls[0][1].body)
+    expect(resendBody).toEqual(expect.objectContaining({
+      from: 'RehabMetrics IQ <followups@example.com>',
+      to: [patientEmail],
+      subject: expect.stringMatching(/follow-up questionnaire/i),
+    }))
+    expect(resendBody.text).toContain('http://localhost:3000/followup/raw-public-token-with-length')
+    expect(resendBody.text).toMatch(/Activities-specific Balance Confidence/i)
+    expect(resendBody.text).not.toContain(patientId)
+    expect(resendBody.html).not.toContain(sourceAssessmentId)
+  })
+
+  it('keeps a pending link available when Resend fails during creation', async () => {
+    process.env.RESEND_API_KEY = 'resend-test-key'
+    process.env.FOLLOWUP_EMAIL_FROM = 'RehabMetrics IQ <followups@example.com>'
+    global.fetch.mockResolvedValue({
+      ok: false,
+      json: async () => ({ message: 'Invalid API key' }),
+    })
+    const { state } = mockAdmin({
+      patient: { id: patientId, user_id: user.id, email: patientEmail },
+    })
+    const req = makeReq({
+      method: 'POST',
+      body: {
+        patientId,
+        measureId: 'ABC',
+        deliveryMode: 'email',
+        dueAt: '2026-06-05T00:00:00.000Z',
+        expiresAt: '2026-06-12T00:00:00.000Z',
+      },
+    })
+    const res = makeRes()
+
+    await followupsHandler(req, res)
+
+    expect(res.statusCode).toBe(201)
+    expect(res.body.publicUrl).toBe('http://localhost:3000/followup/raw-public-token-with-length')
+    expect(res.body.email).toEqual({
+      status: 'failed',
+      error: 'Invalid API key',
+      providerMessageId: null,
+    })
+    expect(res.body.followup).toEqual(expect.objectContaining({
+      status: 'pending',
+      email_status: 'failed',
+      email_error: 'Invalid API key',
+    }))
+  })
+
+  it('requires a stored patient email for email delivery', async () => {
+    const { state } = mockAdmin({ patient: { id: patientId, user_id: user.id, email: null } })
+    const req = makeReq({
+      method: 'POST',
+      body: {
+        patientId,
+        measureId: 'ABC',
+        deliveryMode: 'email',
+        dueAt: '2026-06-05T00:00:00.000Z',
+        expiresAt: '2026-06-12T00:00:00.000Z',
+      },
+    })
+    const res = makeRes()
+
+    await followupsHandler(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect(res.body.error).toMatch(/patient email/i)
+    expect(state.inserts).toHaveLength(0)
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 
   it('requires the selected questionnaire to have been completed for the patient', async () => {
@@ -228,6 +387,101 @@ describe('follow-up API routes', () => {
 
     expect(res.statusCode).toBe(404)
     expect(res.body.error).toMatch(/patient/i)
+  })
+
+  it('resends a pending follow-up email with a rotated public token', async () => {
+    process.env.RESEND_API_KEY = 'resend-test-key'
+    process.env.FOLLOWUP_EMAIL_FROM = 'RehabMetrics IQ <followups@example.com>'
+    createFollowUpToken.mockReturnValue('rotated-public-token-with-length')
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'resend-message-2' }),
+    })
+    const { state } = mockAdmin({
+      request: baseFollowUpRequest({
+        recipient_email: 'Patient@Example.com',
+        email_status: 'failed',
+        email_error: 'Previous failure',
+      }),
+    })
+    const req = makeReq({ method: 'POST', query: { id: requestId } })
+    const res = makeRes()
+
+    await sendFollowupHandler(req, res)
+
+    expect(res.statusCode).toBe(200)
+    expect(res.body.publicUrl).toBe('http://localhost:3000/followup/rotated-public-token-with-length')
+    expect(res.body.email).toEqual({
+      status: 'sent',
+      error: null,
+      providerMessageId: 'resend-message-2',
+    })
+    expect(state.updates.find(item => item.payload.token_hash).payload).toEqual(expect.objectContaining({
+      token_hash: 'hashed-token',
+      last_email_attempt_at: expect.any(String),
+      email_error: null,
+    }))
+    expect(state.updates.find(item => item.payload.email_status === 'sent').payload).toEqual(expect.objectContaining({
+      email_status: 'sent',
+      email_provider_message_id: 'resend-message-2',
+      email_error: null,
+    }))
+    expect(res.body.followup.token_hash).toBeUndefined()
+  })
+
+  it('returns a manual fallback link when resend fails', async () => {
+    process.env.RESEND_API_KEY = 'resend-test-key'
+    process.env.FOLLOWUP_EMAIL_FROM = 'RehabMetrics IQ <followups@example.com>'
+    createFollowUpToken.mockReturnValue('rotated-public-token-with-length')
+    global.fetch.mockResolvedValue({
+      ok: false,
+      json: async () => ({ message: 'Domain not verified' }),
+    })
+    const { state } = mockAdmin({
+      request: baseFollowUpRequest({
+        recipient_email: patientEmail,
+        email_status: 'failed',
+      }),
+    })
+    const req = makeReq({ method: 'POST', query: { id: requestId } })
+    const res = makeRes()
+
+    await sendFollowupHandler(req, res)
+
+    expect(res.statusCode).toBe(502)
+    expect(res.body.publicUrl).toBe('http://localhost:3000/followup/rotated-public-token-with-length')
+    expect(res.body.email).toEqual({
+      status: 'failed',
+      error: 'Domain not verified',
+      providerMessageId: null,
+    })
+    expect(state.updates.find(item => item.payload.token_hash).payload).toEqual(expect.objectContaining({
+      token_hash: 'hashed-token',
+      last_email_attempt_at: expect.any(String),
+      email_error: null,
+    }))
+    expect(state.updates.find(item => item.payload.email_status === 'failed').payload).toEqual(expect.objectContaining({
+      email_status: 'failed',
+      email_error: 'Domain not verified',
+    }))
+  })
+
+  it('does not resend completed follow-ups', async () => {
+    mockAdmin({
+      request: baseFollowUpRequest({
+        status: 'completed',
+        completed_at: '2026-06-01T00:00:00.000Z',
+        recipient_email: patientEmail,
+      }),
+    })
+    const req = makeReq({ method: 'POST', query: { id: requestId } })
+    const res = makeRes()
+
+    await sendFollowupHandler(req, res)
+
+    expect(res.statusCode).toBe(409)
+    expect(res.body.error).toMatch(/pending/i)
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 
   it('returns public question config without patient identifiers', async () => {

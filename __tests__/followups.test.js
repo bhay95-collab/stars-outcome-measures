@@ -3,6 +3,7 @@ import {
   FOLLOWUP_STATUS,
   getFollowUpRequestStatus,
   isFollowUpOverdue,
+  shapeFollowUpRecord,
   scoreFollowUpAttention,
   validateFollowUpAnswers,
 } from '../lib/followups'
@@ -87,5 +88,35 @@ describe('follow-up helpers', () => {
       status: 'completed',
       completed_at: '2026-05-28T00:00:00.000Z',
     }, now)).toBe(FOLLOWUP_STATUS.COMPLETED)
+  })
+
+  it('preserves email delivery fields when shaping follow-up records', () => {
+    const record = shapeFollowUpRecord({
+      id: 'followup-1',
+      patient_id: 'patient-1',
+      measure_id: 'ABC',
+      source_assessment_id: 'assessment-1',
+      completed_assessment_id: null,
+      recipient_email: 'patient@example.com',
+      sent_at: '2026-06-01T00:00:00.000Z',
+      email_status: 'sent',
+      email_provider_message_id: 'resend-message-1',
+      email_error: null,
+      last_email_attempt_at: '2026-06-01T00:00:00.000Z',
+      status: 'pending',
+      due_at: '2026-06-05T00:00:00.000Z',
+      expires_at: '2026-06-12T00:00:00.000Z',
+      created_at: '2026-05-29T00:00:00.000Z',
+      completed_at: null,
+      cancelled_at: null,
+    })
+
+    expect(record).toEqual(expect.objectContaining({
+      recipient_email: 'patient@example.com',
+      email_status: 'sent',
+      email_provider_message_id: 'resend-message-1',
+      last_email_attempt_at: '2026-06-01T00:00:00.000Z',
+    }))
+    expect(record.token_hash).toBeUndefined()
   })
 })

@@ -6,12 +6,14 @@ import {
   dobYearFromDateInput,
   normalizePatientLabel,
   PATIENT_GENDER_OPTIONS,
+  validateOptionalPatientEmail,
 } from '../lib/patientDetails'
 import ThreeBarMotif from './ThreeBarMotif'
 
 export default function EditPatientModal({ userId, patient, onUpdated, onClose }) {
   const [form, setForm] = useState({
     initials: patient?.initials ?? '',
+    email: patient?.email ?? '',
     dob: dateInputValue(patient?.dob),
     gender: patient?.gender ?? '',
     diagnosis: patient?.diagnosis ?? '',
@@ -32,6 +34,12 @@ export default function EditPatientModal({ userId, patient, onUpdated, onClose }
       return
     }
 
+    const patientEmail = validateOptionalPatientEmail(form.email)
+    if (patientEmail.error) {
+      setError(patientEmail.error)
+      return
+    }
+
     if (!patient?.id || !userId) {
       setError('Patient record could not be updated. Please refresh and try again.')
       return
@@ -39,6 +47,7 @@ export default function EditPatientModal({ userId, patient, onUpdated, onClose }
 
     const payload = {
       initials,
+      email: patientEmail.email,
       dob: form.dob || null,
       dob_year: dobYearFromDateInput(form.dob),
       gender: form.gender || null,
@@ -113,6 +122,20 @@ export default function EditPatientModal({ userId, patient, onUpdated, onClose }
                 onChange={e => set('dob', e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
               />
+            </div>
+            <div className="field-group">
+              <label htmlFor="ep-email" className="field-label">Patient email</label>
+              <input
+                id="ep-email"
+                className="field-input"
+                type="email"
+                value={form.email}
+                onChange={e => set('email', e.target.value)}
+                placeholder="patient@example.com"
+                maxLength={254}
+                autoComplete="email"
+              />
+              <p className="field-note">Optional. Used only to send secure questionnaire links.</p>
             </div>
             <div className="field-group">
               <label htmlFor="ep-gender" className="field-label">Gender</label>
