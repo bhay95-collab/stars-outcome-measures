@@ -1909,7 +1909,7 @@ const globalStyles = `
   [data-avatar-upload] input[type="file"] { display: none; }
   [data-avatar-upload] label { font-size: 13px; font-weight: 500; color: var(--color-primary); cursor: pointer; text-decoration: underline; }
 
-  .trial-badge { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; border-radius: var(--radius-sm); padding: 3px 9px; flex-shrink: 0; margin-left: auto; }
+  .trial-badge { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #92400e; background: #fde68a; border: 1px solid #d97706; border-radius: var(--radius-sm); padding: 3px 9px; flex-shrink: 0; margin-left: auto; }
   .signout-btn { font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 500; color: var(--color-muted); background: none; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 14px; cursor: pointer; transition: color 0.15s, border-color 0.15s, background 0.15s; flex-shrink: 0; }
   .signout-btn:hover { color: var(--color-ink); border-color: var(--color-muted); background: rgba(255,255,255,0.8); }
 

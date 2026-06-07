@@ -731,24 +731,24 @@ const styles = `
   :root {
     --navy: #236499;
     --navy-dark: #17496F;
-    --ink: #172238;
-    --muted: #566271;
-    --soft: #eef3f8;
-    --line: #d7e0e8;
-    --mint: #7FB3E6;
+    --ink: #111827;
+    --muted: #4b5563;
+    --soft: #f1f2f3;
+    --line: #d4d8de;
+    --mint: #0d9488;
     --coral: #ee896f;
     --violet: #8c83c8;
     --amber: #c47b43;
     --danger: #b42318;
     --shadow: 0 18px 36px rgba(23, 38, 59, 0.18);
-    --surface: #fbfdff;
-    --surface-raised: #f6f9fc;
-    --surface-muted: #eef4f8;
-    --line-strong: #c3d0dc;
+    --surface: #fafafa;
+    --surface-raised: #f5f5f5;
+    --surface-muted: #f1f2f3;
+    --line-strong: #c8cdd5;
     --shadow-card: 0 1px 2px rgba(23,38,59,0.06), 0 10px 24px rgba(23,38,59,0.045);
   }
   html { scroll-behavior: smooth; }
-  body { background: #f5f8fb; color: var(--ink); font-family: Inter, sans-serif; }
+  body { background: #f2f3f4; color: var(--ink); font-family: Inter, sans-serif; }
   a { color: inherit; }
   button, input { font: inherit; }
 
@@ -828,7 +828,7 @@ const styles = `
     inset: 0 auto 0 0;
     width: 60%;
     background:
-      linear-gradient(90deg, rgba(234,243,251,0.76) 0%, rgba(247,250,252,0.58) 52%, rgba(247,250,252,0) 100%);
+      linear-gradient(90deg, rgba(248,246,244,0.82) 0%, rgba(248,246,244,0.58) 52%, rgba(248,246,244,0) 100%);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     mask-image: linear-gradient(90deg, #000 0%, #000 48%, rgba(0,0,0,0) 100%);
@@ -838,8 +838,8 @@ const styles = `
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(90deg, rgba(247,250,252,0.82) 0%, rgba(234,243,251,0.48) 44%, rgba(255,255,255,0.08) 76%),
-      linear-gradient(180deg, rgba(255,255,255,0.08), rgba(23,73,111,0.08));
+      linear-gradient(90deg, rgba(249,247,245,0.84) 0%, rgba(248,246,244,0.46) 44%, rgba(255,255,255,0.06) 76%),
+      linear-gradient(180deg, rgba(255,255,255,0.06), rgba(15,26,42,0.08));
   }
   .hero__inner {
     position: relative;
@@ -978,8 +978,9 @@ const styles = `
     font-weight: 500;
   }
   .preview-tabs span[data-active] {
-    background: #d8e9fb;
-    color: var(--navy);
+    background: #ddeaf6;
+    color: var(--navy-dark);
+    font-weight: 600;
   }
   .preview-list {
     display: grid;
@@ -1025,9 +1026,9 @@ const styles = `
     line-height: 1.15;
     text-align: center;
   }
-  .preview-row span[data-tone="green"] { background: #e8f4ec; color: #2b6842; }
-  .preview-row span[data-tone="amber"] { background: #fff0d9; color: #8a5718; }
-  .preview-row span[data-tone="blue"] { background: #e7f0fb; color: var(--navy); }
+  .preview-row span[data-tone="green"] { background: #bbf7d0; color: #15803d; border: 1px solid #34d399; }
+  .preview-row span[data-tone="amber"] { background: #fde68a; color: #92400e; border: 1px solid #d97706; }
+  .preview-row span[data-tone="blue"]  { background: #ccfbf1; color: #0f766e; border: 1px solid #2dd4bf; }
 
   .measure-strip {
     position: relative;
@@ -1457,7 +1458,7 @@ const styles = `
     padding: 22px;
     border-top-left-radius: 34px;
     border-top-right-radius: 34px;
-    background: #f1f7fc;
+    background: #f2f3f4;
   }
 
   .phone-hero,
@@ -1466,7 +1467,7 @@ const styles = `
   .phone-pathway,
   .phone-row,
   .phone-action {
-    border: 1px solid #d7e7f5;
+    border: 1px solid #d4d8de;
     background: #fff;
   }
 
@@ -1515,9 +1516,9 @@ const styles = `
     display: flex;
     align-items: center;
     padding: 0 18px;
-    border: 1px solid #d7e7f5;
+    border: 1px solid #d4d8de;
     border-radius: 16px;
-    background: #f8fbfe;
+    background: #f8f8f8;
     color: #8a96a3;
     font-size: 16px;
   }
@@ -1539,7 +1540,7 @@ const styles = `
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: #eaf3fb;
+    background: #eef4fb;
     color: var(--navy);
     font-weight: 800;
   }
@@ -1625,7 +1626,7 @@ const styles = `
     height: 8px;
     overflow: hidden;
     border-radius: 999px;
-    background: #dceeff;
+    background: #e2e8f0;
   }
 
   .phone-progress i {
@@ -1640,7 +1641,7 @@ const styles = `
     margin: 0;
     padding: 14px;
     border-radius: 12px;
-    background: #eaf3fb;
+    background: #eef4fb;
     color: #27364a;
     font-size: 12px;
     line-height: 1.45;
@@ -1671,8 +1672,8 @@ const styles = `
     margin: 22px 0;
     padding: 5px;
     border-radius: 16px;
-    background: #eaf3fb;
-    border: 1px solid #d7e7f5;
+    background: #f0f1f2;
+    border: 1px solid #d4d8de;
   }
 
   .phone-tabs span {
@@ -1730,9 +1731,9 @@ const styles = `
     align-items: center;
     justify-content: center;
     margin-top: 12px;
-    border: 1px solid #d7e7f5;
+    border: 1px solid #d4d8de;
     border-radius: 16px;
-    background: #f8fbfe;
+    background: #f8f8f8;
     color: #8a96a3;
     font-size: 30px;
     font-weight: 800;
