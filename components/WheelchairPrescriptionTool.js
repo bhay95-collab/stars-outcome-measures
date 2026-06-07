@@ -1992,16 +1992,16 @@ const wheelchairToolStyles = `
     --wc-muted: var(--color-muted);
     --wc-subtle: var(--color-subtle);
     --wc-line: var(--color-border);
-    --wc-card-border: rgba(216,225,234,0.9);
-    --wc-surface: #fbfdff;
-    --wc-nested-surface: #f6f9fc;
+    --wc-card-border: var(--color-border);
+    --wc-surface: var(--color-surface);
+    --wc-nested-surface: var(--color-surface-raised);
     --wc-control-surface: var(--color-surface-soft);
     --wc-soft: var(--color-surface-soft);
     --wc-primary: var(--color-primary);
     --wc-primary-dark: var(--color-primary-dark);
     --wc-primary-soft: var(--color-primary-soft);
     --wc-secondary: var(--color-secondary);
-    --wc-danger: #b5451b;
+    --wc-danger: var(--color-red);
     --wc-radius-panel: 16px;
     --wc-radius-inner: 10px;
     --wc-radius-control: 8px;
@@ -2205,19 +2205,19 @@ const wheelchairToolStyles = `
     min-height: 38px;
     margin: -6px 0 16px;
     padding: 8px 12px;
-    border: 1px solid #b7dfc9;
+    border: 1px solid var(--color-green-border);
     border-radius: var(--wc-radius-control);
-    background: #e8f4ef;
-    color: #14523a;
+    background: var(--color-green-soft);
+    color: var(--color-green);
     font-size: 12px;
     font-weight: 800;
     line-height: 1.35;
   }
 
   .wc-tool__toast[data-tone="warning"] {
-    border-color: #f5d49a;
-    background: #fef3e2;
-    color: #8d4f12;
+    border-color: var(--color-amber-border);
+    background: var(--color-amber-soft);
+    color: var(--color-amber);
   }
 
   .wc-tool .step-nav {
@@ -2244,8 +2244,8 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .step-nav__item:hover {
-    border-color: rgba(23,61,104,0.32);
-    background: #f7fafc;
+    border-color: rgba(29,85,144,0.32);
+    background: var(--color-surface-raised);
   }
 
   .wc-tool .step-nav__item:active {
@@ -2455,14 +2455,14 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .progress-status[data-tone="success"] {
-    border-color: #b7dfc9;
-    background: #e8f4ef;
+    border-color: var(--color-green-border);
+    background: var(--color-green-soft);
   }
 
   .wc-tool .progress-status[data-tone="warning"],
   .wc-tool .progress-error {
-    border-color: #f5d49a;
-    background: #fef3e2;
+    border-color: var(--color-amber-border);
+    background: var(--color-amber-soft);
   }
 
   .wc-tool .progress-status strong,
@@ -2680,7 +2680,7 @@ const wheelchairToolStyles = `
     gap: 7px;
     min-height: 38px;
     padding: 9px 10px;
-    border: 1px solid rgba(216,225,234,0.95);
+    border: 1px solid var(--color-border);
     border-radius: var(--wc-radius-inner);
     background: var(--wc-nested-surface);
     color: var(--wc-muted);
@@ -2735,9 +2735,9 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .guidance-line.access-warning {
-    border-color: #f0b8a2;
-    background: #fdf0ec;
-    color: #9a3a16;
+    border-color: var(--color-red-border);
+    background: var(--color-red-soft);
+    color: var(--color-red);
   }
 
   .wc-tool .measurement-layout {
@@ -3047,7 +3047,7 @@ const wheelchairToolStyles = `
     overflow: hidden;
     height: 8px;
     border-radius: 999px;
-    background: rgba(216,225,234,0.78);
+    background: var(--color-border);
   }
 
   .wc-tool .readiness-meter span {
@@ -3149,18 +3149,18 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .risk-high {
-    border-color: #f0b8a2;
-    background: #fdf0ec;
+    border-color: var(--color-red-border);
+    background: var(--color-red-soft);
   }
 
   .wc-tool .risk-mod {
-    border-color: #f5d49a;
-    background: #fef3e2;
+    border-color: var(--color-amber-border);
+    background: var(--color-amber-soft);
   }
 
   .wc-tool .risk-low {
-    border-color: #b7dfc9;
-    background: #e8f4ef;
+    border-color: var(--color-green-border);
+    background: var(--color-green-soft);
   }
 
   .wc-tool .brief-preview {
@@ -3221,9 +3221,9 @@ const wheelchairToolStyles = `
   .wc-tool__print-supplier .print-note {
     margin: 8px 0 12px;
     padding: 8px 10px;
-    border: 1px solid #f5d49a;
+    border: 1px solid var(--color-amber-border);
     border-radius: var(--wc-radius-control);
-    background: #fef3e2;
+    background: var(--color-amber-soft);
   }
 
   .wc-tool__print-supplier .print-section {

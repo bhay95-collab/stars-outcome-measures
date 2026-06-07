@@ -367,29 +367,63 @@ Inside:
 
 `const globalStyles = \`...\``
 
-The current app visual direction uses these effective tokens:
+The current app visual direction uses these locked tokens (do not deviate from these):
 
 ```css
---color-primary: #173d68;
---color-primary-dark: #102947;
---color-primary-soft: #e8f1fb;
---color-secondary: #78c8bd;
---color-secondary-soft: #e4f6f3;
---color-coral: #ee8a70;
---color-violet: #8b82c6;
---color-ink: #152238;
---color-muted: #5b6674;
---color-subtle: #8a96a3;
---color-surface: #FFFFFF;
---color-surface-soft: #eff4f9;
---color-panel: #f7fafc;
---color-border: #d8e1ea;
---shadow-sm: 0 6px 18px rgba(21,34,56,0.08);
---shadow-md: 0 18px 42px rgba(21,34,56,0.12);
---radius-sm: 6px;
---radius-md: 8px;
---radius-lg: 16px;
+/* Brand — navy primary, teal secondary. NO competing blue secondary. */
+--color-primary:        #1d5590;
+--color-primary-dark:   #132d5e;
+--color-primary-soft:   #eef4fb;
+--color-secondary:      #0d9488;   /* Teal — NOT blue */
+--color-secondary-soft: #f0fdfa;
+--color-coral:          #64748b;   /* Slate — chart comparison data only */
+--color-violet:         #7c3aed;   /* Neuro domain and chart 3rd series */
+
+/* Status — must be opaque and saturated, never pastel or cream */
+--color-green:          #15803d;
+--color-green-soft:     #dcfce7;   /* Clearly green, not blue-green */
+--color-green-border:   #86efac;
+--color-amber:          #92400e;   /* Dark amber — NOT orange, NOT cream */
+--color-amber-soft:     #fef3c7;   /* Warm yellow-white — NOT fdf3de cream */
+--color-amber-border:   #fcd34d;
+--color-red:            #991b1b;
+--color-red-soft:       #fee2e2;
+--color-red-border:     #fca5a5;
+
+/* Text */
+--color-ink:            #111827;
+--color-muted:          #374151;
+--color-subtle:         #6b7280;
+
+/* Surfaces — neutral, NO blue tint */
+--color-bg:             #f1f3f5;   /* Page shell — neutral gray, NOT blue */
+--color-surface:        #ffffff;
+--color-surface-raised: #f8f9fa;
+--color-surface-soft:   #f4f5f6;
+--color-border:         #d0d5dd;   /* Neutral — NOT blue-tinted */
+--color-line:           #e5e7eb;
+
+/* Shadows */
+--shadow-sm:   0 1px 3px rgba(17,24,39,0.06), 0 1px 2px rgba(17,24,39,0.04);
+--shadow-card: 0 1px 3px rgba(17,24,39,0.06), 0 4px 12px rgba(17,24,39,0.06);
+
+/* Radius */
+--radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-full: 999px;
 ```
+
+**BANNED colors — do not reintroduce:**
+- `#e8eef5` or any blue-tinted background — causes the "everything is blue" look
+- `#fdf3de`, `#e8c87a`, `#8a5800` — old cream/amber that reads as dirty yellow
+- `#ee8a70`, any orange — no orange in clinical UI
+- `#72aedd` as secondary — creates blue-on-blue competition with primary
+- `rgba(216,225,234,*)` as borders — use `--color-border` instead
+- `rgba(247,250,252,*)` as backgrounds — use `--color-surface-raised` instead
+
+**Status color rules:**
+- Green = recorded / improvement / good / met threshold
+- Amber = missing baseline / due reassessment / caution
+- Red = decline / overdue / concern
+- No orange for any status
 
 Use these tokens before adding any new value.
 
@@ -397,12 +431,6 @@ If a new semantic colour is required:
 - add a named token
 - explain why
 - keep it clinically meaningful
-
-Examples:
-- improvement / safe / met threshold
-- amber caution
-- red concern / decline
-- neutral inactive state
 
 ---
 

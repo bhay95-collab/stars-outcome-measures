@@ -393,8 +393,8 @@ export default function PublicFollowUpPage() {
           background: #f7fafc;
         }
         .followup-result-preview[data-ready] {
-          border-color: #b7dfc9;
-          background: #eef8f2;
+          border-color: #86efac;
+          background: #dcfce7;
         }
         .followup-result-preview span {
           color: #526273;

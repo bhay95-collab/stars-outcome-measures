@@ -128,7 +128,7 @@ export default function FormSCIM({ onSubmit, loading }) {
             <span style={{ marginLeft: 12 }}>
               Δ {delta > 0 ? '+' : ''}{delta} pts
               {mcidMet != null && (
-                <span style={{ marginLeft: 8, fontWeight: 600, color: mcidMet ? '#2d6a4f' : '#a05c00' }}>
+                <span style={{ marginLeft: 8, fontWeight: 600, color: mcidMet ? '#15803d' : '#92400e' }}>
                   {mcidMet ? '✓ MCID met' : '✗ Below MCID'}
                 </span>
               )}

@@ -502,9 +502,9 @@ const styles = `
   .billing-alert {
     display: grid;
     gap: 3px;
-    border: 1px solid #f5d49a;
-    background: #fff6e8;
-    color: #7a4a0f;
+    border: 1px solid var(--color-amber-border);
+    background: var(--color-amber-soft);
+    color: var(--color-amber);
   }
 
   .billing-alert strong {
@@ -513,9 +513,9 @@ const styles = `
   }
 
   .wall-error {
-    border: 1px solid #f0b8a2;
-    background: #fdf0ec;
-    color: #b5451b;
+    border: 1px solid var(--color-red-border);
+    background: var(--color-red-soft);
+    color: var(--color-red);
     font-weight: 600;
   }
 
@@ -700,7 +700,7 @@ const styles = `
   }
 
   .support-actions button[data-danger] {
-    color: #b5451b;
+    color: var(--color-red);
   }
 
   .subscription-modal {
@@ -801,7 +801,7 @@ const styles = `
   }
 
   .subscription-modal__content form button[data-danger] {
-    background: #b5451b;
+    background: var(--color-red);
   }
 
   .subscription-modal__content form button:disabled {
