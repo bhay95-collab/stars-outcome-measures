@@ -393,8 +393,8 @@ export default function PublicFollowUpPage() {
           background: #f7fafc;
         }
         .followup-result-preview[data-ready] {
-          border-color: #86efac;
-          background: #dcfce7;
+          border-color: #34d399;
+          background: #bbf7d0;
         }
         .followup-result-preview span {
           color: #526273;
@@ -417,10 +417,10 @@ export default function PublicFollowUpPage() {
         .followup-error {
           margin: 0;
           padding: 10px 12px;
-          border: 1px solid #f0c4b8;
+          border: 1px solid #f87171;
           border-radius: 8px;
-          background: #fff3ef;
-          color: #9a3a16;
+          background: #fecaca;
+          color: #991b1b;
           font-size: 13px;
           font-weight: 700;
         }

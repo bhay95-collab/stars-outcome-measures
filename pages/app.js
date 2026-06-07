@@ -2758,16 +2758,16 @@ const globalStyles = `
     --color-coral:          #64748b;
     --color-violet:         #7c3aed;
 
-    /* Status — opaque, saturated, clinically distinct */
+    /* Status — opaque, chromatic, clinically distinct */
     --color-green:          #15803d;
-    --color-green-soft:     #dcfce7;
-    --color-green-border:   #86efac;
+    --color-green-soft:     #bbf7d0;
+    --color-green-border:   #34d399;
     --color-amber:          #92400e;
-    --color-amber-soft:     #fef3c7;
-    --color-amber-border:   #fcd34d;
+    --color-amber-soft:     #fde68a;
+    --color-amber-border:   #d97706;
     --color-red:            #991b1b;
-    --color-red-soft:       #fee2e2;
-    --color-red-border:     #fca5a5;
+    --color-red-soft:       #fecaca;
+    --color-red-border:     #f87171;
 
     /* Text */
     --color-ink:            #111827;

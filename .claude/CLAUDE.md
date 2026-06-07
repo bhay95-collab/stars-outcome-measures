@@ -379,16 +379,16 @@ The current app visual direction uses these locked tokens (do not deviate from t
 --color-coral:          #64748b;   /* Slate — chart comparison data only */
 --color-violet:         #7c3aed;   /* Neuro domain and chart 3rd series */
 
-/* Status — must be opaque and saturated, never pastel or cream */
+/* Status — chromatic fills, not pastel. Use -200 level, not -100. */
 --color-green:          #15803d;
---color-green-soft:     #dcfce7;   /* Clearly green, not blue-green */
---color-green-border:   #86efac;
---color-amber:          #92400e;   /* Dark amber — NOT orange, NOT cream */
---color-amber-soft:     #fef3c7;   /* Warm yellow-white — NOT fdf3de cream */
---color-amber-border:   #fcd34d;
+--color-green-soft:     #bbf7d0;   /* green-200 — clearly green, NOT pale mint #dcfce7 */
+--color-green-border:   #34d399;   /* emerald-400 — strong visible green border */
+--color-amber:          #92400e;   /* amber-800 text — dark amber-brown, NOT orange */
+--color-amber-soft:     #fde68a;   /* amber-200 — clearly golden-amber, NOT cream #fef3c7 */
+--color-amber-border:   #d97706;   /* amber-600 — strong amber border */
 --color-red:            #991b1b;
---color-red-soft:       #fee2e2;
---color-red-border:     #fca5a5;
+--color-red-soft:       #fecaca;   /* red-200 — clearly rose-red, NOT near-white #fee2e2 */
+--color-red-border:     #f87171;   /* red-400 — medium-strength red border */
 
 /* Text */
 --color-ink:            #111827;
@@ -414,10 +414,14 @@ The current app visual direction uses these locked tokens (do not deviate from t
 **BANNED colors — do not reintroduce:**
 - `#e8eef5` or any blue-tinted background — causes the "everything is blue" look
 - `#fdf3de`, `#e8c87a`, `#8a5800` — old cream/amber that reads as dirty yellow
+- `#fef3c7` — Tailwind amber-100, reads as cream not amber; use `#fde68a` (amber-200) instead
+- `#dcfce7` — Tailwind green-100, reads as pale mint; use `#bbf7d0` (green-200) instead
+- `#fee2e2` — Tailwind red-100, near-white pink; use `#fecaca` (red-200) instead
 - `#ee8a70`, any orange — no orange in clinical UI
 - `#72aedd` as secondary — creates blue-on-blue competition with primary
 - `rgba(216,225,234,*)` as borders — use `--color-border` instead
 - `rgba(247,250,252,*)` as backgrounds — use `--color-surface-raised` instead
+- Any Tailwind status -50 or -100 fill colors for large areas — too pale, always use -200+
 
 **Status color rules:**
 - Green = recorded / improvement / good / met threshold
