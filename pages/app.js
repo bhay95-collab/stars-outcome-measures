@@ -1138,7 +1138,6 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
     <section className="workspace-shell overview-workspace">
       <div className="workspace-head">
         <div>
-          <span className="section-label">Patient overview</span>
           <h2>{patientLabel(patient)}</h2>
           <p>{patient.diagnosis || 'Diagnosis not recorded'}</p>
         </div>
@@ -1151,7 +1150,6 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
       <div className="overview-grid">
         <article className="next-action-panel overview-next-action" data-tone={pathway?.statusTone}>
           <div>
-            <span className="section-label">Next best action</span>
             <h3>{followUpAction?.label ?? nextAction?.label ?? 'Open Smart Pathway'}</h3>
             <p>{followUpAction?.detail ?? nextAction?.detail ?? 'Review the pathway to choose the next useful clinical action.'}</p>
           </div>
@@ -1160,14 +1158,14 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
           </button>
         </article>
 
-        <div className="workspace-stat-grid overview-stat-grid">
-          <div><span>Assessments</span><strong>{summary.totals.assessments}</strong></div>
-          <div><span>Measures</span><strong>{summary.totals.measures}</strong></div>
-          <div><span>Domains</span><strong>{summary.totals.domains}</strong></div>
-          <div><span>Latest</span><strong>{formatAssessmentDate(latestAssessment?.created_at)}</strong></div>
+        <div className="overview-meta-strip">
+          <div><strong>{summary.totals.assessments}</strong><span>Assessments</span></div>
+          <div><strong>{summary.totals.measures}</strong><span>Measures</span></div>
+          <div><strong>{summary.totals.domains}</strong><span>Domains</span></div>
+          <div><strong>{formatAssessmentDate(latestAssessment?.created_at)}</strong><span>Latest assessment</span></div>
         </div>
 
-        <article className="overview-card">
+        <article className="overview-card overview-card--signal">
           <div className="summary-card__head">
             <div>
               <h3>Clinical signal</h3>
@@ -1185,7 +1183,7 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
           )}
         </article>
 
-        <article className="overview-card">
+        <article className="overview-card overview-card--measures">
           <div className="summary-card__head">
             <div>
               <h3>Latest measures</h3>
@@ -1206,7 +1204,7 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
           </div>
         </article>
 
-        <article className="overview-card">
+        <article className="overview-card overview-card--followup">
           <div className="summary-card__head">
             <div>
               <h3>Patient follow-up</h3>
@@ -1274,7 +1272,6 @@ function SmartPathwayWorkspace({ patient, pathway, onEditPatient, onMeasure, onR
     <section className="workspace-shell pathway-workspace">
       <div className="workspace-head">
         <div>
-          <span className="section-label">Smart pathway</span>
           <h2>{patientLabel(patient)}</h2>
           <p>{pathway?.diagnosisLabel ?? patient.diagnosis ?? 'Diagnosis not recorded'} pathway</p>
         </div>
@@ -1454,7 +1451,6 @@ function FollowUpWorkspace({
     <section className="workspace-shell followup-workspace">
       <div className="workspace-head">
         <div>
-          <span className="section-label">Patient-reported follow-up</span>
           <h2>{patientLabel(patient)}</h2>
           <p>Secure links for patients to repeat questionnaires already completed with their clinician.</p>
         </div>
@@ -1885,32 +1881,8 @@ function AppHead() {
 }
 
 const globalStyles = `
-  /* ── RESET & TOKENS ── */
+  /* ── RESET & BASE ── */
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --color-primary:      #236499;
-    --color-primary-dark: #17496F;
-    --color-primary-soft: #EAF3FB;
-    --color-secondary:    #7FB3E6;
-    --color-secondary-soft: #DCEEFF;
-    --color-ink:          #17212B;
-    --color-muted:        #526273;
-    --color-subtle:       #7B8794;
-    --color-surface:      #FBFDFF;
-    --color-surface-soft: #F4F7FB;
-    --color-surface-raised: #F6F9FC;
-    --color-surface-muted: #EEF4F8;
-    --color-panel:        #EEF4FB;
-    --color-border:       #D2DCE8;
-    --color-line-strong:  #C3D0DC;
-    --shadow-sm:          0 1px 2px rgba(18,35,54,0.05);
-    --shadow-md:          0 10px 24px rgba(18,35,54,0.09);
-    --shadow-card:        0 1px 2px rgba(18,35,54,0.05), 0 8px 20px rgba(18,35,54,0.045);
-    --radius-sm:          6px;
-    --radius-md:          8px;
-    --radius-lg:          8px;
-  }
 
   body { font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--color-ink); font-variant-numeric: tabular-nums; }
 
@@ -2775,36 +2747,63 @@ const globalStyles = `
   [data-legend-yellow] { color: #a05c00; }
   [data-legend-red]    { color: #b5451b; }
 
-  /* ── Premium Stitch-inspired app shell ── */
+  /* ── DESIGN TOKENS ── */
   :root {
-    --color-primary: #236499;
-    --color-primary-dark: #17496F;
-    --color-primary-soft: #EAF3FB;
-    --color-secondary: #7FB3E6;
-    --color-secondary-soft: #DCEEFF;
-    --color-coral: #ee8a70;
-    --color-violet: #8b82c6;
-    --color-ink: #152238;
-    --color-muted: #5b6674;
-    --color-subtle: #8a96a3;
-    --color-surface: #fbfdff;
-    --color-surface-raised: #f6f9fc;
-    --color-surface-muted: #eef4f8;
-    --color-surface-soft: #eff4f9;
-    --color-panel: #f7fafc;
-    --color-border: #d8e1ea;
-    --color-line-strong: #c3d0dc;
-    --shadow-sm: 0 1px 2px rgba(21,34,56,0.05);
-    --shadow-md: 0 10px 24px rgba(21,34,56,0.09);
-    --shadow-card: 0 1px 2px rgba(21,34,56,0.05), 0 8px 20px rgba(21,34,56,0.045);
-    --radius-lg: 10px;
+    /* Brand */
+    --color-primary:        #1d5a8a;
+    --color-primary-dark:   #14406a;
+    --color-primary-soft:   #e6f0f9;
+    --color-secondary:      #72aedd;
+    --color-secondary-soft: #daeaf7;
+    --color-coral:          #ee8a70;
+    --color-violet:         #8b82c6;
+
+    /* Status */
+    --color-green:          #2d6a4f;
+    --color-green-soft:     #e8f5ee;
+    --color-green-border:   #a8d5bc;
+    --color-amber:          #8a5800;
+    --color-amber-soft:     #fdf3de;
+    --color-amber-border:   #e8c87a;
+    --color-red:            #b5451b;
+    --color-red-soft:       #fdf0ec;
+    --color-red-border:     #f0b8a2;
+
+    /* Text */
+    --color-ink:            #111827;
+    --color-muted:          #4b5563;
+    --color-subtle:         #8b95a1;
+
+    /* Surfaces — clear hierarchy */
+    --color-bg:             #e8eef5;
+    --color-surface:        #ffffff;
+    --color-surface-raised: #f5f8fc;
+    --color-surface-soft:   #f3f7fc;
+    --color-surface-muted:  #edf2f7;
+    --color-panel:          #f7fafc;
+    --color-border:         #d1dce8;
+    --color-border-strong:  #b8cad8;
+    --color-line-strong:    #c3d0dc;
+    --color-line:           #e4eaf1;
+
+    /* Shadows */
+    --shadow-sm:    0 1px 3px rgba(17,24,39,0.06), 0 1px 2px rgba(17,24,39,0.04);
+    --shadow-card:  0 1px 3px rgba(17,24,39,0.06), 0 4px 12px rgba(17,24,39,0.06);
+    --shadow-md:    0 4px 16px rgba(17,24,39,0.10), 0 1px 4px rgba(17,24,39,0.06);
+
+    /* Radius */
+    --radius-xs:    4px;
+    --radius-sm:    6px;
+    --radius-md:    10px;
+    --radius-lg:    14px;
+    --radius-full:  999px;
   }
 
   .app-shell {
     min-height: 100vh;
     display: grid;
     grid-template-columns: 286px minmax(0, 1fr);
-    background: var(--color-surface-soft);
+    background: var(--color-bg);
   }
 
   .app-sidebar {
@@ -4148,8 +4147,8 @@ const globalStyles = `
     box-shadow: none;
   }
 
-  .domain-card[data-tone="green"] { background: #f4fbf7; border-color: #c8e6d4; }
-  .domain-card[data-tone="amber"] { background: #fef9ef; border-color: #f0d9a8; }
+  .domain-card[data-tone="green"] { background: var(--color-green-soft); border-color: var(--color-green-border); }
+  .domain-card[data-tone="amber"] { background: var(--color-amber-soft); border-color: var(--color-amber-border); }
   .domain-card[data-tone="red"] { background: #fef7f5; border-color: #edcabb; }
 
   .domain-card__top {
@@ -4356,16 +4355,16 @@ const globalStyles = `
   }
 
   .result-box[data-tone="green"] {
-    border-color: #bddbc9;
-    background: #f4fbf7;
+    border-color: var(--color-green-border);
+    background: var(--color-green-soft);
   }
   .result-box[data-tone="amber"] {
-    border-color: #efca9a;
-    background: #fff9ef;
+    border-color: var(--color-amber-border);
+    background: var(--color-amber-soft);
   }
   .result-box[data-tone="red"] {
-    border-color: #edc0b0;
-    background: #fff7f4;
+    border-color: var(--color-red-border);
+    background: var(--color-red-soft);
   }
 
   .empty-chart {
@@ -4619,23 +4618,35 @@ const globalStyles = `
   .summary-card__head button,
   .pathway-action-grid button {
     min-height: 38px;
-    padding: 0 15px;
+    padding: 0 16px;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--color-primary);
+    box-shadow: 0 1px 3px rgba(17,24,39,0.12);
     color: #fff;
     cursor: pointer;
     font-family: 'Geist', sans-serif;
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 700;
   }
 
   .workspace-head button.secondary-action,
-  .directory-quick-actions button + button,
-  .summary-card__head button {
-    border: 1px solid var(--color-border);
+  .directory-quick-actions button + button {
+    border: 1px solid var(--color-border-strong);
     background: #fff;
+    box-shadow: none;
+    color: var(--color-ink);
+  }
+
+  .summary-card__head button {
+    min-height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    box-shadow: none;
     color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 600;
   }
 
   .workspace-stat-grid {
@@ -4647,9 +4658,10 @@ const globalStyles = `
   .workspace-stat-grid div {
     min-height: 80px;
     padding: 16px 18px;
-    border: 1px solid rgba(216,225,234,0.55);
-    border-radius: 10px;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
     background: var(--color-surface);
+    box-shadow: var(--shadow-card);
   }
 
   .workspace-stat-grid span {
@@ -4665,11 +4677,10 @@ const globalStyles = `
     display: block;
     margin-top: 6px;
     color: var(--color-ink);
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     line-height: 1.16;
-    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.2px;
   }
 
   .next-action-panel {
@@ -4677,29 +4688,30 @@ const globalStyles = `
     align-items: center;
     justify-content: space-between;
     gap: 18px;
-    padding: 20px;
-    border: 1px solid rgba(127,179,230,0.4);
-    border-radius: 10px;
+    padding: 20px 22px;
+    border: 1.5px solid rgba(29,90,138,0.2);
+    border-radius: var(--radius-md);
     background: var(--color-primary-soft);
+    box-shadow: var(--shadow-sm);
   }
 
   .next-action-panel[data-tone="good"] {
-    background: #f0faf5;
-    border-color: #c8e6d4;
+    background: var(--color-green-soft);
+    border-color: var(--color-green-border);
   }
 
   .next-action-panel[data-tone="attention"],
   .next-action-panel[data-tone="due"] {
-    background: #fef9ef;
-    border-color: #f0d9a8;
+    background: var(--color-amber-soft);
+    border-color: var(--color-amber-border);
   }
 
   .next-action-panel h3 {
     margin: 0;
     color: var(--color-ink);
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: -0.1px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
   }
 
   .next-action-panel p {
@@ -4724,40 +4736,79 @@ const globalStyles = `
   .overview-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+    grid-template-areas:
+      "next-action next-action"
+      "stats       stats"
+      "signal      measures"
+      "followup    measures";
     gap: 16px;
     align-items: start;
   }
 
-  .overview-next-action,
-  .overview-stat-grid {
-    grid-column: 1 / -1;
+  .overview-next-action { grid-area: next-action; }
+  .overview-meta-strip  { grid-area: stats; }
+  .overview-card--signal  { grid-area: signal; }
+  .overview-card--measures { grid-area: measures; }
+  .overview-card--followup { grid-area: followup; }
+
+  .overview-meta-strip {
+    display: flex;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .overview-meta-strip > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 20px;
+    border-right: 1px solid var(--color-line);
+  }
+
+  .overview-meta-strip > div:last-child {
+    border-right: none;
+  }
+
+  .overview-meta-strip strong {
+    display: block;
+    color: var(--color-ink);
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.3px;
+  }
+
+  .overview-meta-strip span {
+    display: block;
+    color: var(--color-subtle);
+    font-size: 11px;
+    font-weight: 500;
   }
 
   .overview-card {
-    min-height: 260px;
     padding: 20px;
     border: 1px solid var(--color-border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     background: var(--color-surface);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-card);
   }
 
   .overview-signal {
     margin-top: 16px;
     padding: 14px;
-    border: 1px solid rgba(216,225,234,0.7);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--color-surface-raised);
   }
 
   .overview-signal[data-tone="red"] {
-    background: #fef7f5;
-    border-color: #edcabb;
+    background: var(--color-red-soft);
   }
 
   .overview-signal[data-tone="amber"] {
-    background: #fef9ef;
-    border-color: #f0d9a8;
+    background: var(--color-amber-soft);
   }
 
   .overview-signal strong,
@@ -4832,14 +4883,14 @@ const globalStyles = `
   }
 
   .pathway-hero[data-tone="good"] {
-    background: #f0faf5;
-    border-color: #c8e6d4;
+    background: var(--color-green-soft);
+    border-color: var(--color-green-border);
   }
 
   .pathway-hero[data-tone="attention"],
   .pathway-hero[data-tone="due"] {
-    background: #fef9ef;
-    border-color: #f0d9a8;
+    background: var(--color-amber-soft);
+    border-color: var(--color-amber-border);
   }
 
   .pathway-hero h3 {
@@ -4909,13 +4960,13 @@ const globalStyles = `
 
   .pathway-action-grid article[data-tone="attention"],
   .pathway-action-grid article[data-tone="due"] {
-    background: #fef9ef;
-    border-color: #f0d9a8;
+    background: var(--color-amber-soft);
+    border-color: var(--color-amber-border);
   }
 
   .pathway-action-grid article[data-tone="good"] {
-    background: #f4fbf7;
-    border-color: #c8e6d4;
+    background: var(--color-green-soft);
+    border-color: var(--color-green-border);
   }
 
   .pathway-action-grid span {
@@ -4962,13 +5013,13 @@ const globalStyles = `
 
   .pathway-measure-column button[data-state="missing"],
   .pathway-measure-column button[data-state="due"] {
-    background: #fef9ef;
-    border-color: #f0d9a8;
+    background: var(--color-amber-soft);
+    border-color: var(--color-amber-border);
   }
 
   .pathway-measure-column button[data-state="recorded"] {
-    background: #f4fbf7;
-    border-color: #c8e6d4;
+    background: var(--color-green-soft);
+    border-color: var(--color-green-border);
   }
 
   .pathway-measure-column span {
@@ -5434,19 +5485,16 @@ const globalStyles = `
     gap: 8px;
     margin-top: 16px;
     padding: 14px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--color-surface-raised);
   }
 
   .followup-overview-status[data-attention="amber"] {
-    background: #fff8ec;
-    border-color: #f2d8a8;
+    background: var(--color-amber-soft);
   }
 
   .followup-overview-status[data-attention="red"] {
-    background: #fff3ef;
-    border-color: #f0c4b8;
+    background: var(--color-red-soft);
   }
 
   .followup-overview-status span,
