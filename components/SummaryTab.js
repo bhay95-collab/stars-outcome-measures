@@ -10,6 +10,7 @@ import {
   formatResultValue,
   toFiniteNumber,
 } from '../lib/clinical/patientSummary'
+import { isPatientReportedAssessment } from '../lib/followups'
 
 function toneClass(tone) {
   return ['green', 'amber', 'red'].includes(tone) ? tone : 'grey'
@@ -517,6 +518,9 @@ function AssessmentCard({ entry, onDelete }) {
       <div className="result-row">
         <span className="result-label">{measure.name}</span>
         <div data-assessment-meta="">
+          {isPatientReportedAssessment(latest) && (
+            <span className="provenance-chip">Patient-reported</span>
+          )}
           <span className="na-text">{fmtDate(latest.created_at)}</span>
           <button
             type="button"
@@ -545,7 +549,10 @@ function AssessmentCard({ entry, onDelete }) {
       <div className="assessment-detail-grid">
         <span>Domain trend: <strong>{trendLabel(entry)}</strong></span>
         {previous && (
-          <span>Previous: <strong>{formatResultValue(previous.results?.primaryValue, measure)}</strong> on {fmtDate(previous.created_at)}</span>
+          <span>
+            Previous: <strong>{formatResultValue(previous.results?.primaryValue, measure)}</strong> on {fmtDate(previous.created_at)}
+            {isPatientReportedAssessment(previous) ? ' (patient-reported)' : ''}
+          </span>
         )}
         {mcid && (
           <span>Minimally Clinically Important Difference: <strong>{mcid.label}</strong></span>

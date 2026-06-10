@@ -149,6 +149,7 @@ export default function App() {
   const [assessments, setAssessments] = useState([])
   const [followups, setFollowups] = useState([])
   const [followupsLoading, setFollowupsLoading] = useState(false)
+  const [followUpAttentionBoard, setFollowUpAttentionBoard] = useState([])
   const [latestFollowUpUrl, setLatestFollowUpUrl] = useState('')
   const [showNewPatient, setShowNewPatient] = useState(false)
   const [editingPatient, setEditingPatient] = useState(null)
@@ -360,6 +361,18 @@ export default function App() {
     router.replace('/app', undefined, { shallow: true })
   }, [router.isReady, router.query.payment])
 
+  const loadFollowUpAttentionBoard = useCallback(async () => {
+    if (typeof fetch !== 'function') return
+    try {
+      const response = await fetch('/api/followups')
+      if (!response.ok) throw new Error('Could not load follow-up attention')
+      const data = await response.json()
+      setFollowUpAttentionBoard(data.attention ?? [])
+    } catch {
+      setFollowUpAttentionBoard([])
+    }
+  }, [])
+
   const loadPatientFollowUps = useCallback(async (patientId) => {
     if (!patientId || typeof fetch !== 'function') {
       setFollowups([])
@@ -372,6 +385,7 @@ export default function App() {
       const data = await response.json()
       const nextFollowups = data.followups ?? []
       setFollowups(nextFollowups)
+      loadFollowUpAttentionBoard()
       return nextFollowups
     } catch {
       setFollowups([])
@@ -379,7 +393,12 @@ export default function App() {
     } finally {
       setFollowupsLoading(false)
     }
-  }, [])
+  }, [loadFollowUpAttentionBoard])
+
+  useEffect(() => {
+    if (bootState !== 'ready' || !hasAccess) return
+    loadFollowUpAttentionBoard()
+  }, [bootState, hasAccess, loadFollowUpAttentionBoard])
 
   const handlePatientSelect = useCallback(async (patient) => {
     if (!patient) return
@@ -564,6 +583,7 @@ export default function App() {
     if (!response.ok) throw new Error(data.error || 'Could not create follow-up link.')
     setFollowups(prev => [data.followup, ...prev.filter(item => item.id !== data.followup.id)])
     setLatestFollowUpUrl(data.publicUrl || '')
+    loadFollowUpAttentionBoard()
     return data
   }
 
@@ -585,6 +605,7 @@ export default function App() {
     const data = await response.json()
     if (!response.ok) throw new Error(data.error || 'Could not cancel follow-up.')
     setFollowups(prev => prev.map(item => item.id === data.followup.id ? data.followup : item))
+    loadFollowUpAttentionBoard()
     return data.followup
   }
 
@@ -711,11 +732,16 @@ export default function App() {
                 patients={patients}
                 selectedPatient={selectedPatient}
                 selectedAssessments={assessments}
+                attentionBoard={followUpAttentionBoard}
                 onSelect={(patient) => goToSection(DEFAULT_PATIENT_SECTION, { patient })}
                 onNew={() => setShowNewPatient(true)}
                 onMeasure={(measureId) => goToSection('measures', { measureId })}
                 onDashboard={() => goToSection('overview')}
                 onEditPatient={() => selectedPatient ? setEditingPatient(selectedPatient) : null}
+                onOpenFollowUp={(patientId) => {
+                  const patient = patients.find(item => item.id === patientId)
+                  if (patient) goToSection('followup', { patient })
+                }}
               />
             ) : activeSection === 'wheelchair' ? (
               <WheelchairPrescriptionTool
@@ -999,15 +1025,54 @@ function AppShellSkeleton() {
   )
 }
 
+function FollowUpAttentionBoard({ entries, onOpenFollowUp }) {
+  if (!entries?.length) return null
+
+  return (
+    <section className="summary-card followup-attention-board" aria-label="Patient-reported follow-up attention">
+      <div className="summary-card__head">
+        <div>
+          <h3>Follow-Up Attention</h3>
+          <p>Patient-reported signals and overdue links across your caseload.</p>
+        </div>
+        <span data-attention={entries.some(entry => entry.attentionLevel === FOLLOWUP_ATTENTION.RED) ? FOLLOWUP_ATTENTION.RED : FOLLOWUP_ATTENTION.AMBER}>
+          {entries.length} patient{entries.length === 1 ? '' : 's'}
+        </span>
+      </div>
+      <div className="followup-attention-board__list">
+        {entries.map(entry => (
+          <article key={entry.patientId} data-attention={entry.attentionLevel}>
+            <div>
+              <strong>{entry.patientLabel}</strong>
+              <span>{entry.attentionLevel === FOLLOWUP_ATTENTION.GREEN ? 'Links overdue' : entry.attentionLabel}</span>
+            </div>
+            <div>
+              {entry.latestLine && <p>{entry.latestLine}</p>}
+              {entry.latestComparisonLine && <p>{entry.latestComparisonLine}</p>}
+              <small>
+                {entry.latestCompletedAt ? `Last response ${formatFollowUpDate(entry.latestCompletedAt)}` : 'No response yet'}
+                {entry.overdueCount ? ` · ${entry.overdueCount} overdue link${entry.overdueCount === 1 ? '' : 's'}` : ''}
+              </small>
+            </div>
+            <button type="button" onClick={() => onOpenFollowUp(entry.patientId)}>Open follow-up</button>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function PatientDirectoryWorkspace({
   patients,
   selectedPatient,
   selectedAssessments,
+  attentionBoard,
   onSelect,
   onNew,
   onMeasure,
   onDashboard,
   onEditPatient,
+  onOpenFollowUp,
 }) {
   const summary = selectedPatient ? buildPatientSummary(selectedPatient, selectedAssessments) : null
   const pathway = selectedPatient ? buildPatientPathway(selectedPatient, selectedAssessments) : null
@@ -1027,7 +1092,9 @@ function PatientDirectoryWorkspace({
   }
 
   return (
-    <div className="patients-workspace patient-directory-workspace">
+    <div className="directory-stack">
+      <FollowUpAttentionBoard entries={attentionBoard} onOpenFollowUp={onOpenFollowUp} />
+      <div className="patients-workspace patient-directory-workspace">
       <div className="patient-directory-card">
         <PatientList
           patients={patients}
@@ -1093,6 +1160,7 @@ function PatientDirectoryWorkspace({
           </div>
         )}
       </section>
+      </div>
     </div>
   )
 }
@@ -1483,6 +1551,9 @@ function FollowUpWorkspace({
             <span className="section-label">Patient-reported signal</span>
             <h3>{followUpAttentionLabel(latestAttention)}</h3>
             <p>{latestFollowUpLine(latestRecord)}</p>
+            {latestRecord.assessment?.comparison?.summaryLine && (
+              <p data-direction={latestRecord.assessment.comparison.direction}>{latestRecord.assessment.comparison.summaryLine}</p>
+            )}
             {latestRecord.assessment?.interpretation && <p>{latestRecord.assessment.interpretation}</p>}
             {latestRecord.response?.concern_text && <p>{latestRecord.response.concern_text}</p>}
           </div>
@@ -1606,6 +1677,9 @@ function FollowUpTimeline({ records, loading, onCancel, onResend, sendingId, onR
             {record.measure_id && <p>{followUpMeasureLabel(record)}</p>}
             <p>{followUpEmailStatusLabel(record)}{record.recipient_email ? ` · ${record.recipient_email}` : ''}</p>
             {record.email_error && <p>{record.email_error}</p>}
+            {record.assessment?.comparison?.summaryLine && (
+              <p data-direction={record.assessment.comparison.direction}>{record.assessment.comparison.summaryLine}</p>
+            )}
             {record.assessment?.interpretation && <p>{record.assessment.interpretation}</p>}
             {record.response?.concern_text && <p>{record.response.concern_text}</p>}
             <small>
@@ -1733,8 +1807,11 @@ function FollowUpReportSection({ followups }) {
           <div><span>Questionnaire</span><strong>{latestAssessment.measure}</strong></div>
           <div><span>Score</span><strong>{latestAssessment.resultLabel}</strong></div>
           <div><span>Signal</span><strong>{followUpAttentionLabel(latestAssessment.attention_level)}</strong></div>
-          <div><span>Status</span><strong>{followUpStatusLabel(latestRecord.displayStatus)}</strong></div>
-          <div><span>Source</span><strong>Patient</strong></div>
+          <div>
+            <span>Change vs baseline</span>
+            <strong>{latestAssessment.comparison ? latestAssessment.comparison.deltaLabel : 'No baseline'}</strong>
+          </div>
+          <div><span>Source</span><strong>Patient-reported</strong></div>
         </div>
       ) : latestResponse ? (
         <div className="followup-report-grid">
@@ -1747,6 +1824,11 @@ function FollowUpReportSection({ followups }) {
         </div>
       ) : (
         <p className="empty-hint">No patient-reported follow-up responses have been submitted yet.</p>
+      )}
+      {latestAssessment?.comparison?.summaryLine && (
+        <p className="followup-report-concern" data-direction={latestAssessment.comparison.direction}>
+          {latestAssessment.comparison.summaryLine}
+        </p>
       )}
       {latestAssessment?.interpretation && <p className="followup-report-concern">{latestAssessment.interpretation}</p>}
       {latestResponse?.concern_text && <p className="followup-report-concern">{latestResponse.concern_text}</p>}
@@ -5168,6 +5250,125 @@ const globalStyles = `
     gap: 18px;
     padding: 18px;
     box-shadow: inset 0 0 0 1px rgba(9,75,138,0.06);
+  }
+
+  .directory-stack {
+    display: grid;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .followup-attention-board .summary-card__head > span[data-attention] {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border: 1px solid var(--color-amber-border);
+    border-radius: 999px;
+    background: var(--color-amber-soft);
+    color: var(--color-amber);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .followup-attention-board .summary-card__head > span[data-attention="red"] {
+    border-color: var(--color-red-border);
+    background: var(--color-red-soft);
+    color: var(--color-red);
+  }
+
+  .followup-attention-board__list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .followup-attention-board__list article {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface-raised);
+  }
+
+  .followup-attention-board__list article[data-attention="amber"] {
+    border-color: var(--color-amber-border);
+    background: var(--color-amber-soft);
+  }
+
+  .followup-attention-board__list article[data-attention="red"] {
+    border-color: var(--color-red-border);
+    background: var(--color-red-soft);
+  }
+
+  .followup-attention-board__list article strong {
+    display: block;
+    color: var(--color-ink);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .followup-attention-board__list article > div:first-child span {
+    display: block;
+    margin-top: 2px;
+    color: var(--color-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .followup-attention-board__list article p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .followup-attention-board__list article small {
+    color: var(--color-subtle);
+    font-size: 12px;
+  }
+
+  .followup-attention-board__list article button {
+    min-height: 34px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--color-primary);
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Geist', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .provenance-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border: 1px solid #c3cce0;
+    border-radius: 999px;
+    background: #f2f4f9;
+    color: var(--color-violet);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .followup-timeline article p[data-direction="declined"],
+  .followup-attention-panel p[data-direction="declined"],
+  .followup-report-concern[data-direction="declined"] {
+    color: var(--color-red);
+    font-weight: 600;
+  }
+
+  @media (max-width: 760px) {
+    .followup-attention-board__list article {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
   .followup-attention-panel[data-attention="amber"] {

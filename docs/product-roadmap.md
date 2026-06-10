@@ -11,9 +11,14 @@ RehabMetrics IQ is moving beyond outcome-measure capture into derived clinical w
 
 Decision for v1: this is a derived MVP. No Supabase schema, RLS, auth, Stripe, or assessment-result changes are required.
 
-## Future Phase: Patient-Reported Follow-Up
+## Delivered: Patient-Reported Follow-Up
 
-Add lightweight patient-facing check-ins for symptoms, falls, confidence, fatigue, home-program adherence, and patient-reported outcome measures. Responses should flow into the patient timeline and highlight deterioration or missed follow-up.
+Patients complete validated questionnaires (ABC, FSS, HADS, PDQ-8, RPQ, BIVI-IQ) through secure tokenised links sent by email (Resend) or shared manually. Responses are scored with the same clinical engine, saved as patient-reported assessments in the timeline (badged as patient-reported in history, reports, and the PDF export), compared against the clinic-recorded source assessment with MCID context, and surfaced through per-patient attention signals plus a caseload-wide Follow-Up Attention board on the patient directory (red/amber responses and overdue links).
+
+Deferred from this phase:
+- Automated reminder emails before due/expiry (needs scheduled infrastructure, e.g. a Vercel cron route) and clinician email alerts on red signals.
+- Follow-up visibility in the mobile app (web only for now; the patient-facing link already works in mobile browsers).
+- The original generic weekly check-in (falls/confidence/fatigue) was retired in favour of validated questionnaires; historical responses still display.
 
 ## Future Phase: Outcomes Intelligence
 
