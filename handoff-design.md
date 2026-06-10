@@ -8,7 +8,7 @@ This document describes the colour redesign applied to the **web app** (`pages/a
 > document (see `mobile/src/theme/tokens.ts`). Implementation notes from that pass:
 > `primarySoft` is `#E9F3FF` on mobile (see §3), the wordmark "IQ" accent is fixed
 > `#6FBDFF` in `LogoWordmark.tsx` (matching web — it must not follow the teal
-> `secondary` token), and `Screen.tsx` now uses the `bg` bone token as the default
+> `secondary` token), and `Screen.tsx` now uses the `bg` token as the default
 > screen background.
 
 ---
@@ -87,11 +87,11 @@ These are now defined in `pages/app.js` `:root` (web). Map them onto
 
 | Token | Value | Use |
 |---|---|---|
-| bg | `#F1F1E6` | Page/screen background |
+| bg | `#F8F8F2` | Page/screen background (lightened from #F1F1E6 after review — near-white warm neutral) |
 | surface | `#FFFFFF` | Cards |
-| surfaceRaised | `#FAFAF3` | Nested panels |
-| surfaceSoft | `#F5F5EB` | Soft wells, hover rows |
-| surfaceMuted | `#EAEADD` | Progress track backgrounds, disabled fills |
+| surfaceRaised | `#FBFBF7` | Nested panels |
+| surfaceSoft | `#F6F6F0` | Soft wells, hover rows |
+| surfaceMuted | `#EFEFE6` | Progress track backgrounds, disabled fills |
 | border | `#D9DACB` | Default border |
 | borderStrong | `#A4A896` | Emphasised border |
 | line | `#E8E9DC` | Hairlines |
@@ -125,8 +125,8 @@ export const colors = {
   muted:         '#334B49',
   subtle:        '#69787A',
   surface:       '#FFFFFF',
-  surfaceSoft:   '#F5F5EB',  // was blue-tinted #F6F9FC
-  panel:         '#FAFAF3',  // was blue-tinted #F8FBFE
+  surfaceSoft:   '#F6F6F0',  // was blue-tinted #F6F9FC
+  panel:         '#FBFBF7',  // was blue-tinted #F8FBFE
   border:        '#D9DACB',  // was blue #D9E6F2
   successSoft:   '#E3EFE5',
   successBorder: '#9DC4A9',
@@ -138,11 +138,11 @@ export const colors = {
 ```
 
 Notes:
-- If a screen background token exists (or screens hardcode a background), use bone
-  `#F1F1E6` for screen backgrounds, white for cards.
+- If a screen background token exists (or screens hardcode a background), use
+  `#F8F8F2` for screen backgrounds, white for cards.
 - `shadows.sm/md.shadowColor`: `#17496F` → `#1C2B36`.
 - Consider adding `sky: '#3CACFF'`, `sage: '#7CB6B1'`, `amberStrong: '#C9A13B'`,
-  `redDark: '#7E2C24'`, `primaryBorder: '#BCD7F0'`, `surfaceMuted: '#EAEADD'` if any
+  `redDark: '#7E2C24'`, `primaryBorder: '#BCD7F0'`, `surfaceMuted: '#EFEFE6'` if any
   screen needs them (web added these as new tokens).
 
 ---

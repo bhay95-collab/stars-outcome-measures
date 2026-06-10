@@ -19,11 +19,11 @@ export const colors = {
   ink:           '#1C2B36',
   muted:         '#334B49',  // Slate with green undertone
   subtle:        '#69787A',
-  bg:            '#F1F1E6',  // Screen background — warm bone
+  bg:            '#F8F8F2',  // Screen background — near-white warm neutral
   surface:       '#FFFFFF',
-  surfaceSoft:   '#F5F5EB',  // Soft wells, hover rows
-  surfaceMuted:  '#EAEADD',  // Progress tracks, disabled fills
-  panel:         '#FAFAF3',
+  surfaceSoft:   '#F6F6F0',  // Soft wells, hover rows
+  surfaceMuted:  '#EFEFE6',  // Progress tracks, disabled fills
+  panel:         '#FBFBF7',
   border:        '#D9DACB',  // Warm neutral border
   // Tonal status fills — mirrors web token system
   successSoft:   '#E3EFE5',

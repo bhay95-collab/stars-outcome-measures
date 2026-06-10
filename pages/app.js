@@ -2861,13 +2861,13 @@ const globalStyles = `
     --color-muted:          #334b49;
     --color-subtle:         #69787a;
 
-    /* Surfaces — warm bone neutrals, no blue wash */
-    --color-bg:             #f1f1e6;
+    /* Surfaces — near-white with a warm cast: clinical, not beige */
+    --color-bg:             #f8f8f2;
     --color-surface:        #ffffff;
-    --color-surface-raised: #fafaf3;
-    --color-surface-soft:   #f5f5eb;
-    --color-surface-muted:  #eaeadd;
-    --color-panel:          #fafaf3;
+    --color-surface-raised: #fbfbf7;
+    --color-surface-soft:   #f6f6f0;
+    --color-surface-muted:  #efefe6;
+    --color-panel:          #fbfbf7;
     --color-border:         #d9dacb;
     --color-border-strong:  #a4a896;
     --color-line-strong:    #dedfd1;
@@ -3206,12 +3206,9 @@ const globalStyles = `
     z-index: 1;
   }
 
-  /* Anchored page header — sticks the title to the top of the content
-     column so it reads as the header OF the workspace, not a stray label. */
+  /* Page header — shares the content column's left edge and carries a
+     divider spanning it, so the title reads as the workspace's header. */
   .page-toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 6;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3219,7 +3216,6 @@ const globalStyles = `
     width: min(100%, var(--content-max));
     margin: 0 0 24px;
     padding: 26px 0 18px;
-    background: var(--color-bg);
     border-bottom: 1px solid var(--color-border);
   }
 
@@ -3243,7 +3239,7 @@ const globalStyles = `
     position: relative;
     overflow: hidden;
     border-radius: 8px;
-    background: linear-gradient(90deg, #eaeadf 0%, #f5f5ec 46%, #eaeadf 100%);
+    background: linear-gradient(90deg, #edede4 0%, #f7f7f1 46%, #edede4 100%);
     background-size: 220% 100%;
   }
 
@@ -5704,7 +5700,7 @@ const globalStyles = `
     display: block;
     height: 66px;
     border-radius: 10px;
-    background: linear-gradient(90deg, #eaeadf 0%, #f5f5ec 46%, #eaeadf 100%);
+    background: linear-gradient(90deg, #edede4 0%, #f7f7f1 46%, #edede4 100%);
     background-size: 220% 100%;
   }
 
