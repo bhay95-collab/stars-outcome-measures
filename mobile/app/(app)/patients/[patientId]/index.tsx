@@ -721,12 +721,12 @@ const styles = StyleSheet.create({
   changePillTextMCID: {
     fontSize: typography.sizeXs,
     fontWeight: typography.weightSemibold,
-    color: '#1a7340',
+    color: colors.success,
   },
   changePillTextImproved: {
     fontSize: typography.sizeXs,
     fontWeight: typography.weightSemibold,
-    color: '#1a7340',
+    color: colors.success,
   },
   changePillTextDeclined: {
     fontSize: typography.sizeXs,

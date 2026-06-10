@@ -49,7 +49,7 @@ const FAST_ALT_BIL_IDX = 2; // bilateral[2] = fast alternating hand movements (i
 
 const SARA_COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red:   colors.coral,
 };
 

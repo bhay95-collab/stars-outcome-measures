@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(10, 27, 51, 0.45)',
+    backgroundColor: 'rgba(28, 43, 54, 0.45)',
   },
   keyboardView: {
     justifyContent: 'flex-end',

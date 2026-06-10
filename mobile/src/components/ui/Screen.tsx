@@ -45,7 +45,7 @@ export function Screen({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.surfaceSoft,
+    backgroundColor: colors.bg,
   },
   scroll: {
     flex: 1,

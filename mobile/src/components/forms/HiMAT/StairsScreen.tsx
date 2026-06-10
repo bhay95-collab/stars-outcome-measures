@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   modeTileActiveGreen: {
     borderColor: colors.success,
-    backgroundColor: '#EBF6EB',
+    backgroundColor: colors.successSoft,
   },
   modeTileTitle: {
     fontSize: typography.sizeMd,

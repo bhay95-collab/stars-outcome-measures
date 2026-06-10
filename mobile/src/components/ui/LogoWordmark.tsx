@@ -53,6 +53,6 @@ const styles = StyleSheet.create({
   iq: {
     fontFamily: fonts.serif,
     fontWeight: typography.weightSemibold,
-    color: colors.secondary,
+    color: '#6FBDFF',
   },
 });

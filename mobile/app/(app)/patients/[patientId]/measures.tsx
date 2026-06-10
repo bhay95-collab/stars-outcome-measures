@@ -335,12 +335,12 @@ const styles = StyleSheet.create({
   pathwayBadgeText_due: {
     fontSize: typography.sizeXs,
     fontWeight: typography.weightSemibold,
-    color: '#a05c00',
+    color: colors.amber,
   },
   pathwayBadgeText_recorded: {
     fontSize: typography.sizeXs,
     fontWeight: typography.weightSemibold,
-    color: '#1a7340',
+    color: colors.success,
   },
   chevron: {
     fontSize: typography.sizeLg,

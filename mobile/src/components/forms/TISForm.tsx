@@ -43,7 +43,7 @@ const COORD_MAX   = 6;
 
 const TIS_COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red:   colors.coral,
 };
 

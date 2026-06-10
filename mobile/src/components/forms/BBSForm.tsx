@@ -29,7 +29,7 @@ const BBS_SCORE_OPTIONS = [0, 1, 2, 3, 4] as const;
 
 const BBS_COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red:   colors.coral,
 };
 

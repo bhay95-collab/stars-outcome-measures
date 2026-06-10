@@ -4,6 +4,13 @@ This document describes the colour redesign applied to the **web app** (`pages/a
 `components/`, `lib/clinical/`) so the same system can be applied to the **mobile app**
 (`/mobile`). Follow it exactly — do not invent new colours.
 
+> **Status: applied to both platforms.** The mobile app was migrated against this
+> document (see `mobile/src/theme/tokens.ts`). Implementation notes from that pass:
+> `primarySoft` is `#E9F3FF` on mobile (see §3), the wordmark "IQ" accent is fixed
+> `#6FBDFF` in `LogoWordmark.tsx` (matching web — it must not follow the teal
+> `secondary` token), and `Screen.tsx` now uses the `bg` bone token as the default
+> screen background.
+
 ---
 
 ## 1. Design intent
@@ -106,7 +113,7 @@ Replace the `colors` object values as follows (keep the keys):
 export const colors = {
   primary:       '#094B8A',
   primaryDark:   '#063764',
-  primarySoft:   '#F4F9FF',
+  primarySoft:   '#E9F3FF',  // stronger than web's #F4F9FF — mobile selected rows often have no border
   actionBlue:    '#094B8A',
   secondary:     '#1A857F',  // was light blue #7FB3E6 — now teal accent
   secondarySoft: '#EAF4F1',

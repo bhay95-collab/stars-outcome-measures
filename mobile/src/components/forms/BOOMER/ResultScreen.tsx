@@ -15,7 +15,7 @@ type SaveState = 'idle' | 'saving' | 'timed-out' | 'saved' | 'error';
 
 const COLOR_MAP = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red: colors.coral,
 } as const;
 

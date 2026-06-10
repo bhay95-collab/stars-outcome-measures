@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
   failRowActive: {
     borderColor: colors.coral,
-    backgroundColor: '#FFF5F3',
+    backgroundColor: colors.dangerSoft,
   },
   failRowPressed: {
     opacity: 0.75,
@@ -282,12 +282,12 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   failLabelActive: {
-    color: '#b5451b',
+    color: colors.coral,
     fontWeight: typography.weightSemibold,
   },
   failNote: {
     fontSize: typography.sizeSm,
-    color: '#b5451b',
+    color: colors.coral,
     fontStyle: 'italic',
   },
   nextBtn: {

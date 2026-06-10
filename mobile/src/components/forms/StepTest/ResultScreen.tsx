@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   legCardLower: {
     borderColor: colors.coral,
-    backgroundColor: '#FFF5F3',
+    backgroundColor: colors.dangerSoft,
   },
   legCardLabel: {
     fontSize: typography.sizeXs,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     color: colors.coral,
   },
   asymmetryCard: {
-    backgroundColor: '#FFF5F3',
+    backgroundColor: colors.dangerSoft,
     borderColor: colors.coral,
   },
   asymmetryText: {

@@ -1,30 +1,37 @@
 import { Platform } from 'react-native';
 
 export const colors = {
-  primary:       '#236499',  // Brand Navy
-  primaryDark:   '#17496F',
-  primarySoft:   '#EAF3FB',
-  actionBlue:    '#236499',  // Primary interaction colour
-  secondary:     '#7FB3E6',
-  secondarySoft: '#DCEEFF',
-  success:       '#107C10',  // Clinical success
-  coral:         '#ee8a70',  // Error / warning
-  amber:         '#a05c00',  // Clinical caution
-  violet:        '#8b82c6',
-  ink:           '#0A1B33',
-  muted:         '#5E718D',  // Muted Navy
-  subtle:        '#8a96a3',
+  primary:       '#094B8A',  // Brand deep blue
+  primaryDark:   '#063764',
+  primarySoft:   '#E9F3FF',  // Selected/info blue fill
+  primaryBorder: '#BCD7F0',  // Border on blue-soft fills
+  actionBlue:    '#094B8A',  // Primary interaction colour
+  sky:           '#3CACFF',  // Decorative accent only — never text
+  secondary:     '#1A857F',  // Teal accent
+  secondarySoft: '#EAF4F1',  // Pale sage fill
+  sage:          '#7CB6B1',  // Supporting accent / soft borders
+  success:       '#2A6B4F',  // Clinical success — muted forest
+  coral:         '#A13B30',  // Error / concern — brick red, not orange
+  redDark:       '#7E2C24',  // Pressed/hover on destructive actions
+  amber:         '#7A5D1E',  // Clinical caution — golden olive
+  amberStrong:   '#C9A13B',  // Chromatic amber for small dots/icons
+  violet:        '#7E90BC',  // Periwinkle — neuro domain
+  ink:           '#1C2B36',
+  muted:         '#334B49',  // Slate with green undertone
+  subtle:        '#69787A',
+  bg:            '#F1F1E6',  // Screen background — warm bone
   surface:       '#FFFFFF',
-  surfaceSoft:   '#F6F9FC',  // Clinical Surface
-  panel:         '#F8FBFE',
-  border:        '#D9E6F2',  // Border Blue
+  surfaceSoft:   '#F5F5EB',  // Soft wells, hover rows
+  surfaceMuted:  '#EAEADD',  // Progress tracks, disabled fills
+  panel:         '#FAFAF3',
+  border:        '#D9DACB',  // Warm neutral border
   // Tonal status fills — mirrors web token system
-  successSoft:   '#f2faf5',
-  successBorder: '#c5e6d2',
-  amberSoft:     '#fef9ef',
-  amberBorder:   '#f0d9a8',
-  dangerSoft:    '#fef7f5',
-  dangerBorder:  '#edcabb',
+  successSoft:   '#E3EFE5',
+  successBorder: '#9DC4A9',
+  amberSoft:     '#FFF7D6',
+  amberBorder:   '#E3CC83',
+  dangerSoft:    '#F7E8E4',
+  dangerBorder:  '#DCA293',
 } as const;
 
 export const radii = {
@@ -38,14 +45,14 @@ export const radii = {
 
 export const shadows = {
   sm: {
-    shadowColor:   '#17496F',
+    shadowColor:   '#1C2B36',
     shadowOpacity: 0.06,
     shadowRadius:  14,
     shadowOffset:  { width: 0, height: 6 },
     elevation:     2,
   },
   md: {
-    shadowColor:   '#17496F',
+    shadowColor:   '#1C2B36',
     shadowOpacity: 0.12,
     shadowRadius:  24,
     shadowOffset:  { width: 0, height: 10 },

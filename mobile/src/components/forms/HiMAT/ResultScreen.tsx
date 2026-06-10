@@ -39,7 +39,7 @@ const RESULT_ROWS = [
 
 const COLOR_MAP: Record<string, string> = {
   green: colors.success,
-  amber: '#a05c00',
+  amber: colors.amber,
   red:   colors.coral,
 };
 

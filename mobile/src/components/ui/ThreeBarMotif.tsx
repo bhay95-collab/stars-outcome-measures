@@ -18,9 +18,9 @@ const SIZE_MAP = {
 } as const;
 
 const TONE_MAP = {
-  brand: ['#0D5C95', '#4A9DE8', '#9BC7F2'],
-  inverse: ['#FFFFFF', colors.secondarySoft, '#9BC7F2'],
-  soft: ['rgba(13,92,149,0.72)', 'rgba(74,157,232,0.68)', 'rgba(155,199,242,0.72)'],
+  brand: ['#094B8A', '#3CACFF', '#A9D6FF'],
+  inverse: ['#FFFFFF', '#D6EDFF', '#A9D6FF'],
+  soft: ['rgba(9,75,138,0.72)', 'rgba(60,172,255,0.68)', 'rgba(169,214,255,0.72)'],
 } as const;
 
 export function ThreeBarMotif({

@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     marginBottom: -radii.sheet,
   },
   heroScrim: {
-    backgroundColor: 'rgba(16, 41, 71, 0.62)',
+    backgroundColor: 'rgba(6, 55, 100, 0.62)',
   },
   logo: {
     width: 120,
