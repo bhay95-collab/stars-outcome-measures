@@ -31,8 +31,8 @@ export default function AuthGateway({
           align-items: center;
           justify-content: center;
           padding: 32px 18px;
-          background: #f4f7fb;
-          color: #17212b;
+          background: #f1f1e6;
+          color: #1c2b36;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
@@ -47,7 +47,7 @@ export default function AuthGateway({
 
         .auth-gateway__panel h1 {
           margin: 8px 0 0;
-          color: #17212b;
+          color: #1c2b36;
           font-size: 24px;
           font-weight: 800;
           letter-spacing: 0;
@@ -57,7 +57,7 @@ export default function AuthGateway({
         .auth-gateway__panel p {
           max-width: 32ch;
           margin: 0;
-          color: #526273;
+          color: #69787a;
           font-size: 14px;
           line-height: 1.55;
         }

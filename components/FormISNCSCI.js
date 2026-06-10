@@ -28,26 +28,26 @@ function validateSens(raw) {
 
 function motorCellStyle(val) {
   const up = String(val).toUpperCase()
-  if (up.startsWith('NT')) return { background: '#f0eafa', borderColor: '#9b7fd4' }
+  if (up.startsWith('NT')) return { background: '#eff1f8', borderColor: '#8c9cc4' }
   const n = val === '' ? null : parseInt(val, 10)
-  if (n === null) return { background: '#e8f0f9', borderColor: '#b8cfe8' }
-  if (n === 0)   return { background: '#fde8e4', borderColor: '#e07060' }
-  if (n <= 2)    return { background: '#fef5e7', borderColor: '#e8b84b' }
-  if (n <= 4)    return { background: '#e8f5f0', borderColor: '#56b87a' }
-  return               { background: '#e8f5ee', borderColor: '#3da864' }
+  if (n === null) return { background: '#eff6fd', borderColor: '#b7d3ee' }
+  if (n === 0)   return { background: '#f7e8e4', borderColor: '#d98e80' }
+  if (n <= 2)    return { background: '#fff7d6', borderColor: '#ddbe5f' }
+  if (n <= 4)    return { background: '#e7f1ea', borderColor: '#79b08c' }
+  return               { background: '#e3efe5', borderColor: '#5e9e78' }
 }
 function sensCellStyle(val) {
-  if (!val) return { background: '#fffef9', borderColor: '#d8e2ec' }
+  if (!val) return { background: '#fffdf4', borderColor: '#d9dacb' }
   const v = String(val).toUpperCase()
-  if (v === '0')         return { background: '#fde8e4', borderColor: '#e07060' }
-  if (v === '1')         return { background: '#fef5e7', borderColor: '#e8b84b' }
-  if (v === '2')         return { background: '#e8f5ee', borderColor: '#56b87a' }
-  return                        { background: '#f0eafa', borderColor: '#9b7fd4' }
+  if (v === '0')         return { background: '#f7e8e4', borderColor: '#d98e80' }
+  if (v === '1')         return { background: '#fff7d6', borderColor: '#ddbe5f' }
+  if (v === '2')         return { background: '#e3efe5', borderColor: '#79b08c' }
+  return                        { background: '#eff1f8', borderColor: '#8c9cc4' }
 }
 
 const CELL_BASE = {
   width: 36, textAlign: 'center', fontFamily: 'monospace', fontSize: 12,
-  color: '#111', outline: 'none', borderRadius: 4, padding: '3px 2px',
+  color: '#1c2b36', outline: 'none', borderRadius: 4, padding: '3px 2px',
   border: '1px solid', boxSizing: 'border-box',
 }
 
@@ -65,17 +65,17 @@ function CellInput({ value, onChange, isMotor }) {
   )
 }
 
-const AIS_COLOR = { A: '#c0392b', B: '#a05c00', C: '#6b6b00', D: '#2d6a4f', E: '#236499' }
+const AIS_COLOR = { A: '#a13b30', B: '#8a6512', C: '#5f6b2a', D: '#2a6b4f', E: '#094b8a' }
 
-const TH = (extra = {}) => ({ textAlign: 'center', fontSize: 11, padding: '3px 4px 6px', fontWeight: 600, color: '#5f6b7a', ...extra })
-const TD = { padding: '2px 3px', borderBottom: '1px solid #d8e2ec', verticalAlign: 'middle', textAlign: 'center' }
+const TH = (extra = {}) => ({ textAlign: 'center', fontSize: 11, padding: '3px 4px 6px', fontWeight: 600, color: '#5f6e6d', ...extra })
+const TD = { padding: '2px 3px', borderBottom: '1px solid #d9dacb', verticalAlign: 'middle', textAlign: 'center' }
 const TD_LVL = (isMotor) => ({
-  ...TD, padding: '3px 4px', borderLeft: '2px solid #b8cfe8', borderRight: '2px solid #b8cfe8',
+  ...TD, padding: '3px 4px', borderLeft: '2px solid #b7d3ee', borderRight: '2px solid #b7d3ee',
   fontSize: 12, fontWeight: 700, width: 40, whiteSpace: 'nowrap',
-  color: isMotor ? '#236499' : '#5f6b7a',
-  background: isMotor ? '#eaf3fb' : '#f7fafc',
+  color: isMotor ? '#094b8a' : '#5f6e6d',
+  background: isMotor ? '#e9f3ff' : '#f7f7f0',
 })
-const BOX = { padding: '10px 14px', background: '#f7fafc', border: '1px solid #d8e2ec', borderRadius: 8 }
+const BOX = { padding: '10px 14px', background: '#f7f7f0', border: '1px solid #d9dacb', borderRadius: 8 }
 
 export default function FormISNCSCI({ patient, onSubmit, loading }) {
   const [motorR, setMotorR] = useState(initMotor)
@@ -129,7 +129,7 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
 
   const meta   = preview?.meta ?? {}
   const detail = meta.aisGrade ? ISNCSCI_AIS_DETAIL[meta.aisGrade] : null
-  const aisClr = meta.aisGrade ? AIS_COLOR[meta.aisGrade] : '#8a96a3'
+  const aisClr = meta.aisGrade ? AIS_COLOR[meta.aisGrade] : '#859190'
 
   return (
     <form onSubmit={handleSubmit}>
@@ -141,7 +141,7 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
           <div className="measure-subtitle">International Standards for Neurological Classification of Spinal Cord Injury (ASIA/ISCOS 2019). Type values directly into each cell. Scores auto-calculate.</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, padding: '3px 8px', borderRadius: 4, background: '#eaf3fb', color: '#236499', border: '1px solid #b8cfe8' }}>ASIA/ISCOS 2019</span>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, padding: '3px 8px', borderRadius: 4, background: '#e9f3ff', color: '#094b8a', border: '1px solid #b7d3ee' }}>ASIA/ISCOS 2019</span>
           <button
             type="button"
             data-map-btn=""
@@ -150,7 +150,7 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
             View Dermatome Map
           </button>
           <button type="button" onClick={handleExport} disabled={exporting}
-            style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, background: '#236499', color: '#fff', border: 'none', borderRadius: 6, cursor: exporting ? 'default' : 'pointer', opacity: exporting ? 0.7 : 1 }}>
+            style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, background: '#094b8a', color: '#fff', border: 'none', borderRadius: 6, cursor: exporting ? 'default' : 'pointer', opacity: exporting ? 0.7 : 1 }}>
             {exporting ? (
               <span className="button-loading">
                 <ThreeBarMotif size="xs" tone="light" loading label="Generating ASIA PDF" />
@@ -162,9 +162,9 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
       </div>
 
       {/* ── Legend ──────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 16, padding: '10px 14px', background: '#f7fafc', border: '1px solid #d8e2ec', borderRadius: 8, fontSize: 12 }}>
-        <div><strong style={{ color: '#5f6b7a' }}>Sensory (LT &amp; PP):</strong>&nbsp; 0 = Absent &nbsp;·&nbsp; 1 = Altered &nbsp;·&nbsp; 2 = Normal &nbsp;·&nbsp; NT = Not testable</div>
-        <div><strong style={{ color: '#236499' }}>Motor (M):</strong>&nbsp; 0–5 MRC scale &nbsp;·&nbsp; NT = Not testable &nbsp;·&nbsp; Motor cells shaded blue — key muscles only</div>
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 16, padding: '10px 14px', background: '#f7f7f0', border: '1px solid #d9dacb', borderRadius: 8, fontSize: 12 }}>
+        <div><strong style={{ color: '#5f6e6d' }}>Sensory (LT &amp; PP):</strong>&nbsp; 0 = Absent &nbsp;·&nbsp; 1 = Altered &nbsp;·&nbsp; 2 = Normal &nbsp;·&nbsp; NT = Not testable</div>
+        <div><strong style={{ color: '#094b8a' }}>Motor (M):</strong>&nbsp; 0–5 MRC scale &nbsp;·&nbsp; NT = Not testable &nbsp;·&nbsp; Motor cells shaded blue — key muscles only</div>
       </div>
 
       {/* ── Grid ────────────────────────────────────────────────────── */}
@@ -173,11 +173,11 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
 
           {/* Right-side inputs */}
           <div>
-            <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, letterSpacing: 1, color: '#236499', marginBottom: 4 }}>RIGHT</div>
+            <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, letterSpacing: 1, color: '#094b8a', marginBottom: 4 }}>RIGHT</div>
             <table className="data-table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead>
                 <tr>
-                  <th style={TH({ color: '#236499', width: 40 })}>M</th>
+                  <th style={TH({ color: '#094b8a', width: 40 })}>M</th>
                   <th style={TH({ width: 40 })}>LT</th>
                   <th style={TH({ width: 40 })}>PP</th>
                   <th style={TH({ width: 40 })}>LEVEL</th>
@@ -187,7 +187,7 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
                 {ISNCSCI_LEVELS.map(lv => {
                   const hasM   = MOTOR_SET.has(lv)
                   const muscle = ISNCSCI_KEY_MUSCLES[lv]
-                  const dash   = <span style={{ display: 'inline-block', width: 36, color: '#8a96a3', fontSize: 10, textAlign: 'center' }}>—</span>
+                  const dash   = <span style={{ display: 'inline-block', width: 36, color: '#859190', fontSize: 10, textAlign: 'center' }}>—</span>
                   return (
                     <tr key={lv}>
                       <td style={TD}>{hasM ? <CellInput value={motorR[lv]} isMotor onChange={v => setMotorCell('r', lv, v)} /> : dash}</td>
@@ -210,21 +210,21 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
 
           {/* Left-side inputs */}
           <div>
-            <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, letterSpacing: 1, color: '#236499', marginBottom: 4 }}>LEFT</div>
+            <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, letterSpacing: 1, color: '#094b8a', marginBottom: 4 }}>LEFT</div>
             <table className="data-table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead>
                 <tr>
                   <th style={TH({ width: 40 })}>LEVEL</th>
                   <th style={TH({ width: 40 })}>LT</th>
                   <th style={TH({ width: 40 })}>PP</th>
-                  <th style={TH({ color: '#236499', width: 40 })}>M</th>
+                  <th style={TH({ color: '#094b8a', width: 40 })}>M</th>
                 </tr>
               </thead>
               <tbody>
                 {ISNCSCI_LEVELS.map(lv => {
                   const hasM   = MOTOR_SET.has(lv)
                   const muscle = ISNCSCI_KEY_MUSCLES[lv]
-                  const dash   = <span style={{ display: 'inline-block', width: 36, color: '#8a96a3', fontSize: 10, textAlign: 'center' }}>—</span>
+                  const dash   = <span style={{ display: 'inline-block', width: 36, color: '#859190', fontSize: 10, textAlign: 'center' }}>—</span>
                   return (
                     <tr key={lv}>
                       <td style={TD_LVL(hasM)}>
@@ -248,8 +248,8 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 16 }}>
         {[['VAC', 'Voluntary Anal Contraction', vac, setVac], ['DAP', 'Deep Anal Pressure', dap, setDap]].map(([abbr, label, val, set]) => (
           <div key={abbr} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#1f2933' }}>{abbr}</span>
-            <span style={{ fontSize: 12, color: '#5f6b7a' }}>{label}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#1c2b36' }}>{abbr}</span>
+            <span style={{ fontSize: 12, color: '#5f6e6d' }}>{label}</span>
             <select className="field-input input-narrow" value={val} onChange={e => set(e.target.value)}>
               <option value="">—</option>
               <option value="Y">Yes</option>
@@ -271,9 +271,9 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
           ['PP Total',   meta.pp?.total,  '/112'],
         ].map(([label, val, denom]) => (
           <div key={label} style={{ ...BOX, textAlign: 'center', minWidth: 80 }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#1f2933', lineHeight: 1 }}>{val != null ? val : '—'}</div>
-            <div style={{ fontSize: 11, color: '#8a96a3' }}>{denom}</div>
-            <div style={{ fontSize: 11, color: '#5f6b7a', marginTop: 4 }}>{label}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#1c2b36', lineHeight: 1 }}>{val != null ? val : '—'}</div>
+            <div style={{ fontSize: 11, color: '#859190' }}>{denom}</div>
+            <div style={{ fontSize: 11, color: '#5f6e6d', marginTop: 4 }}>{label}</div>
           </div>
         ))}
       </div>
@@ -292,31 +292,31 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
           ['ZPP Motor (R / L)',        meta.zppMot ? `${meta.zppMot.r} / ${meta.zppMot.l}` : null],
         ].map(([label, val]) => (
           <div key={label} style={{ ...BOX, minWidth: 160 }}>
-            <div style={{ fontSize: 11, color: '#8a96a3', marginBottom: 4 }}>{label}</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#1f2933' }}>{val || '—'}</div>
+            <div style={{ fontSize: 11, color: '#859190', marginBottom: 4 }}>{label}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1c2b36' }}>{val || '—'}</div>
           </div>
         ))}
         <div style={{ ...BOX, minWidth: 160 }}>
-          <div style={{ fontSize: 11, color: '#8a96a3', marginBottom: 6 }}>ASIA Impairment Scale (AIS)</div>
+          <div style={{ fontSize: 11, color: '#859190', marginBottom: 6 }}>ASIA Impairment Scale (AIS)</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', background: aisClr, color: '#fff', fontWeight: 800, fontSize: 16 }}>
               {meta.aisGrade || '?'}
             </span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#1f2933' }}>{meta.aisGrade ? `AIS ${meta.aisGrade}` : '—'}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#1c2b36' }}>{meta.aisGrade ? `AIS ${meta.aisGrade}` : '—'}</span>
           </div>
         </div>
       </div>
 
       {/* ── Interpretation ──────────────────────────────────────────── */}
       {detail && (
-        <div style={{ marginBottom: 16, border: '1px solid #d8e2ec', borderRadius: 12, overflow: 'hidden' }}>
-          <div style={{ background: '#236499', color: '#fff', padding: '12px 20px', fontWeight: 700, fontSize: 13 }}>Clinical Interpretation</div>
+        <div style={{ marginBottom: 16, border: '1px solid #d9dacb', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ background: '#094b8a', color: '#fff', padding: '12px 20px', fontWeight: 700, fontSize: 13 }}>Clinical Interpretation</div>
           <div style={{ padding: 20 }}>
             <div style={{ marginBottom: 16, padding: '14px 16px', borderRadius: 8, borderLeft: `4px solid ${detail.colour}`, background: detail.bg }}>
               <div style={{ fontWeight: 700, fontSize: 13, color: detail.colour, marginBottom: 6 }}>{detail.title}</div>
-              <div style={{ fontSize: 13, lineHeight: 1.7, color: '#1f2933' }}>{detail.body}</div>
+              <div style={{ fontSize: 13, lineHeight: 1.7, color: '#1c2b36' }}>{detail.body}</div>
             </div>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: '#8a96a3', marginBottom: 10 }}>Classification Summary</div>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: '#859190', marginBottom: 10 }}>Classification Summary</div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginBottom: 16 }}>
               <tbody>
                 {[
@@ -330,15 +330,15 @@ export default function FormISNCSCI({ patient, onSubmit, loading }) {
                   ['ZPP Sensory', meta.zppSns ? `R: ${meta.zppSns.r} / L: ${meta.zppSns.l}` : '—', meta.aisGrade === 'A' ? 'Most caudal level with any sensory innervation (AIS A only)' : 'ZPP applies to AIS A only'],
                   ['ZPP Motor',   meta.zppMot ? `R: ${meta.zppMot.r} / L: ${meta.zppMot.l}` : '—', meta.aisGrade === 'A' ? 'Most caudal level with any motor innervation (AIS A only)' : 'ZPP applies to AIS A only'],
                 ].map(([lbl, val, note]) => (
-                  <tr key={lbl} style={{ borderBottom: '1px solid #d8e2ec' }}>
-                    <td style={{ padding: '8px 0', fontWeight: 600, color: '#5f6b7a', width: '34%' }}>{lbl}</td>
-                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1f2933' }}>{val}</td>
-                    <td style={{ padding: '8px 0', color: '#8a96a3', fontSize: 12 }}>{note}</td>
+                  <tr key={lbl} style={{ borderBottom: '1px solid #d9dacb' }}>
+                    <td style={{ padding: '8px 0', fontWeight: 600, color: '#5f6e6d', width: '34%' }}>{lbl}</td>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1c2b36' }}>{val}</td>
+                    <td style={{ padding: '8px 0', color: '#859190', fontSize: 12 }}>{note}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div style={{ padding: '14px 16px', background: '#fffbf0', border: '1px solid #e8d9a0', borderRadius: 8, fontSize: 12, color: '#7a5c00', lineHeight: 1.8 }}>
+            <div style={{ padding: '14px 16px', background: '#fff7d6', border: '1px solid #e3cc83', borderRadius: 8, fontSize: 12, color: '#7a5d1e', lineHeight: 1.8 }}>
               <strong>Prognosis:</strong> {detail.prognosis}
             </div>
           </div>

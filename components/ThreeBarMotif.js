@@ -25,9 +25,9 @@ export default function ThreeBarMotif({
       {loading && <span className="three-bar-motif__label">{label}</span>}
       <style jsx>{`
         .three-bar-motif {
-          --motif-dark: #0D5C95;
-          --motif-mid: #4A9DE8;
-          --motif-light: #9BC7F2;
+          --motif-dark: #094B8A;
+          --motif-mid: #3CACFF;
+          --motif-light: #A9D6FF;
           --motif-width: 18px;
           --motif-gap: 5px;
           --motif-h1: 24px;
@@ -72,14 +72,14 @@ export default function ThreeBarMotif({
 
         .three-bar-motif--light {
           --motif-dark: rgba(255,255,255,0.72);
-          --motif-mid: #7FB3E6;
-          --motif-light: #DCEEFF;
+          --motif-mid: #6FBDFF;
+          --motif-light: #D6EDFF;
         }
 
         .three-bar-motif--muted {
-          --motif-dark: rgba(35,100,153,0.48);
-          --motif-mid: rgba(90,152,218,0.58);
-          --motif-light: rgba(127,179,230,0.62);
+          --motif-dark: rgba(9,75,138,0.48);
+          --motif-mid: rgba(96,176,250,0.58);
+          --motif-light: rgba(96,176,250,0.62);
         }
 
         .three-bar-motif__bar {

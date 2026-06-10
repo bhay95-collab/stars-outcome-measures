@@ -2170,14 +2170,14 @@ const wheelchairToolStyles = `
 
   .wc-tool__actions button:hover,
   .wc-tool .btn:hover {
-    border-color: rgba(23,61,104,0.35);
+    border-color: rgba(6,55,100,0.35);
     background: #fff;
   }
 
   .wc-tool__actions button[data-primary] {
     border-color: transparent;
     background: var(--wc-primary);
-    box-shadow: 0 8px 18px rgba(23,61,104,0.22);
+    box-shadow: 0 8px 18px rgba(6,55,100,0.22);
     color: #fff;
   }
 
@@ -2244,7 +2244,7 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .step-nav__item:hover {
-    border-color: rgba(29,85,144,0.32);
+    border-color: rgba(9,75,138,0.32);
     background: var(--color-surface-raised);
   }
 
@@ -2253,7 +2253,7 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .step-nav__item[data-active] {
-    border-color: rgba(23,61,104,0.42);
+    border-color: rgba(6,55,100,0.42);
     background: var(--wc-primary-soft);
     color: var(--wc-primary);
   }
@@ -2263,7 +2263,7 @@ const wheelchairToolStyles = `
     place-items: center;
     width: 28px;
     height: 28px;
-    border: 1px solid rgba(23,61,104,0.18);
+    border: 1px solid rgba(6,55,100,0.18);
     border-radius: 50%;
     background: rgba(255,255,255,0.72);
     color: var(--wc-primary);
@@ -2322,7 +2322,7 @@ const wheelchairToolStyles = `
     place-items: center;
     width: 36px;
     height: 36px;
-    border: 1px solid rgba(23,61,104,0.18);
+    border: 1px solid rgba(6,55,100,0.18);
     border-radius: 50%;
     background: var(--wc-surface);
     color: var(--wc-primary);
@@ -2522,12 +2522,12 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .version-item:hover {
-    border-color: rgba(23,61,104,0.28);
+    border-color: rgba(6,55,100,0.28);
     background: #fff;
   }
 
   .wc-tool .version-item[data-active] {
-    border-color: rgba(23,61,104,0.42);
+    border-color: rgba(6,55,100,0.42);
     background: var(--wc-primary-soft);
   }
 
@@ -2626,8 +2626,8 @@ const wheelchairToolStyles = `
   .wc-tool input:focus,
   .wc-tool select:focus,
   .wc-tool textarea:focus {
-    border-color: rgba(23,61,104,0.6);
-    box-shadow: 0 0 0 3px rgba(23,61,104,0.10);
+    border-color: rgba(6,55,100,0.6);
+    box-shadow: 0 0 0 3px rgba(6,55,100,0.10);
     background: #fff;
   }
 
@@ -2636,7 +2636,7 @@ const wheelchairToolStyles = `
   .wc-tool .radio:focus-within,
   .wc-tool .selection-card:focus-within,
   .wc-tool .advanced-details summary:focus-visible {
-    outline: 3px solid rgba(23,61,104,0.18);
+    outline: 3px solid rgba(6,55,100,0.18);
     outline-offset: 2px;
   }
 
@@ -2694,13 +2694,13 @@ const wheelchairToolStyles = `
 
   .wc-tool .check:hover,
   .wc-tool .radio:hover {
-    border-color: rgba(23,61,104,0.26);
+    border-color: rgba(6,55,100,0.26);
     background: rgba(255,255,255,0.96);
   }
 
   .wc-tool .check:has(input:checked),
   .wc-tool .radio:has(input:checked) {
-    border-color: rgba(23,61,104,0.36);
+    border-color: rgba(6,55,100,0.36);
     background: var(--wc-primary-soft);
     color: var(--wc-primary);
   }
@@ -2719,10 +2719,10 @@ const wheelchairToolStyles = `
 
   .wc-tool .note,
   .wc-tool .guidance-line {
-    border: 1px solid #d7e4ef;
+    border: 1px solid var(--color-primary-border);
     border-radius: var(--wc-radius-inner);
-    background: #eef3fa;
-    color: #1d4e89;
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
     font-size: 12px;
     line-height: 1.5;
     padding: 10px 12px;
@@ -2843,7 +2843,7 @@ const wheelchairToolStyles = `
     place-items: center;
     min-width: 26px;
     height: 26px;
-    border: 1px solid #cfe0ee;
+    border: 1px solid var(--color-primary-border);
     border-radius: 999px;
     background: var(--wc-primary-soft);
     color: var(--wc-primary);
@@ -2896,7 +2896,7 @@ const wheelchairToolStyles = `
     display: block;
     width: 100%;
     height: auto;
-    border: 1px solid #edf3f7;
+    border: 1px solid var(--color-line);
     border-radius: var(--wc-radius-control);
     background: #fff;
     object-fit: contain;
@@ -2932,8 +2932,8 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .selection-card:hover {
-    border-color: rgba(23,61,104,0.26);
-    box-shadow: 0 10px 24px rgba(21,34,56,0.08);
+    border-color: rgba(6,55,100,0.26);
+    box-shadow: 0 10px 24px rgba(28,43,54,0.08);
   }
 
   .wc-tool .selection-card:active {
@@ -2941,9 +2941,9 @@ const wheelchairToolStyles = `
   }
 
   .wc-tool .selection-card:has(.selection-card__input:checked) {
-    border-color: rgba(23,61,104,0.44);
+    border-color: rgba(6,55,100,0.44);
     background: var(--wc-primary-soft);
-    box-shadow: 0 10px 24px rgba(21,34,56,0.10);
+    box-shadow: 0 10px 24px rgba(28,43,54,0.10);
   }
 
   .wc-tool .selection-card__input {
@@ -2961,7 +2961,7 @@ const wheelchairToolStyles = `
     place-items: center;
     aspect-ratio: 1 / 1;
     padding: 10px;
-    border: 1px solid #edf3f7;
+    border: 1px solid var(--color-line);
     border-radius: var(--wc-radius-control);
     background: #fff;
     overflow: hidden;
@@ -3091,16 +3091,16 @@ const wheelchairToolStyles = `
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #d8e1ea;
+    background: var(--color-surface-muted);
   }
 
   .wc-tool .readiness-list li[data-complete="true"]::before {
-    background: #2e7d58;
+    background: var(--color-green);
   }
 
   .wc-tool .readiness-list li[data-complete="false"]::before,
   .wc-tool .risk-flag-list li::before {
-    background: #d77a35;
+    background: var(--color-amber-strong);
   }
 
   .wc-tool .readiness-list li span {
@@ -3247,7 +3247,7 @@ const wheelchairToolStyles = `
     grid-template-columns: 170px minmax(0, 1fr);
     gap: 8px;
     padding: 6px 10px;
-    border-top: 1px solid #eef3f7;
+    border-top: 1px solid var(--color-line);
   }
 
   .wc-tool__print-supplier .print-label {
@@ -3263,7 +3263,7 @@ const wheelchairToolStyles = `
 
   .wc-tool__print-supplier .print-paragraph {
     padding: 7px 10px;
-    border-top: 1px solid #eef3f7;
+    border-top: 1px solid var(--color-line);
   }
 
   @media (max-width: 1320px) {
@@ -3363,7 +3363,7 @@ const wheelchairToolStyles = `
       margin: 0 auto;
       padding: 0;
       background: #fff;
-      color: #182331;
+      color: #1c2b36;
     }
 
     body[data-wc-print="assessment"] .wc-tool__content {

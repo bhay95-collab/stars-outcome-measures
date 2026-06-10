@@ -40,7 +40,7 @@ function interpretationMeta(text, index) {
   return { label: index === 0 ? 'Overview' : 'Clinical Note', tone: 'overview' }
 }
 
-const TREND_SERIES_COLORS = ['#1d5590', '#0d9488', '#7c3aed', '#64748b', '#15803d']
+const TREND_SERIES_COLORS = ['#094b8a', '#1a857f', '#7e90bc', '#7cb6b1', '#3cacff']
 
 function trendSeriesColor(index) {
   return TREND_SERIES_COLORS[index % TREND_SERIES_COLORS.length]

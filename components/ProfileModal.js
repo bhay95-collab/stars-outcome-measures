@@ -219,10 +219,10 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
         </div>
 
         {error && (
-          <div style={{ fontSize: '13px', color: '#922b21', background: '#fdf2f0', border: '1px solid #f5c6c2', borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: '16px' }}>{error}</div>
+          <div style={{ fontSize: '13px', color: 'var(--color-red)', background: 'var(--color-red-soft)', border: '1px solid var(--color-red-border)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: '16px' }}>{error}</div>
         )}
         {successMsg && (
-          <div style={{ fontSize: '13px', color: '#1a5c3a', background: '#edfaf3', border: '1px solid #b7eacf', borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: '16px' }}>{successMsg}</div>
+          <div style={{ fontSize: '13px', color: 'var(--color-green)', background: 'var(--color-green-soft)', border: '1px solid var(--color-green-border)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: '16px' }}>{successMsg}</div>
         )}
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '4px' }}>
