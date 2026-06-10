@@ -2874,9 +2874,12 @@ const globalStyles = `
     --color-line:           #e8e9dc;
 
     /* Shadows — warm slate, not blue */
-    --shadow-sm:    0 1px 3px rgba(28,43,54,0.06), 0 1px 2px rgba(28,43,54,0.04);
-    --shadow-card:  0 1px 3px rgba(28,43,54,0.06), 0 4px 12px rgba(28,43,54,0.06);
+    --shadow-sm:    0 1px 2px rgba(28,43,54,0.05), 0 1px 3px rgba(28,43,54,0.04);
+    --shadow-card:  0 1px 2px rgba(28,43,54,0.04), 0 10px 22px -8px rgba(28,43,54,0.12);
     --shadow-md:    0 4px 16px rgba(28,43,54,0.10), 0 1px 4px rgba(28,43,54,0.06);
+
+    /* Layout spine — one shared content column across every workspace */
+    --content-max: 1280px;
 
     /* Radius */
     --radius-xs:    4px;
@@ -3191,7 +3194,7 @@ const globalStyles = `
   .app-main {
     position: relative;
     min-width: 0;
-    padding: 58px 46px 60px 38px;
+    padding: 0 46px 64px 38px;
   }
 
   .app-main::before {
@@ -3203,18 +3206,27 @@ const globalStyles = `
     z-index: 1;
   }
 
+  /* Anchored page header — sticks the title to the top of the content
+     column so it reads as the header OF the workspace, not a stray label. */
   .page-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 6;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    margin-bottom: 22px;
+    width: min(100%, var(--content-max));
+    margin: 0 0 24px;
+    padding: 26px 0 18px;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .page-toolbar h1 {
     color: var(--color-ink);
     font-size: clamp(20px, 2.2vw, 26px);
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.15;
     letter-spacing: -0.2px;
   }
@@ -3573,7 +3585,8 @@ const globalStyles = `
   .summary-card {
     padding: 20px;
     overflow: hidden;
-    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
     background: var(--color-surface);
     box-shadow: var(--shadow-card);
   }
@@ -4657,8 +4670,8 @@ const globalStyles = `
 
   .workspace-shell,
   .reports-workspace {
-    width: min(100%, 1320px);
-    margin: 0 auto;
+    width: min(100%, var(--content-max));
+    margin: 0;
   }
 
   .workspace-shell {
@@ -4745,7 +4758,7 @@ const globalStyles = `
   .workspace-stat-grid div {
     min-height: 80px;
     padding: 16px 18px;
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-surface);
     box-shadow: var(--shadow-card);
@@ -4776,10 +4789,10 @@ const globalStyles = `
     justify-content: space-between;
     gap: 18px;
     padding: 20px 22px;
-    border: 1.5px solid rgba(9,75,138,0.2);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--color-primary-border);
+    border-radius: var(--radius-lg);
     background: var(--color-primary-soft);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-card);
   }
 
   .next-action-panel[data-tone="good"] {
@@ -4841,8 +4854,9 @@ const globalStyles = `
   .overview-meta-strip {
     display: flex;
     background: var(--color-surface);
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
   }
 
@@ -4878,7 +4892,7 @@ const globalStyles = `
   .overview-card {
     padding: 20px;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     background: var(--color-surface);
     box-shadow: var(--shadow-card);
   }
@@ -4964,9 +4978,10 @@ const globalStyles = `
     justify-content: space-between;
     gap: 22px;
     padding: 20px;
-    border: 1px solid rgba(96,176,250,0.4);
-    border-radius: 10px;
+    border: 1px solid var(--color-primary-border);
+    border-radius: var(--radius-lg);
     background: var(--color-primary-soft);
+    box-shadow: var(--shadow-card);
   }
 
   .pathway-hero[data-tone="good"] {
@@ -5037,8 +5052,9 @@ const globalStyles = `
     gap: 10px;
     padding: 16px;
     border: 1px solid var(--color-border);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     background: var(--color-surface);
+    box-shadow: var(--shadow-card);
   }
 
   .pathway-action-grid article {
@@ -5130,6 +5146,8 @@ const globalStyles = `
   .outcome-measures-workspace {
     display: grid;
     gap: 14px;
+    width: min(100%, var(--content-max));
+    margin: 0;
   }
 
   .measure-priority-strip {
@@ -5256,6 +5274,8 @@ const globalStyles = `
     display: grid;
     gap: 16px;
     align-items: start;
+    width: min(100%, var(--content-max));
+    margin: 0;
   }
 
   .followup-attention-board .summary-card__head > span[data-attention] {
