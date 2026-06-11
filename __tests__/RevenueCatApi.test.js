@@ -1,5 +1,7 @@
 import revenueCatWebhook from '../pages/api/webhooks/revenuecat'
 import {
+  existingRevenueCatUserIds,
+  isRevenueCatSyntheticTestEvent,
   revenueCatWebhookUserIds,
   syncRevenueCatSubscription,
 } from '../lib/revenuecat-server'
@@ -26,9 +28,13 @@ function makeRes() {
   return res
 }
 
-function makeAdmin({ existingEvent = null } = {}) {
+function makeAdmin({
+  existingEvent = null,
+  existingUserIds = ['55b470d5-5a09-4f6e-8f83-d1e1f9f49766'],
+} = {}) {
   const state = {
     existingEvent,
+    existingUserIds,
     insertedEvents: [],
     updatedEvents: [],
     deletedEvents: [],
@@ -68,7 +74,22 @@ function makeAdmin({ existingEvent = null } = {}) {
   }
 
   return {
-    admin: { from: jest.fn(queryFor) },
+    admin: {
+      from: jest.fn(queryFor),
+      auth: {
+        admin: {
+          getUserById: jest.fn(userId => {
+            if (state.existingUserIds.includes(userId)) {
+              return Promise.resolve({ data: { user: { id: userId } }, error: null })
+            }
+            return Promise.resolve({
+              data: { user: null },
+              error: { status: 404, code: 'user_not_found', message: 'User not found' },
+            })
+          }),
+        },
+      },
+    },
     state,
   }
 }
@@ -132,6 +153,21 @@ describe('RevenueCat subscription synchronization', () => {
     ])
   })
 
+  it('recognizes dashboard synthetic lifecycle events by their test product', () => {
+    expect(isRevenueCatSyntheticTestEvent({
+      type: 'INITIAL_PURCHASE',
+      product_id: 'test_product',
+    })).toBe(true)
+  })
+
+  it('keeps only App User IDs backed by Supabase Auth users', async () => {
+    const missingUserId = '9d531a53-e4f7-4b9c-9611-236bdbef95c7'
+    const { admin } = makeAdmin()
+
+    await expect(existingRevenueCatUserIds(admin, [userId, missingUserId]))
+      .resolves.toEqual([userId])
+  })
+
   it('acknowledges TEST events without persisting or synchronizing them', async () => {
     const req = {
       method: 'POST',
@@ -141,6 +177,29 @@ describe('RevenueCat subscription synchronization', () => {
           id: 'test-event-1',
           type: 'TEST',
           app_user_id: 'fake-app-user-id',
+          product_id: 'test_product',
+        },
+      },
+    }
+    const res = makeRes()
+
+    await revenueCatWebhook(req, res)
+
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toEqual({ received: true, test: true })
+    expect(getAdminClient).not.toHaveBeenCalled()
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  it('acknowledges dashboard synthetic lifecycle events without persistence', async () => {
+    const req = {
+      method: 'POST',
+      headers: { authorization: 'Bearer webhook-secret' },
+      body: {
+        event: {
+          id: 'synthetic-purchase-event',
+          type: 'INITIAL_PURCHASE',
+          app_user_id: '9d531a53-e4f7-4b9c-9611-236bdbef95c7',
           product_id: 'test_product',
         },
       },
@@ -175,6 +234,36 @@ describe('RevenueCat subscription synchronization', () => {
     expect(res.statusCode).toBe(401)
     expect(res.body).toEqual({ error: 'Invalid webhook authorization' })
     expect(getAdminClient).not.toHaveBeenCalled()
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  it('marks an event processed without syncing a missing Supabase Auth user', async () => {
+    const missingUserId = '9d531a53-e4f7-4b9c-9611-236bdbef95c7'
+    const { admin, state } = makeAdmin({ existingUserIds: [] })
+    getAdminClient.mockReturnValue(admin)
+    const req = {
+      method: 'POST',
+      headers: { authorization: 'Bearer webhook-secret' },
+      body: {
+        event: {
+          id: 'event-for-deleted-user',
+          type: 'RENEWAL',
+          app_user_id: missingUserId,
+          product_id: 'com.rehabmetricsiq.app.subscription.pro.monthly',
+        },
+      },
+    }
+    const res = makeRes()
+
+    await revenueCatWebhook(req, res)
+
+    expect(res.statusCode).toBe(200)
+    expect(state.insertedEvents).toEqual([{
+      event_id: 'event-for-deleted-user',
+      event_type: 'RENEWAL',
+    }])
+    expect(state.subscription).toBeNull()
+    expect(state.updatedEvents).toHaveLength(1)
     expect(global.fetch).not.toHaveBeenCalled()
   })
 

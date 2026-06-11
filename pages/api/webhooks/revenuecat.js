@@ -1,6 +1,8 @@
 import { getAdminClient } from '../../../lib/supabase-admin'
 import {
+  existingRevenueCatUserIds,
   isRevenueCatWebhookAuthorized,
+  isRevenueCatSyntheticTestEvent,
   revenueCatWebhookUserIds,
   syncRevenueCatSubscription,
 } from '../../../lib/revenuecat-server'
@@ -12,7 +14,7 @@ export default async function handler(req, res) {
   }
 
   const event = req.body?.event
-  if (event?.type === 'TEST') {
+  if (isRevenueCatSyntheticTestEvent(event)) {
     return res.status(200).json({ received: true, test: true })
   }
 
@@ -38,7 +40,10 @@ export default async function handler(req, res) {
   if (insertError) return res.status(500).json({ error: 'Could not record webhook event' })
 
   try {
-    const userIds = revenueCatWebhookUserIds(event)
+    const userIds = await existingRevenueCatUserIds(
+      admin,
+      revenueCatWebhookUserIds(event),
+    )
     await Promise.all(userIds.map(userId => syncRevenueCatSubscription(admin, userId, {
       originalTransactionId: event.original_transaction_id,
     })))
