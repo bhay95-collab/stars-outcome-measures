@@ -8,13 +8,41 @@ import {
 
 describe('patient follow-up questionnaires', () => {
   it('exposes safe public questionnaire metadata for eligible measures', () => {
-    expect(FOLLOWUP_QUESTIONNAIRE_MEASURE_IDS).toEqual(['ABC', 'FSS', 'HADS', 'PDQ8', 'RPQ', 'BIVI'])
+    expect(FOLLOWUP_QUESTIONNAIRE_MEASURE_IDS).toEqual(
+      ['ABC', 'FSS', 'HADS', 'PDQ8', 'RPQ', 'BIVI', 'NPRS', 'LEFS', 'BPFS', 'KOOS', 'HOOS']
+    )
 
     const abc = getFollowUpQuestionnaire('ABC')
 
     expect(abc.name).toMatch(/balance confidence/i)
     expect(abc.questions).toHaveLength(16)
     expect(JSON.stringify(abc)).not.toMatch(/patient_id|user_id|token/i)
+  })
+
+  it('exposes the MSK questionnaires with full flat question lists', () => {
+    expect(getFollowUpQuestionnaire('NPRS').questions).toHaveLength(1)
+    expect(getFollowUpQuestionnaire('LEFS').questions).toHaveLength(20)
+    expect(getFollowUpQuestionnaire('BPFS').questions).toHaveLength(12)
+    expect(getFollowUpQuestionnaire('KOOS').questions).toHaveLength(42)
+    expect(getFollowUpQuestionnaire('HOOS').questions).toHaveLength(40)
+    // KOOS subscale section labels survive flattening for the public page
+    expect(getFollowUpQuestionnaire('KOOS').questions[0].section).toMatch(/symptoms/i)
+  })
+
+  it('scores patient-completed KOOS responses through the subscale engine', () => {
+    const result = validateFollowUpQuestionnaireAnswers('KOOS', { items: Array(42).fill(1) })
+    expect(result.error).toBeUndefined()
+    expect(result.results.primaryValue).toBe(75) // Pain subscale
+    expect(result.results.meta.qol).toBe(75)
+  })
+
+  it('scores patient-completed NPRS and LEFS responses', () => {
+    const nprs = validateFollowUpQuestionnaireAnswers('NPRS', { items: [7] })
+    expect(nprs.results.primaryValue).toBe(7)
+    expect(questionnaireAttentionLevel('NPRS', nprs.results)).toBe('red')
+
+    const lefs = validateFollowUpQuestionnaireAnswers('LEFS', { items: Array(20).fill(3) })
+    expect(lefs.results.primaryValue).toBe(60)
   })
 
   it('validates and scores ABC patient responses with the clinical engine', () => {
