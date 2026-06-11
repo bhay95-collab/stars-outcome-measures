@@ -174,6 +174,56 @@ describe('KOOS/HOOS scoring engine', () => {
   })
 })
 
+describe('calcFAAM', () => {
+  const { calcFAAM } = require('../lib/clinical/faam')
+
+  it('scores both subscales as percentages', () => {
+    const result = calcFAAM({ adl: Array(21).fill(4), sport: Array(8).fill(2) })
+    expect(result.primaryValue).toBe(100)
+    expect(result.meta.sport).toBe(50)
+    expect(result.primaryUnit).toBe('%')
+  })
+
+  it('excludes N/A responses from numerator and denominator', () => {
+    // 19 numeric at 2 + 2 N/A → 19×2 / (4×19) = 50%
+    const adl = [...Array(19).fill(2), 'na', 'na']
+    expect(calcFAAM({ adl, sport: Array(8).fill(null) }).primaryValue).toBe(50)
+  })
+
+  it('refuses ADL with fewer than 19 responses', () => {
+    const adl = [...Array(18).fill(3), null, null, null]
+    expect(calcFAAM({ adl, sport: Array(8).fill(null) })).toBeNull()
+  })
+
+  it('treats a fully skipped Sports subscale as not administered', () => {
+    const result = calcFAAM({ adl: Array(21).fill(4), sport: Array(8).fill(null) })
+    expect(result.meta.sport).toBeNull()
+    expect(result.meta.classColor).toBe('green')
+  })
+
+  it('leaves Sports unscored below its validity floor without blocking ADL', () => {
+    const sport = [3, 3, null, null, null, null, null, null]
+    const result = calcFAAM({ adl: Array(21).fill(4), sport })
+    expect(result.primaryValue).toBe(100)
+    expect(result.meta.sport).toBeNull()
+  })
+
+  it('flags the CAI functional deficit range', () => {
+    const result = calcFAAM({ adl: Array(21).fill(3), sport: Array(8).fill(3) })
+    // ADL 75% (<90), Sport 75% (<80)
+    expect(result.meta.classColor).toBe('amber')
+    expect(result.interpretation).toContain('functional deficit')
+  })
+
+  it('labels FAAM Sports changes between MCID and MDC with the measurement-error caveat', () => {
+    const { getMCIDStatus } = require('../lib/clinical/mcid')
+    const status = getMCIDStatus('faam-sport', 70, 60) // +10: ≥ MCID 9, < MDC 12.3
+    expect(status.meetsThreshold).toBe(true)
+    expect(status.exceedsMDC).toBe(false)
+    expect(status.label).toContain('within measurement error')
+  })
+})
+
 describe('getPreviousPSFSActivities', () => {
   it('returns activities from the most recent PSFS assessment (list is newest first)', () => {
     const assessments = [

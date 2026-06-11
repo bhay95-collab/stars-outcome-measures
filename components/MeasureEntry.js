@@ -31,9 +31,10 @@ import FormLEFS from './FormLEFS'
 import FormBPFS from './FormBPFS'
 import FormKOOS from './FormKOOS'
 import FormHOOS from './FormHOOS'
+import FormFAAM from './FormFAAM'
 import ThreeBarMotif from './ThreeBarMotif'
 
-const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI', 'NPRS', 'PSFS', 'LEFS', 'BPFS', 'KOOS', 'HOOS'])
+const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI', 'NPRS', 'PSFS', 'LEFS', 'BPFS', 'KOOS', 'HOOS', 'FAAM'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
 const CATEGORY_LABELS = {
   performance: 'Performance',
@@ -397,6 +398,7 @@ export default function MeasureEntry({
             {activeMeasure === 'BPFS'    && <FormBPFS     onSubmit={handleSubmit} loading={formLoading} />}
             {activeMeasure === 'KOOS'    && <FormKOOS     onSubmit={handleSubmit} loading={formLoading} />}
             {activeMeasure === 'HOOS'    && <FormHOOS     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'FAAM'    && <FormFAAM     onSubmit={handleSubmit} loading={formLoading} />}
           </div>
           {error && <p className="error">{error}</p>}
         </div>
