@@ -1,8 +1,24 @@
 # RehabMetrics IQ — MSK Expansion Build Plan
 
 **Date:** 2026-06-11
-**Status:** Approved for build (decisions confirmed by Ben — see below). No code written yet.
+**Status:** ✅ Wave 1 BUILT (same day — see "Build outcome" below). Decisions confirmed by Ben.
 **Companion file:** `docs/outcome-measures-handoff.md` (next 20 measures for future builds)
+
+## Build outcome (delta from plan)
+
+All 10 Wave 1 measures, foundations, pathways, summary domains, follow-ups, and
+reference card shipped on branch `claude/festive-gauss-ky6hgp`. Deviations from plan:
+
+- **Follow-up questionnaires:** NPRS, LEFS, BPFS, KOOS, HOOS shipped. **PSFS and
+  FAAM deferred** — PSFS needs per-patient dynamic questions and FAAM needs N/A
+  response support in the public follow-up engine (both noted in handoff).
+- **Deploy order:** apply both new migrations **before** deploying the web build —
+  `pages/app.js` and `ProfileModal` select `profiles.clinical_focus`; the select
+  fails (and the app treats it as no access) if the column does not exist yet.
+- **Verification still owed:** KOOS/HOOS/FAAM item wording proof-read against the
+  official koos.nu / Martin 2005 PDFs, and an authenticated visual pass of the new
+  forms (this environment has no app credentials). Unit suite (173 tests) and
+  production build are green; security review found no issues.
 
 ---
 

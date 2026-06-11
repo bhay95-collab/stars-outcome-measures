@@ -50,6 +50,12 @@ Substitution guidance: if a 🟡/⚠️ measure stalls, prefer the next free mea
 
 ## Carried-forward work (not measures)
 
+0. **Wave 1 follow-up gaps:** add public follow-up support for **PSFS** (needs
+   per-patient dynamic questions seeded from the previous PSFS activities) and
+   **FAAM** (needs N/A response support in `parseItemScore` / question schema).
+   Also proof-read KOOS/HOOS/FAAM item wording against official PDFs (koos.nu,
+   Martin 2005) before public release.
+
 1. **Mobile parity phase:** native forms for all Wave 1 measures (`mobile/src/components/forms/`, follow `TUGForm.tsx` SaveState pattern). Registry/scoring already shared via `@clinical`. PSFS needs activity pre-load; KOOS/HOOS need subscale result screens.
 2. **Licence admin:** Mapi (ODI, NDI, PCS), IWH (QuickDASH), OUI (OSS, MSK-HQ shares Oxford channel). Courtesy permissions: APTA (LEFS), RobRoy Martin (FAAM).
 3. **Landing page repositioning:** marketing copy still targets "rehabilitation teams"; broaden to whole-of-physio once Wave 1 ships.
