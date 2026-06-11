@@ -25,9 +25,11 @@ import FormSCIM from './FormSCIM'
 import FormRPQ from './FormRPQ'
 import FormBIVI from './FormBIVI'
 import FormISNCSCI from './FormISNCSCI'
+import FormNPRS from './FormNPRS'
+import FormPSFS from './FormPSFS'
 import ThreeBarMotif from './ThreeBarMotif'
 
-const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI'])
+const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI', 'NPRS', 'PSFS'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
 const CATEGORY_LABELS = {
   performance: 'Performance',
@@ -80,6 +82,7 @@ export default function MeasureEntry({
   userId,
   pathway,
   clinicalFocus,
+  assessments,
   initialMeasureId,
   activeMeasureId,
   onSaved,
@@ -384,6 +387,8 @@ export default function MeasureEntry({
             {activeMeasure === 'RPQ'     && <FormRPQ      onSubmit={handleSubmit} loading={formLoading} />}
             {activeMeasure === 'BIVI'    && <FormBIVI     onSubmit={handleSubmit} loading={formLoading} />}
             {activeMeasure === 'ISNCSCI' && <FormISNCSCI  patient={patient} onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'NPRS'    && <FormNPRS     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'PSFS'    && <FormPSFS     key={`psfs-${patient?.id}`} assessments={assessments} onSubmit={handleSubmit} loading={formLoading} />}
           </div>
           {error && <p className="error">{error}</p>}
         </div>

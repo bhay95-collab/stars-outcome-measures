@@ -793,6 +793,7 @@ export default function App() {
                 userId={user.id}
                 pathway={selectedPathway}
                 clinicalFocus={profileData.clinicalFocus}
+                assessments={assessments}
                 requestedMeasureId={requestedMeasureId}
                 onMeasure={(measureId) => goToSection('measures', { measureId, replace: true })}
                 onSaved={handleAssessmentSaved}
@@ -1731,6 +1732,7 @@ function OutcomeMeasuresWorkspace({
   userId,
   pathway,
   clinicalFocus,
+  assessments,
   requestedMeasureId,
   onMeasure,
   onSaved,
@@ -1765,6 +1767,7 @@ function OutcomeMeasuresWorkspace({
         userId={userId}
         pathway={pathway}
         clinicalFocus={clinicalFocus}
+        assessments={assessments}
         activeMeasureId={requestedMeasureId}
         initialMeasureId={requestedMeasureId}
         onSaved={onSaved}
@@ -6118,6 +6121,69 @@ const globalStyles = `
 
   [data-measure-panel] .section-label {
     margin-bottom: 8px;
+  }
+
+  /* ── NUMERIC SCALE SELECTOR (0–10 ratings: NPRS, PSFS) ── */
+  [data-numeric-scale] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  [data-numeric-scale] button {
+    min-width: 40px;
+    padding: 9px 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  [data-numeric-scale] button:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  [data-numeric-scale] button[data-active] {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-surface);
+  }
+
+  /* ── PSFS ACTIVITY ROWS ── */
+  [data-psfs-activity] { margin-bottom: 18px; }
+
+  [data-psfs-activity-row] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  [data-psfs-activity-row] .field-input { flex: 1; }
+
+  [data-remove-activity] {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--color-subtle);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  [data-remove-activity]:hover {
+    color: var(--color-red);
+    border-color: var(--color-red-border);
   }
 
   /* ── MEASURE DOMAIN FILTER (Neuro/Rehab vs MSK) ── */
