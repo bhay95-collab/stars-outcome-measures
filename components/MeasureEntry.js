@@ -32,9 +32,12 @@ import FormBPFS from './FormBPFS'
 import FormKOOS from './FormKOOS'
 import FormHOOS from './FormHOOS'
 import FormFAAM from './FormFAAM'
+import Form30STS from './Form30STS'
+import FormFTSTS from './FormFTSTS'
+import FormCMS from './FormCMS'
 import ThreeBarMotif from './ThreeBarMotif'
 
-const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI', 'NPRS', 'PSFS', 'LEFS', 'BPFS', 'KOOS', 'HOOS', 'FAAM'])
+const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI', 'NPRS', 'PSFS', 'LEFS', 'BPFS', 'KOOS', 'HOOS', 'FAAM', '30STS', 'FTSTS', 'CMS'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
 const CATEGORY_LABELS = {
   performance: 'Performance',
@@ -399,6 +402,9 @@ export default function MeasureEntry({
             {activeMeasure === 'KOOS'    && <FormKOOS     onSubmit={handleSubmit} loading={formLoading} />}
             {activeMeasure === 'HOOS'    && <FormHOOS     onSubmit={handleSubmit} loading={formLoading} />}
             {activeMeasure === 'FAAM'    && <FormFAAM     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === '30STS'   && <Form30STS    patient={patient} onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'FTSTS'   && <FormFTSTS    onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'CMS'     && <FormCMS      onSubmit={handleSubmit} loading={formLoading} />}
           </div>
           {error && <p className="error">{error}</p>}
         </div>

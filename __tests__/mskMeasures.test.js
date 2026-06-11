@@ -224,6 +224,80 @@ describe('calcFAAM', () => {
   })
 })
 
+describe('calc30STS', () => {
+  const { calc30STS } = require('../lib/clinical/sts30')
+
+  it('compares against Rikli & Jones age/sex norms when available', () => {
+    const below = calc30STS({ stands: 10, age: 62, gender: 'M' }) // norm 14–19
+    expect(below.meta.classColor).toBe('amber')
+    expect(below.interpretation).toContain('Below age norm (14–19)')
+
+    const within = calc30STS({ stands: 15, age: 62, gender: 'M' })
+    expect(within.meta.classColor).toBe('green')
+
+    const above = calc30STS({ stands: 20, age: 62, gender: 'M' })
+    expect(above.interpretation).toContain('Above age norm')
+  })
+
+  it('falls back to the knee OA <12 cutoff without norms', () => {
+    expect(calc30STS({ stands: 10 }).meta.classColor).toBe('amber')
+    expect(calc30STS({ stands: 14 }).meta.classColor).toBe('green')
+    expect(calc30STS({ stands: 10, age: 45, gender: 'F' }).interpretation).toContain('<12 stands')
+  })
+
+  it('rejects invalid counts', () => {
+    expect(calc30STS({ stands: -1 })).toBeNull()
+    expect(calc30STS({ stands: 6.5 })).toBeNull()
+    expect(calc30STS({ stands: 'x' })).toBeNull()
+  })
+})
+
+describe('calcFTSTS', () => {
+  const { calcFTSTS } = require('../lib/clinical/ftsts')
+
+  it('bands times against falls cutoffs', () => {
+    expect(calcFTSTS({ time: 9.2 }).meta.classColor).toBe('green')
+    expect(calcFTSTS({ time: 13.5 }).meta.classColor).toBe('amber')
+    expect(calcFTSTS({ time: 16.0 }).meta.classColor).toBe('red')
+    expect(calcFTSTS({ time: 16.0 }).interpretation).toContain('fall risk')
+  })
+
+  it('rounds to one decimal and rejects invalid times', () => {
+    expect(calcFTSTS({ time: 10.456 }).primaryValue).toBe(10.5)
+    expect(calcFTSTS({ time: 0 })).toBeNull()
+    expect(calcFTSTS({ time: -3 })).toBeNull()
+  })
+})
+
+describe('calcCMS', () => {
+  const { calcCMS } = require('../lib/clinical/cms')
+  const fullInputs = {
+    pain: 15, adlWork: 4, adlRecreation: 4, adlSleep: 2, adlPositioning: 10,
+    romFlexion: 10, romAbduction: 10, romER: 10, romIR: 10, strengthKg: 12,
+  }
+
+  it('sums the four components to /100', () => {
+    const result = calcCMS(fullInputs)
+    // strength 12 kg → 12/0.453592 = 26.5 → capped at 25
+    expect(result.meta.strength).toBe(25)
+    expect(result.primaryValue).toBe(100)
+    expect(result.meta).toMatchObject({ pain: 15, adl: 20, rom: 40 })
+  })
+
+  it('converts strength kg to points at 1 point per 0.45 kg', () => {
+    const result = calcCMS({ ...fullInputs, strengthKg: 4.5 })
+    expect(result.meta.strength).toBe(10)
+    expect(result.primaryValue).toBe(85)
+  })
+
+  it('rejects component values outside their ranges', () => {
+    expect(calcCMS({ ...fullInputs, pain: 16 })).toBeNull()
+    expect(calcCMS({ ...fullInputs, adlSleep: 3 })).toBeNull()
+    expect(calcCMS({ ...fullInputs, romFlexion: 5 })).toBeNull() // must be 0/2/4/6/8/10
+    expect(calcCMS({ ...fullInputs, strengthKg: -1 })).toBeNull()
+  })
+})
+
 describe('getPreviousPSFSActivities', () => {
   it('returns activities from the most recent PSFS assessment (list is newest first)', () => {
     const assessments = [
