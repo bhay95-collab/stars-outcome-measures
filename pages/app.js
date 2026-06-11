@@ -633,7 +633,9 @@ export default function App() {
         <style jsx global>{globalStyles}</style>
         <AuthGateway
           title={bootState === 'unauthenticated' ? 'Redirecting to sign in' : 'Opening RehabMetrics IQ'}
-          message={bootState === 'unauthenticated' ? 'Taking you back to the secure login page.' : 'Checking your secure session.'}
+          message={bootState === 'unauthenticated'
+            ? 'This is the secure clinical outcomes dashboard for physiotherapists. Taking you to the login page.'
+            : 'Checking your secure session before opening the clinical outcomes dashboard.'}
         />
       </>
     )
@@ -1952,8 +1954,16 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
 function AppHead() {
   return (
     <Head>
-      <title>RehabMetrics IQ</title>
+      <title>Clinical Dashboard | RehabMetrics IQ</title>
+      <meta name="description" content="The secure RehabMetrics IQ clinical dashboard for physiotherapists and rehabilitation teams. Sign in to record, score, interpret, and track standardised outcome measures for your patients." />
+      {/* Intentional noindex: authenticated clinical workspace, not for search results. */}
       <meta name="robots" content="noindex,nofollow" />
+      <meta property="og:url" content="https://www.rehabmetricsiq.com/app" />
+      <meta property="og:title" content="Clinical Dashboard | RehabMetrics IQ" />
+      <meta property="og:description" content="The secure RehabMetrics IQ clinical dashboard for physiotherapists and rehabilitation teams." />
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="RehabMetrics IQ" />
+      <meta property="og:image" content="https://www.rehabmetricsiq.com/SquareLogo.png" />
       <link rel="icon" href="/SquareLogo.png" />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

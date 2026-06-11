@@ -1,3 +1,4 @@
+import Head from 'next/head'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { getAppRedirectUrl, supabase } from '../lib/supabase'
@@ -5,6 +6,27 @@ import LogoWordmark from '../components/LogoWordmark'
 import ThreeBarMotif from '../components/ThreeBarMotif'
 
 export async function getServerSideProps() { return { props: {} } }
+
+function SignupHead() {
+  return (
+    <Head>
+      <title>Start your free trial | RehabMetrics IQ</title>
+      <meta name="description" content="Create your RehabMetrics IQ account. The clinical outcomes platform for physiotherapists and rehabilitation teams — score, interpret, and track standardised outcome measures. 14-day free trial, no credit card required." />
+      <meta name="robots" content="index,follow" />
+      <link rel="canonical" href="https://www.rehabmetricsiq.com/signup" />
+      <meta property="og:url" content="https://www.rehabmetricsiq.com/signup" />
+      <meta property="og:title" content="Start your free trial | RehabMetrics IQ" />
+      <meta property="og:description" content="Create your RehabMetrics IQ account. The clinical outcomes platform for physiotherapists and rehabilitation teams." />
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="RehabMetrics IQ" />
+      <meta property="og:image" content="https://www.rehabmetricsiq.com/SquareLogo.png" />
+      <link rel="icon" href="/SquareLogo.png" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet" />
+    </Head>
+  )
+}
 
 export default function Signup() {
   const router = useRouter()
@@ -75,6 +97,7 @@ export default function Signup() {
   if (emailSent) {
     return (
       <>
+        <SignupHead />
         <style jsx>{pageStyles}</style>
         <div className="page">
           <div className="card">
@@ -95,12 +118,22 @@ export default function Signup() {
 
   return (
     <>
+      <SignupHead />
       <style jsx>{pageStyles}</style>
       <div className="page">
         <div className="card">
           <LogoWordmark size="md" spaceAfter />
+          <p className="eyebrow">CLINICAL OUTCOMES PLATFORM</p>
           <h1 className="heading">Create your account</h1>
-          <p className="subtext">Start your 14-day free trial — no credit card required.</p>
+          <p className="subtext">
+            RehabMetrics IQ helps physiotherapists and rehabilitation teams score, interpret,
+            and track standardised outcome measures. Start your 14-day free trial — no credit card required.
+          </p>
+          <ul className="signup-points">
+            <li>Outcome measures for gait, balance, endurance, independence and symptoms</li>
+            <li>MCID-aware interpretation beside patient trends</li>
+            <li>Clinical reports for your team, GP, and funders</li>
+          </ul>
 
           <button type="button" className="btn-google" onClick={signInWithGoogle} disabled={googleLoading || loading}>
             <GoogleIcon />
@@ -156,6 +189,9 @@ export default function Signup() {
           <p className="footer">
             Already have an account? <a href="/login">Log in</a>
           </p>
+          <p className="footer">
+            <a href="/">Learn more about RehabMetrics IQ</a>
+          </p>
         </div>
       </div>
     </>
@@ -208,6 +244,14 @@ const pageStyles = `
     box-shadow: var(--shadow-md);
   }
 
+  .eyebrow {
+    margin-bottom: 10px;
+    color: var(--color-primary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+  }
+
   .heading {
     font-family: 'Source Serif 4', serif;
     font-size: 26px;
@@ -221,7 +265,38 @@ const pageStyles = `
     font-size: 14px;
     color: var(--color-muted);
     line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .signup-points {
+    list-style: none;
     margin-bottom: 28px;
+    padding: 14px 16px;
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .signup-points li {
+    position: relative;
+    padding-left: 18px;
+    font-size: 13px;
+    color: var(--color-muted);
+    line-height: 1.45;
+  }
+
+  .signup-points li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 7px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
   }
 
   .field {

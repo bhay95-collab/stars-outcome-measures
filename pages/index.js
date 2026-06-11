@@ -199,6 +199,8 @@ export default function Landing({ initialAuthCallback = false }) {
         <meta property="og:title" content="RehabMetrics IQ | Clinical Outcome Measures" />
         <meta property="og:description" content="You scored the test. Now what does it mean? RehabMetrics IQ turns rehabilitation outcome measures into clinical interpretation, MCID-aware progress, and reports your team, GP, and funder can actually use." />
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="RehabMetrics IQ" />
+        <meta property="og:image" content="https://www.rehabmetricsiq.com/SquareLogo.png" />
         <link rel="icon" href="/SquareLogo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

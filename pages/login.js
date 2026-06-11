@@ -57,7 +57,15 @@ export default function Login() {
     <>
       <Head>
         <title>Log in | RehabMetrics IQ</title>
-        <meta name="robots" content="noindex,nofollow" />
+        <meta name="description" content="Log in to RehabMetrics IQ, the clinical outcomes platform for physiotherapists and rehabilitation teams. Score, interpret, and track standardised outcome measures with MCID-aware progress and clinical reports." />
+        <meta name="robots" content="index,follow" />
+        <link rel="canonical" href="https://www.rehabmetricsiq.com/login" />
+        <meta property="og:url" content="https://www.rehabmetricsiq.com/login" />
+        <meta property="og:title" content="Log in | RehabMetrics IQ" />
+        <meta property="og:description" content="Log in to RehabMetrics IQ, the clinical outcomes platform for physiotherapists and rehabilitation teams." />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="RehabMetrics IQ" />
+        <meta property="og:image" content="https://www.rehabmetricsiq.com/SquareLogo.png" />
         <link rel="icon" href="/SquareLogo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -94,7 +102,7 @@ export default function Login() {
           <div className="card">
             <LogoWordmark size="md" spaceAfter />
             <h2 className="heading">Welcome back</h2>
-            <p className="subtext">Log in to your RehabMetrics IQ account.</p>
+            <p className="subtext">Log in to RehabMetrics IQ — the clinical outcomes platform for physiotherapists and rehabilitation teams.</p>
 
             <button type="button" className="btn-google" onClick={signInWithGoogle} disabled={googleLoading || loading}>
               <GoogleIcon />
