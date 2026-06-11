@@ -1,15 +1,22 @@
 # RehabMetrics IQ Product Roadmap
 
-## Active Build: Smart Rehab Pathways MVP
+## Active Build: Outcomes Intelligence
 
-RehabMetrics IQ is moving beyond outcome-measure capture into derived clinical workflow support. The first implementation is a no-schema-change pathway layer that uses the patient's recorded diagnosis, existing recommended-measure mappings, and saved assessments to surface:
+Service-level reporting for clinics, delivered as a derived layer (no Supabase schema, RLS, auth, Stripe, or assessment-result changes). A caseload-wide Outcomes Intelligence workspace in the app sidebar surfaces:
 
-- baseline measures still required;
-- reassessments due after the default review interval;
-- pathway coverage;
-- the next best assessment action.
+- improvement rates (baseline-to-latest change per patient-measure pair, following each measure's published directionality);
+- MCID achievement, calculated only for measures with a published MCID threshold;
+- diagnosis cohort summaries (patients, assessments, repeat-data coverage, improvement and MCID rates, most-used measures);
+- an exportable proof-of-value PDF service report containing aggregate data only — no patient identifiers.
 
-Decision for v1: this is a derived MVP. No Supabase schema, RLS, auth, Stripe, or assessment-result changes are required.
+Deferred from this phase:
+- Referrer/payer summaries — the patients table has no referrer or funding fields yet; this needs new patient fields (schema change) before it can be reported.
+- Date-range and discharge-episode filtering (v1 reports across all recorded data).
+- Multi-clinician clinic rollups (v1 reports per signed-in clinician account, matching the data-access model).
+
+## Delivered: Smart Rehab Pathways MVP
+
+A no-schema-change pathway layer that uses the patient's recorded diagnosis, existing recommended-measure mappings, and saved assessments to surface baseline measures still required, reassessments due after the default review interval, pathway coverage, and the next best assessment action. Surfaced in the patient overview, the Smart Pathway workspace, the patient directory, and the sidebar badge.
 
 ## Delivered: Patient-Reported Follow-Up
 
@@ -20,12 +27,9 @@ Deferred from this phase:
 - Follow-up visibility in the mobile app (web only for now; the patient-facing link already works in mobile browsers).
 - The original generic weekly check-in (falls/confidence/fatigue) was retired in favour of validated questionnaires; historical responses still display.
 
-## Future Phase: Outcomes Intelligence
-
-Create service-level reporting for clinics: improvement rates, Minimally Clinically Important Difference achievement, diagnosis cohorts, referrer/payer summaries, and exportable proof-of-value reports.
-
 ## Defaults To Revisit
 
 - Smart Rehab Pathways currently uses a 28-day reassessment interval.
 - Custom pathway templates, clinician dismissals, and per-patient schedule preferences are deferred.
 - Wheelchair prescription is intentionally outside the pathway engine for the first release.
+- Outcomes Intelligence measures change as earliest-to-latest per measure; per-episode baselines (e.g. after readmission) are a future refinement.

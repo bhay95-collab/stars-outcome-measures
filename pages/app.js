@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { Accessibility, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, MessageSquare, RefreshCw, Route, Search, Users, XCircle } from 'lucide-react'
+import { Accessibility, BarChart3, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, MessageSquare, RefreshCw, Route, Search, Users, XCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
@@ -14,7 +14,9 @@ import SubscriptionWall from '../components/SubscriptionWall'
 import LogoWordmark from '../components/LogoWordmark'
 import WheelchairPrescriptionTool from '../components/WheelchairPrescriptionTool'
 import AuthGateway from '../components/AuthGateway'
+import OutcomesIntelligenceWorkspace from '../components/OutcomesIntelligenceWorkspace'
 import { MEASURES } from '../lib/clinical'
+import { buildOutcomesIntelligence } from '../lib/clinical/outcomesIntelligence'
 import { buildPatientPathway } from '../lib/clinical/pathways'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
 import { buildPatientSummary, fmtDate } from '../lib/clinical/patientSummary'
@@ -40,8 +42,9 @@ import { sortPatientsByLabel } from '../lib/patientDetails'
 
 export async function getServerSideProps() { return { props: {} } }
 
-const APP_SECTIONS = ['directory', 'overview', 'pathway', 'followup', 'measures', 'reports', 'wheelchair']
+const APP_SECTIONS = ['directory', 'insights', 'overview', 'pathway', 'followup', 'measures', 'reports', 'wheelchair']
 const PATIENT_SECTIONS = new Set(['overview', 'pathway', 'followup', 'measures', 'reports', 'wheelchair'])
+const CASELOAD_SECTIONS = new Set(['directory', 'insights'])
 const DEFAULT_PATIENT_SECTION = 'overview'
 
 function getQueryValue(value) {
@@ -68,6 +71,7 @@ function buildAppRoute({ section, patientId, measureId }) {
 function getSectionTitle(section) {
   switch (section) {
     case 'directory': return 'Patient Directory'
+    case 'insights': return 'Outcomes Intelligence'
     case 'pathway': return 'Smart Pathway'
     case 'followup': return 'Follow-Up'
     case 'measures': return 'Outcome Measures'
@@ -151,6 +155,8 @@ export default function App() {
   const [followupsLoading, setFollowupsLoading] = useState(false)
   const [followUpAttentionBoard, setFollowUpAttentionBoard] = useState([])
   const [latestFollowUpUrl, setLatestFollowUpUrl] = useState('')
+  const [caseloadAssessments, setCaseloadAssessments] = useState(null)
+  const [insightsLoading, setInsightsLoading] = useState(false)
   const [showNewPatient, setShowNewPatient] = useState(false)
   const [editingPatient, setEditingPatient] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
@@ -411,6 +417,29 @@ export default function App() {
     loadFollowUpAttentionBoard()
   }, [bootState, hasAccess, loadFollowUpAttentionBoard])
 
+  const loadCaseloadAssessments = useCallback(async () => {
+    if (!user?.id) return
+    setInsightsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('assessments')
+        .select('id, patient_id, measure, results, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setCaseloadAssessments(data ?? [])
+    } catch {
+      // Keep any previously loaded caseload data; the workspace shows a retry state when none exists.
+    } finally {
+      setInsightsLoading(false)
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (bootState !== 'ready' || !hasAccess || activeSection !== 'insights') return
+    loadCaseloadAssessments()
+  }, [bootState, hasAccess, activeSection, loadCaseloadAssessments])
+
   const handlePatientSelect = useCallback(async (patient) => {
     if (!patient) return
     setSelectedPatient(patient)
@@ -438,16 +467,17 @@ export default function App() {
       setAssessments([])
       setFollowups([])
       setLatestFollowUpUrl('')
-      setActiveSection('directory')
+      const fallbackSection = CASELOAD_SECTIONS.has(routeSection) ? routeSection : 'directory'
+      setActiveSection(fallbackSection)
       setRequestedMeasureId(null)
-      if (routeSection !== 'directory') {
+      if (routeSection !== fallbackSection) {
         router.replace(buildAppRoute({ section: 'directory' }), undefined, { shallow: true })
       }
       return
     }
 
-    if (routeSection === 'directory') {
-      setActiveSection('directory')
+    if (CASELOAD_SECTIONS.has(routeSection)) {
+      setActiveSection(routeSection)
       setRequestedMeasureId(null)
       return
     }
@@ -636,6 +666,9 @@ export default function App() {
   const viewTitle = getSectionTitle(activeSection)
   const selectedPathway = selectedPatient ? buildPatientPathway(selectedPatient, assessments) : null
   const selectedFollowUpSummary = summarizeFollowUpRecords(followups)
+  const insightsModel = activeSection === 'insights' && caseloadAssessments
+    ? buildOutcomesIntelligence(patients, caseloadAssessments)
+    : null
 
   if (bootState === 'checking-auth' || bootState === 'unauthenticated') {
     return (
@@ -740,7 +773,13 @@ export default function App() {
           )}
 
           <div key={`${activeSection}-${selectedPatient?.id ?? 'none'}`} className="app-view">
-            {activeSection === 'directory' || !selectedPatient ? (
+            {activeSection === 'insights' ? (
+              <OutcomesIntelligenceWorkspace
+                model={insightsModel}
+                loading={insightsLoading}
+                onRefresh={loadCaseloadAssessments}
+              />
+            ) : activeSection === 'directory' || !selectedPatient ? (
               <PatientDirectoryWorkspace
                 patients={patients}
                 selectedPatient={selectedPatient}
@@ -970,6 +1009,17 @@ function AppSidebar({
           <span className="app-nav__copy">
             <strong>Patient Directory</strong>
             <span>Find or create patients</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          data-active={activeSection === 'insights' ? '' : undefined}
+          onClick={() => onNavigate('insights')}
+        >
+          <BarChart3 size={21} aria-hidden="true" />
+          <span className="app-nav__copy">
+            <strong>Outcomes Intelligence</strong>
+            <span>Service-level outcomes</span>
           </span>
         </button>
       </nav>
@@ -5404,6 +5454,225 @@ const globalStyles = `
     white-space: nowrap;
   }
 
+  .app-insights .workspace-stat-grid {
+    margin-top: 18px;
+  }
+
+  .app-insights__head-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .app-insights__refresh,
+  .app-insights__export {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Geist', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .app-insights__refresh {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-muted);
+  }
+
+  .app-insights__export {
+    border: 0;
+    background: var(--color-primary);
+    color: #fff;
+  }
+
+  .app-insights__refresh:disabled,
+  .app-insights__export:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .app-insights__highlights {
+    margin: 16px 0 0;
+    padding-left: 20px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .app-insights__highlights li {
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .app-insights__caution,
+  .app-insights__method {
+    margin-top: 14px;
+    color: var(--color-subtle);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .app-insights__method {
+    color: var(--color-muted);
+  }
+
+  .app-insights__error {
+    margin-top: 12px;
+    color: var(--color-red);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .app-insights__empty {
+    margin-top: 14px;
+    color: var(--color-subtle);
+    font-size: 14px;
+  }
+
+  .app-insights__table-scroll {
+    margin-top: 16px;
+    overflow-x: auto;
+  }
+
+  .app-insights__table {
+    width: 100%;
+    min-width: 640px;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .app-insights__table th {
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--color-border);
+    color: var(--color-subtle);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .app-insights__table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-muted);
+    vertical-align: top;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app-insights__table td:first-child {
+    color: var(--color-ink);
+    font-weight: 700;
+  }
+
+  .app-insights__table td[data-tone="good"] {
+    color: var(--color-green);
+    font-weight: 700;
+  }
+
+  .app-insights__table td[data-tone="concern"] {
+    color: var(--color-red);
+    font-weight: 700;
+  }
+
+  .app-insights__cohort-grid {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+  }
+
+  .app-insights__cohort {
+    padding: 16px 18px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .app-insights__cohort[data-tone="concern"] {
+    border-color: var(--color-red-border);
+  }
+
+  .app-insights__cohort header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .app-insights__cohort header strong {
+    color: var(--color-ink);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .app-insights__cohort header span {
+    color: var(--color-subtle);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .app-insights__cohort dl {
+    margin: 12px 0 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .app-insights__cohort dt {
+    color: var(--color-subtle);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .app-insights__cohort dd {
+    margin: 4px 0 0;
+    color: var(--color-ink);
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app-insights__cohort-measures {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .app-insights__cohort-measures span {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-surface-raised);
+    color: var(--color-muted);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .app-insights__cohort > p {
+    margin: 12px 0 0;
+    color: var(--color-subtle);
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .app-insights__cohort[data-tone="concern"] > p {
+    color: var(--color-red);
+    font-weight: 600;
+  }
+
   .followup-timeline article p[data-direction="declined"],
   .followup-attention-panel p[data-direction="declined"],
   .followup-report-concern[data-direction="declined"] {
@@ -6507,6 +6776,14 @@ const globalStyles = `
     .followup-create-actions button,
     .followup-row-actions button {
       width: 100%;
+      justify-content: center;
+    }
+    .app-insights__head-actions {
+      width: 100%;
+    }
+    .app-insights__refresh,
+    .app-insights__export {
+      flex: 1 1 auto;
       justify-content: center;
     }
     .followup-link-panel,
