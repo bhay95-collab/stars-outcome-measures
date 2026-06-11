@@ -25,6 +25,7 @@
       "channel": "production",
       "autoIncrement": true,
       "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://auth.rehabmetricsiq.com",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
