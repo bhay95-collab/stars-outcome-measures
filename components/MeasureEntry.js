@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { MEASURES } from '../lib/clinical'
+import { MEASURES, DOMAIN_LABELS, measureHasDomain } from '../lib/clinical'
 import Form10MWT from './Form10MWT'
 import FormTUG from './FormTUG'
 import FormBBS from './FormBBS'
@@ -34,6 +34,15 @@ const CATEGORY_LABELS = {
   independence: 'Independence',
   questionnaire: 'Questionnaire',
 }
+const DOMAIN_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'rehab', label: DOMAIN_LABELS.rehab },
+  { id: 'msk', label: DOMAIN_LABELS.msk },
+]
+
+function focusToDomain(focus) {
+  return focus === 'rehab' || focus === 'msk' ? focus : 'all'
+}
 
 function getInitialMeasure(pathway) {
   const candidates = [
@@ -57,8 +66,8 @@ function getPathwayStatus(pathway, measureId) {
   return { state: 'recorded', label: 'Pathway' }
 }
 
-function measuresInCat(cat) {
-  return Object.values(MEASURES).filter(m => m.category === cat)
+function measuresInCat(cat, domain) {
+  return Object.values(MEASURES).filter(m => m.category === cat && measureHasDomain(m, domain))
 }
 
 function makeEncounterId() {
@@ -70,6 +79,7 @@ export default function MeasureEntry({
   patient,
   userId,
   pathway,
+  clinicalFocus,
   initialMeasureId,
   activeMeasureId,
   onSaved,
@@ -79,6 +89,12 @@ export default function MeasureEntry({
   const initialMeasure = getSelectableMeasure(activeMeasureId) ?? getSelectableMeasure(initialMeasureId) ?? getInitialMeasure(pathway)
   const [activeMeasure, setActiveMeasure] = useState(initialMeasure)
   const [activeCategory, setActiveCategory] = useState(MEASURES[initialMeasure]?.category ?? 'performance')
+  // Default the domain filter to the clinician's focus, widening to All when
+  // the requested measure (e.g. a pathway recommendation) sits outside it.
+  const [domainFilter, setDomainFilter] = useState(() => {
+    const preferred = focusToDomain(clinicalFocus)
+    return measureHasDomain(MEASURES[initialMeasure], preferred) ? preferred : 'all'
+  })
   const [completed, setCompleted] = useState(new Set())
   const [drafts, setDrafts] = useState([])
   const [loading, setLoading] = useState(false)
@@ -107,8 +123,23 @@ export default function MeasureEntry({
     if (!drafts.length && nextMeasure && MEASURES[nextMeasure]) {
       setActiveMeasure(nextMeasure)
       setActiveCategory(MEASURES[nextMeasure].category)
+      // Requested measure outside the current domain filter — widen so the
+      // nav reflects the active form.
+      setDomainFilter(prev => measureHasDomain(MEASURES[nextMeasure], prev) ? prev : 'all')
     }
   }, [activeMeasureId, drafts.length, initialMeasureId, patient?.id, pathway?.preferredMeasureId])
+
+  function handleDomainChange(domain) {
+    setDomainFilter(domain)
+    if (measureHasDomain(MEASURES[activeMeasure], domain)) return
+    const next =
+      measuresInCat(activeCategory, domain).find(m => IMPLEMENTED.has(m.id)) ??
+      Object.values(MEASURES).find(m => measureHasDomain(m, domain) && IMPLEMENTED.has(m.id))
+    if (next) {
+      setActiveMeasure(next.id)
+      setActiveCategory(next.category)
+    }
+  }
 
   function handleSubmit(inputs, results) {
     if (assessmentSaveState === 'saving') return
@@ -234,6 +265,21 @@ export default function MeasureEntry({
         )}
       </div>
 
+      <div data-measure-domain-filter="" role="group" aria-label="Filter measures by clinical domain">
+        <span>Domain</span>
+        {DOMAIN_FILTERS.map(domain => (
+          <button
+            key={domain.id}
+            type="button"
+            data-active={domainFilter === domain.id ? '' : undefined}
+            disabled={assessmentSaving}
+            onClick={() => handleDomainChange(domain.id)}
+          >
+            {domain.label}
+          </button>
+        ))}
+      </div>
+
       <div data-measure-tabs="">
         {CATEGORY_ORDER.map(cat => (
           <button
@@ -261,7 +307,7 @@ export default function MeasureEntry({
           </button>
           {CATEGORY_ORDER.filter(cat => cat === activeCategory).map(cat => (
             <div key={cat} data-measure-group="">
-              {measuresInCat(cat).map(m => {
+              {measuresInCat(cat, domainFilter).map(m => {
                 const pathwayStatus = getPathwayStatus(pathway, m.id)
                 return (
                   <button

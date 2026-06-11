@@ -7,6 +7,8 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
   const [lastName, setLastName] = useState('')
   const [originalFirstName, setOriginalFirstName] = useState('')
   const [originalLastName, setOriginalLastName] = useState('')
+  const [clinicalFocus, setClinicalFocus] = useState('both')
+  const [originalClinicalFocus, setOriginalClinicalFocus] = useState('both')
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
@@ -21,16 +23,19 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
     async function loadProfile() {
       const { data } = await supabase
         .from('profiles')
-        .select('first_name, last_name, avatar_url')
+        .select('first_name, last_name, avatar_url, clinical_focus')
         .eq('id', user.id)
         .maybeSingle()
       if (data) {
         const fn = data.first_name ?? ''
         const ln = data.last_name ?? ''
+        const focus = data.clinical_focus ?? 'both'
         setFirstName(fn)
         setLastName(ln)
         setOriginalFirstName(fn)
         setOriginalLastName(ln)
+        setClinicalFocus(focus)
+        setOriginalClinicalFocus(focus)
         setAvatarUrl(data.avatar_url ?? null)
       }
     }
@@ -75,6 +80,7 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
     const profileUpdates = { id: user.id, email: user.email }
     if (firstName !== originalFirstName) profileUpdates.first_name = firstName
     if (lastName !== originalLastName) profileUpdates.last_name = lastName
+    if (clinicalFocus !== originalClinicalFocus) profileUpdates.clinical_focus = clinicalFocus
     if (avatarFile) profileUpdates.avatar_url = savedAvatarUrl
 
     const { error: profileError } = await supabase
@@ -88,6 +94,7 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
 
     if (firstName !== originalFirstName) setOriginalFirstName(firstName)
     if (lastName !== originalLastName) setOriginalLastName(lastName)
+    if (clinicalFocus !== originalClinicalFocus) setOriginalClinicalFocus(clinicalFocus)
 
     if (newEmail && newEmail !== user.email) {
       const { error: emailError } = await supabase.auth.updateUser({ email: newEmail })
@@ -107,7 +114,7 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
       }
     }
 
-    onProfileUpdated({ firstName, lastName, avatarUrl: savedAvatarUrl })
+    onProfileUpdated({ firstName, lastName, avatarUrl: savedAvatarUrl, clinicalFocus })
     setSuccessMsg(newEmail && newEmail !== user.email
       ? 'Saved. Check your inbox to confirm the new email address.'
       : 'Profile saved.')
@@ -170,6 +177,24 @@ export default function ProfileModal({ user, onClose, onProfileUpdated }) {
               placeholder="Last name"
             />
           </div>
+        </div>
+
+        {/* Clinical focus */}
+        <div className="field-group" style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid var(--color-border)' }}>
+          <label className="field-label" htmlFor="clinical-focus-select">Clinical focus</label>
+          <select
+            id="clinical-focus-select"
+            className="field-input"
+            value={clinicalFocus}
+            onChange={e => setClinicalFocus(e.target.value)}
+          >
+            <option value="both">Both disciplines</option>
+            <option value="rehab">Neuro &amp; Rehabilitation</option>
+            <option value="msk">Musculoskeletal (MSK)</option>
+          </select>
+          <p style={{ fontSize: '12px', color: 'var(--color-subtle)', marginTop: '4px' }}>
+            Tailors the measure picker and sidebar tools to your caseload. Recorded patient data is always shown, whichever focus you choose.
+          </p>
         </div>
 
         {/* Email */}

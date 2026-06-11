@@ -154,7 +154,7 @@ export default function App() {
   const [showNewPatient, setShowNewPatient] = useState(false)
   const [editingPatient, setEditingPatient] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
-  const [profileData, setProfileData] = useState({ firstName: '', lastName: '', avatarUrl: null })
+  const [profileData, setProfileData] = useState({ firstName: '', lastName: '', avatarUrl: null, clinicalFocus: 'both' })
   const [activeSection, setActiveSection] = useState('directory')
   const [requestedMeasureId, setRequestedMeasureId] = useState(null)
   const [notification, setNotification] = useState(null)
@@ -259,7 +259,7 @@ export default function App() {
       ] = await Promise.all([
         supabase
           .from('profiles')
-          .select('trial_end_date, first_name, last_name, avatar_url')
+          .select('trial_end_date, first_name, last_name, avatar_url, clinical_focus')
           .eq('id', sessionUser.id)
           .maybeSingle(),
         supabase
@@ -300,6 +300,7 @@ export default function App() {
           firstName: profile.first_name ?? '',
           lastName: profile.last_name ?? '',
           avatarUrl: profile.avatar_url ?? null,
+          clinicalFocus: profile.clinical_focus ?? 'both',
         })
       }
 
@@ -791,6 +792,7 @@ export default function App() {
                 patient={selectedPatient}
                 userId={user.id}
                 pathway={selectedPathway}
+                clinicalFocus={profileData.clinicalFocus}
                 requestedMeasureId={requestedMeasureId}
                 onMeasure={(measureId) => goToSection('measures', { measureId, replace: true })}
                 onSaved={handleAssessmentSaved}
@@ -894,8 +896,11 @@ function AppSidebar({
       job: 'Specialist seating workflow',
       icon: Accessibility,
       disabled: patientSectionsDisabled,
+      // Rehab-specific tool — hidden for MSK-focused clinicians (restored via
+      // the profile clinical focus setting; the tool itself is unchanged).
+      hidden: profileData.clinicalFocus === 'msk',
     },
-  ]
+  ].filter(item => !item.hidden)
 
   function handlePatientChange(event) {
     const patient = patients.find(item => String(item.id) === event.target.value)
@@ -1725,6 +1730,7 @@ function OutcomeMeasuresWorkspace({
   patient,
   userId,
   pathway,
+  clinicalFocus,
   requestedMeasureId,
   onMeasure,
   onSaved,
@@ -1758,6 +1764,7 @@ function OutcomeMeasuresWorkspace({
         patient={patient}
         userId={userId}
         pathway={pathway}
+        clinicalFocus={clinicalFocus}
         activeMeasureId={requestedMeasureId}
         initialMeasureId={requestedMeasureId}
         onSaved={onSaved}
@@ -6113,9 +6120,60 @@ const globalStyles = `
     margin-bottom: 8px;
   }
 
+  /* ── MEASURE DOMAIN FILTER (Neuro/Rehab vs MSK) ── */
+  [data-measure-domain-filter] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: max-content;
+    max-width: 100%;
+    margin: 16px auto 0;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--color-surface-soft);
+    box-shadow: inset 0 0 0 1px var(--color-border);
+  }
+
+  [data-measure-domain-filter] span {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--color-subtle);
+    padding: 0 8px 0 12px;
+  }
+
+  [data-measure-domain-filter] button {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-muted);
+    background: none;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  [data-measure-domain-filter] button:hover { color: var(--color-primary); }
+
+  [data-measure-domain-filter] button[data-active] {
+    color: var(--color-surface);
+    background: var(--color-primary);
+    font-weight: 600;
+  }
+
+  [data-measure-domain-filter] button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
   [data-measure-tabs] {
     width: min(100%, 600px);
-    margin: 16px auto;
+    margin: 12px auto 16px;
     padding: 4px;
     border: 0;
     border-radius: 999px;
