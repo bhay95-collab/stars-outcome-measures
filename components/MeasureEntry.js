@@ -29,9 +29,11 @@ import FormNPRS from './FormNPRS'
 import FormPSFS from './FormPSFS'
 import FormLEFS from './FormLEFS'
 import FormBPFS from './FormBPFS'
+import FormKOOS from './FormKOOS'
+import FormHOOS from './FormHOOS'
 import ThreeBarMotif from './ThreeBarMotif'
 
-const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI', 'NPRS', 'PSFS', 'LEFS', 'BPFS'])
+const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI', 'NPRS', 'PSFS', 'LEFS', 'BPFS', 'KOOS', 'HOOS'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
 const CATEGORY_LABELS = {
   performance: 'Performance',
@@ -393,6 +395,8 @@ export default function MeasureEntry({
             {activeMeasure === 'PSFS'    && <FormPSFS     key={`psfs-${patient?.id}`} assessments={assessments} onSubmit={handleSubmit} loading={formLoading} />}
             {activeMeasure === 'LEFS'    && <FormLEFS     onSubmit={handleSubmit} loading={formLoading} />}
             {activeMeasure === 'BPFS'    && <FormBPFS     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'KOOS'    && <FormKOOS     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'HOOS'    && <FormHOOS     onSubmit={handleSubmit} loading={formLoading} />}
           </div>
           {error && <p className="error">{error}</p>}
         </div>

@@ -105,6 +105,75 @@ describe('calcBPFS', () => {
   })
 })
 
+describe('KOOS/HOOS scoring engine', () => {
+  const { scoreKoosSubscale } = require('../lib/clinical/koosFamily')
+  const { calcKOOS, KOOS_SECTIONS } = require('../lib/clinical/koos')
+  const { calcHOOS, HOOS_SECTIONS } = require('../lib/clinical/hoos')
+
+  function fullItems(sections, value) {
+    const items = {}
+    for (const section of sections) items[section.key] = Array(section.items.length).fill(value)
+    return items
+  }
+
+  it('transforms item means to the inverted 0–100 scale', () => {
+    // all 0 (best) → 100; all 4 (worst) → 0; all 2 → 50
+    expect(scoreKoosSubscale(Array(9).fill(0), 9).score).toBe(100)
+    expect(scoreKoosSubscale(Array(9).fill(4), 9).score).toBe(0)
+    expect(scoreKoosSubscale(Array(9).fill(2), 9).score).toBe(50)
+  })
+
+  it('tolerates up to 2 missing items via mean of answered items', () => {
+    // 7 answered at 2, 2 missing → mean 2 → score 50 (mean substitution equivalent)
+    const values = [2, 2, 2, 2, 2, 2, 2, null, null]
+    expect(scoreKoosSubscale(values, 9)).toEqual({ score: 50, missing: 2 })
+  })
+
+  it('refuses to score a subscale with more than 2 missing items', () => {
+    const values = [2, 2, 2, 2, 2, 2, null, null, null]
+    expect(scoreKoosSubscale(values, 9)).toEqual({ score: null, missing: 3 })
+  })
+
+  it('rejects structurally invalid values', () => {
+    expect(scoreKoosSubscale([5, 2, 2], 3)).toBeNull()
+    expect(scoreKoosSubscale([2, 2], 3)).toBeNull()
+  })
+
+  it('scores all five KOOS subscales independently with no total', () => {
+    const result = calcKOOS({ items: fullItems(KOOS_SECTIONS, 1) })
+    expect(result.primaryValue).toBe(75) // Pain
+    expect(result.meta.symptoms).toBe(75)
+    expect(result.meta.adl).toBe(75)
+    expect(result.meta.sport).toBe(75)
+    expect(result.meta.qol).toBe(75)
+    expect(result.interpretation).toContain('100 = no problems')
+    expect(result.meta.total).toBeUndefined()
+  })
+
+  it('returns null when the Pain subscale cannot be scored', () => {
+    const items = fullItems(KOOS_SECTIONS, 1)
+    items.pain = Array(9).fill(null)
+    expect(calcKOOS({ items })).toBeNull()
+  })
+
+  it('leaves an individual non-pain subscale null when too many items are missing', () => {
+    const items = fullItems(KOOS_SECTIONS, 1)
+    items.sport = [1, 1, null, null, null]
+    const result = calcKOOS({ items })
+    expect(result.primaryValue).toBe(75)
+    expect(result.meta.sport).toBeNull()
+    expect(result.interpretation).toContain('Sport/Rec —')
+  })
+
+  it('scores HOOS with its own section lengths (10 pain items)', () => {
+    expect(HOOS_SECTIONS.find(s => s.key === 'pain').items).toHaveLength(10)
+    expect(HOOS_SECTIONS.reduce((n, s) => n + s.items.length, 0)).toBe(40)
+    expect(KOOS_SECTIONS.reduce((n, s) => n + s.items.length, 0)).toBe(42)
+    const result = calcHOOS({ items: fullItems(HOOS_SECTIONS, 3) })
+    expect(result.primaryValue).toBe(25)
+  })
+})
+
 describe('getPreviousPSFSActivities', () => {
   it('returns activities from the most recent PSFS assessment (list is newest first)', () => {
     const assessments = [

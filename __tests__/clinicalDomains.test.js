@@ -39,6 +39,43 @@ describe('measure registry domains', () => {
   })
 })
 
+describe('registry-driven trend series (subscale migration parity)', () => {
+  const { buildMeasureTrendSeries } = require('../lib/clinical/patientSummary')
+
+  function record(measure, primaryValue, meta = {}, created_at = '2026-06-01') {
+    return { measure, created_at, results: { primaryValue, meta } }
+  }
+
+  it('keeps the HADS anxiety + depression series identical to the old special case', () => {
+    const groups = { HADS: [record('HADS', 9, { depressionScore: 6 })] }
+    const series = buildMeasureTrendSeries(groups, 'HADS')
+    expect(series.map(s => [s.key, s.label, s.unit, s.mcidKey])).toEqual([
+      ['primary', 'Anxiety', '/21', null],
+      ['depressionScore', 'Depression', '/21', 'hads-d'],
+    ])
+    expect(series[1].values[0].value).toBe(6)
+  })
+
+  it('keeps the SCIM subscale series', () => {
+    const groups = { SCIM: [record('SCIM', 64, { sc: 12, rs: 28, mob: 24 })] }
+    const labels = buildMeasureTrendSeries(groups, 'SCIM').map(s => s.label)
+    expect(labels).toEqual(['Total score', 'Self-care', 'Respiration/sphincters', 'Mobility'])
+  })
+
+  it('keeps the TUG fast/dual-task series and drops empty ones', () => {
+    const groups = { TUG: [record('TUG', 12.5, { fastTime: 10.1 })] }
+    const series = buildMeasureTrendSeries(groups, 'TUG')
+    expect(series.map(s => s.key)).toEqual(['primary', 'fastTime'])
+    expect(series[0].label).toBe('Comfortable time')
+  })
+
+  it('keeps the 10MWT fast speed series with its MCID key', () => {
+    const groups = { '10MWT': [record('10MWT', 0.82, { fastSpeed: 1.1 })] }
+    const series = buildMeasureTrendSeries(groups, '10MWT')
+    expect(series[1]).toMatchObject({ key: 'fastSpeed', label: 'Fast speed', mcidKey: '10mwt-fast' })
+  })
+})
+
 describe('condition-aware MCID engine', () => {
   it('keeps the original three-argument call working unchanged', () => {
     // TUG: thresh 2.0 sec, lower is better

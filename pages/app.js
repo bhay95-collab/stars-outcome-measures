@@ -6156,6 +6156,34 @@ const globalStyles = `
     color: var(--color-surface);
   }
 
+  /* ── MEASURE FORM SECTIONS (KOOS/HOOS/FAAM subscale groups) ── */
+  [data-measure-section] { margin-bottom: 26px; }
+
+  [data-measure-section-head] {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+  }
+
+  [data-measure-section-head] > strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  [data-measure-section-head] > span {
+    font-size: 12px;
+    color: var(--color-subtle);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
   /* ── PSFS ACTIVITY ROWS ── */
   [data-psfs-activity] { margin-bottom: 18px; }
 
