@@ -1,5 +1,7 @@
 import { calcNPRS } from '../lib/clinical/nprs'
 import { calcPSFS, getPreviousPSFSActivities } from '../lib/clinical/psfs'
+import { calcLEFS } from '../lib/clinical/lefs'
+import { calcBPFS } from '../lib/clinical/bpfs'
 
 describe('calcNPRS', () => {
   it('scores and bands pain ratings', () => {
@@ -58,6 +60,48 @@ describe('calcPSFS', () => {
   it('trims activity names in the saved meta', () => {
     const result = calcPSFS({ activities: [{ name: '  Gardening  ', score: 6 }] })
     expect(result.meta.activities[0].name).toBe('Gardening')
+  })
+})
+
+describe('calcLEFS', () => {
+  it('sums 20 items to /80 with percent of maximal function', () => {
+    const result = calcLEFS({ items: Array(20).fill(3) })
+    expect(result.primaryValue).toBe(60)
+    expect(result.primaryUnit).toBe('/80')
+    expect(result.meta.percentMax).toBe(75)
+    expect(result.interpretation).toBe('75% of maximal function')
+  })
+
+  it('handles floor and ceiling', () => {
+    expect(calcLEFS({ items: Array(20).fill(0) }).primaryValue).toBe(0)
+    expect(calcLEFS({ items: Array(20).fill(4) }).primaryValue).toBe(80)
+  })
+
+  it('requires all 20 items with integer scores 0–4', () => {
+    expect(calcLEFS({ items: Array(19).fill(2) })).toBeNull()
+    expect(calcLEFS({ items: [...Array(19).fill(2), 5] })).toBeNull()
+    expect(calcLEFS({ items: [...Array(19).fill(2), 2.5] })).toBeNull()
+    expect(calcLEFS({ items: [...Array(19).fill(2), NaN] })).toBeNull()
+  })
+})
+
+describe('calcBPFS', () => {
+  it('sums 12 items to /60 with percent of maximal function', () => {
+    const result = calcBPFS({ items: Array(12).fill(3) })
+    expect(result.primaryValue).toBe(36)
+    expect(result.primaryUnit).toBe('/60')
+    expect(result.meta.percentMax).toBe(60)
+  })
+
+  it('handles floor and ceiling', () => {
+    expect(calcBPFS({ items: Array(12).fill(0) }).primaryValue).toBe(0)
+    expect(calcBPFS({ items: Array(12).fill(5) }).primaryValue).toBe(60)
+  })
+
+  it('requires all 12 items with integer scores 0–5', () => {
+    expect(calcBPFS({ items: Array(11).fill(3) })).toBeNull()
+    expect(calcBPFS({ items: [...Array(11).fill(3), 6] })).toBeNull()
+    expect(calcBPFS({ items: [...Array(11).fill(3), -1] })).toBeNull()
   })
 })
 
