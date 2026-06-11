@@ -7,6 +7,39 @@ Licensing key: ✅ free to embed · 🟡 verify/courtesy permission · ⚠️ li
 
 ---
 
+## Wave 2 build status (2026-06-11)
+
+Built this wave (licence-clear, patient-reported, slot into existing pathways;
+full calc + registry + condition-aware MCID + form + MeasureEntry dispatch +
+summary domain + reference card + follow-up eligibility + migration + tests):
+
+- ✅ **CAIT** — Cumberland Ankle Instability Tool (Ankle Sprain / Instability pathway)
+- ✅ **ATRS** — Achilles Tendon Total Rupture Score (Achilles Tendinopathy pathway)
+- ✅ **FABQ** — Fear-Avoidance Beliefs Questionnaire (Low Back Pain pathway; yellow flags)
+
+Also this session: the neuro MCID/classification engine was made **condition-aware**
+(10MWT, TUG, 6MWT, BBS, ABC + SCIM MDC) with `byCondition` overrides and a
+`thresholdType: 'mdc'` honesty label, and the patient condition is now threaded
+through every `getMCIDStatus` call site. See `[[project_condition_aware_mcid]]`.
+
+Remaining licence-clear Wave 2 queue (deferred — each needs its own verification/build):
+
+- 🟡 **OMAS** (Olerud–Molander Ankle Score) — blocked on confirming the exact
+  per-item point weights against a primary source before coding (weights vary
+  0–5 … 0–25 by item; not yet verified, so not invented).
+- **Harris Hip Score** — clinician composite (pain 44 / function 47 / deformity 4
+  / ROM 5); larger multi-part form, build separately.
+- **Mayo Elbow Performance Index** — clinician composite (pain 45 / motion 20 /
+  stability 10 / function 25); needs a new "Elbow" condition + form.
+- **HAGOS** — 6-subscale hip/groin PROM; reuses the KOOS/HOOS engine but needs
+  exact HAGOS item wording + a new hip/groin condition.
+
+All ⚠️ measures (ODI, NDI, QuickDASH, OSS, PCS, MSK-HQ) and 🟡 verify-first
+measures (IKDC, iHOT-12, FFI, KOS, PSEQ, TSK, CSI) remain out of scope until
+licensing/verification clears.
+
+---
+
 ## Tier 1 — Licence-gated measures already fully researched (build first once licences are signed)
 
 Full clinical profiles (structure, scoring, missing-item rules, bands, MCID/MDC by condition) are in `docs/msk-expansion-plan.md` §4 "Deferred profiles". These are plug-in builds.

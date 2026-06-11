@@ -9,7 +9,7 @@ import {
 describe('patient follow-up questionnaires', () => {
   it('exposes safe public questionnaire metadata for eligible measures', () => {
     expect(FOLLOWUP_QUESTIONNAIRE_MEASURE_IDS).toEqual(
-      ['ABC', 'FSS', 'HADS', 'PDQ8', 'RPQ', 'BIVI', 'NPRS', 'LEFS', 'BPFS', 'KOOS', 'HOOS']
+      ['ABC', 'FSS', 'HADS', 'PDQ8', 'RPQ', 'BIVI', 'NPRS', 'LEFS', 'BPFS', 'KOOS', 'HOOS', 'CAIT', 'ATRS', 'FABQ']
     )
 
     const abc = getFollowUpQuestionnaire('ABC')

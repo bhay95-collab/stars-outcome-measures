@@ -23,6 +23,7 @@ export function getAssessmentComparison(
   current: Assessment,
   previous: Assessment,
   measure: MeasureDefinition,
+  condition?: string | null,
 ): AssessmentComparison | null {
   const currentValue = toFiniteNumber(current.results?.primaryValue);
   const previousValue = toFiniteNumber(previous.results?.primaryValue);
@@ -45,7 +46,7 @@ export function getAssessmentComparison(
     : `${sign}${change.rawStr}`;
 
   const rawMCID = measure.mcidKey
-    ? getMCIDStatus(measure.mcidKey, currentValue, previousValue)
+    ? getMCIDStatus(measure.mcidKey, currentValue, previousValue, condition)
     : null;
 
   return {

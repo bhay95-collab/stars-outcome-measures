@@ -109,7 +109,7 @@ export default function SummaryTab({ patient, assessments, onDeleteAssessment, o
                   </select>
                 )}
               </div>
-              <MeasureTrendChart series={trendSeries} measureId={activeMeasureId} />
+              <MeasureTrendChart series={trendSeries} measureId={activeMeasureId} condition={patient.diagnosis} />
             </div>
 
             <PathwayPanel pathway={pathway} />
@@ -293,7 +293,7 @@ function PathwayPanel({ pathway }) {
   )
 }
 
-function MeasureTrendChart({ series, measureId }) {
+function MeasureTrendChart({ series, measureId, condition }) {
   const points = series.flatMap(item => item.values.map(point => point.value))
   if (!points.length) {
     return (
@@ -354,7 +354,7 @@ function MeasureTrendChart({ series, measureId }) {
               {item.values.length > 1 && <polyline points={linePoints} data-line="progress" style={{ stroke: color }} />}
               {item.values.map((point, index) => {
                 const previous = index > 0 ? item.values[index - 1] : null
-                const mcid = item.mcidKey && previous ? getMCIDStatus(item.mcidKey, point.value, previous.value) : null
+                const mcid = item.mcidKey && previous ? getMCIDStatus(item.mcidKey, point.value, previous.value, condition) : null
                 return (
                   <g key={`${item.key}-${point.date}`}>
                     <circle cx={toX(point.date)} cy={toY(point.value)} r={mcid?.meetsThreshold ? 7 : 5} style={{ fill: color }} data-mcid={mcid?.meetsThreshold ? '' : undefined} />

@@ -80,6 +80,7 @@ export const getMCIDStatus = _getMCIDStatus as (
   mcidKey: string,
   current: number,
   previous: number,
+  condition?: string | null,
 ) => MCIDStatus | null;
 
 export const MEASURES = _MEASURES as Record<string, MeasureDefinition>;
