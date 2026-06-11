@@ -79,10 +79,11 @@ function queryFor(result, mode = 'maybeSingle') {
   return query
 }
 
-function mockAccessQueries({ profile, subscription = null, patients = [] }) {
+function mockAccessQueries({ profile, subscription = null, appStoreSubscription = null, patients = [] }) {
   supabase.from.mockImplementation(table => {
     if (table === 'profiles') return queryFor({ data: profile, error: null })
     if (table === 'subscriptions') return queryFor({ data: subscription, error: null })
+    if (table === 'app_store_subscriptions') return queryFor({ data: appStoreSubscription, error: null })
     if (table === 'patients') return queryFor({ data: patients, error: null }, 'order')
     return queryFor({ data: null, error: null })
   })
@@ -112,12 +113,14 @@ describe('App boot states', () => {
   it('shows the workspace skeleton while user data loads', async () => {
     const profileLoad = deferred()
     const subscriptionLoad = deferred()
+    const appStoreLoad = deferred()
     supabase.auth.getSession.mockResolvedValue({
       data: { session: { user: { id: 'user-1', email: 'clinician@example.com' } } },
     })
     supabase.from.mockImplementation(table => {
       if (table === 'profiles') return queryFor(profileLoad.promise, 'pendingMaybeSingle')
       if (table === 'subscriptions') return queryFor(subscriptionLoad.promise, 'pendingMaybeSingle')
+      if (table === 'app_store_subscriptions') return queryFor(appStoreLoad.promise, 'pendingMaybeSingle')
       return queryFor({ data: [], error: null })
     })
 
@@ -131,6 +134,7 @@ describe('App boot states', () => {
         error: null,
       })
       subscriptionLoad.resolve({ data: null, error: null })
+      appStoreLoad.resolve({ data: null, error: null })
     })
   })
 
@@ -169,5 +173,28 @@ describe('App boot states', () => {
     render(<App />)
 
     expect(await screen.findByText('Subscription required')).toBeInTheDocument()
+  })
+
+  it('renders the app for an active App Store subscription', async () => {
+    supabase.auth.getSession.mockResolvedValue({
+      data: { session: { user: { id: 'user-1', email: 'clinician@example.com' } } },
+    })
+    mockAccessQueries({
+      profile: {
+        trial_end_date: '2000-01-01T00:00:00.000Z',
+        first_name: 'Ada',
+        last_name: 'Clinician',
+        avatar_url: null,
+      },
+      appStoreSubscription: {
+        is_active: true,
+        expiration_at: '2999-01-01T00:00:00.000Z',
+      },
+      patients: [{ id: 'patient-1', initials: 'AB' }],
+    })
+
+    render(<App />)
+
+    expect(await screen.findByText('Patient list loaded')).toBeInTheDocument()
   })
 })

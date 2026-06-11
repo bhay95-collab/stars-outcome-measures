@@ -147,6 +147,27 @@ describe('/api/signup', () => {
     }))
   })
 
+  it('uses the mobile deep link for native account creation', async () => {
+    mockAdmin()
+    mockSignupClient()
+    const req = makeReq({
+      email: 'mobile@example.com',
+      password: 'TestPassword123!',
+      source: 'mobile',
+    }, '1.1.1.2')
+    const res = makeRes()
+
+    await signupHandler(req, res)
+
+    const signupClient = createClient.mock.results.at(-1).value
+    expect(signupClient.auth.signUp).toHaveBeenCalledWith(expect.objectContaining({
+      options: {
+        emailRedirectTo: 'rehabmetricsiq://sign-in?verified=1',
+        data: { signup_source: 'mobile' },
+      },
+    }))
+  })
+
   it('blocks emails that are not eligible for a new trial', async () => {
     mockAdmin({ deletedAccount: { id: 'deleted-1' } })
     const req = makeReq({ email: 'deleted@example.com', password: 'TestPassword123!' }, '2.2.2.2')

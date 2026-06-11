@@ -16,8 +16,9 @@
     },
     "ios": {
       "supportsTablet": true,
+      "usesAppleSignIn": true,
       "bundleIdentifier": "com.rehabmetricsiq.app",
-      "buildNumber": "10",
+      "buildNumber": "11",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -37,6 +38,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-apple-authentication",
       "expo-web-browser",
       "expo-video",
       "@sentry/react-native/expo"

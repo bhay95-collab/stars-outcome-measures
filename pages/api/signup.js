@@ -1,12 +1,15 @@
-import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 import { getAdminClient } from '../../lib/supabase-admin'
+import {
+  hashEmail,
+  normalizeEmail,
+  trialEndDate,
+} from '../../lib/account-provisioning'
 
 const RATE_LIMIT_WINDOW_MS = 60_000
 const RATE_LIMIT_MAX = 5
 const rateLimitMap = new Map()
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const TRIAL_DAYS = 14
 
 function pruneExpiredEntries() {
   const now = Date.now()
@@ -28,22 +31,9 @@ function isRateLimited(ip) {
   return entry.count > RATE_LIMIT_MAX
 }
 
-function normalizeEmail(email) {
-  return String(email ?? '').trim().toLowerCase()
-}
+function getEmailRedirectUrl(req, source) {
+  if (source === 'mobile') return 'rehabmetricsiq://sign-in?verified=1'
 
-function hashEmail(email) {
-  return crypto
-    .createHash('sha256')
-    .update(normalizeEmail(email))
-    .digest('hex')
-}
-
-function trialEndDate() {
-  return new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString()
-}
-
-function getEmailRedirectUrl(req) {
   const configuredUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL
   if (configuredUrl) return `${configuredUrl.replace(/\/$/, '')}/app`
 
@@ -102,6 +92,7 @@ export default async function handler(req, res) {
 
   const email = normalizeEmail(req.body?.email)
   const password = String(req.body?.password ?? '')
+  const source = req.body?.source === 'mobile' ? 'mobile' : 'web'
 
   if (!EMAIL_RE.test(email) || email.length > 254) {
     return res.status(400).json({ error: 'Enter a valid email address.' })
@@ -129,8 +120,8 @@ export default async function handler(req, res) {
     email,
     password,
     options: {
-      emailRedirectTo: getEmailRedirectUrl(req),
-      data: { signup_source: 'web' },
+      emailRedirectTo: getEmailRedirectUrl(req, source),
+      data: { signup_source: source },
     },
   })
 

@@ -1,6 +1,6 @@
 import { supabase } from './client';
 
-export type AccessReason = 'trial' | 'subscription' | 'none';
+export type AccessReason = 'trial' | 'stripe' | 'app_store' | 'none';
 
 export interface AccessStatus {
   hasAccess: boolean;
@@ -8,7 +8,7 @@ export interface AccessStatus {
 }
 
 export async function checkAccess(userId: string): Promise<AccessStatus> {
-  const [profileResult, subResult] = await Promise.all([
+  const [profileResult, stripeResult, appStoreResult] = await Promise.all([
     supabase
       .from('profiles')
       .select('trial_end_date')
@@ -19,13 +19,20 @@ export async function checkAccess(userId: string): Promise<AccessStatus> {
       .select('status, current_period_end')
       .eq('user_id', userId)
       .maybeSingle(),
+    supabase
+      .from('app_store_subscriptions')
+      .select('is_active, expiration_at')
+      .eq('user_id', userId)
+      .maybeSingle(),
   ]);
 
   if (profileResult.error) throw new Error('Access check unavailable.');
-  if (subResult.error) throw new Error('Access check unavailable.');
+  if (stripeResult.error) throw new Error('Access check unavailable.');
+  if (appStoreResult.error) throw new Error('Access check unavailable.');
 
   const profile = profileResult.data;
-  const sub = subResult.data;
+  const stripeSubscription = stripeResult.data;
+  const appStoreSubscription = appStoreResult.data;
   const now = new Date();
 
   const isTrialActive = profile?.trial_end_date
@@ -33,11 +40,17 @@ export async function checkAccess(userId: string): Promise<AccessStatus> {
     : false;
 
   const isSubscriptionActive =
-    sub?.status === 'active' &&
-    !!sub?.current_period_end &&
-    new Date(sub.current_period_end) > now;
+    stripeSubscription?.status === 'active' &&
+    !!stripeSubscription?.current_period_end &&
+    new Date(stripeSubscription.current_period_end) > now;
 
-  if (isSubscriptionActive) return { hasAccess: true, reason: 'subscription' };
+  const isAppStoreActive =
+    appStoreSubscription?.is_active === true &&
+    !!appStoreSubscription?.expiration_at &&
+    new Date(appStoreSubscription.expiration_at) > now;
+
+  if (isSubscriptionActive) return { hasAccess: true, reason: 'stripe' };
+  if (isAppStoreActive) return { hasAccess: true, reason: 'app_store' };
   if (isTrialActive) return { hasAccess: true, reason: 'trial' };
   return { hasAccess: false, reason: 'none' };
 }

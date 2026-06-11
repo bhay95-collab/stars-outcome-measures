@@ -120,6 +120,7 @@ function makeQuery(table, state) {
     maybeSingle: jest.fn(() => {
       if (table === 'profiles') return Promise.resolve({ data: state.profile, error: null })
       if (table === 'subscriptions') return Promise.resolve({ data: state.subscription, error: null })
+      if (table === 'app_store_subscriptions') return Promise.resolve({ data: state.appStoreSubscription, error: null })
       if (table === 'patients') return Promise.resolve({ data: state.patient, error: null })
       if (table === 'followup_requests') {
         if (query.payload) {
@@ -162,6 +163,7 @@ function mockAdmin(state = {}) {
   const adminState = {
     profile: { trial_end_date: '2999-01-01T00:00:00.000Z' },
     subscription: null,
+    appStoreSubscription: null,
     patient: { id: patientId, user_id: user.id },
     requests: [],
     responses: [],

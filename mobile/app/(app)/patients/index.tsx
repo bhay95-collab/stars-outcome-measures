@@ -13,7 +13,7 @@ import Animated, {
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { User } from '@supabase/supabase-js';
-import { SIGN_OUT_ERROR_MESSAGE, useAuth } from '../../../src/auth/AuthProvider';
+import { useAuth } from '../../../src/auth/AuthProvider';
 import { withTimeout, DATA_FETCH_TIMEOUT_MS } from '../../../src/utils/withTimeout';
 import { supabase } from '../../../src/supabase/client';
 import { createPatient, listPatients } from '../../../src/supabase/patients';
@@ -29,6 +29,7 @@ import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { TextInput as ClinicalTextInput } from '../../../src/components/ui/TextInput';
 import { colors, spacing, typography, radii } from '../../../src/theme/tokens';
 import { CONDITION_OPTIONS } from '@clinical/constants';
+import { AccountSettingsSheet } from '../../../src/components/account/AccountSettingsSheet';
 
 const GENDER_OPTIONS: { value: PatientGender; label: string }[] = [
   { value: 'M', label: 'Male' },
@@ -48,10 +49,6 @@ function getUserInitials(user: User): string {
   return (user.email?.[0] ?? '?').toUpperCase();
 }
 
-function getUserDisplayName(user: User): string {
-  return user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? '';
-}
-
 function UserAvatarButton({ user, avatarUrl, onPress }: { user: User; avatarUrl: string | null; onPress: () => void }) {
   return (
     <Pressable
@@ -68,65 +65,6 @@ function UserAvatarButton({ user, avatarUrl, onPress }: { user: User; avatarUrl:
         </View>
       )}
     </Pressable>
-  );
-}
-
-function SettingsSheet({
-  visible,
-  user,
-  avatarUrl,
-  onDismiss,
-  onSignOut,
-}: {
-  visible: boolean;
-  user: User;
-  avatarUrl: string | null;
-  onDismiss: () => void;
-  onSignOut: () => void;
-}) {
-  const insets = useSafeAreaInsets();
-
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onDismiss}
-    >
-      <Pressable style={styles.backdrop} onPress={onDismiss} />
-      <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
-        <View style={styles.sheetHandle} />
-
-        <View style={styles.sheetUser}>
-          {avatarUrl ? (
-            <Image source={{ uri: avatarUrl }} style={styles.sheetAvatar} />
-          ) : (
-            <View style={styles.sheetAvatarFallback}>
-              <Text style={styles.sheetAvatarInitials}>{getUserInitials(user)}</Text>
-            </View>
-          )}
-          <View style={styles.sheetUserInfo}>
-            <Text style={styles.sheetName} numberOfLines={1}>
-              {getUserDisplayName(user)}
-            </Text>
-            {user.email ? (
-              <Text style={styles.sheetEmail} numberOfLines={1}>{user.email}</Text>
-            ) : null}
-          </View>
-        </View>
-
-        <View style={styles.sheetDivider} />
-
-        <Pressable
-          onPress={onSignOut}
-          style={({ pressed }) => [styles.signOutBtn, pressed && styles.signOutBtnPressed]}
-          accessibilityRole="button"
-          accessibilityLabel="Sign out"
-        >
-          <Text style={styles.signOutText}>Sign out</Text>
-        </Pressable>
-      </View>
-    </Modal>
   );
 }
 
@@ -447,7 +385,7 @@ function CreatePatientSheet({
 }
 
 export default function PatientsScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -520,17 +458,6 @@ export default function PatientsScreen() {
       return searchable.includes(query);
     });
   }, [patients, searchQuery]);
-
-  async function handleSignOut() {
-    setSettingsVisible(false);
-    setError(null);
-    try {
-      await signOut();
-      router.replace('/sign-in');
-    } catch {
-      setError(SIGN_OUT_ERROR_MESSAGE);
-    }
-  }
 
   async function handlePatientCreated() {
     setCreatePatientVisible(false);
@@ -622,12 +549,10 @@ export default function PatientsScreen() {
       </View>
 
       {user ? (
-        <SettingsSheet
+        <AccountSettingsSheet
           visible={settingsVisible}
-          user={user}
           avatarUrl={resolvedAvatarUrl}
           onDismiss={() => setSettingsVisible(false)}
-          onSignOut={handleSignOut}
         />
       ) : null}
       <CreatePatientSheet
@@ -677,10 +602,6 @@ const styles = StyleSheet.create({
   modalRoot: {
     flex: 1,
   },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
   createBackdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -706,64 +627,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: spacing.xs,
-  },
-  sheetUser: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  sheetAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-  },
-  sheetAvatarFallback: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheetAvatarInitials: {
-    fontSize: typography.sizeLg,
-    fontWeight: typography.weightBold,
-    color: colors.muted,
-  },
-  sheetUserInfo: {
-    flex: 1,
-  },
-  sheetName: {
-    fontSize: typography.sizeMd,
-    fontWeight: typography.weightSemibold,
-    color: colors.ink,
-  },
-  sheetEmail: {
-    fontSize: typography.sizeSm,
-    color: colors.muted,
-    marginTop: spacing.xs,
-  },
-  sheetDivider: {
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  signOutBtn: {
-    height: 48,
-    borderRadius: radii.button,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  signOutBtnPressed: {
-    opacity: 0.7,
-  },
-  signOutText: {
-    fontSize: typography.sizeMd,
-    fontWeight: typography.weightMedium,
-    color: colors.ink,
   },
   createSheet: {
     maxHeight: '92%',

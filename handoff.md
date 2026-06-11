@@ -13,7 +13,7 @@ Apple Developer account is now approved and App Store Connect is accessible. The
 **Three pre-build blockers remain before running the production EAS build:**
 
 1. **App icon** — `mobile/assets/icon.png` is still the default Expo placeholder. Must be replaced with the branded RehabMetrics IQ icon (resize `SquareLogo.png` to 1024×1024 and overwrite `icon.png`).
-2. **Screenshots** — existing screenshots were taken on a real device. App Store requires exact dimensions: iPhone 6.7" = 1290×2796 px, iPad 12.9" = 2048×2732 px. Also need to retake with a clean demo account (no personal profile photo visible).
+2. **Screenshots** — retake the listing with fictional clinical data and the revised login, subscription, and account UI. Use App Store Connect's currently accepted 6.9-inch iPhone and 13-inch iPad dimensions.
 3. **`eas.json` submit block** — needs real `appleId`, `ascAppId`, and `appleTeamId` values filled in (see section 4B).
 
 No code changes have been made since the last handoff. The working tree is clean.
@@ -94,11 +94,15 @@ Everything below is the remaining work.
 
 ### What still needs to be done before building
 
-### Subscription model — important
+### Subscription model, updated after App Review rejection
 
-The subscription is entirely web-based via Stripe. Users sign up and pay at rehabmetricsiq.com. The mobile app checks for an active web subscription and shows a wall if none exists. **There is no in-app purchase flow.** No StoreKit or Play Billing is needed.
+The previous web-only subscription assumption is no longer valid for iOS. Apple rejected build 10 under guideline 3.1.1 on June 10, 2026.
 
-Apple and Google allow this model provided the app does not show a "subscribe" button inside the app itself — the subscription wall must only direct the user to the website. Do not add any in-app purchase UI.
+- Stripe remains the web billing provider.
+- iOS offers monthly and annual auto-renewable subscriptions through Apple and RevenueCat.
+- Existing Stripe customers continue to receive access without purchasing again.
+- Stripe and App Store entitlement records remain separate, and either source can grant access.
+- The iOS app must not link to external payment methods from its subscription screen.
 
 ---
 
@@ -124,9 +128,9 @@ In App Store Connect at appstoreconnect.apple.com:
    - Keywords (up to 100 characters, comma-separated)
    - Support URL: `https://www.rehabmetricsiq.com`
 
-4. **Screenshots — two sizes are required**
-   - **iPhone 6.7"** (iPhone 15 Pro Max) — required dimensions: **1290 × 2796 px**
-   - **iPad 12.9"** (3rd gen or later) — required dimensions: **2048 × 2732 px** — required because `supportsTablet: true` is set in `app.json`
+4. **Screenshots — two device classes are required**
+   - **iPhone 6.9-inch display** using a dimension currently accepted by App Store Connect.
+   - **iPad 13-inch display** using a dimension currently accepted by App Store Connect. iPad screenshots are required because `supportsTablet: true` is set in `app.json`.
    - Capture from Xcode Simulator at those exact device sizes (not from a real device)
    - Use a clean demo account with no personal profile photo visible
    - Suggested screens: Login, Patient Directory, Patient Workspace, Select Measure
@@ -258,7 +262,7 @@ After uploading:
 - [ ] `google-play-key.json` downloaded and placed at `mobile/google-play-key.json`
 - [ ] `google-play-key.json` added to `.gitignore`
 - [ ] App icon replaced — resize `SquareLogo.png` to 1024×1024 and save as `mobile/assets/icon.png`
-- [ ] Screenshots captured at exact dimensions: iPhone 6.7" (1290×2796) and iPad 12.9" (2048×2732), using Simulator, with clean demo account
+- [ ] Screenshots captured at accepted 6.9-inch iPhone and 13-inch iPad dimensions, using Simulator and fictional clinical data
 - [ ] App Store listing text written (description, keywords, support URL)
 - [ ] Demo credentials (active subscription account) ready for App Review Notes
 - [ ] `eas build --platform all --profile production` completes without errors

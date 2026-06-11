@@ -11,7 +11,7 @@ export default function DataDeletion() {
           </div>
 
           <h1 className="title">Data Deletion</h1>
-          <p className="meta">Last updated: May 2026</p>
+          <p className="meta">Last updated: June 2026</p>
 
           <p className="intro">
             You have the right to delete your data from RehabMetrics IQ at any time. This page explains
@@ -37,20 +37,23 @@ export default function DataDeletion() {
 
           <h2>Delete Your Account and All Data</h2>
           <p>
-            To permanently delete your account and all data associated with it — including all patient records
-            and assessments — send a deletion request by email:
+            You can permanently delete your account and all associated data directly from the RehabMetrics IQ
+            mobile app:
           </p>
-          <div className="contact-box">
-            <p className="contact-label">Send your request to:</p>
-            <a href="mailto:Support@RehabMetricsIQ.com?subject=Account%20Deletion%20Request" className="contact-email">
+          <ol>
+            <li>Sign in to the mobile app.</li>
+            <li>Open <strong>Account</strong> from the patient directory or subscription screen.</li>
+            <li>Select <strong>Delete account</strong>.</li>
+            <li>Review the billing notice and continue to the final confirmation.</li>
+            <li>Select <strong>Delete account permanently</strong>.</li>
+          </ol>
+          <p>
+            If you cannot access the app, contact{' '}
+            <a href="mailto:Support@RehabMetricsIQ.com?subject=Account%20Deletion%20Help">
               Support@RehabMetricsIQ.com
-            </a>
-            <p className="contact-note">
-              Use the subject line <strong>Account Deletion Request</strong> and include the email address
-              associated with your account. We will process your request within <strong>30 days</strong> and
-              confirm by email once complete.
-            </p>
-          </div>
+            </a>{' '}
+            for assistance.
+          </p>
 
           <h2>What Gets Deleted</h2>
           <p>When your account is deleted, we permanently remove:</p>
@@ -58,9 +61,13 @@ export default function DataDeletion() {
             <li>Your account credentials and profile.</li>
             <li>All patient records you have created.</li>
             <li>All clinical assessment data and scores.</li>
-            <li>Your subscription and billing history (note: Stripe may retain payment records as required by law).</li>
+            <li>Your RehabMetrics IQ subscription entitlement records.</li>
           </ul>
-          <p>Deletion is irreversible. We do not retain backups of deleted accounts beyond 30 days.</p>
+          <p>
+            Deletion is irreversible. Active account and clinical data is removed immediately. Encrypted backups
+            may take up to 30 days to age out. Stripe, Apple, and RevenueCat may retain transaction records where
+            required for billing, fraud prevention, tax, or legal obligations.
+          </p>
 
           <h2>Google Sign-In Users</h2>
           <p>
@@ -69,6 +76,20 @@ export default function DataDeletion() {
             <a href="https://myaccount.google.com/permissions" target="_blank" rel="noreferrer">
               Google Account Permissions
             </a>.
+          </p>
+
+          <h2>Sign in with Apple and App Store Subscriptions</h2>
+          <p>
+            If you use Sign in with Apple, the deletion flow asks you to authenticate with Apple again so
+            RehabMetrics IQ can revoke its Apple login authorization. Deleting your RehabMetrics IQ account
+            does not cancel an App Store subscription.
+          </p>
+          <p>
+            Cancel an Apple subscription before or after deletion through{' '}
+            <a href="https://apps.apple.com/account/subscriptions" target="_blank" rel="noreferrer">
+              Apple subscription settings
+            </a>{' '}
+            to prevent future renewals.
           </p>
 
           <h2>Questions</h2>

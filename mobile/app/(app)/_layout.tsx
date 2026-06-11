@@ -93,7 +93,7 @@ export default function AppLayout() {
   }
 
   if (!accessStatus?.hasAccess) {
-    return <Redirect href="/sign-in?reason=access_expired" />;
+    return <Redirect href="/subscribe" />;
   }
 
   return <Stack screenOptions={{ headerShown: false }} />;

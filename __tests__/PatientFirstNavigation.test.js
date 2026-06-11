@@ -93,6 +93,7 @@ function queryForTable(table, { patients = [], assessmentsByPatient = {}, profil
         })
       }
       if (table === 'subscriptions') return Promise.resolve({ data: null, error: null })
+      if (table === 'app_store_subscriptions') return Promise.resolve({ data: null, error: null })
       return Promise.resolve({ data: null, error: null })
     }),
     order: jest.fn(() => {

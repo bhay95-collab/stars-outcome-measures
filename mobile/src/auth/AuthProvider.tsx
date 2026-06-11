@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../supabase/client';
 import { withTimeout, SESSION_TIMEOUT_MS } from '../utils/withTimeout';
+import { identifyPurchasesUser, logOutPurchases } from '../billing/revenuecat';
 
 export const SIGN_OUT_ERROR_MESSAGE = 'Unable to sign out. Please try again.';
 
@@ -54,7 +55,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!session?.user.id) return;
+    identifyPurchasesUser(session.user.id).catch(() => {
+      // Billing initialization is retried on the subscription screen.
+    });
+  }, [session?.user.id]);
+
   async function signOut(): Promise<void> {
+    await logOutPurchases().catch(() => undefined);
     const { error } = await supabase.auth.signOut();
     if (error) throw new Error(SIGN_OUT_ERROR_MESSAGE);
     setSession(null);

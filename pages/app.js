@@ -254,7 +254,8 @@ export default function App() {
 
       const [
         { data: profile, error: profileError },
-        { data: subData }
+        { data: subData, error: subscriptionError },
+        { data: appStoreData, error: appStoreError },
       ] = await Promise.all([
         supabase
           .from('profiles')
@@ -266,11 +267,16 @@ export default function App() {
           .select('stripe_customer_id, stripe_subscription_id, status, current_period_end')
           .eq('user_id', sessionUser.id)
           .maybeSingle(),
+        supabase
+          .from('app_store_subscriptions')
+          .select('is_active, expiration_at')
+          .eq('user_id', sessionUser.id)
+          .maybeSingle(),
       ])
 
       if (!active) return
 
-      if (profileError) {
+      if (profileError || subscriptionError || appStoreError) {
         setHasAccess(false)
         setBootState('ready')
         return
@@ -281,9 +287,13 @@ export default function App() {
         subData?.status === 'active' &&
         subData?.current_period_end &&
         new Date(subData.current_period_end) > new Date()
+      const isAppStoreActive =
+        appStoreData?.is_active === true &&
+        appStoreData?.expiration_at &&
+        new Date(appStoreData.expiration_at) > new Date()
 
       setSubscription(subData ?? null)
-      setHasAccess(isTrialActive || isSubscriptionActive)
+      setHasAccess(isTrialActive || isSubscriptionActive || isAppStoreActive)
 
       if (profile) {
         setProfileData({
@@ -293,7 +303,7 @@ export default function App() {
         })
       }
 
-      if (isTrialActive || isSubscriptionActive) {
+      if (isTrialActive || isSubscriptionActive || isAppStoreActive) {
         const { data: pats } = await supabase
           .from('patients')
           .select('*')

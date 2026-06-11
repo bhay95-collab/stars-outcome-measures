@@ -2,6 +2,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as Linking from 'expo-linking';
 import { supabase } from '../supabase/client';
+import { provisionOAuthProfile } from './oauthProvisioning';
 
 export const GOOGLE_SIGN_IN_ERROR_MESSAGE = 'Google sign-in could not be completed. Please try again.';
 
@@ -37,11 +38,13 @@ export async function signInWithGoogle(): Promise<boolean> {
       throw new Error(GOOGLE_SIGN_IN_ERROR_MESSAGE);
     }
 
-    const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
-    if (sessionError) throw new Error(GOOGLE_SIGN_IN_ERROR_MESSAGE);
+    const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+    if (sessionError || !sessionData.session) throw new Error(GOOGLE_SIGN_IN_ERROR_MESSAGE);
+    await provisionOAuthProfile(sessionData.session);
 
     return true;
   } catch {
+    await supabase.auth.signOut().catch(() => undefined);
     throw new Error(GOOGLE_SIGN_IN_ERROR_MESSAGE);
   }
 }

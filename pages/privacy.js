@@ -21,9 +21,9 @@ export default function Privacy() {
           <h2>1. Information We Collect</h2>
           <p>When you use RehabMetrics IQ, we collect the following information:</p>
           <ul>
-            <li><strong>Account information:</strong> Your email address and encrypted password when you register, or your Google account details if you sign in with Google.</li>
+            <li><strong>Account information:</strong> Your email address and encrypted password when you register, or the account details provided when you sign in with Google or Apple. Apple may provide a private relay email address if you choose Hide My Email.</li>
             <li><strong>Patient data you enter:</strong> Patient initials (no full names), optional patient email address, date of birth, diagnosis category, and clinical outcome measure scores and inputs.</li>
-            <li><strong>Payment information:</strong> When you subscribe, payments are processed by Stripe, Inc. We do not store your full payment card details. Stripe may collect card details, billing address, and transaction history. See Stripe&apos;s privacy policy for how they handle this data.</li>
+            <li><strong>Payment information:</strong> Web subscriptions are processed by Stripe. iOS subscriptions are processed by Apple through the App Store and managed for entitlement purposes through RevenueCat. We receive subscription status, product, transaction identifiers, and renewal dates, but do not receive or store your full card details.</li>
             <li><strong>Usage data:</strong> Basic information about how you interact with the service, such as feature usage and error reports, to help us improve the product.</li>
           </ul>
 
@@ -71,6 +71,12 @@ export default function Privacy() {
             privacy policy and security certifications. We do not store payment card numbers on our servers.
           </p>
           <p>
+            iOS subscriptions are processed by <strong>Apple Inc.</strong> through the App Store. We use{' '}
+            <strong>RevenueCat, Inc.</strong> to verify App Store purchases and synchronize subscription
+            entitlements across your RehabMetrics IQ account. RevenueCat receives an internal user identifier,
+            purchased product identifier, transaction information, subscription status, and renewal dates.
+          </p>
+          <p>
             Patient questionnaire emails are sent through <strong>Resend</strong> when you choose to email a
             secure follow-up link. Email content is limited to the secure link, questionnaire name, expiry date,
             and safety disclaimer. We do not include diagnosis, date of birth, scores, or other clinical details
@@ -100,7 +106,8 @@ export default function Privacy() {
           <h2>5. Data Retention</h2>
           <p>
             Your account data and patient records are retained for as long as your account is active.
-            If you close your account or request deletion, your data will be permanently removed within 30 days.
+            When you complete in-app account deletion, active account and clinical data is removed immediately.
+            Residual encrypted backups may take up to 30 days to age out.
             See our <a href="/data-deletion">Data Deletion</a> page for instructions.
           </p>
 
@@ -109,7 +116,7 @@ export default function Privacy() {
           <ul>
             <li>Access the data we hold about you.</li>
             <li>Correct inaccurate data.</li>
-            <li>Request deletion of your data.</li>
+            <li>Delete your account and associated data directly from the mobile app.</li>
             <li>Export your data in a portable format — contact us to request this.</li>
           </ul>
 

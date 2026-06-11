@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { supabase } from '../src/supabase/client';
@@ -16,20 +17,19 @@ import { ThreeBarLoading } from '../src/components/ui/ThreeBarMotif';
 import { colors, spacing, typography, radii } from '../src/theme/tokens';
 
 import { GOOGLE_SIGN_IN_ERROR_MESSAGE, signInWithGoogle } from '../src/auth/googleAuth';
+import { APPLE_SIGN_IN_ERROR_MESSAGE, signInWithApple } from '../src/auth/appleAuth';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const heroVideo = require('../assets/videos/hero-loop.mp4');
 
-const WEB_SIGNUP_URL = 'https://www.rehabmetricsiq.com/signup';
 const squareLogo = require('../assets/SquareLogo.png');
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 600;
-  const { reason } = useLocalSearchParams<{ reason?: string }>();
-  const isAccessExpired = reason === 'access_expired';
+  const { verified, deleted } = useLocalSearchParams<{ verified?: string; deleted?: string }>();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,6 +37,8 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isAppleLoading, setIsAppleLoading] = useState(false);
+  const isBusy = isLoading || isGoogleLoading || isAppleLoading;
 
   const videoPlayer = useVideoPlayer(heroVideo, (player) => {
     player.loop = true;
@@ -55,7 +57,7 @@ export default function SignInScreen() {
   }
 
   async function handleGoogleSignIn() {
-    if (isLoading || isGoogleLoading) return;
+    if (isBusy) return;
     setError(null);
     setIsGoogleLoading(true);
     try {
@@ -69,19 +71,22 @@ export default function SignInScreen() {
     }
   }
 
-  async function handleCreateAccount() {
-    if (isLoading || isGoogleLoading) return;
+  async function handleAppleSignIn() {
+    if (isBusy) return;
     setError(null);
-
+    setIsAppleLoading(true);
     try {
-      await WebBrowser.openBrowserAsync(WEB_SIGNUP_URL);
-    } catch {
-      setError('Create account could not be opened. Please visit rehabmetricsiq.com/signup.');
+      const completed = await signInWithApple();
+      if (completed) router.replace('/(app)/patients');
+    } catch (appleError) {
+      setError(appleError instanceof Error ? appleError.message : APPLE_SIGN_IN_ERROR_MESSAGE);
+    } finally {
+      setIsAppleLoading(false);
     }
   }
 
   async function handleSignIn() {
-    if (isLoading || isGoogleLoading) return;
+    if (isBusy) return;
 
     if (!email.trim() || !password) {
       setError('Email and password are required.');
@@ -153,10 +158,18 @@ export default function SignInScreen() {
               <Text style={styles.formSubtitle}>Log in to continue to your account.</Text>
             </View>
 
-            {isAccessExpired ? (
+            {verified === '1' ? (
               <View style={styles.accessNotice}>
                 <Text style={styles.accessNoticeText}>
-                  Your trial or subscription has ended. Visit rehabmetricsiq.com to continue.
+                  Email confirmed. Log in to start your 14-day trial.
+                </Text>
+              </View>
+            ) : null}
+
+            {deleted === '1' ? (
+              <View style={styles.accessNotice}>
+                <Text style={styles.accessNoticeText}>
+                  Your account and clinical data have been deleted.
                 </Text>
               </View>
             ) : null}
@@ -197,10 +210,10 @@ export default function SignInScreen() {
 
             <Pressable
               onPress={handleSignIn}
-              disabled={isLoading || isGoogleLoading}
+              disabled={isBusy}
               style={({ pressed }) => [
                 styles.loginButton,
-                (isLoading || isGoogleLoading || pressed) && styles.loginButtonPressed,
+                (isBusy || pressed) && styles.loginButtonPressed,
               ]}
               accessibilityRole="button"
               accessibilityLabel="Log in"
@@ -212,12 +225,30 @@ export default function SignInScreen() {
               )}
             </Pressable>
 
+            {Platform.OS === 'ios' ? (
+              <View style={isBusy && !isAppleLoading ? styles.socialDisabled : undefined}>
+                {isAppleLoading ? (
+                  <View style={styles.appleLoading}>
+                    <ThreeBarLoading size="sm" tone="inverse" />
+                  </View>
+                ) : (
+                  <AppleAuthentication.AppleAuthenticationButton
+                    buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                    buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                    cornerRadius={radii.button}
+                    style={styles.appleButton}
+                    onPress={handleAppleSignIn}
+                  />
+                )}
+              </View>
+            ) : null}
+
             <Pressable
               onPress={handleGoogleSignIn}
-              disabled={isLoading || isGoogleLoading}
+              disabled={isBusy}
               style={({ pressed }) => [
                 styles.googleButton,
-                (isLoading || isGoogleLoading || pressed) && styles.googleButtonPressed,
+                (isBusy || pressed) && styles.googleButtonPressed,
               ]}
               accessibilityRole="button"
               accessibilityLabel="Continue with Google"
@@ -238,17 +269,17 @@ export default function SignInScreen() {
             <View style={styles.signupCard}>
               <View style={styles.signupCopy}>
                 <Text style={styles.signupTitle}>New to RehabMetrics IQ?</Text>
-                <Text style={styles.signupText}>Create your account on the secure web signup page.</Text>
+                <Text style={styles.signupText}>Create your account securely without leaving the app.</Text>
               </View>
               <Pressable
-                onPress={handleCreateAccount}
-                disabled={isLoading || isGoogleLoading}
-                accessibilityRole="link"
-                accessibilityLabel="Create account on the secure web signup page"
+                onPress={() => router.push('/sign-up')}
+                disabled={isBusy}
+                accessibilityRole="button"
+                accessibilityLabel="Create account"
                 style={({ pressed }) => [
                   styles.signupButton,
                   pressed && styles.signupButtonPressed,
-                  (isLoading || isGoogleLoading) && styles.signupButtonDisabled,
+                  isBusy && styles.signupButtonDisabled,
                 ]}
               >
                 <Text style={styles.signupLink}>Create account</Text>
@@ -401,6 +432,20 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeMd,
     fontWeight: typography.weightSemibold,
     color: colors.primary,
+  },
+  appleButton: {
+    width: '100%',
+    height: 52,
+  },
+  appleLoading: {
+    height: 52,
+    borderRadius: radii.button,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialDisabled: {
+    opacity: 0.45,
   },
   signupCard: {
     marginTop: spacing.xs,

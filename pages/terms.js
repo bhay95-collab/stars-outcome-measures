@@ -11,7 +11,7 @@ export default function Terms() {
           </div>
 
           <h1 className="title">Terms of Service</h1>
-          <p className="meta">Last updated: April 2026</p>
+          <p className="meta">Last updated: June 2026</p>
 
           <p className="intro">
             Please read these Terms of Service carefully before using RehabMetrics IQ. By creating an account or
@@ -68,8 +68,10 @@ export default function Terms() {
             <li>New accounts receive a 14-day free trial with full access to all features.</li>
             <li>No credit card is required to start a trial.</li>
             <li>After the trial period, continued access requires a paid subscription.</li>
-            <li>Subscription fees are billed monthly or annually as selected at checkout.</li>
-            <li>You may cancel your subscription at any time. Access continues until the end of the billing period.</li>
+            <li>Subscription fees are billed monthly or annually through Stripe on the web or Apple&apos;s App Store on iOS.</li>
+            <li>App Store subscriptions renew automatically unless cancelled at least 24 hours before the end of the current billing period.</li>
+            <li>You may cancel at any time through the billing provider used to purchase your subscription. Access continues until the end of the paid billing period.</li>
+            <li>Deleting your RehabMetrics IQ account does not automatically cancel an App Store subscription. You must cancel it separately in your Apple subscription settings.</li>
           </ul>
 
           <h2>7. Acceptable Use</h2>
