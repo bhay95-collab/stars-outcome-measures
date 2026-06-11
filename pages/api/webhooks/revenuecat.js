@@ -12,6 +12,10 @@ export default async function handler(req, res) {
   }
 
   const event = req.body?.event
+  if (event?.type === 'TEST') {
+    return res.status(200).json({ received: true, test: true })
+  }
+
   const eventId = event?.id
   if (!eventId) return res.status(400).json({ error: 'Missing RevenueCat event id' })
 

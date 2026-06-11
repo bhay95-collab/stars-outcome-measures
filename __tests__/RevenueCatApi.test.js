@@ -132,6 +132,52 @@ describe('RevenueCat subscription synchronization', () => {
     ])
   })
 
+  it('acknowledges TEST events without persisting or synchronizing them', async () => {
+    const req = {
+      method: 'POST',
+      headers: { authorization: 'Bearer webhook-secret' },
+      body: {
+        event: {
+          id: 'test-event-1',
+          type: 'TEST',
+          app_user_id: 'fake-app-user-id',
+          product_id: 'test_product',
+        },
+      },
+    }
+    const res = makeRes()
+
+    await revenueCatWebhook(req, res)
+
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toEqual({ received: true, test: true })
+    expect(getAdminClient).not.toHaveBeenCalled()
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  it('still requires authorization for TEST events', async () => {
+    const req = {
+      method: 'POST',
+      headers: { authorization: 'Bearer incorrect-secret' },
+      body: {
+        event: {
+          id: 'test-event-1',
+          type: 'TEST',
+          app_user_id: 'fake-app-user-id',
+          product_id: 'test_product',
+        },
+      },
+    }
+    const res = makeRes()
+
+    await revenueCatWebhook(req, res)
+
+    expect(res.statusCode).toBe(401)
+    expect(res.body).toEqual({ error: 'Invalid webhook authorization' })
+    expect(getAdminClient).not.toHaveBeenCalled()
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
   it('processes a webhook once and marks it complete', async () => {
     const { admin, state } = makeAdmin()
     getAdminClient.mockReturnValue(admin)
