@@ -15,13 +15,22 @@ import {
   questionnaireAttentionLevel,
   validateFollowUpQuestionnaireAnswers,
 } from '../../../../lib/followupQuestionnaires'
+import { createRateLimiter, getClientIp } from '../../../../lib/rateLimit'
 
 function unavailable(res, reason, status = 200) {
   return res.status(status).json({ state: 'unavailable', reason })
 }
 
+// Unauthenticated, token-gated endpoint. Tokens are 256-bit and stored hashed so
+// brute force is infeasible, but an IP cap hardens against probing/abuse bursts.
+const isRateLimited = createRateLimiter({ windowMs: 60_000, max: 30 })
+
 export default async function handler(req, res) {
   if (!['GET', 'POST'].includes(req.method)) return res.status(405).end()
+
+  if (isRateLimited(getClientIp(req))) {
+    return res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' })
+  }
 
   const token = Array.isArray(req.query.token) ? req.query.token[0] : req.query.token
   if (!token || typeof token !== 'string' || token.length < 20 || token.length > 256) {

@@ -5,31 +5,11 @@ import {
   normalizeEmail,
   trialEndDate,
 } from '../../lib/account-provisioning'
+import { createRateLimiter, getClientIp } from '../../lib/rateLimit'
 
-const RATE_LIMIT_WINDOW_MS = 60_000
-const RATE_LIMIT_MAX = 5
-const rateLimitMap = new Map()
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-function pruneExpiredEntries() {
-  const now = Date.now()
-  for (const [key, entry] of rateLimitMap) {
-    if (now > entry.resetAt) rateLimitMap.delete(key)
-  }
-}
-
-function isRateLimited(ip) {
-  pruneExpiredEntries()
-  const now = Date.now()
-  const existing = rateLimitMap.get(ip) ?? { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS }
-  const isExpired = now > existing.resetAt
-  const entry = {
-    count: isExpired ? 1 : existing.count + 1,
-    resetAt: isExpired ? now + RATE_LIMIT_WINDOW_MS : existing.resetAt,
-  }
-  rateLimitMap.set(ip, entry)
-  return entry.count > RATE_LIMIT_MAX
-}
+const isRateLimited = createRateLimiter({ windowMs: 60_000, max: 5 })
 
 function getEmailRedirectUrl(req, source) {
   if (source === 'mobile') return 'rehabmetricsiq://sign-in?verified=1'
@@ -135,9 +115,7 @@ async function deleteCreatedAccount(admin, userId) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const ip = req.headers['x-real-ip']
-    || req.socket?.remoteAddress
-    || 'unknown'
+  const ip = getClientIp(req)
   if (isRateLimited(ip)) return res.status(429).json({ error: 'Too many signup attempts. Please wait a minute and try again.' })
 
   const email = normalizeEmail(req.body?.email)

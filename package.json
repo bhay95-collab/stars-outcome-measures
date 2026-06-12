@@ -10,15 +10,15 @@
   },
   "dependencies": {
     "@sentry/nextjs": "^10.53.1",
-    "@stripe/stripe-js": "latest",
-    "@supabase/supabase-js": "latest",
+    "@stripe/stripe-js": "^9.3.0",
+    "@supabase/supabase-js": "^2.104.0",
     "isncsci-ui": "^1.0.38",
     "lucide-react": "^1.9.0",
-    "next": "latest",
+    "next": "^16.2.4",
     "pdf-lib": "^1.17.1",
-    "react": "latest",
-    "react-dom": "latest",
-    "stripe": "latest"
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "stripe": "^22.0.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
