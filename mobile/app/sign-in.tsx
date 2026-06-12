@@ -13,6 +13,7 @@ import { withTimeout, SIGN_IN_TIMEOUT_MS } from '../src/utils/withTimeout';
 import { Screen } from '../src/components/ui/Screen';
 import { TextInput } from '../src/components/ui/TextInput';
 import { LogoWordmark } from '../src/components/ui/LogoWordmark';
+import { GoogleIcon } from '../src/components/ui/GoogleIcon';
 import { ThreeBarLoading } from '../src/components/ui/ThreeBarMotif';
 import { colors, spacing, typography, radii } from '../src/theme/tokens';
 
@@ -256,7 +257,10 @@ export default function SignInScreen() {
               {isGoogleLoading ? (
                 <ThreeBarLoading size="sm" tone="brand" />
               ) : (
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
+                <View style={styles.googleButtonContent}>
+                  <GoogleIcon size={20} />
+                  <Text style={styles.googleButtonText}>Continue with Google</Text>
+                </View>
               )}
             </Pressable>
 
@@ -397,7 +401,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   loginButtonText: {
-    fontSize: typography.sizeMd,
+    fontSize: typography.sizeLg,
     fontWeight: typography.weightSemibold,
     color: '#FFFFFF',
   },
@@ -420,18 +424,25 @@ const styles = StyleSheet.create({
   googleButton: {
     height: 52,
     borderRadius: radii.button,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleButtonPressed: {
     opacity: 0.7,
   },
+  googleButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
   googleButtonText: {
-    fontSize: typography.sizeMd,
+    fontSize: typography.sizeLg,
     fontWeight: typography.weightSemibold,
-    color: colors.primary,
+    color: colors.ink,
   },
   appleButton: {
     width: '100%',
