@@ -28,21 +28,61 @@ function SignupHead() {
   )
 }
 
+function SignupVisual() {
+  return (
+    <div className="login-visual">
+      <video
+        className="login-visual__video"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        poster="/assets/videos/login-poster.jpg"
+        aria-hidden="true"
+      >
+        <source src="/assets/videos/login-loop.mp4" type="video/mp4" />
+      </video>
+      <div className="login-visual__content">
+        <LogoWordmark size="lg" showMark={false} />
+        <p className="eyebrow">CLINICAL OUTCOMES PLATFORM</p>
+        <h1>Start your trial with the clinical context built in.</h1>
+        <div className="login-visual__metrics" aria-label="What your trial includes">
+          <div><strong>23</strong><span>Outcome measures for gait, balance, endurance, independence and symptoms.</span></div>
+          <div><strong>MCID</strong><span>Meaningful-change interpretation beside every patient trend.</span></div>
+          <div><strong>Reports</strong><span>Clinical reports for your team, GP, and funders.</span></div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Signup() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [appleLoading, setAppleLoading] = useState(false)
   const [error, setError] = useState('')
   const [emailSent, setEmailSent] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState('')
+
+  const oauthBusy = googleLoading || appleLoading || loading
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) router.replace('/app')
     })
   }, [router])
+
+  function toErrorMessage(err) {
+    if (!err) return 'Something went wrong. Please try again.'
+    if (typeof err === 'string') return err
+    if (typeof err.message === 'string' && err.message && err.message !== '{}') return err.message
+    if (typeof err.error === 'string' && err.error && err.error !== '{}') return err.error
+    return 'Something went wrong. Please try again.'
+  }
 
   async function signInWithGoogle() {
     setGoogleLoading(true)
@@ -57,12 +97,17 @@ export default function Signup() {
     }
   }
 
-  function toErrorMessage(err) {
-    if (!err) return 'Something went wrong. Please try again.'
-    if (typeof err === 'string') return err
-    if (typeof err.message === 'string' && err.message && err.message !== '{}') return err.message
-    if (typeof err.error === 'string' && err.error && err.error !== '{}') return err.error
-    return 'Something went wrong. Please try again.'
+  async function signInWithApple() {
+    setAppleLoading(true)
+    setError('')
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo: getAppRedirectUrl() }
+    })
+    if (oauthError) {
+      setError(toErrorMessage(oauthError))
+      setAppleLoading(false)
+    }
   }
 
   async function handleSubmit(e) {
@@ -94,106 +139,106 @@ export default function Signup() {
     }
   }
 
-  if (emailSent) {
-    return (
-      <>
-        <SignupHead />
-        <style jsx>{pageStyles}</style>
-        <div className="page">
-          <div className="card">
-            <LogoWordmark size="md" spaceAfter />
-            <h1 className="heading">Check your email</h1>
-            <p className="subtext">
-              We sent a verification link to <strong>{submittedEmail}</strong>.
-              Open it to activate your account and start your 14-day trial.
-            </p>
-            <a href="/login" className="btn" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: '24px' }}>
-              Go to log in
-            </a>
-          </div>
-        </div>
-      </>
-    )
-  }
-
   return (
     <>
       <SignupHead />
       <style jsx>{pageStyles}</style>
-      <div className="page">
-        <div className="card">
-          <LogoWordmark size="md" spaceAfter />
-          <p className="eyebrow">CLINICAL OUTCOMES PLATFORM</p>
-          <h1 className="heading">Create your account</h1>
-          <p className="subtext">
-            RehabMetrics IQ helps physiotherapists and rehabilitation teams score, interpret,
-            and track standardised outcome measures. Start your 14-day free trial — no credit card required.
-          </p>
-          <ul className="signup-points">
-            <li>Outcome measures for gait, balance, endurance, independence and symptoms</li>
-            <li>MCID-aware interpretation beside patient trends</li>
-            <li>Clinical reports for your team, GP, and funders</li>
-          </ul>
+      <main className="page">
+        <section className="login-shell">
+          <SignupVisual />
 
-          <button type="button" className="btn-google" onClick={signInWithGoogle} disabled={googleLoading || loading}>
-            <GoogleIcon />
-            {googleLoading ? (
-              <span className="button-loading">
-                <ThreeBarMotif size="xs" loading label="Redirecting to Google" />
-                Redirecting…
-              </span>
-            ) : 'Continue with Google'}
-          </button>
-
-          <div className="divider"><span>or</span></div>
-
-          <form onSubmit={handleSubmit}>
-            <div className="field">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                placeholder="you@clinic.com"
-              />
+          {emailSent ? (
+            <div className="card card--centered">
+              <LogoWordmark size="md" spaceAfter />
+              <h2 className="heading">Check your email</h2>
+              <p className="subtext">
+                We sent a verification link to <strong>{submittedEmail}</strong>.
+                Open it to activate your account and start your 14-day trial.
+              </p>
+              <a href="/login" className="btn btn--link">Go to log in</a>
             </div>
-            <div className="field">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-                minLength={6}
-                placeholder="Minimum 6 characters"
-              />
+          ) : (
+            <div className="card">
+              <LogoWordmark size="md" spaceAfter />
+              <h2 className="heading">Create your account</h2>
+              <p className="subtext">
+                RehabMetrics IQ helps physiotherapists and rehabilitation teams score, interpret,
+                and track standardised outcome measures. Start your 14-day free trial — no credit card required.
+              </p>
+
+              <div className="social-auth">
+                <button type="button" className="btn-google" onClick={signInWithGoogle} disabled={oauthBusy}>
+                  <GoogleIcon />
+                  {googleLoading ? (
+                    <span className="button-loading">
+                      <ThreeBarMotif size="xs" loading label="Redirecting to Google" />
+                      Redirecting…
+                    </span>
+                  ) : 'Continue with Google'}
+                </button>
+
+                <button type="button" className="btn-apple" onClick={signInWithApple} disabled={oauthBusy}>
+                  <AppleIcon />
+                  {appleLoading ? (
+                    <span className="button-loading">
+                      <ThreeBarMotif size="xs" tone="light" loading label="Redirecting to Apple" />
+                      Redirecting…
+                    </span>
+                  ) : 'Continue with Apple'}
+                </button>
+              </div>
+
+              <div className="divider"><span>or</span></div>
+
+              <form onSubmit={handleSubmit}>
+                <div className="field">
+                  <label htmlFor="email">Email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                    placeholder="you@clinic.com"
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="password">Password</label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    minLength={6}
+                    placeholder="Minimum 6 characters"
+                  />
+                </div>
+
+                {error && <p className="error">{error}</p>}
+
+                <button type="submit" className="btn" disabled={loading}>
+                  {loading ? (
+                    <span className="button-loading">
+                      <ThreeBarMotif size="xs" tone="light" loading label="Creating account" />
+                      Creating account…
+                    </span>
+                  ) : 'Create account'}
+                </button>
+              </form>
+
+              <p className="footer">
+                Already have an account? <a href="/login">Log in</a>
+              </p>
+              <p className="footer">
+                <a href="/">Learn more about RehabMetrics IQ</a>
+              </p>
             </div>
-
-            {error && <p className="error">{error}</p>}
-
-            <button type="submit" className="btn" disabled={loading}>
-              {loading ? (
-                <span className="button-loading">
-                  <ThreeBarMotif size="xs" tone="light" loading label="Creating account" />
-                  Creating account…
-                </span>
-              ) : 'Create account'}
-            </button>
-          </form>
-
-          <p className="footer">
-            Already have an account? <a href="/login">Log in</a>
-          </p>
-          <p className="footer">
-            <a href="/">Learn more about RehabMetrics IQ</a>
-          </p>
-        </div>
-      </div>
+          )}
+        </section>
+      </main>
     </>
   )
 }
@@ -209,53 +254,210 @@ function GoogleIcon() {
   )
 }
 
+function AppleIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
+    </svg>
+  )
+}
+
 const pageStyles = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
     --color-primary:      #236499;
+    --color-primary-dark: #17496F;
+    --color-primary-soft: #EAF3FB;
+    --color-secondary:    #7FB3E6;
+    --color-secondary-soft: #DCEEFF;
     --color-ink:          #1F2933;
     --color-muted:        #5F6B7A;
     --color-subtle:       #8A96A3;
     --color-surface:      #FFFFFF;
     --color-surface-soft: #F7FAFC;
     --color-border:       #D8E2EC;
-    --shadow-md:          0 6px 16px rgba(31,41,51,0.08);
+    --shadow-md:          0 18px 42px rgba(21,34,56,0.12);
   }
 
   body { font-family: 'Inter', sans-serif; }
 
+  @keyframes shell-appear {
+    from { opacity: 0; transform: translateY(16px) scale(0.99); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes metric-appear {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+
   .page {
     min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 32px;
     background: var(--color-surface-soft);
+  }
+
+  .login-shell {
+    width: min(100%, 1040px);
+    min-height: min(680px, calc(100vh - 64px));
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(380px, 0.82fr);
+    overflow: hidden;
+    border: 1px solid rgba(216,226,236,0.95);
+    border-radius: 18px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-md);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .login-shell { animation: shell-appear 0.52s cubic-bezier(0.16, 1, 0.3, 1); }
+    .login-visual__metrics > div:nth-child(1) { animation: metric-appear 0.5s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .login-visual__metrics > div:nth-child(2) { animation: metric-appear 0.5s 0.18s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .login-visual__metrics > div:nth-child(3) { animation: metric-appear 0.5s 0.26s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  }
+
+  .login-visual {
+    position: relative;
+    min-height: 560px;
+    isolation: isolate;
+    overflow: hidden;
+    background: #17496F;
+  }
+
+  .login-visual__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transform: scale(1.12);
+    z-index: 0;
+  }
+
+  .login-visual::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(9, 19, 32, 0.68), rgba(9, 19, 32, 0.26) 56%, rgba(9, 19, 32, 0.08)),
+      linear-gradient(180deg, rgba(9, 19, 32, 0.18), rgba(9, 19, 32, 0.1) 42%, rgba(9, 19, 32, 0.54));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .login-visual__video { display: none; }
+  }
+
+  .login-visual__content {
+    position: relative;
+    z-index: 3;
+    min-height: 100%;
     display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 46px;
+    color: #fff;
+  }
+
+  .login-visual__content .logo-wordmark {
+    margin-bottom: auto;
+    color: #fff;
+    text-shadow: 0 2px 18px rgba(0,0,0,0.3);
+  }
+
+  .login-visual__content .logo-wordmark__iq {
+    color: var(--color-secondary);
+  }
+
+  .eyebrow {
+    margin-bottom: 12px;
+    color: rgba(255,255,255,0.76);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.28);
+  }
+
+  .login-visual h1 {
+    max-width: 520px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(34px, 4vw, 54px);
+    font-weight: 700;
+    line-height: 1.04;
+    text-shadow: 0 2px 22px rgba(0,0,0,0.32);
+  }
+
+  .login-visual__metrics {
+    width: min(100%, 520px);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .login-visual__metrics > div {
+    min-height: 94px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.24);
+    border-radius: 10px;
+    background: rgba(8,18,30,0.58);
+    box-shadow: inset 0 1px rgba(255,255,255,0.16);
+  }
+
+  .login-visual__metrics strong {
+    display: block;
+    font-size: clamp(22px, 2.4vw, 28px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .login-visual__metrics span {
+    display: block;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.74);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .button-loading {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 32px 16px;
+    gap: 9px;
   }
 
   .card {
     width: 100%;
-    max-width: 420px;
+    align-self: center;
+    max-width: none;
+    padding: 46px;
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 16px;
-    padding: 40px;
-    box-shadow: var(--shadow-md);
   }
 
-  .eyebrow {
-    margin-bottom: 10px;
-    color: var(--color-primary);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 1.4px;
+  .card--centered {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    min-height: 100%;
+  }
+
+  .card .logo-wordmark {
+    margin-bottom: 32px;
+  }
+
+  .card--centered .logo-wordmark {
+    align-self: center;
   }
 
   .heading {
     font-family: 'Source Serif 4', serif;
     font-size: 26px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--color-ink);
     line-height: 1.2;
     margin-bottom: 8px;
@@ -265,38 +467,7 @@ const pageStyles = `
     font-size: 14px;
     color: var(--color-muted);
     line-height: 1.5;
-    margin-bottom: 20px;
-  }
-
-  .signup-points {
-    list-style: none;
-    margin-bottom: 28px;
-    padding: 14px 16px;
-    background: var(--color-surface-soft);
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .signup-points li {
-    position: relative;
-    padding-left: 18px;
-    font-size: 13px;
-    color: var(--color-muted);
-    line-height: 1.45;
-  }
-
-  .signup-points li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 7px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--color-primary);
+    margin-bottom: 24px;
   }
 
   .field {
@@ -316,7 +487,7 @@ const pageStyles = `
     font-family: 'Inter', sans-serif;
     font-size: 15px;
     color: var(--color-ink);
-    background: var(--color-surface);
+    background: var(--color-surface-soft);
     border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 10px 14px;
@@ -325,7 +496,7 @@ const pageStyles = `
     width: 100%;
   }
 
-  input:focus { border-color: var(--color-primary); }
+  input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(35,100,153,0.12); transition: border-color 0.15s, box-shadow 0.15s; }
 
   input::placeholder { color: var(--color-subtle); }
 
@@ -348,17 +519,19 @@ const pageStyles = `
     font-weight: 600;
     cursor: pointer;
     margin-top: 8px;
-    transition: opacity 0.15s;
+    box-shadow: 0 10px 22px rgba(35,100,153,0.24);
+    transition: background 0.18s, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s, opacity 0.15s;
   }
 
-  .btn:hover { opacity: 0.9; }
-  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn:hover { background: var(--color-primary-dark); transform: translateY(-1px); box-shadow: 0 14px 28px rgba(35,100,153,0.34); }
+  .btn:active { transform: translateY(0); box-shadow: 0 6px 14px rgba(35,100,153,0.2); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-  .button-loading {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
+  .btn--link {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 24px;
   }
 
   .footer {
@@ -376,11 +549,16 @@ const pageStyles = `
 
   .footer a:hover { text-decoration: underline; }
 
-  .btn-google {
+  .social-auth {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .btn-google,
+  .btn-apple {
     width: 100%;
-    background: var(--color-surface);
-    color: var(--color-ink);
-    border: 1px solid var(--color-border);
     border-radius: 10px;
     padding: 12px 24px;
     font-family: 'Inter', sans-serif;
@@ -391,12 +569,28 @@ const pageStyles = `
     align-items: center;
     justify-content: center;
     gap: 10px;
-    transition: background 0.15s;
-    margin-bottom: 4px;
+    transition: background 0.15s, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
   }
 
-  .btn-google:hover { background: var(--color-surface-soft); }
-  .btn-google:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-google {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-google:hover { background: var(--color-surface-soft); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(21,34,56,0.1); }
+  .btn-google:active { transform: translateY(0); }
+  .btn-google:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .btn-apple {
+    background: #000000;
+    color: #ffffff;
+    border: 1px solid #000000;
+  }
+
+  .btn-apple:hover { background: #1c1c1e; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+  .btn-apple:active { transform: translateY(0); }
+  .btn-apple:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
   .divider {
     display: flex;
@@ -413,5 +607,39 @@ const pageStyles = `
     flex: 1;
     height: 1px;
     background: var(--color-border);
+  }
+
+  @media (max-width: 860px) {
+    .page {
+      padding: 18px;
+    }
+
+    .login-shell {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+
+    .login-visual {
+      min-height: 320px;
+    }
+
+    .login-visual__content,
+    .card {
+      padding: 30px;
+    }
+
+    .login-visual__metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .login-visual__metrics > div:last-child {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .login-visual__metrics {
+      grid-template-columns: 1fr;
+    }
   }
 `
