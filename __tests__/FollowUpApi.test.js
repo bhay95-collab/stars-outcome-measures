@@ -199,7 +199,7 @@ describe('follow-up API routes', () => {
         measureId: 'ABC',
         sourceAssessmentId,
         dueAt: '2026-06-05T00:00:00.000Z',
-        expiresAt: '2026-06-12T00:00:00.000Z',
+        expiresAt: '2999-06-12T00:00:00.000Z',
       },
     })
     const res = makeRes()
@@ -242,7 +242,7 @@ describe('follow-up API routes', () => {
         sourceAssessmentId,
         deliveryMode: 'email',
         dueAt: '2026-06-05T00:00:00.000Z',
-        expiresAt: '2026-06-12T00:00:00.000Z',
+        expiresAt: '2999-06-12T00:00:00.000Z',
       },
     })
     const res = makeRes()
@@ -310,7 +310,7 @@ describe('follow-up API routes', () => {
         measureId: 'ABC',
         deliveryMode: 'email',
         dueAt: '2026-06-05T00:00:00.000Z',
-        expiresAt: '2026-06-12T00:00:00.000Z',
+        expiresAt: '2999-06-12T00:00:00.000Z',
       },
     })
     const res = makeRes()
@@ -340,7 +340,7 @@ describe('follow-up API routes', () => {
         measureId: 'ABC',
         deliveryMode: 'email',
         dueAt: '2026-06-05T00:00:00.000Z',
-        expiresAt: '2026-06-12T00:00:00.000Z',
+        expiresAt: '2999-06-12T00:00:00.000Z',
       },
     })
     const res = makeRes()
@@ -361,7 +361,7 @@ describe('follow-up API routes', () => {
         patientId,
         measureId: 'ABC',
         dueAt: '2026-06-05T00:00:00.000Z',
-        expiresAt: '2026-06-12T00:00:00.000Z',
+        expiresAt: '2999-06-12T00:00:00.000Z',
       },
     })
     const res = makeRes()
@@ -380,7 +380,7 @@ describe('follow-up API routes', () => {
         patientId,
         measureId: 'ABC',
         dueAt: '2026-06-05T00:00:00.000Z',
-        expiresAt: '2026-06-12T00:00:00.000Z',
+        expiresAt: '2999-06-12T00:00:00.000Z',
       },
     })
     const res = makeRes()
