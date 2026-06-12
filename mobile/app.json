@@ -9,11 +9,6 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "jsEngine": "jsc",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#094b8a"
-    },
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
@@ -41,7 +36,16 @@
       "expo-apple-authentication",
       "expo-web-browser",
       "expo-video",
-      "@sentry/react-native/expo"
+      "@sentry/react-native/expo",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#094b8a"
+        }
+      ]
     ],
     "extra": {
       "router": {},
