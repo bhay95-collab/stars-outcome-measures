@@ -13,7 +13,10 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [appleLoading, setAppleLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const oauthBusy = googleLoading || appleLoading || loading
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -31,6 +34,19 @@ export default function Login() {
     if (oauthError) {
       setError(oauthError.message)
       setGoogleLoading(false)
+    }
+  }
+
+  async function signInWithApple() {
+    setAppleLoading(true)
+    setError('')
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo: getAppRedirectUrl() }
+    })
+    if (oauthError) {
+      setError(oauthError.message)
+      setAppleLoading(false)
     }
   }
 
@@ -104,15 +120,27 @@ export default function Login() {
             <h2 className="heading">Welcome back</h2>
             <p className="subtext">Log in to RehabMetrics IQ — the clinical outcomes platform for physiotherapists and rehabilitation teams.</p>
 
-            <button type="button" className="btn-google" onClick={signInWithGoogle} disabled={googleLoading || loading}>
-              <GoogleIcon />
-              {googleLoading ? (
-                <span className="button-loading">
-                  <ThreeBarMotif size="xs" loading label="Redirecting to Google" />
-                  Redirecting…
-                </span>
-              ) : 'Continue with Google'}
-            </button>
+            <div className="social-auth">
+              <button type="button" className="btn-google" onClick={signInWithGoogle} disabled={oauthBusy}>
+                <GoogleIcon />
+                {googleLoading ? (
+                  <span className="button-loading">
+                    <ThreeBarMotif size="xs" loading label="Redirecting to Google" />
+                    Redirecting…
+                  </span>
+                ) : 'Continue with Google'}
+              </button>
+
+              <button type="button" className="btn-apple" onClick={signInWithApple} disabled={oauthBusy}>
+                <AppleIcon />
+                {appleLoading ? (
+                  <span className="button-loading">
+                    <ThreeBarMotif size="xs" tone="light" loading label="Redirecting to Apple" />
+                    Redirecting…
+                  </span>
+                ) : 'Continue with Apple'}
+              </button>
+            </div>
 
             <div className="divider"><span>or</span></div>
 
@@ -171,6 +199,14 @@ function GoogleIcon() {
       <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
       <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
       <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+  )
+}
+
+function AppleIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
     </svg>
   )
 }
@@ -443,11 +479,16 @@ const pageStyles = `
 
   .footer a:hover { text-decoration: underline; }
 
-  .btn-google {
+  .social-auth {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .btn-google,
+  .btn-apple {
     width: 100%;
-    background: var(--color-surface);
-    color: var(--color-ink);
-    border: 1px solid var(--color-border);
     border-radius: 10px;
     padding: 12px 24px;
     font-family: 'Inter', sans-serif;
@@ -459,12 +500,27 @@ const pageStyles = `
     justify-content: center;
     gap: 10px;
     transition: background 0.15s, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
-    margin-bottom: 4px;
+  }
+
+  .btn-google {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    border: 1px solid var(--color-border);
   }
 
   .btn-google:hover { background: var(--color-surface-soft); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(21,34,56,0.1); }
   .btn-google:active { transform: translateY(0); }
   .btn-google:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .btn-apple {
+    background: #000000;
+    color: #ffffff;
+    border: 1px solid #000000;
+  }
+
+  .btn-apple:hover { background: #1c1c1e; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+  .btn-apple:active { transform: translateY(0); }
+  .btn-apple:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
   .divider {
     display: flex;
