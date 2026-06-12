@@ -2981,7 +2981,10 @@ const globalStyles = `
     top: 0;
     height: 100vh;
     min-width: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
     padding: 28px 14px 18px;
@@ -6688,7 +6691,18 @@ const globalStyles = `
       display: none;
     }
     .app-sidebar__bottom {
-      display: none;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 14px;
+    }
+    .sidebar-signout {
+      width: auto;
+      min-height: 42px;
+      padding: 0 16px;
+      white-space: nowrap;
     }
     .app-main {
       padding: 28px 16px 44px;
