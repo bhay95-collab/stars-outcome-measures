@@ -12,6 +12,7 @@ jest.mock('../lib/stripe-server', () => ({
 }))
 jest.mock('../lib/apple-server', () => ({
   revokeAppleAuthorizationCode: jest.fn(),
+  resolveAppleClient: jest.fn(() => 'com.rehabmetricsiq.app'),
   userUsesAppleLogin: jest.fn(user => user.app_metadata?.providers?.includes('apple')),
 }))
 
@@ -113,7 +114,7 @@ describe('/api/delete-account', () => {
 
     expect(res.statusCode).toBe(200)
     expect(stripe.subscriptions.cancel).toHaveBeenCalledWith('sub_123')
-    expect(revokeAppleAuthorizationCode).toHaveBeenCalledWith('apple-code')
+    expect(revokeAppleAuthorizationCode).toHaveBeenCalledWith('apple-code', { clientId: 'com.rehabmetricsiq.app' })
     expect(state.deletedTables).toEqual(expect.arrayContaining([
       'followup_responses',
       'followup_requests',

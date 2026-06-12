@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { userUsesAppleLogin } from '../lib/apple-identity'
 import LogoWordmark from './LogoWordmark'
 import ThreeBarMotif from './ThreeBarMotif'
 
@@ -38,6 +39,18 @@ export default function SubscriptionWall({ user, subscription, onSignOut }) {
   const [error, setError] = useState('')
   const [selectedPlan, setSelectedPlan] = useState('annual')
 
+  // Surface a failed/cancelled Apple deletion when the user is redirected back.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('delete') !== 'error') return
+
+    setError('Account deletion could not be completed with Apple. Please try again.')
+    params.delete('delete')
+    const query = params.toString()
+    window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
+  }, [])
+
   async function handleSubscribe(plan) {
     setCheckoutLoading(plan)
     setError('')
@@ -74,6 +87,17 @@ export default function SubscriptionWall({ user, subscription, onSignOut }) {
     setDeleting(true)
     setError('')
     try {
+      // Apple web users must re-authenticate with Apple so we can revoke their
+      // token. Hand off to the server-driven Apple flow, which finishes deletion
+      // in /api/apple/deletion-callback and redirects back here.
+      if (userUsesAppleLogin(user)) {
+        const res = await fetch('/api/apple/deletion-start', { method: 'POST' })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Deletion failed')
+        window.location.href = data.url
+        return
+      }
+
       const res = await fetch('/api/delete-account', { method: 'POST' })
       if (!res.ok) {
         const data = await res.json()
