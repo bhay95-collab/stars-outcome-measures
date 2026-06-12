@@ -202,6 +202,38 @@ describe('/api/signup', () => {
     expect(state.deletedUsers).toEqual(['user-1'])
   })
 
+  it('surfaces a clear password-strength error instead of a misleading email failure', async () => {
+    mockSignupClient({
+      signUpError: {
+        code: 'weak_password',
+        status: 422,
+        message: 'Password is known to be weak and easy to guess, please choose a different one.',
+      },
+    })
+    const req = makeReq({ email: 'weakpass@example.com', password: 'password' }, '6.6.6.6')
+    const res = makeRes()
+
+    await signupHandler(req, res)
+
+    expect(res.statusCode).toBe(422)
+    expect(res.body.error).toMatch(/password/i)
+    expect(res.body.error).not.toMatch(/verification email/i)
+  })
+
+  it('returns a 429 when the auth provider rate-limits signups', async () => {
+    mockSignupClient({
+      signUpError: { code: 'over_email_send_rate_limit', status: 429, message: 'email rate limit exceeded' },
+    })
+    const req = makeReq({ email: 'rate@example.com', password: 'TestPassword123!' }, '7.7.7.7')
+    const res = makeRes()
+
+    await signupHandler(req, res)
+
+    expect(res.statusCode).toBe(429)
+    expect(res.body.error).toMatch(/wait/i)
+    expect(res.body.error).not.toMatch(/verification email/i)
+  })
+
   it('does not create a profile when verification email sending fails', async () => {
     const { admin } = mockAdmin()
     mockSignupClient({ signUpError: { message: '{}', status: 504 } })

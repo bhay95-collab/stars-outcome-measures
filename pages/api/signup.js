@@ -54,6 +54,56 @@ function isAlreadyRegistered(error) {
   return text.includes('already') || text.includes('registered') || text.includes('exists')
 }
 
+// Translates a Supabase GoTrue signUp error into a user-facing status + message.
+// GoTrue returns a `code` (e.g. 'weak_password') and an HTTP `status`; without this
+// mapping every failure was reported as "verification email could not be sent",
+// which hid real causes like a weak password or an invalid email.
+function classifySignupError(error) {
+  const code = String(error?.code || '').toLowerCase()
+  const status = Number(error?.status) || 0
+  const rawMessage = typeof error?.message === 'string' ? error.message.trim() : ''
+  const message = rawMessage && rawMessage !== '{}' ? rawMessage : ''
+
+  if (isAlreadyRegistered(error)) {
+    return { status: 409, error: 'An account with this email already exists. Try logging in instead.' }
+  }
+
+  if (code === 'weak_password' || (status === 422 && /password/i.test(message))) {
+    return {
+      status: 422,
+      error: message
+        || 'That password is too weak or has appeared in a known data breach. Please choose a stronger, unique password.',
+    }
+  }
+
+  if (code === 'email_address_invalid' || code === 'validation_failed') {
+    return { status: 400, error: message || 'Please enter a valid email address.' }
+  }
+
+  if (code.includes('rate_limit') || status === 429) {
+    return { status: 429, error: 'Too many attempts. Please wait a minute and then try again.' }
+  }
+
+  if (code === 'signup_disabled' || code === 'email_provider_disabled') {
+    return { status: 403, error: 'New sign-ups are temporarily disabled. Please contact support.' }
+  }
+
+  // Genuine mail-delivery failure: GoTrue surfaces this as a 5xx, usually with an
+  // "Error sending confirmation email" message.
+  if (status >= 500 || /error sending|sending.*email/i.test(message)) {
+    return {
+      status: 502,
+      error: 'We could not send your verification email just now. Please try again in a few minutes.',
+    }
+  }
+
+  // Anything else: prefer GoTrue's own user-facing message over a misleading one.
+  return {
+    status: 400,
+    error: message || 'We could not create your account. Please check your details and try again.',
+  }
+}
+
 function getSignupClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -126,17 +176,16 @@ export default async function handler(req, res) {
   })
 
   if (signUpError) {
-    if (isAlreadyRegistered(signUpError)) {
-      return res.status(409).json({ error: 'An account with this email already exists. Try logging in instead.' })
+    const { status, error } = classifySignupError(signUpError)
+    // Only log server-side failures (5xx); 4xx are normal user input errors.
+    if (status >= 500) {
+      console.error('Signup email delivery failed', {
+        code: signUpError.code,
+        message: signUpError.message,
+        status: signUpError.status,
+      })
     }
-    console.error('Signup verification email failed', {
-      code: signUpError.code,
-      message: signUpError.message,
-      status: signUpError.status,
-    })
-    return res.status(502).json({
-      error: 'Account creation is temporarily unavailable because the verification email could not be sent. Please try again later.',
-    })
+    return res.status(status).json({ error })
   }
 
   const user = data?.user
