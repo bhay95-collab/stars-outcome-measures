@@ -13,6 +13,10 @@ import { PatientAvatar } from '../ui/PatientAvatar';
 import { ThreeBarMotif } from '../ui/ThreeBarMotif';
 import { ScoreChipRow } from './fields/ScoreChipRow';
 import type { ChipOption } from './fields/ScoreChipRow';
+import { ScaleKey } from './fields/ScaleKey';
+import type { ScaleKeyEntry } from './fields/ScaleKey';
+import { QuestionnaireItem } from './fields/QuestionnaireItem';
+import { QuestionnaireProgress } from './fields/QuestionnaireProgress';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
 import { saveAssessment } from '../../supabase/assessments';
 import { useAuth } from '../../auth/AuthProvider';
@@ -38,6 +42,11 @@ const COLOR_MAP: Record<string, string> = {
 };
 
 const PDQ8_CHIP_OPTIONS: ChipOption[] = (PDQ8_OPTIONS as PDQ8OptionType[]).map(o => ({
+  value: o.value,
+  label: o.label,
+}));
+
+const PDQ8_SCALE_KEY: ScaleKeyEntry[] = (PDQ8_OPTIONS as PDQ8OptionType[]).map(o => ({
   value: o.value,
   label: o.label,
 }));
@@ -114,7 +123,6 @@ export function PDQ8Form({ patientId }: { patientId: string }) {
   }
 
   const scoredCount = scores.filter(s => s !== null).length;
-  const progressPercent = (scoredCount / ITEM_COUNT) * 100;
 
   return (
     <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
@@ -135,41 +143,27 @@ export function PDQ8Form({ patientId }: { patientId: string }) {
           </View>
         </Card>
 
-        <View style={styles.progressCard}>
-          <Text style={styles.progressMeta}>PROGRESS</Text>
-          <View style={styles.progressHeader}>
-            <Text style={styles.progressCount}>{scoredCount} / {ITEM_COUNT} scored</Text>
-          </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` as any }]} />
-          </View>
-        </View>
+        <QuestionnaireProgress scoredCount={scoredCount} itemCount={ITEM_COUNT} />
+
+        <ScaleKey entries={PDQ8_SCALE_KEY} />
 
         <Card>
-          {(PDQ8_ITEMS as PDQ8ItemType[]).map((item: PDQ8ItemType, idx: number) => {
-            const isLast = idx === ITEM_COUNT - 1;
-            return (
-              <View key={item.label} style={[styles.itemRow, !isLast && styles.itemBorder]}>
-                <View style={styles.itemHeader}>
-                  <View style={[styles.itemBadge, scores[idx] !== null && styles.itemBadgeScored]}>
-                    <Text style={[styles.itemNum, scores[idx] !== null && styles.itemNumScored]}>
-                      {idx + 1}
-                    </Text>
-                  </View>
-                  <Text style={styles.itemText}>{item.label}</Text>
-                  {scores[idx] !== null ? <Text style={styles.itemCheck}>✓</Text> : null}
-                </View>
-                <View style={styles.chipWrap}>
-                  <ScoreChipRow
-                    options={PDQ8_CHIP_OPTIONS}
-                    label={item.label}
-                    selected={scores[idx]}
-                    onSelect={v => handleScore(idx, v)}
-                  />
-                </View>
-              </View>
-            );
-          })}
+          {(PDQ8_ITEMS as PDQ8ItemType[]).map((item: PDQ8ItemType, idx: number) => (
+            <QuestionnaireItem
+              key={item.label}
+              index={idx}
+              text={item.label}
+              scored={scores[idx] !== null}
+              showDivider={idx !== ITEM_COUNT - 1}
+            >
+              <ScoreChipRow
+                options={PDQ8_CHIP_OPTIONS}
+                label={item.label}
+                selected={scores[idx]}
+                onSelect={v => handleScore(idx, v)}
+              />
+            </QuestionnaireItem>
+          ))}
         </Card>
 
         {result !== null ? (
@@ -182,6 +176,7 @@ export function PDQ8Form({ patientId }: { patientId: string }) {
                   <Text style={styles.resultUnit}>{result.primaryUnit}</Text>
                   <View style={[styles.colorDot, { backgroundColor: COLOR_MAP[result.meta.classColor] }]} />
                 </View>
+                <Text style={styles.resultCaption}>Scale Index (0–100) · raw sum {result.meta.rawSum}/32</Text>
               </View>
               <ThreeBarMotif size="sm" tone="soft" />
             </View>
@@ -236,49 +231,6 @@ const styles = StyleSheet.create({
   patientInfo: { flex: 1 },
   patientName: { fontSize: typography.sizeMd, fontWeight: typography.weightSemibold, color: colors.ink },
   patientSub: { fontSize: typography.sizeSm, color: colors.muted, marginTop: spacing.xs },
-  progressCard: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radii.card,
-    padding: spacing.md,
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.secondarySoft,
-  },
-  progressMeta: {
-    fontSize: typography.sizeXs,
-    color: colors.primary,
-    fontWeight: typography.weightSemibold,
-    letterSpacing: typography.trackingWide,
-  },
-  progressHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  progressCount: { fontSize: typography.sizeMd, color: colors.muted, fontWeight: typography.weightMedium },
-  progressTrack: {
-    height: 4,
-    backgroundColor: colors.secondarySoft,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: { height: 4, backgroundColor: colors.primary, borderRadius: 2 },
-  itemRow: { paddingVertical: spacing.md, gap: spacing.sm },
-  itemBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
-  itemHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  itemBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  itemBadgeScored: { backgroundColor: colors.primarySoft, borderColor: colors.secondarySoft },
-  itemNum: { fontSize: typography.sizeXs, fontWeight: typography.weightBold, color: colors.muted },
-  itemNumScored: { color: colors.primary },
-  itemText: { flex: 1, fontSize: typography.sizeSm, color: colors.ink, lineHeight: 20 },
-  itemCheck: { fontSize: typography.sizeSm, color: colors.primary },
-  chipWrap: { paddingLeft: 32 },
   resultCard: {
     backgroundColor: colors.primarySoft,
     borderRadius: radii.card,
@@ -299,6 +251,7 @@ const styles = StyleSheet.create({
   resultValue: { fontSize: 36, fontWeight: typography.weightBold, color: colors.actionBlue, lineHeight: 40 },
   resultUnit: { fontSize: typography.sizeMd, color: colors.muted, fontWeight: typography.weightSemibold },
   colorDot: { width: 10, height: 10, borderRadius: 5, alignSelf: 'center' },
+  resultCaption: { fontSize: typography.sizeSm, color: colors.muted, marginTop: spacing.xs },
   interpPill: {
     borderRadius: radii.md,
     borderWidth: 1,

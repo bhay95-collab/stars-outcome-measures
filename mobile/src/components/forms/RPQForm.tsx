@@ -13,6 +13,10 @@ import { PatientAvatar } from '../ui/PatientAvatar';
 import { ThreeBarMotif } from '../ui/ThreeBarMotif';
 import { ScoreChipRow } from './fields/ScoreChipRow';
 import type { ChipOption } from './fields/ScoreChipRow';
+import { ScaleKey } from './fields/ScaleKey';
+import type { ScaleKeyEntry } from './fields/ScaleKey';
+import { QuestionnaireItem } from './fields/QuestionnaireItem';
+import { QuestionnaireProgress } from './fields/QuestionnaireProgress';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
 import { saveAssessment } from '../../supabase/assessments';
 import { useAuth } from '../../auth/AuthProvider';
@@ -42,6 +46,11 @@ const RPQ_OPTIONS: ChipOption[] = [
   { value: 3, label: 'Moderate' },
   { value: 4, label: 'Severe' },
 ];
+
+const RPQ_SCALE_KEY: ScaleKeyEntry[] = RPQ_OPTIONS.map(o => ({
+  value: o.value,
+  label: o.label ?? String(o.value),
+}));
 
 const COLOR_MAP: Record<string, string> = {
   green: colors.success,
@@ -122,7 +131,7 @@ export function RPQForm({ patientId }: { patientId: string }) {
 
   const items = RPQ_ITEMS as RPQItemGroups;
   const scoredCount = scores.filter(s => s !== null).length;
-  const progressPercent = (scoredCount / ITEM_COUNT) * 100;
+  const runningTotal = scores.reduce<number>((sum, s) => sum + (s ?? 0), 0);
 
   function renderSection(sectionLabel: string, sectionItems: string[], startIdx: number) {
     return (
@@ -132,25 +141,20 @@ export function RPQForm({ patientId }: { patientId: string }) {
           const idx = startIdx + localIdx;
           const isLast = localIdx === sectionItems.length - 1;
           return (
-            <View key={itemText} style={[styles.itemRow, !isLast && styles.itemBorder]}>
-              <View style={styles.itemHeader}>
-                <View style={[styles.itemBadge, scores[idx] !== null && styles.itemBadgeScored]}>
-                  <Text style={[styles.itemNum, scores[idx] !== null && styles.itemNumScored]}>
-                    {idx + 1}
-                  </Text>
-                </View>
-                <Text style={styles.itemText}>{itemText}</Text>
-                {scores[idx] !== null ? <Text style={styles.itemCheck}>✓</Text> : null}
-              </View>
-              <View style={styles.chipWrap}>
-                <ScoreChipRow
-                  options={RPQ_OPTIONS}
-                  label={itemText}
-                  selected={scores[idx]}
-                  onSelect={v => handleScore(idx, v)}
-                />
-              </View>
-            </View>
+            <QuestionnaireItem
+              key={itemText}
+              index={idx}
+              text={itemText}
+              scored={scores[idx] !== null}
+              showDivider={!isLast}
+            >
+              <ScoreChipRow
+                options={RPQ_OPTIONS}
+                label={itemText}
+                selected={scores[idx]}
+                onSelect={v => handleScore(idx, v)}
+              />
+            </QuestionnaireItem>
           );
         })}
       </Card>
@@ -176,15 +180,14 @@ export function RPQForm({ patientId }: { patientId: string }) {
           </View>
         </Card>
 
-        <View style={styles.progressCard}>
-          <Text style={styles.progressMeta}>PROGRESS</Text>
-          <View style={styles.progressHeader}>
-            <Text style={styles.progressCount}>{scoredCount} / {ITEM_COUNT} scored</Text>
-          </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` as any }]} />
-          </View>
-        </View>
+        <QuestionnaireProgress
+          scoredCount={scoredCount}
+          itemCount={ITEM_COUNT}
+          runningTotal={runningTotal}
+          maxTotal={64}
+        />
+
+        <ScaleKey entries={RPQ_SCALE_KEY} />
 
         {renderSection('RPQ-3', items.rpq3, 0)}
         {renderSection('RPQ-13', items.rpq13, RPQ3_COUNT)}
@@ -271,29 +274,6 @@ const styles = StyleSheet.create({
   patientInfo: { flex: 1 },
   patientName: { fontSize: typography.sizeMd, fontWeight: typography.weightSemibold, color: colors.ink },
   patientSub: { fontSize: typography.sizeSm, color: colors.muted, marginTop: spacing.xs },
-  progressCard: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radii.card,
-    padding: spacing.md,
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.secondarySoft,
-  },
-  progressMeta: {
-    fontSize: typography.sizeXs,
-    color: colors.primary,
-    fontWeight: typography.weightSemibold,
-    letterSpacing: typography.trackingWide,
-  },
-  progressHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  progressCount: { fontSize: typography.sizeMd, color: colors.muted, fontWeight: typography.weightMedium },
-  progressTrack: {
-    height: 4,
-    backgroundColor: colors.secondarySoft,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: { height: 4, backgroundColor: colors.primary, borderRadius: 2 },
   sectionLabel: {
     fontSize: typography.sizeXs,
     color: colors.primary,
@@ -301,26 +281,6 @@ const styles = StyleSheet.create({
     letterSpacing: typography.trackingWide,
     marginBottom: spacing.sm,
   },
-  itemRow: { paddingVertical: spacing.md, gap: spacing.sm },
-  itemBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
-  itemHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  itemBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  itemBadgeScored: { backgroundColor: colors.primarySoft, borderColor: colors.secondarySoft },
-  itemNum: { fontSize: typography.sizeXs, fontWeight: typography.weightBold, color: colors.muted },
-  itemNumScored: { color: colors.primary },
-  itemText: { flex: 1, fontSize: typography.sizeSm, color: colors.ink, lineHeight: 20 },
-  itemCheck: { fontSize: typography.sizeSm, color: colors.primary },
-  chipWrap: { paddingLeft: 32 },
   resultCard: {
     backgroundColor: colors.primarySoft,
     borderRadius: radii.card,

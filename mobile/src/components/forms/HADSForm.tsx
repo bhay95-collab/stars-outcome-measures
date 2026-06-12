@@ -13,6 +13,8 @@ import { PatientAvatar } from '../ui/PatientAvatar';
 import { ThreeBarMotif } from '../ui/ThreeBarMotif';
 import { ScoreChipRow } from './fields/ScoreChipRow';
 import type { ChipOption } from './fields/ScoreChipRow';
+import { QuestionnaireItem } from './fields/QuestionnaireItem';
+import { QuestionnaireProgress } from './fields/QuestionnaireProgress';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
 import { saveAssessment } from '../../supabase/assessments';
 import { useAuth } from '../../auth/AuthProvider';
@@ -123,7 +125,6 @@ export function HADSForm({ patientId }: { patientId: string }) {
   }
 
   const scoredCount = scores.filter(s => s !== null).length;
-  const progressPercent = (scoredCount / ITEM_COUNT) * 100;
 
   return (
     <Screen padded={false} rootBackground={colors.primaryDark} safeEdges={['top', 'left', 'right']}>
@@ -144,49 +145,41 @@ export function HADSForm({ patientId }: { patientId: string }) {
           </View>
         </Card>
 
-        <View style={styles.progressCard}>
-          <Text style={styles.progressMeta}>PROGRESS</Text>
-          <View style={styles.progressHeader}>
-            <Text style={styles.progressCount}>{scoredCount} / {ITEM_COUNT} scored</Text>
+        <QuestionnaireProgress
+          scoredCount={scoredCount}
+          itemCount={ITEM_COUNT}
+          headerRight={
             <View style={styles.legendRow}>
               <View style={[styles.legendDot, { backgroundColor: SUBSCALE_COLOR.A }]} />
               <Text style={styles.legendText}>Anxiety</Text>
               <View style={[styles.legendDot, { backgroundColor: SUBSCALE_COLOR.D }]} />
               <Text style={styles.legendText}>Depression</Text>
             </View>
-          </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` as any }]} />
-          </View>
-        </View>
+          }
+        />
 
         <Card>
-          {(HADS_ITEMS as HADSItemType[]).map((item: HADSItemType, idx: number) => {
-            const isLast = idx === ITEM_COUNT - 1;
-            return (
-              <View key={item.text} style={[styles.itemRow, !isLast && styles.itemBorder]}>
-                <View style={styles.itemHeader}>
-                  <View style={[styles.itemBadge, scores[idx] !== null && styles.itemBadgeScored]}>
-                    <Text style={[styles.itemNum, scores[idx] !== null && styles.itemNumScored]}>
-                      {idx + 1}
-                    </Text>
-                  </View>
-                  <Text style={styles.itemText}>{item.text}</Text>
-                  <View style={[styles.subscalePill, { backgroundColor: SUBSCALE_COLOR[item.subscale] }]}>
-                    <Text style={styles.subscalePillText}>{item.subscale}</Text>
-                  </View>
+          {(HADS_ITEMS as HADSItemType[]).map((item: HADSItemType, idx: number) => (
+            <QuestionnaireItem
+              key={item.text}
+              index={idx}
+              text={item.text}
+              scored={scores[idx] !== null}
+              showDivider={idx !== ITEM_COUNT - 1}
+              trailing={
+                <View style={[styles.subscalePill, { backgroundColor: SUBSCALE_COLOR[item.subscale] }]}>
+                  <Text style={styles.subscalePillText}>{item.subscale}</Text>
                 </View>
-                <View style={styles.chipWrap}>
-                  <ScoreChipRow
-                    options={HADS_OPTIONS}
-                    label={item.text}
-                    selected={scores[idx]}
-                    onSelect={v => handleScore(idx, v)}
-                  />
-                </View>
-              </View>
-            );
-          })}
+              }
+            >
+              <ScoreChipRow
+                options={HADS_OPTIONS}
+                label={item.text}
+                selected={scores[idx]}
+                onSelect={v => handleScore(idx, v)}
+              />
+            </QuestionnaireItem>
+          ))}
         </Card>
 
         {result !== null ? (
@@ -277,56 +270,9 @@ const styles = StyleSheet.create({
   patientInfo: { flex: 1 },
   patientName: { fontSize: typography.sizeMd, fontWeight: typography.weightSemibold, color: colors.ink },
   patientSub: { fontSize: typography.sizeSm, color: colors.muted, marginTop: spacing.xs },
-  progressCard: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radii.card,
-    padding: spacing.md,
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.secondarySoft,
-  },
-  progressMeta: {
-    fontSize: typography.sizeXs,
-    color: colors.primary,
-    fontWeight: typography.weightSemibold,
-    letterSpacing: typography.trackingWide,
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  progressCount: { fontSize: typography.sizeMd, color: colors.muted, fontWeight: typography.weightMedium },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendText: { fontSize: typography.sizeXs, color: colors.muted },
-  progressTrack: {
-    height: 4,
-    backgroundColor: colors.secondarySoft,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: { height: 4, backgroundColor: colors.primary, borderRadius: 2 },
-  itemRow: { paddingVertical: spacing.md, gap: spacing.sm },
-  itemBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
-  itemHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  itemBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  itemBadgeScored: { backgroundColor: colors.primarySoft, borderColor: colors.secondarySoft },
-  itemNum: { fontSize: typography.sizeXs, fontWeight: typography.weightBold, color: colors.muted },
-  itemNumScored: { color: colors.primary },
-  itemText: { flex: 1, fontSize: typography.sizeSm, color: colors.ink, lineHeight: 20 },
   subscalePill: {
     borderRadius: radii.sm,
     paddingHorizontal: 6,
