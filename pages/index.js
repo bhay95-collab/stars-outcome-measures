@@ -1,11 +1,30 @@
 import Head from 'next/head'
+import localFont from 'next/font/local'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { Accessibility, ArrowRight, Check, ChevronDown, ClipboardCheck, FileText, LineChart, Route, Smartphone } from 'lucide-react'
-import { supabase } from '../lib/supabase'
 import { hasSupabaseAuthErrorUrl, isSupabaseAuthCallbackUrl } from '../lib/auth-routing'
+import { initializeScrollReveal } from '../lib/scrollReveal'
+import AdaptiveVideo from '../components/AdaptiveVideo'
 import AuthGateway from '../components/AuthGateway'
+import DeferredImage from '../components/DeferredImage'
 import LogoWordmark from '../components/LogoWordmark'
+
+const inter = localFont({
+  src: '../assets/fonts/inter-latin.woff2',
+  display: 'swap',
+  style: 'normal',
+  weight: '400 800',
+  variable: '--font-inter',
+})
+
+const sourceSerif = localFont({
+  src: '../assets/fonts/source-serif-4-latin.woff2',
+  display: 'swap',
+  style: 'normal',
+  weight: '600 700',
+  variable: '--font-source-serif',
+})
 
 const MEASURES = [
   '10 Metre Walk Test',
@@ -112,23 +131,15 @@ try {
 } catch (error) {}
 `
 
-export async function getServerSideProps({ resolvedUrl = '/' } = {}) {
-  return {
-    props: {
-      initialAuthCallback: isSupabaseAuthCallbackUrl(resolvedUrl),
-    },
-  }
-}
-
 function getClassificationColor(s) {
   if (s < 0.4) return 'var(--danger)'
   if (s < 0.8) return 'var(--amber)'
   return 'var(--mint)'
 }
 
-export default function Landing({ initialAuthCallback = false }) {
+export default function Landing() {
   const router = useRouter()
-  const [authGatewayVisible, setAuthGatewayVisible] = useState(initialAuthCallback)
+  const [authGatewayVisible, setAuthGatewayVisible] = useState(false)
   const [billing, setBilling] = useState('monthly')
   const [showDemoModal, setShowDemoModal] = useState(false)
   const [time, setTime] = useState(8.2)
@@ -137,6 +148,10 @@ export default function Landing({ initialAuthCallback = false }) {
   useEffect(() => {
     const currentUrl = window.location.href
     const isAuthCallback = isSupabaseAuthCallbackUrl(currentUrl)
+    let cancelled = false
+    let idleId
+    let timeoutId
+
     if (isAuthCallback) {
       document.documentElement.setAttribute('data-auth-callback', 'true')
       setAuthGatewayVisible(true)
@@ -144,35 +159,55 @@ export default function Landing({ initialAuthCallback = false }) {
       document.documentElement.removeAttribute('data-auth-callback')
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        setAuthGatewayVisible(true)
-        router.replace('/app')
-        return
-      }
+    const checkSession = async () => {
+      try {
+        const { supabase } = await import('../lib/supabase')
+        const { data } = await supabase.auth.getSession()
+        if (cancelled) return
 
-      if (isAuthCallback && hasSupabaseAuthErrorUrl(currentUrl)) {
-        router.replace('/login')
+        if (data.session) {
+          setAuthGatewayVisible(true)
+          router.replace('/app')
+          return
+        }
+
+        if (isAuthCallback && hasSupabaseAuthErrorUrl(currentUrl)) {
+          router.replace('/login')
+        }
+      } catch {
+        if (!cancelled && isAuthCallback) router.replace('/login')
       }
-    }).catch(() => {
-      if (isAuthCallback) router.replace('/login')
-    })
+    }
+
+    const scheduleSessionCheck = () => {
+      if (typeof window.requestIdleCallback === 'function') {
+        idleId = window.requestIdleCallback(checkSession, { timeout: 1000 })
+      } else {
+        timeoutId = window.setTimeout(checkSession, 0)
+      }
+    }
+
+    if (isAuthCallback) {
+      checkSession()
+    } else if (document.readyState === 'complete') {
+      scheduleSessionCheck()
+    } else {
+      window.addEventListener('load', scheduleSessionCheck, { once: true })
+    }
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('load', scheduleSessionCheck)
+      if (idleId !== undefined && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId)
+      }
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
+    }
   }, [router])
 
   useEffect(() => {
     if (authGatewayVisible) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const observer = new IntersectionObserver(
-      entries => entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible')
-          observer.unobserve(entry.target)
-        }
-      }),
-      { threshold: 0.1 }
-    )
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
-    return () => observer.disconnect()
+    return initializeScrollReveal()
   }, [authGatewayVisible])
 
   const speed = time > 0 ? 10 / time : 0
@@ -201,23 +236,21 @@ export default function Landing({ initialAuthCallback = false }) {
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="RehabMetrics IQ" />
         <meta property="og:image" content="https://www.rehabmetricsiq.com/SquareLogo.png" />
-        <link rel="icon" href="/SquareLogo.png" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/v2/favicon-32.png" />
         <script dangerouslySetInnerHTML={{ __html: AUTH_CALLBACK_BOOTSTRAP_SCRIPT }} />
       </Head>
 
       <style>{styles}</style>
 
-      <AuthGateway
-        active={authGatewayVisible}
-        landingGateway
-        title="Opening RehabMetrics IQ"
-        message="Checking your secure session."
-      />
+      <div className={`landing-root ${inter.variable} ${sourceSerif.variable}`}>
+        <AuthGateway
+          active={authGatewayVisible}
+          landingGateway
+          title="Opening RehabMetrics IQ"
+          message="Checking your secure session."
+        />
 
-      <div className="landing-frame" data-auth-hidden={authGatewayVisible ? 'true' : undefined}>
+        <div className="landing-frame" data-auth-hidden={authGatewayVisible ? 'true' : undefined}>
         <header className="site-header">
           <div className="site-header__inner">
             <LogoWordmark href="/" size="xl" />
@@ -227,18 +260,22 @@ export default function Landing({ initialAuthCallback = false }) {
 
         <main>
           <section className="hero">
-            <video
-              className="hero__video"
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="metadata"
-              poster="/assets/landing-hero-physio.jpg"
-              aria-hidden="true"
-            >
-              <source src="/assets/videos/hero-loop.mp4" type="video/mp4" />
-            </video>
+            <AdaptiveVideo
+              className="hero__media"
+              src="/assets/landing/v2/hero-loop.mp4"
+              poster="/assets/landing/v2/hero-poster.jpg"
+              posterSources={[
+                {
+                  type: 'image/webp',
+                  srcSet: '/assets/landing/v2/hero-poster-640.webp 640w, /assets/landing/v2/hero-poster-1280.webp 1280w, /assets/landing/v2/hero-poster-1920.webp 1920w',
+                  sizes: '100vw',
+                },
+              ]}
+              posterLoading="eager"
+              fetchPriority="high"
+              width={1920}
+              height={1280}
+            />
             <div className="hero__focus-blur" />
             <div className="hero__scrim" />
             <div className="hero__inner">
@@ -294,27 +331,34 @@ export default function Landing({ initialAuthCallback = false }) {
                 </div>
               </div>
               <figure className="image-panel image-panel--workflow reveal">
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="metadata"
-                  poster="/assets/videos/workflow-poster.jpg"
-                  aria-hidden="true"
-                >
-                  <source src="/assets/videos/workflow-loop.mp4" type="video/mp4" />
-                </video>
+                <AdaptiveVideo
+                  className="image-panel__media"
+                  src="/assets/landing/v2/workflow-loop.mp4"
+                  poster="/assets/landing/v2/workflow-poster.jpg"
+                  posterSources={[
+                    {
+                      type: 'image/webp',
+                      srcSet: '/assets/landing/v2/workflow-poster-640.webp 640w, /assets/landing/v2/workflow-poster-960.webp 960w, /assets/landing/v2/workflow-poster-1280.webp 1280w',
+                      sizes: '(max-width: 960px) 100vw, 360px',
+                    },
+                  ]}
+                  loadStrategy="visible"
+                  deferPoster
+                  width={1280}
+                  height={675}
+                />
               </figure>
             </div>
           </section>
 
-        <section className="clinical-band">
+        <section className="clinical-band deferred-section">
           <div className="clinical-band__inner">
             <figure className="image-panel image-panel--wide reveal">
-              <img
+              <DeferredImage
                 src="https://images.pexels.com/photos/6111595/pexels-photo-6111595.jpeg?auto=compress&cs=tinysrgb&w=1400"
                 alt="Amputee patient using a prosthetic leg during rehabilitation therapy"
+                width={1400}
+                height={933}
               />
             </figure>
             <div className="clinical-band__copy reveal" style={{ '--reveal-delay': '0.12s' }}>
@@ -327,7 +371,7 @@ export default function Landing({ initialAuthCallback = false }) {
           </div>
         </section>
 
-        <section className="section capability-section">
+        <section className="section capability-section deferred-section">
           <div className="section-head centered reveal">
             <p className="eyebrow">WHAT IS INCLUDED</p>
             <h2>More than a score calculator.</h2>
@@ -344,13 +388,14 @@ export default function Landing({ initialAuthCallback = false }) {
           </div>
         </section>
 
-        <section className="section founder-section">
+        <section className="section founder-section deferred-section">
           <div className="founder-layout">
             <figure className="founder-portrait reveal">
-              <img
+              <DeferredImage
                 src="/founder-ben.jpg"
                 alt="Ben, founder of RehabMetrics IQ, an Australian physiotherapist"
-                loading="lazy"
+                width={1122}
+                height={1402}
               />
             </figure>
             <div className="founder-copy reveal">
@@ -379,7 +424,7 @@ export default function Landing({ initialAuthCallback = false }) {
 
         <MobileAppShowcase />
 
-        <section id="pricing" className="section pricing-section">
+        <section id="pricing" className="section pricing-section deferred-section">
           <div className="section-head centered reveal">
             <p className="eyebrow">PRICING</p>
             <h2>Simple access for modern rehab practice.</h2>
@@ -388,9 +433,11 @@ export default function Landing({ initialAuthCallback = false }) {
 
           <div className="pricing-layout">
             <figure className="image-panel image-panel--pricing reveal">
-              <img
+              <DeferredImage
                 src="https://images.pexels.com/photos/20860624/pexels-photo-20860624.jpeg?auto=compress&cs=tinysrgb&w=1000"
                 alt="Physiotherapist guiding a patient through a rehabilitation exercise"
+                width={1000}
+                height={667}
               />
             </figure>
             <div className="pricing-controls">
@@ -425,14 +472,16 @@ export default function Landing({ initialAuthCallback = false }) {
           </div>
         </section>
 
-        <section className="section faq-section">
+        <section className="section faq-section deferred-section">
           <div className="section-head reveal">
             <p className="eyebrow">FAQ</p>
             <h2>Clear answers before you start.</h2>
             <figure className="image-panel image-panel--faq">
-              <img
+              <DeferredImage
                 src="https://images.pexels.com/photos/6111593/pexels-photo-6111593.jpeg?auto=compress&cs=tinysrgb&w=900"
                 alt="Therapist assisting a prosthetic leg rehabilitation session"
+                width={900}
+                height={600}
               />
             </figure>
           </div>
@@ -479,6 +528,7 @@ export default function Landing({ initialAuthCallback = false }) {
           time={time}
         />
       )}
+        </div>
       </div>
     </>
   )
@@ -505,7 +555,7 @@ function FaqItem({ question, answer, revealDelay }) {
 
 function MobileAppShowcase() {
   return (
-    <section className="mobile-showcase" aria-label="Mobile app coming soon">
+    <section className="mobile-showcase deferred-section" aria-label="Mobile app coming soon">
       <div className="mobile-showcase__inner">
         <div className="mobile-showcase__copy reveal">
           <p className="eyebrow">MOBILE APP COMING SOON</p>
@@ -750,7 +800,7 @@ const styles = `
     --shadow-card: 0 1px 2px rgba(23,38,59,0.06), 0 10px 24px rgba(23,38,59,0.045);
   }
   html { scroll-behavior: smooth; }
-  body { background: #f2f3f4; color: var(--ink); font-family: Inter, sans-serif; }
+  body { background: #f2f3f4; color: var(--ink); font-family: var(--font-inter, sans-serif), sans-serif; }
   a { color: inherit; }
   button, input { font: inherit; }
 
@@ -767,12 +817,46 @@ const styles = `
     to { opacity: 1; transform: none; }
   }
   @media (prefers-reduced-motion: no-preference) {
-    .reveal { opacity: 0; }
-    .reveal.is-visible {
+    .reveal-ready .reveal { opacity: 0; }
+    .reveal-ready .reveal.is-visible {
       animation: reveal-up 0.64s cubic-bezier(0.16, 1, 0.3, 1) both;
       animation-delay: var(--reveal-delay, 0s);
     }
   }
+
+  .deferred-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 900px;
+  }
+
+  .adaptive-video,
+  .adaptive-video__poster,
+  .adaptive-video__poster img,
+  .adaptive-video__element {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .adaptive-video {
+    overflow: hidden;
+  }
+  .adaptive-video__poster {
+    display: block;
+    opacity: 1;
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .adaptive-video__poster img,
+  .adaptive-video__element {
+    display: block;
+    object-fit: cover;
+  }
+  .adaptive-video__element {
+    opacity: 0;
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .adaptive-video[data-playing="true"] .adaptive-video__poster { opacity: 0; }
+  .adaptive-video[data-playing="true"] .adaptive-video__element { opacity: 1; }
 
   .site-header {
     position: relative;
@@ -802,28 +886,15 @@ const styles = `
     overflow: hidden;
     background-color: #f2ede5;
   }
-  .hero::before {
-    content: '';
+  .hero__media {
     position: absolute;
     inset: 0;
-    background-image: url('/assets/landing-hero-physio.jpg');
-    background-size: cover;
-    background-position: 62% center;
     filter: saturate(0.92) sepia(0.06) brightness(1.04) contrast(0.95);
     transform: scale(1.01);
   }
-  .hero__video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .hero__media .adaptive-video__poster img,
+  .hero__media .adaptive-video__element {
     object-position: 62% center;
-    filter: saturate(0.92) sepia(0.06) brightness(1.04) contrast(0.95);
-    transform: scale(1.01);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .hero__video { display: none; }
   }
   .hero__focus-blur {
     position: absolute;
@@ -864,7 +935,7 @@ const styles = `
     max-width: 560px;
     margin-top: 18px;
     color: var(--navy-dark);
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: var(--font-source-serif, Georgia), Georgia, serif;
     font-size: clamp(48px, 6vw, 74px);
     font-weight: 700;
     line-height: 1.05;
@@ -1131,25 +1202,18 @@ const styles = `
     display: block;
     object-fit: cover;
   }
-  .image-panel video {
+  .image-panel__media {
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-    object-fit: cover;
+  }
+  .image-panel__media .adaptive-video__poster img,
+  .image-panel__media .adaptive-video__element {
     object-position: center;
     transform: scale(1.1);
   }
 
   .image-panel--workflow {
     min-height: 100%;
-    background-image: url('/assets/videos/workflow-poster.jpg');
-    background-size: cover;
-    background-position: center;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .image-panel--workflow video { display: none; }
   }
 
   .image-panel--wide {
@@ -1250,7 +1314,7 @@ const styles = `
     margin-bottom: 12px;
   }
   .founder-copy h2 {
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: var(--font-source-serif, Georgia), Georgia, serif;
     font-size: 30px;
     line-height: 1.15;
     color: var(--navy-dark);
@@ -1265,7 +1329,7 @@ const styles = `
   }
   .founder-signature {
     margin-top: 8px;
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: var(--font-source-serif, Georgia), Georgia, serif;
     font-style: italic;
     color: var(--ink);
   }
@@ -1319,7 +1383,7 @@ const styles = `
     max-width: 520px;
     margin-top: 12px;
     color: #fff;
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: var(--font-source-serif, Georgia), Georgia, serif;
     font-size: clamp(34px, 4vw, 54px);
     line-height: 1.06;
   }
@@ -1417,7 +1481,7 @@ const styles = `
   }
 
   .phone-preview__nav strong {
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: var(--font-source-serif, Georgia), Georgia, serif;
     font-size: 14px;
     line-height: 1;
   }
@@ -1484,7 +1548,7 @@ const styles = `
 
   .phone-hero h3 {
     color: #0A1B33;
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: var(--font-source-serif, Georgia), Georgia, serif;
     font-size: 28px;
     line-height: 0.96;
   }

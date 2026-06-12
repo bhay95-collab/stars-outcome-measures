@@ -33,7 +33,7 @@ export default function AuthGateway({
           padding: 32px 18px;
           background: #f8f8f2;
           color: #1c2b36;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-family: var(--font-inter, -apple-system), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .auth-gateway__panel {

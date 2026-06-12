@@ -7,7 +7,17 @@ export default function LogoWordmark({ href, className = '', size = 'md', spaceA
   ].filter(Boolean).join(' ')
   const content = (
     <>
-      {showMark && <img className="logo-wordmark__mark" src="/SquareLogo.png" alt="" aria-hidden="true" />}
+      {showMark && (
+        <img
+          className="logo-wordmark__mark"
+          src="/assets/brand/v2/mark-64.png"
+          alt=""
+          aria-hidden="true"
+          width="64"
+          height="64"
+          decoding="async"
+        />
+      )}
       <span>RehabMetrics</span>
       <span className="logo-wordmark__iq">IQ</span>
       <style jsx global>{`
@@ -16,7 +26,7 @@ export default function LogoWordmark({ href, className = '', size = 'md', spaceA
           align-items: center;
           gap: 0.28em;
           color: #094B8A;
-          font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+          font-family: var(--font-source-serif, Georgia), Georgia, 'Times New Roman', serif;
           font-weight: 700;
           line-height: 0.95;
           letter-spacing: 0;

@@ -1,48 +1,4 @@
-/**
- * Tests for the scroll-reveal IntersectionObserver logic used in pages/index.js.
- *
- * The logic under test (inlined here to keep tests independent):
- *   - Skips setup when prefers-reduced-motion: reduce is active
- *   - Observes all .reveal elements on mount
- *   - Adds .is-visible when an element intersects
- *   - Unobserves the element after adding .is-visible (fires only once per element)
- *   - Disconnects the observer on unmount
- */
-
-import React, { useEffect } from 'react'
-import { render } from '@testing-library/react'
-
-// The hook extracted from Landing's useEffect — tested in isolation
-function useScrollReveal() {
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const observer = new IntersectionObserver(
-      entries => entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible')
-          observer.unobserve(entry.target)
-        }
-      }),
-      { threshold: 0.1 }
-    )
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
-    return () => observer.disconnect()
-  }, [])
-}
-
-// Minimal component that uses the hook and renders .reveal elements
-function TestPage({ count = 1 }) {
-  useScrollReveal()
-  return (
-    <div>
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="reveal" data-testid={`reveal-${i}`} />
-      ))}
-    </div>
-  )
-}
-
-// ─── IntersectionObserver mock ────────────────────────────────────────────────
+import { initializeScrollReveal } from '../lib/scrollReveal'
 
 let observerCallback
 let mockObserve
@@ -54,7 +10,7 @@ function setupObserverMock() {
   mockUnobserve = jest.fn()
   mockDisconnect = jest.fn()
 
-  global.IntersectionObserver = jest.fn((callback) => {
+  window.IntersectionObserver = jest.fn(callback => {
     observerCallback = callback
     return {
       observe: mockObserve,
@@ -64,99 +20,69 @@ function setupObserverMock() {
   })
 }
 
-function triggerIntersection(elements, isIntersecting = true) {
-  const targets = Array.isArray(elements) ? elements : [elements]
-  observerCallback(targets.map(target => ({ target, isIntersecting })))
+function addRevealElements(count = 1) {
+  document.body.innerHTML = Array.from(
+    { length: count },
+    (_, index) => `<div class="reveal" data-testid="reveal-${index}"></div>`
+  ).join('')
+  return [...document.querySelectorAll('.reveal')]
 }
-
-// ─── matchMedia mock ──────────────────────────────────────────────────────────
-
-function mockMatchMedia(reducedMotion = false) {
-  Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: jest.fn(query => ({
-      matches: reducedMotion,
-      media: query,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-    })),
-  })
-}
-
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
+  document.documentElement.classList.remove('reveal-ready')
+  document.body.innerHTML = ''
   setupObserverMock()
-  mockMatchMedia(false)
+  window.matchMedia = jest.fn().mockReturnValue({ matches: false })
 })
 
 afterEach(() => {
   jest.clearAllMocks()
 })
 
-describe('scroll reveal — observer setup', () => {
-  it('creates an IntersectionObserver on mount', () => {
-    render(<TestPage />)
-    expect(global.IntersectionObserver).toHaveBeenCalledTimes(1)
-  })
+it('only enables hidden reveal styling after IntersectionObserver is ready', () => {
+  const elements = addRevealElements(3)
 
-  it('observes all .reveal elements', () => {
-    const { getAllByTestId } = render(<TestPage count={3} />)
-    const elements = getAllByTestId(/reveal-/)
-    expect(mockObserve).toHaveBeenCalledTimes(3)
-    elements.forEach(el => expect(mockObserve).toHaveBeenCalledWith(el))
-  })
+  initializeScrollReveal()
 
-  it('skips setup when prefers-reduced-motion is reduce', () => {
-    mockMatchMedia(true)
-    render(<TestPage />)
-    expect(global.IntersectionObserver).not.toHaveBeenCalled()
-    expect(mockObserve).not.toHaveBeenCalled()
-  })
-
-  it('disconnects observer on unmount', () => {
-    const { unmount } = render(<TestPage />)
-    unmount()
-    expect(mockDisconnect).toHaveBeenCalledTimes(1)
-  })
+  expect(document.documentElement).toHaveClass('reveal-ready')
+  elements.forEach(element => expect(mockObserve).toHaveBeenCalledWith(element))
 })
 
-describe('scroll reveal — intersection response', () => {
-  it('adds is-visible when element intersects', () => {
-    const { getByTestId } = render(<TestPage />)
-    const el = getByTestId('reveal-0')
-    triggerIntersection(el, true)
-    expect(el).toHaveClass('is-visible')
-  })
+it('keeps content visible when IntersectionObserver is unavailable', () => {
+  addRevealElements()
+  window.IntersectionObserver = undefined
 
-  it('unobserves element after adding is-visible', () => {
-    const { getByTestId } = render(<TestPage />)
-    const el = getByTestId('reveal-0')
-    triggerIntersection(el, true)
-    expect(mockUnobserve).toHaveBeenCalledWith(el)
-  })
+  initializeScrollReveal()
 
-  it('does not add is-visible when not intersecting', () => {
-    const { getByTestId } = render(<TestPage />)
-    const el = getByTestId('reveal-0')
-    triggerIntersection(el, false)
-    expect(el).not.toHaveClass('is-visible')
-  })
+  expect(document.documentElement).not.toHaveClass('reveal-ready')
+})
 
-  it('does not unobserve when not intersecting', () => {
-    const { getByTestId } = render(<TestPage />)
-    const el = getByTestId('reveal-0')
-    triggerIntersection(el, false)
-    expect(mockUnobserve).not.toHaveBeenCalled()
-  })
+it('keeps content visible when reduced motion is enabled', () => {
+  addRevealElements()
+  window.matchMedia = jest.fn().mockReturnValue({ matches: true })
 
-  it('handles multiple elements intersecting at once', () => {
-    const { getAllByTestId } = render(<TestPage count={3} />)
-    const elements = getAllByTestId(/reveal-/)
-    triggerIntersection(elements, true)
-    elements.forEach(el => {
-      expect(el).toHaveClass('is-visible')
-      expect(mockUnobserve).toHaveBeenCalledWith(el)
-    })
-  })
+  initializeScrollReveal()
+
+  expect(window.IntersectionObserver).not.toHaveBeenCalled()
+  expect(document.documentElement).not.toHaveClass('reveal-ready')
+})
+
+it('reveals and unobserves an intersecting element', () => {
+  const [element] = addRevealElements()
+  initializeScrollReveal()
+
+  observerCallback([{ target: element, isIntersecting: true }])
+
+  expect(element).toHaveClass('is-visible')
+  expect(mockUnobserve).toHaveBeenCalledWith(element)
+})
+
+it('disconnects the observer and removes enhancement state during cleanup', () => {
+  addRevealElements()
+  const cleanup = initializeScrollReveal()
+
+  cleanup()
+
+  expect(mockDisconnect).toHaveBeenCalledTimes(1)
+  expect(document.documentElement).not.toHaveClass('reveal-ready')
 })
