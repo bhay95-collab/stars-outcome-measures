@@ -1,6 +1,16 @@
 # Security Overview — RehabMetrics IQ
 
-Last reviewed: 2026-05-19
+Last reviewed: 2026-06-13
+
+---
+
+## Data Handling Model
+
+- **Supabase is the single source of truth for clinical data**, protected by Row Level Security and per-user scoping. Clinical data is never persisted in localStorage, on-device stores, or static hosting — the product is a server-backed app on Vercel (web) and Supabase-connected native clients (mobile), not a static/offline tool.
+- **Data minimisation by design:** patients are recorded by an initials/label field (no full-name field exists), `date_of_birth` with age computed at runtime, and a diagnosis. Outcome measure inputs/results are clinical JSONB.
+- **Patient-facing follow-up links** are tokenised, expiring, and contain no clinical data in the email body (link, questionnaire name, expiry, and a non-emergency disclaimer only).
+- **PHI never reaches third parties beyond processors:** Stripe (payments), Supabase (storage/auth), Resend (follow-up link emails), Sentry (errors only, PHI-scrubbed — see below), RevenueCat/Apple (purchase state only).
+- **Mobile** uses the anon key only (`EXPO_PUBLIC_*`); a service role key must never be configured in or shipped with the mobile app.
 
 ---
 
@@ -17,6 +27,9 @@ RLS is enabled on all tables containing clinical or user data.
 | `profiles` | Yes | `auth.uid() = id` |
 | `subscriptions` | Yes | `auth.uid() = user_id` |
 | `deleted_accounts` | Yes | No client SELECT — admin client only |
+| `followup_requests` / `followup_responses` | Yes | Enabled in `20260529030000_add_patient_reported_followups.sql`; public submission goes through the token-gated API route, not direct client access |
+| `app_store_subscriptions` / `revenuecat_webhook_events` | Yes | Enabled in `20260610090000_add_app_store_subscriptions.sql`; written server-side |
+| `leads` | Yes | Enabled in `20260602011134_add_leads_table.sql`; written via rate-limited API routes |
 
 The `assessments` INSERT policy also validates patient ownership using `EXISTS(SELECT 1 FROM patients WHERE id = patient_id AND user_id = auth.uid())`, which prevents a user from inserting an assessment against another user's patient even if they know the patient UUID.
 
@@ -47,8 +60,15 @@ All sensitive API routes validate the caller's identity via `getUserFromRequest(
 | `/api/checkout` | Yes — 401 if unauthenticated |
 | `/api/customer-portal` | Yes — 401 if unauthenticated |
 | `/api/delete-account` | Yes — 401 if unauthenticated |
-| `/api/check-deleted` | No (by design — pre-signup check) |
+| `/api/check-deleted` | No (by design — pre-signup check, rate-limited) |
+| `/api/signup` | No (account creation, rate-limited) |
+| `/api/pilot`, `/api/reference-card` | No (public lead capture, rate-limited) |
+| `/api/followups/*` | Yes — cookie auth |
+| `/api/followups/public/[token]` | Follow-up token validation, rate-limited |
+| `/api/subscriptions/revenuecat-sync` | Yes — bearer access token |
+| `/api/apple/deletion-start` / `deletion-callback` | Cookie auth / Apple state validation |
 | `/api/webhooks/stripe` | Stripe signature verification |
+| `/api/webhooks/revenuecat` | Constant-time comparison against `REVENUECAT_WEBHOOK_AUTHORIZATION` |
 
 ### HTTP Security Headers
 
@@ -65,7 +85,7 @@ Configured in `next.config.js` via the `headers()` function.
 
 ### Rate Limiting
 
-`/api/check-deleted` is rate-limited to 10 requests per minute per IP address using an in-memory sliding window. Returns 429 with `{ error: 'Too many requests' }` when exceeded.
+Public-facing routes are rate-limited per IP via the shared in-memory limiter in `lib/rateLimit.js` (`createRateLimiter({ windowMs, max })`): `/api/check-deleted`, `/api/signup`, `/api/pilot`, `/api/reference-card`, and `/api/followups/public/[token]`. Routes return 429 with `{ error: 'Too many requests' }` when exceeded.
 
 IP is sourced from `x-real-ip` (Vercel edge header, not spoofable by clients), falling back to `req.socket.remoteAddress`. Stale entries are pruned on each request to prevent unbounded memory growth.
 
@@ -157,7 +177,6 @@ These have been assessed and accepted for post-beta remediation.
 | `stars-auth` cookie is not `HttpOnly` | MEDIUM | Cookie is set client-side for API route auth. Fixing requires migrating to `@supabase/ssr`, which is a non-trivial change affecting auth middleware, session handling, and cookie management. Planned post-beta. |
 | No Content Security Policy | MEDIUM | CSP requires careful allowlisting of Supabase, Stripe, Google OAuth, and font domains. Incorrect policy silently breaks login. Planned post-beta with thorough testing. |
 | Rate limiting is in-memory only | LOW | In-memory rate limiting resets on server restart and does not scale across multiple instances. Replace with Upstash Redis + `@upstash/ratelimit` before high-traffic rollout. |
-| All npm dependencies pinned to `"latest"` | LOW | No fixed version constraints. Pin to exact versions before public launch to prevent unexpected breaking changes on deploy. |
 | No Next.js edge middleware | LOW | No edge-level auth guard. All auth is handled at the page level. Acceptable for current scale. |
 | No audit logging for clinical data | INFO | Supabase has a built-in audit log. Enable on `patients` and `assessments` tables for production compliance. |
 | No autosave / assessment draft recovery | INFO | Unsaved assessment warning exists but does not recover data after accidental navigation. Add localStorage draft rescue pattern. |
