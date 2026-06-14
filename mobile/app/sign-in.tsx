@@ -207,6 +207,16 @@ export default function SignInScreen() {
               />
             </View>
 
+            <Pressable
+              onPress={() => router.push('/forgot-password')}
+              disabled={isBusy}
+              accessibilityRole="link"
+              accessibilityLabel="Forgot password"
+              style={styles.forgotLink}
+            >
+              <Text style={styles.forgotLinkText}>Forgot password?</Text>
+            </Pressable>
+
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Pressable
@@ -370,6 +380,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eyeText: {
+    fontSize: typography.sizeSm,
+    color: colors.actionBlue,
+    fontWeight: typography.weightMedium,
+  },
+  forgotLink: {
+    alignSelf: 'flex-end',
+  },
+  forgotLinkText: {
     fontSize: typography.sizeSm,
     color: colors.actionBlue,
     fontWeight: typography.weightMedium,

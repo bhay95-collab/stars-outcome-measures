@@ -12,6 +12,7 @@ app/                      expo-router file-based routes
   index.tsx               Entry redirect
   sign-in.tsx             Email + Google + native Sign in with Apple (iOS)
   sign-up.tsx             Email/password account creation
+  forgot-password.tsx     Email entry → Supabase sends reset link; redirects to web /reset-password
   subscribe.tsx           Native App Store subscription screen (RevenueCat)
   (app)/_layout.tsx       Access gate — redirects to /subscribe without trial/subscription
   (app)/patients/         Patient directory → patient workspace → measure select → assess

@@ -170,6 +170,8 @@ export default function Login() {
                 />
               </div>
 
+              <p className="forgot-link"><a href="/forgot-password">Forgot password?</a></p>
+
               {error && <p className="error">{error}</p>}
 
               <button type="submit" className="btn" disabled={loading}>
@@ -436,6 +438,20 @@ const pageStyles = `
   input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(35,100,153,0.12); transition: border-color 0.15s, box-shadow 0.15s; }
 
   input::placeholder { color: var(--color-subtle); }
+
+  .forgot-link {
+    text-align: right;
+    margin-bottom: 4px;
+  }
+
+  .forgot-link a {
+    font-size: 13px;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .forgot-link a:hover { text-decoration: underline; }
 
   .error {
     font-size: 13px;

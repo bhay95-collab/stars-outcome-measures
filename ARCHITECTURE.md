@@ -24,6 +24,8 @@ pages/
                     workspace, assessment workflow, summary dashboard, modals, and the
                     global CSS (`const globalStyles`, design tokens in `:root`).
   login.js / signup.js / pilot.js
+  forgot-password.js    Public — enter email to receive a Supabase password reset link (noindex).
+  reset-password.js     Public — captures the PASSWORD_RECOVERY session event, sets new password (noindex).
   privacy.js / terms.js / clinical-use.js / data-deletion.js / reference-card.js
   followup/[token].js   Public (unauthenticated) patient questionnaire page, token-gated.
   api/              Server-side routes (see table below).
