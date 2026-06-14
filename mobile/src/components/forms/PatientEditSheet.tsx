@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CONDITION_OPTIONS } from '@clinical/constants';
-import { updatePatient } from '../../supabase/patients';
+import { updatePatient, deletePatient } from '../../supabase/patients';
 import type { Patient, PatientGender } from '../../types/domain';
 import { formatDOBInput, parseDOBInput, isoToDisplayDOB, dobYearFromISO } from '../../utils/dob';
 import { TextInput } from '../ui/TextInput';
@@ -30,10 +31,11 @@ interface PatientEditSheetProps {
   visible: boolean;
   patient: Patient;
   onUpdated: (patient: Patient) => void;
+  onDeleted?: () => void;
   onDismiss: () => void;
 }
 
-export function PatientEditSheet({ visible, patient, onUpdated, onDismiss }: PatientEditSheetProps) {
+export function PatientEditSheet({ visible, patient, onUpdated, onDeleted, onDismiss }: PatientEditSheetProps) {
   const insets = useSafeAreaInsets();
   const [initials, setInitials] = useState('');
   const [dob, setDob] = useState('');
@@ -42,6 +44,7 @@ export function PatientEditSheet({ visible, patient, onUpdated, onDismiss }: Pat
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -55,8 +58,34 @@ export function PatientEditSheet({ visible, patient, onUpdated, onDismiss }: Pat
   }, [visible, patient.id]);
 
   function handleDismiss() {
-    if (isSaving) return;
+    if (isSaving || isDeleting) return;
     onDismiss();
+  }
+
+  function handleDeletePress() {
+    if (isSaving || isDeleting) return;
+    Alert.alert(
+      `Delete ${patient.initials}?`,
+      'All assessments and clinical data for this patient will be permanently removed. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete patient',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            setError(null);
+            try {
+              await deletePatient(patient.id);
+              onDeleted?.();
+            } catch (e) {
+              setIsDeleting(false);
+              setError(e instanceof Error ? e.message : 'Could not delete patient. Please try again.');
+            }
+          },
+        },
+      ],
+    );
   }
 
   async function handleSave() {
@@ -260,14 +289,32 @@ export function PatientEditSheet({ visible, patient, onUpdated, onDismiss }: Pat
                   label="Save changes"
                   onPress={handleSave}
                   loading={isSaving}
+                  disabled={isDeleting}
                 />
                 <Button
                   label="Cancel"
                   onPress={handleDismiss}
                   variant="secondary"
-                  disabled={isSaving}
+                  disabled={isSaving || isDeleting}
                 />
               </View>
+
+              {onDeleted ? (
+                <View style={styles.deleteZone}>
+                  <View style={styles.deleteDivider} />
+                  <Pressable
+                    onPress={handleDeletePress}
+                    disabled={isSaving || isDeleting}
+                    style={({ pressed }) => [styles.deleteButton, pressed && styles.deleteButtonPressed]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Delete patient"
+                  >
+                    <Text style={[styles.deleteButtonText, (isSaving || isDeleting) && styles.deleteButtonTextDisabled]}>
+                      {isDeleting ? 'Deleting…' : 'Delete patient'}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
@@ -444,5 +491,32 @@ const styles = StyleSheet.create({
   actions: {
     gap: spacing.sm,
     marginTop: spacing.xs,
+  },
+  deleteZone: {
+    marginTop: spacing.xs,
+    gap: spacing.sm,
+  },
+  deleteDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  deleteButton: {
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    borderColor: colors.dangerBorder,
+    backgroundColor: colors.surface,
+  },
+  deleteButtonPressed: {
+    backgroundColor: colors.dangerSoft,
+  },
+  deleteButtonText: {
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightSemibold,
+    color: colors.coral,
+  },
+  deleteButtonTextDisabled: {
+    opacity: 0.5,
   },
 });

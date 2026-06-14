@@ -204,6 +204,10 @@ export default function PatientSummaryScreen() {
     setEditSheetVisible(false);
   }
 
+  function handlePatientDeleted() {
+    router.replace('/(app)/patients');
+  }
+
   function handleRetry() {
     hasLoadedPatientData.current = false;
     setRetryKey(k => k + 1);
@@ -408,6 +412,7 @@ export default function PatientSummaryScreen() {
         visible={editSheetVisible}
         patient={patient}
         onUpdated={handlePatientUpdated}
+        onDeleted={handlePatientDeleted}
         onDismiss={() => setEditSheetVisible(false)}
       />
     </Screen>

@@ -606,6 +606,17 @@ export default function App() {
     }, 3200)
   }, [])
 
+  const handlePatientDeleted = useCallback((patientId) => {
+    setPatients(prev => prev.filter(p => p.id !== patientId))
+    setSelectedPatient(null)
+    setAssessments([])
+    setFollowups([])
+    setLatestFollowUpUrl('')
+    setEditingPatient(null)
+    setAssessmentDirty(false)
+    setActiveSection('directory')
+  }, [])
+
   async function handleCreateFollowUp({ dueDate, expiresDate, measureId, sourceAssessmentId, deliveryMode = 'manual' }) {
     if (!selectedPatient) throw new Error('Select a patient first.')
     const response = await fetch('/api/followups', {
@@ -725,6 +736,7 @@ export default function App() {
           userId={user.id}
           patient={editingPatient}
           onUpdated={handlePatientUpdated}
+          onDeleted={handlePatientDeleted}
           onClose={() => setEditingPatient(null)}
         />
       )}
@@ -6869,6 +6881,25 @@ const globalStyles = `
     border-color: var(--color-red);
   }
   .confirm-modal-actions button[data-danger]:hover { background: var(--color-red-dark); border-color: var(--color-red-dark); }
+  .confirm-modal-actions button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  /* Edit patient modal: delete zone */
+  .ep-delete-zone {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: center;
+  }
+  .ep-delete-confirm {
+    padding: 24px 28px 28px;
+  }
+  .ep-delete-warning {
+    font-size: 15px;
+    color: var(--color-ink);
+    line-height: 1.55;
+    margin: 0;
+  }
 
   /* ── PHASE 3 MOTION ── */
   @media (prefers-reduced-motion: no-preference) {

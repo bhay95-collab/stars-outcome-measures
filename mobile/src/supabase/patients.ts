@@ -155,3 +155,27 @@ export async function updatePatient(patientId: string, input: UpdatePatientInput
   if (!data) throw new Error('Patient record could not be updated. Please try again.');
   return data as Patient;
 }
+
+export async function deletePatient(patientId: string): Promise<void> {
+  const session = await getSession();
+
+  const { error: assessmentsError } = await supabase
+    .from('assessments')
+    .delete()
+    .eq('patient_id', patientId)
+    .eq('user_id', session.user.id);
+
+  if (assessmentsError) {
+    throw new Error('Could not delete patient assessments. Please try again.');
+  }
+
+  const { error: patientError } = await supabase
+    .from('patients')
+    .delete()
+    .eq('id', patientId)
+    .eq('user_id', session.user.id);
+
+  if (patientError) {
+    throw new Error('Could not delete patient. Please try again.');
+  }
+}
