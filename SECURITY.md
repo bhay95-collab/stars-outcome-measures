@@ -33,6 +33,8 @@ RLS is enabled on all tables containing clinical or user data.
 
 The `assessments` INSERT policy also validates patient ownership using `EXISTS(SELECT 1 FROM patients WHERE id = patient_id AND user_id = auth.uid())`, which prevents a user from inserting an assessment against another user's patient even if they know the patient UUID.
 
+**Subscription access gate.** The gated tables (`patients`, `assessments`, `followup_requests`, `followup_responses`) additionally require `(SELECT private.user_has_active_access())` on every operation, so a user can only read or write their own clinical data while their access is current. The helper (`SECURITY DEFINER`, `search_path = ''`, in the non-API-exposed `private` schema) returns true when **any** of these holds for `auth.uid()`: an active trial (`profiles.trial_end_date >= now()`), an active Stripe subscription (`subscriptions.status = 'active' AND current_period_end >= now()`), or an active App Store subscription (`app_store_subscriptions.is_active AND expiration_at >= now()`). The App Store branch was added in `20260615000000_align_access_gate_app_store_private.sql`; without it, an Apple In-App Purchase subscriber whose trial had expired was silently shown zero clinical rows even though the app's entry check (which reads `app_store_subscriptions` directly) admitted them. The app-layer access check (`mobile/src/supabase/access.ts` and the web equivalent) must be kept in sync with this database helper.
+
 ### Cross-User Isolation Testing
 
 Direct REST API cross-user attack testing was performed using valid JWTs from two separate accounts.
