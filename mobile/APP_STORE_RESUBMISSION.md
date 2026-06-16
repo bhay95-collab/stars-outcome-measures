@@ -11,26 +11,74 @@
 
 **No code changes are required.** This is a metadata-only fix in App Store Connect.
 
-### Step 1 — Add the Terms of Use link to the App Description
+### Step 1 — Replace the App Description
 
 In App Store Connect, open **My Apps → RehabMetrics IQ → iOS App → 1.0 → App Information** (or the version's Description field).
 
-Scroll to the bottom of the existing App Description and paste the following block. Do not replace the existing description — append this section to the end:
+Replace the entire existing description with the text below. The SUBSCRIPTION section has been rewritten (the old version incorrectly stated "No in-app purchases are required" and directed users to the website only), and Terms of Use has been added alongside the Privacy Policy link at the bottom.
 
 ```
-───────────────────────────────
-SUBSCRIPTION INFORMATION
+RehabMetrics IQ is a clinical outcome measure documentation tool for physiotherapists and rehabilitation clinicians working in neurological, stroke, amputee, and complex rehabilitation settings.
 
-RehabMetrics IQ Pro is available as a monthly or annual auto-renewable subscription.
+Capture, score, and interpret validated outcome measures in less time, with built-in clinical context at every step.
 
-• RehabMetrics IQ Pro Monthly — AUD $29.00 per month
-• RehabMetrics IQ Pro Annual — AUD $250.00 per year
+OUTCOME MEASURES INCLUDED
 
-Payment is charged to your Apple Account at confirmation of purchase. Your subscription automatically renews unless cancelled at least 24 hours before the end of the current period. You can manage or cancel your subscription at any time in your Apple Account Settings (Settings → [your name] → Subscriptions).
+Mobility & Gait
+  • Timed Up and Go (TUG)
+  • 10 Metre Walk Test (10MWT)
+  • 6 Minute Walk Test (6MWT)
+  • Functional Ambulation Classification (FAC)
+  • Functional Gait Assessment (FGA)
+  • High-Level Mobility Assessment Tool (HiMAT)
+  • Step Test
+
+Balance
+  • Berg Balance Scale (BBS)
+  • Postural Assessment Scale for Stroke (PASS)
+  • Balance Outcome Measure for Elder Rehabilitation (BOOMER)
+  • Activities-Specific Balance Confidence Scale (ABC)
+
+Neurological & Stroke
+  • Motor Assessment Scale (MAS)
+  • Trunk Impairment Scale (TIS)
+  • Clinical Outcome Variation Scale (COVS)
+  • Barthel Index
+  • Spinal Cord Independence Measure III (SCIM III)
+  • ISNCSCI — International Standards for Neurological Classification of SCI
+  • Scale for the Assessment and Rating of Ataxia (SARA)
+
+Condition-Specific
+  • Parkinson's Disease Questionnaire — 8 (PDQ-8)
+  • Fatigue Severity Scale (FSS)
+  • Rivermead Post Concussion Questionnaire (RPQ)
+  • Hospital Anxiety and Depression Scale (HADS)
+  • Brain Injury Vision Inventory (BIVI)
+
+CLINICAL INTELLIGENCE
+Each assessment is automatically scored and interpreted. When a patient has a previous assessment, RehabMetrics IQ shows whether the change is clinically meaningful — not just whether the number moved.
+
+MINIMAL DOCUMENTATION TIME
+Structured forms guide data entry. Results are calculated instantly. Nothing needs to be looked up or computed manually.
+
+PATIENT MANAGEMENT
+Maintain a directory of your patients, track their assessment history over time, and review trends across multiple measures in one place.
+
+DESIGNED FOR CLINICIANS
+RehabMetrics IQ is intended for licensed physiotherapists and rehabilitation professionals. It is not a consumer health app and is not a medical device. It does not provide diagnoses or replace clinical judgement.
+
+SUBSCRIPTION
+RehabMetrics IQ Pro requires an active subscription to access the full clinical workspace.
+
+  • RehabMetrics IQ Pro Monthly — AUD $29.00 per month
+  • RehabMetrics IQ Pro Annual — AUD $250.00 per year
+
+Payment is charged to your Apple Account at confirmation of purchase. Subscriptions automatically renew unless cancelled at least 24 hours before the end of the current period. You can manage or cancel your subscription at any time in Settings → [your name] → Subscriptions.
+
+Clinicians with an existing web subscription at rehabmetricsiq.com retain full access on iOS without purchasing again.
 
 Privacy Policy: https://www.rehabmetricsiq.com/privacy
 Terms of Use: https://www.rehabmetricsiq.com/terms
-───────────────────────────────
 ```
 
 Save the description change.
