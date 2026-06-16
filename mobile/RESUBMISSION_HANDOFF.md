@@ -1,12 +1,26 @@
 # RehabMetrics IQ App Store Resubmission Handoff
 
-Updated: June 11, 2026
+Updated: June 16, 2026
 
 This is the step-by-step runbook for completing the Apple resubmission work. Follow it in order. Do not create the final App Store build until the Apple, RevenueCat, Supabase, Vercel, and EAS configuration sections are complete.
 
 ## Current State
 
-Already completed:
+### Latest rejection — June 16, 2026 (Guideline 3.1.2(c))
+
+Submission `a2cda48f-32c3-4135-b255-b087f9e63617` was re-reviewed on June 16, 2026 and rejected for one outstanding issue: the App Store description did not include a functional link to the Terms of Use (EULA).
+
+**This is a metadata-only fix. No code changes are required.**
+
+The action required before resubmitting:
+
+- [ ] Add the subscription information + Terms of Use + Privacy Policy block to the bottom of the App Description in App Store Connect (see `APP_STORE_RESUBMISSION.md` for the exact text)
+- [ ] Optionally add `https://www.rehabmetricsiq.com/terms` to the EULA field in App Store Connect
+- [ ] Reply to the rejection using the updated reply text in `APP_STORE_RESUBMISSION.md`
+
+No new build is needed for this fix.
+
+### Previously completed (June 10, 2026 rejection)
 
 - [x] App changes for native Sign in with Apple
 - [x] Native email account creation
@@ -19,7 +33,7 @@ Already completed:
 - [x] EAS project and App Store Connect application identifiers
 - [x] RevenueCat account created
 
-Still required:
+Still required (pre-build configuration):
 
 - [ ] Complete Apple paid-app agreements, tax, and banking
 - [ ] Create the two subscriptions in App Store Connect
