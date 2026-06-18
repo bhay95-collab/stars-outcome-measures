@@ -5,7 +5,7 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { getPatient } from '../../../../src/supabase/patients';
 import { getAssessmentsForPatient } from '../../../../src/supabase/assessments';
-import { withTimeout, DATA_FETCH_TIMEOUT_MS } from '../../../../src/utils/withTimeout';
+import { withTimeout, AUTH_TIMEOUT_MS } from '../../../../src/utils/withTimeout';
 import type { Patient, Assessment, AssessmentResults } from '../../../../src/types/domain';
 import { Screen } from '../../../../src/components/ui/Screen';
 import { Card } from '../../../../src/components/ui/Card';
@@ -235,7 +235,7 @@ export default function PatientSummaryScreen() {
 
     withTimeout(
       Promise.all([getPatient(patientId), getAssessmentsForPatient(patientId)]),
-      DATA_FETCH_TIMEOUT_MS,
+      AUTH_TIMEOUT_MS,
     )
       .then(([p, loadedAssessments]) => {
         if (!isActive) return;

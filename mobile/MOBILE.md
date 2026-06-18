@@ -51,7 +51,7 @@ Scoring, registry, and MCID logic are **not duplicated** — they are imported f
 ## Established mobile patterns (do not regress)
 
 - **SaveState pattern:** every measure form follows the `SaveState` flow — `TUGForm.tsx` is the reference implementation. New forms copy the pattern, not an existing form's layout.
-- **Save timeout:** `setTimeout` fires UI feedback after `SAVE_TIMEOUT_MS`, but the original `await saveAssessment()` keeps the Save button disabled until the promise settles. Never wrap the save in `withTimeout` — this prevents duplicate writes.
+- **Save timeout:** `setTimeout` fires UI feedback after `ACTION_TIMEOUT_MS`, but the original `await saveAssessment()` keeps the Save button disabled until the promise settles. Never wrap the save in `withTimeout` — this prevents duplicate writes.
 - **Session handling:** a `getSession()` network failure sets `isSessionCheckFailed` (with a retry path) — it must **not** clear the session. Session becomes `null` only when the server confirms no session exists.
 - **Defence in depth:** all Supabase reads/writes are scoped `.eq('user_id', session.user.id)` in addition to RLS; route params are UUID-validated before use.
 - **Questionnaire forms** share `ScoreChipRow`, `ScaleKey`, `QuestionnaireItem`, `QuestionnaireProgress` from `src/components/forms/fields/`.

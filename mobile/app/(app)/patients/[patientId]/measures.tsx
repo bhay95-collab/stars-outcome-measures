@@ -7,7 +7,7 @@ import { MEASURES, buildPatientPathway } from '../../../../src/clinical/adapter'
 import type { MeasureDefinition, PatientPathway } from '../../../../src/clinical/adapter';
 import { getPatient } from '../../../../src/supabase/patients';
 import { getAssessmentsForPatient } from '../../../../src/supabase/assessments';
-import { withTimeout, DATA_FETCH_TIMEOUT_MS } from '../../../../src/utils/withTimeout';
+import { withTimeout, AUTH_TIMEOUT_MS } from '../../../../src/utils/withTimeout';
 import { Screen } from '../../../../src/components/ui/Screen';
 import { Card } from '../../../../src/components/ui/Card';
 import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
@@ -114,7 +114,7 @@ export default function MeasureSelectorScreen() {
     setIsNetworkError(false);
     withTimeout(
       Promise.all([getPatient(patientId), getAssessmentsForPatient(patientId)]),
-      DATA_FETCH_TIMEOUT_MS,
+      AUTH_TIMEOUT_MS,
     )
       .then(([patient, assessments]) => {
         if (!isActive) return;

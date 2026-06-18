@@ -1,1 +1,0 @@
-export { HiMATForm } from './HiMATForm';

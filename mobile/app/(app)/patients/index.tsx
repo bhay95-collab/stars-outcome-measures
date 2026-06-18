@@ -14,7 +14,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { User } from '@supabase/supabase-js';
 import { useAuth } from '../../../src/auth/AuthProvider';
-import { withTimeout, DATA_FETCH_TIMEOUT_MS } from '../../../src/utils/withTimeout';
+import { withTimeout, AUTH_TIMEOUT_MS } from '../../../src/utils/withTimeout';
 import { supabase } from '../../../src/supabase/client';
 import { createPatient, listPatients } from '../../../src/supabase/patients';
 import type { Patient, PatientGender } from '../../../src/types/domain';
@@ -397,7 +397,7 @@ export default function PatientsScreen() {
   function loadPatients() {
     setIsLoading(true);
     setError(null);
-    withTimeout(listPatients(), DATA_FETCH_TIMEOUT_MS)
+    withTimeout(listPatients(), AUTH_TIMEOUT_MS)
       .then(setPatients)
       .catch(() => setError('Unable to load patients. Check your connection and try again.'))
       .finally(() => setIsLoading(false));
@@ -407,7 +407,7 @@ export default function PatientsScreen() {
     setIsLoading(true);
     setError(null);
     try {
-      const nextPatients = await withTimeout(listPatients(), DATA_FETCH_TIMEOUT_MS);
+      const nextPatients = await withTimeout(listPatients(), AUTH_TIMEOUT_MS);
       setPatients(nextPatients);
     } finally {
       setIsLoading(false);

@@ -9,7 +9,7 @@ import type { Patient } from '../../../types/domain';
 import { LegScreen } from './LegScreen';
 import { ResultScreen } from './ResultScreen';
 import type { LegInput, StepTestResult } from './types';
-import { SAVE_TIMEOUT_MS } from '../../../utils/withTimeout';
+import { ACTION_TIMEOUT_MS } from '../../../utils/withTimeout';
 
 type SaveState = 'idle' | 'saving' | 'timed-out' | 'saved' | 'error';
 
@@ -88,7 +88,7 @@ export function StepTestForm({ patientId }: { patientId: string }) {
       timedOut = true;
       setSaveState('timed-out');
       setSaveError('Save timed out. Your result may not have been saved. Check your connection before trying again.');
-    }, SAVE_TIMEOUT_MS);
+    }, ACTION_TIMEOUT_MS);
     try {
       await saveAssessment({
         patient_id: patientId,

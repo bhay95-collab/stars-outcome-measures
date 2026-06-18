@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@sentry/nextjs": "^10.53.1",
-    "@stripe/stripe-js": "^9.3.0",
     "@supabase/supabase-js": "^2.104.0",
     "isncsci-ui": "^1.0.38",
     "lucide-react": "^1.9.0",

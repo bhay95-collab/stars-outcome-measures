@@ -9,7 +9,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { supabase } from '../src/supabase/client';
-import { withTimeout, SIGN_IN_TIMEOUT_MS } from '../src/utils/withTimeout';
+import { withTimeout, ACTION_TIMEOUT_MS } from '../src/utils/withTimeout';
 import { Screen } from '../src/components/ui/Screen';
 import { TextInput } from '../src/components/ui/TextInput';
 import { LogoWordmark } from '../src/components/ui/LogoWordmark';
@@ -102,7 +102,7 @@ export default function SignInScreen() {
       try {
         result = await withTimeout(
           supabase.auth.signInWithPassword({ email: email.trim(), password }),
-          SIGN_IN_TIMEOUT_MS,
+          ACTION_TIMEOUT_MS,
         );
       } catch {
         setError('Unable to sign in. Check your connection and try again.');

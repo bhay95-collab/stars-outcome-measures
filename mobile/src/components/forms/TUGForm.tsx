@@ -18,7 +18,7 @@ import { ResultPreviewCard } from './ResultPreviewCard';
 import { SegmentedControl } from './SegmentedControl';
 import { ClinicalTimer } from './ClinicalTimer';
 import { colors, spacing, typography, radii } from '../../theme/tokens';
-import { SAVE_TIMEOUT_MS } from '../../utils/withTimeout';
+import { ACTION_TIMEOUT_MS } from '../../utils/withTimeout';
 
 interface TUGResult {
   primaryValue: number;
@@ -123,7 +123,7 @@ export function TUGForm({ patientId }: { patientId: string }) {
       timedOut = true;
       setSaveState('timed-out');
       setSaveError('Save timed out. Your result may not have been saved. Check your connection before trying again.');
-    }, SAVE_TIMEOUT_MS);
+    }, ACTION_TIMEOUT_MS);
 
     try {
       await saveAssessment({

@@ -34,7 +34,7 @@ export function LogoWordmark({
       ]}
       accessibilityLabel="RehabMetrics IQ"
     >
-      <Text style={[styles.main, { color: mainColor }]}>RehabMetrics </Text>
+      <Text style={{ color: mainColor }}>RehabMetrics </Text>
       <Text style={styles.iq}>IQ</Text>
     </Text>
   );
@@ -46,13 +46,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold,
     letterSpacing: 0,
   },
-  main: {
-    fontFamily: fonts.serif,
-    fontWeight: typography.weightSemibold,
-  },
   iq: {
-    fontFamily: fonts.serif,
-    fontWeight: typography.weightSemibold,
     color: '#6FBDFF',
   },
 });

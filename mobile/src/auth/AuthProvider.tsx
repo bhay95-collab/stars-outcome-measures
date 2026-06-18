@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../supabase/client';
-import { withTimeout, SESSION_TIMEOUT_MS } from '../utils/withTimeout';
+import { withTimeout, AUTH_TIMEOUT_MS } from '../utils/withTimeout';
 import { identifyPurchasesUser, logOutPurchases } from '../billing/revenuecat';
 
 export const SIGN_OUT_ERROR_MESSAGE = 'Unable to sign out. Please try again.';
@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setIsSessionCheckFailed(false);
 
-    withTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS)
+    withTimeout(supabase.auth.getSession(), AUTH_TIMEOUT_MS)
       .then(({ data }) => {
         setSession(data.session);
         setIsSessionCheckFailed(false);
