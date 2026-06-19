@@ -77,6 +77,30 @@ describe('follow-up email helpers', () => {
     }))
   })
 
+  it('returns a generic error when Resend rejects the request', async () => {
+    process.env.RESEND_API_KEY = 'resend-test-key'
+    process.env.FOLLOWUP_EMAIL_FROM = 'RehabMetrics IQ <followups@example.com>'
+    const fetchImpl = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: async () => ({ message: 'The rehabmetricsiq.com domain is not verified. Please, add and verify your domain on https://resend.com/domains' }),
+    })
+
+    const result = await sendFollowUpEmail({
+      to: 'patient@example.com',
+      publicUrl: 'https://app.example.com/followup/secure-token',
+      expiresAt: '2026-06-12T00:00:00.000Z',
+      measureId: 'ABC',
+      fetchImpl,
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      status: 'failed',
+      error: 'Follow-up email could not be sent.',
+    })
+  })
+
   it('returns a failed delivery result when Resend is not configured', async () => {
     const fetchImpl = jest.fn()
 
