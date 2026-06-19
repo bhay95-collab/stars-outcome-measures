@@ -2213,6 +2213,7 @@ const globalStyles = `
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: 7px 10px;
+    height: 36px;
     width: 100%;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
@@ -5953,7 +5954,9 @@ const globalStyles = `
     color: var(--color-ink);
     font-size: 13px;
     font-weight: 800;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .followup-email-target small {
