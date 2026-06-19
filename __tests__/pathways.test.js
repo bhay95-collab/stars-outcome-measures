@@ -148,4 +148,66 @@ describe('buildPatientPathway', () => {
     expect(pathway.preferredMeasureId).toBe('TUG')
     expect(pathway.dueMeasures.map(item => item.id)).toEqual(['10MWT'])
   })
+
+  describe('pathway_excluded_measures', () => {
+    test('excluded measure is absent from missing, due, and recorded lists', () => {
+      const patient = makePatient({ pathway_excluded_measures: ['TUG'] })
+      const pathway = buildPatientPathway(patient, [], { now: NOW })
+
+      const allActive = [
+        ...pathway.missingMeasures,
+        ...pathway.dueMeasures,
+        ...pathway.recordedMeasures,
+      ]
+      expect(allActive.map(item => item.id)).not.toContain('TUG')
+    })
+
+    test('excluded measure appears in excludedMeasures list', () => {
+      const patient = makePatient({ pathway_excluded_measures: ['TUG'] })
+      const pathway = buildPatientPathway(patient, [], { now: NOW })
+
+      expect(pathway.excludedMeasures.map(item => item.id)).toContain('TUG')
+    })
+
+    test('coverage percent is calculated over non-excluded measures only', () => {
+      // SCA pathway: 10MWT, TUG, SARA, FSS — exclude TUG (3 active)
+      const patient = makePatient({ diagnosis: 'SCA', pathway_excluded_measures: ['TUG'] })
+      const recent = '2026-06-05T00:00:00.000Z'
+      // Record 10MWT only → 1 of 3 active = 33%
+      const assessments = [makeAssessment({ measure: '10MWT', created_at: recent })]
+      const pathway = buildPatientPathway(patient, assessments, { now: NOW })
+
+      expect(pathway.coveragePercent).toBe(Math.round((1 / 3) * 100))
+      expect(pathway.recommendedMeasures.map(item => item.id)).not.toContain('TUG')
+    })
+
+    test('pathway is current when all non-excluded measures are recorded and none are due', () => {
+      // SCA: 10MWT, TUG, SARA, FSS — exclude TUG, record the other three
+      const patient = makePatient({ diagnosis: 'SCA', pathway_excluded_measures: ['TUG'] })
+      const recent = '2026-06-05T00:00:00.000Z'
+      const assessments = ['10MWT', 'SARA', 'FSS'].map(measure =>
+        makeAssessment({ id: measure, measure, created_at: recent })
+      )
+      const pathway = buildPatientPathway(patient, assessments, { now: NOW })
+
+      expect(pathway.coveragePercent).toBe(100)
+      expect(pathway.statusTone).toBe('good')
+      expect(pathway.statusLabel).toBe('Pathway current')
+    })
+
+    test('restoring a measure (empty exclusion list) puts it back in the active set', () => {
+      const patient = makePatient({ pathway_excluded_measures: [] })
+      const pathway = buildPatientPathway(patient, [], { now: NOW })
+
+      expect(pathway.excludedMeasures).toEqual([])
+      expect(pathway.missingMeasures.map(item => item.id)).toContain('TUG')
+    })
+
+    test('patient with no pathway_excluded_measures field behaves as empty exclusion list', () => {
+      const patient = makePatient()
+      const pathway = buildPatientPathway(patient, [], { now: NOW })
+
+      expect(pathway.excludedMeasures).toEqual([])
+    })
+  })
 })

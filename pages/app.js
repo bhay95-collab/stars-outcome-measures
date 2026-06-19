@@ -606,6 +606,42 @@ export default function App() {
     }, 3200)
   }, [])
 
+  const handlePathwayExclude = useCallback(async (patientId, measureId) => {
+    if (!user?.id || !patientId || !measureId) return
+    const patient = patients.find(p => p.id === patientId)
+    if (!patient) return
+    const current = patient.pathway_excluded_measures ?? []
+    if (current.includes(measureId)) return
+    const updated = [...current, measureId]
+    const { data, error } = await supabase
+      .from('patients')
+      .update({ pathway_excluded_measures: updated })
+      .eq('id', patientId)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+    if (!error && data) handlePatientUpdated(data)
+    else if (error) alert('Could not update pathway exclusions. Please try again.')
+  }, [user?.id, patients, handlePatientUpdated])
+
+  const handlePathwayInclude = useCallback(async (patientId, measureId) => {
+    if (!user?.id || !patientId || !measureId) return
+    const patient = patients.find(p => p.id === patientId)
+    if (!patient) return
+    const current = patient.pathway_excluded_measures ?? []
+    if (!current.includes(measureId)) return
+    const updated = current.filter(id => id !== measureId)
+    const { data, error } = await supabase
+      .from('patients')
+      .update({ pathway_excluded_measures: updated })
+      .eq('id', patientId)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+    if (!error && data) handlePatientUpdated(data)
+    else if (error) alert('Could not update pathway exclusions. Please try again.')
+  }, [user?.id, patients, handlePatientUpdated])
+
   const handlePatientDeleted = useCallback((patientId) => {
     setPatients(prev => prev.filter(p => p.id !== patientId))
     setSelectedPatient(null)
@@ -823,6 +859,8 @@ export default function App() {
                 onEditPatient={() => setEditingPatient(selectedPatient)}
                 onMeasure={(measureId) => goToSection('measures', { measureId })}
                 onReports={() => goToSection('reports')}
+                onExclude={(measureId) => handlePathwayExclude(selectedPatient.id, measureId)}
+                onInclude={(measureId) => handlePathwayInclude(selectedPatient.id, measureId)}
               />
             ) : activeSection === 'followup' ? (
               <FollowUpWorkspace
@@ -1381,25 +1419,29 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
   )
 }
 
-function SmartPathwayWorkspace({ patient, pathway, onEditPatient, onMeasure, onReports }) {
+function SmartPathwayWorkspace({ patient, pathway, onEditPatient, onMeasure, onReports, onExclude, onInclude }) {
   const nextActions = pathway?.nextActions ?? []
+  const excludedMeasures = pathway?.excludedMeasures ?? []
   const measureGroups = [
     {
       title: 'Missing baseline',
       empty: 'Recommended baseline measures are recorded.',
       state: 'missing',
+      canExclude: true,
       items: pathway?.missingMeasures ?? [],
     },
     {
       title: 'Due reassessment',
       empty: 'No pathway reassessments are due.',
       state: 'due',
+      canExclude: true,
       items: pathway?.dueMeasures ?? [],
     },
     {
       title: 'Recorded/current',
       empty: 'No pathway measures have been recorded yet.',
       state: 'recorded',
+      canExclude: false,
       items: pathway?.recordedMeasures ?? [],
     },
   ]
@@ -1456,26 +1498,58 @@ function SmartPathwayWorkspace({ patient, pathway, onEditPatient, onMeasure, onR
           <section key={group.title} className="pathway-measure-column">
             <h3>{group.title}</h3>
             {group.items.length ? group.items.map(item => (
-              <button
-                key={`${group.state}-${item.id}`}
-                type="button"
-                data-state={group.state}
-                onClick={() => onMeasure(item.id)}
-              >
-                <span>{item.id}</span>
-                <strong>{item.name}</strong>
-                <em>
-                  {item.lastRecordedLabel
-                    ? `Last recorded ${item.lastRecordedLabel}`
-                    : 'Not yet recorded'}
-                </em>
-              </button>
+              <div key={`${group.state}-${item.id}`} className="pathway-measure-card-wrap">
+                <button
+                  type="button"
+                  data-state={group.state}
+                  onClick={() => onMeasure(item.id)}
+                >
+                  <span>{item.id}</span>
+                  <strong>{item.name}</strong>
+                  <em>
+                    {item.lastRecordedLabel
+                      ? `Last recorded ${item.lastRecordedLabel}`
+                      : 'Not yet recorded'}
+                  </em>
+                </button>
+                {group.canExclude && onExclude && (
+                  <button
+                    type="button"
+                    className="pathway-exclude-btn"
+                    onClick={() => onExclude(item.id)}
+                  >
+                    Not indicated — exclude from pathway
+                  </button>
+                )}
+              </div>
             )) : (
               <p className="empty-hint">{group.empty}</p>
             )}
           </section>
         ))}
       </div>
+
+      {excludedMeasures.length > 0 && (
+        <section className="pathway-excluded-section">
+          <h3>Excluded from pathway</h3>
+          <p>These measures have been marked as not indicated for this patient and are excluded from pathway status and notifications.</p>
+          <div className="pathway-excluded-list">
+            {excludedMeasures.map(item => (
+              <div key={item.id} className="pathway-excluded-item">
+                <div>
+                  <span>{item.id}</span>
+                  <strong>{item.name}</strong>
+                </div>
+                {onInclude && (
+                  <button type="button" onClick={() => onInclude(item.id)}>
+                    Restore to pathway
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </section>
   )
 }
@@ -5232,6 +5306,105 @@ const globalStyles = `
     color: var(--color-muted);
     font-size: 12px;
     font-style: normal;
+  }
+
+  .pathway-measure-card-wrap {
+    display: grid;
+    gap: 4px;
+  }
+
+  .pathway-measure-column .pathway-exclude-btn {
+    padding: 3px 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--color-subtle);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s;
+  }
+
+  .pathway-measure-column .pathway-exclude-btn:hover {
+    background: transparent;
+    border-color: transparent;
+    color: var(--color-ink);
+  }
+
+  .pathway-excluded-section {
+    margin-top: 4px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-soft);
+    box-shadow: var(--shadow-card);
+  }
+
+  .pathway-excluded-section > h3 {
+    margin-bottom: 4px;
+    color: var(--color-ink);
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .pathway-excluded-section > p {
+    margin-bottom: 12px;
+    color: var(--color-subtle);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .pathway-excluded-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .pathway-excluded-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface);
+  }
+
+  .pathway-excluded-item span {
+    display: block;
+    color: var(--color-subtle);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .pathway-excluded-item strong {
+    display: block;
+    color: var(--color-muted);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .pathway-excluded-item button {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .pathway-excluded-item button:hover {
+    border-color: var(--color-primary-border);
+    background: var(--color-primary-soft);
   }
 
   .outcome-measures-workspace {

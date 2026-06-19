@@ -45,6 +45,7 @@ export interface PatientPathway {
   diagnosis: string;
   diagnosisLabel: string;
   recommendedMeasures: PathwayMeasure[];
+  excludedMeasures: PathwayMeasure[];
   missingMeasures: PathwayMeasure[];
   dueMeasures: PathwayMeasure[];
   recordedMeasures: PathwayMeasure[];
