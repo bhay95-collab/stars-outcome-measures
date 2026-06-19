@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { Accessibility, BarChart3, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, MessageSquare, RefreshCw, Route, Search, Users, XCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -34,8 +34,7 @@ import {
   summarizeFollowUpRecords,
 } from '../lib/followups'
 import {
-  FOLLOWUP_QUESTIONNAIRE_MEASURE_IDS,
-  getEligibleFollowUpQuestionnaireOptions,
+  getAllEligibleFollowUpQuestionnaireOptions,
   getFollowUpQuestionnaire,
 } from '../lib/followupQuestionnaires'
 import { sortPatientsByLabel } from '../lib/patientDetails'
@@ -1569,8 +1568,8 @@ function FollowUpWorkspace({
 }) {
   const [dueDate, setDueDate] = useState(dateInputValueInDays(7))
   const [expiresDate, setExpiresDate] = useState(dateInputValueInDays(14))
-  const eligibleQuestionnaires = getEligibleFollowUpQuestionnaireOptions(assessments)
-  const [selectedMeasureId, setSelectedMeasureId] = useState(eligibleQuestionnaires[0]?.measureId ?? '')
+  const allQuestionnaires = useMemo(() => getAllEligibleFollowUpQuestionnaireOptions(assessments), [assessments])
+  const [selectedMeasureId, setSelectedMeasureId] = useState(allQuestionnaires[0]?.measureId ?? '')
   const [creating, setCreating] = useState(false)
   const [manualCreating, setManualCreating] = useState(false)
   const [sendingId, setSendingId] = useState('')
@@ -1580,21 +1579,11 @@ function FollowUpWorkspace({
   const summary = summarizeFollowUpRecords(followups)
   const latestRecord = summary.latestResponse ?? null
   const latestAttention = getFollowUpRecordAttention(latestRecord)
-  const selectedOption = eligibleQuestionnaires.find(option => option.measureId === selectedMeasureId) ?? eligibleQuestionnaires[0] ?? null
-
-  useEffect(() => {
-    if (!eligibleQuestionnaires.length) {
-      setSelectedMeasureId('')
-      return
-    }
-    if (!eligibleQuestionnaires.some(option => option.measureId === selectedMeasureId)) {
-      setSelectedMeasureId(eligibleQuestionnaires[0].measureId)
-    }
-  }, [eligibleQuestionnaires, selectedMeasureId])
+  const selectedOption = allQuestionnaires.find(option => option.measureId === selectedMeasureId) ?? allQuestionnaires[0] ?? null
 
   async function createFollowUp(deliveryMode) {
     if (!selectedOption) {
-      setError('Record one eligible questionnaire before creating a patient follow-up link.')
+      setError('No questionnaire selected.')
       return
     }
     if (deliveryMode === 'email' && !patient?.email) {
@@ -1674,7 +1663,7 @@ function FollowUpWorkspace({
       <div className="workspace-head">
         <div>
           <h2>{patientLabel(patient)}</h2>
-          <p>Secure links for patients to repeat questionnaires already completed with their clinician.</p>
+          <p>Send questionnaires to patients before or after sessions — results auto-record as assessments.</p>
         </div>
         <button type="button" className="secondary-action" onClick={onRefresh} disabled={loading}>
           <RefreshCw size={16} aria-hidden="true" /> Refresh
@@ -1721,7 +1710,7 @@ function FollowUpWorkspace({
         <div>
           <span className="section-label">Create secure link</span>
           <h3>Patient questionnaire</h3>
-          <p>Choose a completed questionnaire, then send by email or create a manual link.</p>
+          <p>Choose a questionnaire and send by email or create a manual link to copy and share.</p>
         </div>
         <div className="followup-email-target">
           <span>Email</span>
@@ -1733,16 +1722,16 @@ function FollowUpWorkspace({
           <select
             className="field-input"
             value={selectedMeasureId}
-            disabled={!eligibleQuestionnaires.length || creating}
+            disabled={creating}
             onChange={event => setSelectedMeasureId(event.target.value)}
           >
-            {eligibleQuestionnaires.length ? eligibleQuestionnaires.map(option => (
+            {allQuestionnaires.map(option => (
               <option key={option.measureId} value={option.measureId}>
-                {option.measureId} - {option.resultLabel} ({formatFollowUpDate(option.latestCreatedAt)})
+                {option.hasPriorAssessment
+                  ? `${option.measureId} — ${option.resultLabel} (${formatFollowUpDate(option.latestCreatedAt)})`
+                  : `${option.measureId} — First capture`}
               </option>
-            )) : (
-              <option value="">No completed questionnaires</option>
-            )}
+            ))}
           </select>
         </label>
         <label>
@@ -1754,22 +1743,14 @@ function FollowUpWorkspace({
           <input className="field-input" type="date" value={expiresDate} onChange={event => setExpiresDate(event.target.value)} />
         </label>
         <div className="followup-create-actions">
-          <button type="submit" disabled={creating || manualCreating || !selectedOption || !patient?.email}>
+          <button type="submit" disabled={creating || manualCreating || !patient?.email}>
             {creating ? 'Sending...' : 'Create and send email'}
           </button>
-          <button type="button" data-secondary="" disabled={creating || manualCreating || !selectedOption} onClick={handleManualCreate}>
+          <button type="button" data-secondary="" disabled={creating || manualCreating} onClick={handleManualCreate}>
             {manualCreating ? 'Creating...' : 'Create secure link'}
           </button>
         </div>
       </form>
-
-      {!eligibleQuestionnaires.length && (
-        <div className="followup-empty-panel">
-          <strong>No eligible questionnaire yet</strong>
-          <p>Complete one of {FOLLOWUP_QUESTIONNAIRE_MEASURE_IDS.join(', ')} with this patient, then send the same questionnaire as a follow-up.</p>
-          <button type="button" onClick={() => onMeasure('ABC')}>Record questionnaire</button>
-        </div>
-      )}
 
       {latestFollowUpUrl && (
         <div className="followup-link-panel">

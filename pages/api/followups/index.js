@@ -12,6 +12,7 @@ import {
 import { createFollowUpToken, hashFollowUpToken } from '../../../lib/followupTokens'
 import { FOLLOWUP_STATUS, shapeFollowUpRecord } from '../../../lib/followups'
 import { sendFollowUpEmail, validateFollowUpRecipientEmail } from '../../../lib/followupEmail'
+import { normalizeMeasureId } from '../../../lib/followupQuestionnaires'
 
 const DELIVERY_MODES = new Set(['manual', 'email'])
 
@@ -72,8 +73,8 @@ export default async function handler(req, res) {
     .insert({
       user_id: user.id,
       patient_id: patient.id,
-      measure_id: source.assessment.measure,
-      source_assessment_id: source.assessment.id,
+      measure_id: source.assessment?.measure ?? normalizeMeasureId(measureId),
+      source_assessment_id: source.assessment?.id ?? null,
       recipient_email: deliveryMode === 'email' ? recipient.email : null,
       email_status: deliveryMode === 'email' ? null : 'manual',
       token_hash: tokenHash,
@@ -94,7 +95,7 @@ export default async function handler(req, res) {
       to: recipient.email,
       publicUrl: buildPublicFollowUpUrl(token, req),
       expiresAt: dates.expires_at,
-      measureId: source.assessment.measure,
+      measureId: source.assessment?.measure ?? normalizeMeasureId(measureId),
     })
 
     const deliveryPatch = emailDelivery.ok

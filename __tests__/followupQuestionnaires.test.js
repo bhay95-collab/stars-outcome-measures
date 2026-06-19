@@ -1,5 +1,6 @@
 import {
   FOLLOWUP_QUESTIONNAIRE_MEASURE_IDS,
+  getAllEligibleFollowUpQuestionnaireOptions,
   getEligibleFollowUpQuestionnaireOptions,
   getFollowUpQuestionnaire,
   questionnaireAttentionLevel,
@@ -72,6 +73,34 @@ describe('patient follow-up questionnaires', () => {
     expect(questionnaireAttentionLevel('ABC', red.results)).toBe('red')
     expect(questionnaireAttentionLevel('FSS', amber.results)).toBe('amber')
     expect(questionnaireAttentionLevel('BIVI', green.results)).toBe('green')
+  })
+
+  it('returns all 14 eligible measures regardless of prior assessments', () => {
+    const all = getAllEligibleFollowUpQuestionnaireOptions([])
+    expect(all).toHaveLength(14)
+    expect(all.every(o => !o.hasPriorAssessment)).toBe(true)
+    expect(all.every(o => o.sourceAssessmentId === null)).toBe(true)
+    expect(all.every(o => o.resultLabel === null)).toBe(true)
+  })
+
+  it('marks measures with prior assessments and omits measures without', () => {
+    const all = getAllEligibleFollowUpQuestionnaireOptions([
+      {
+        id: 'abc-1',
+        measure: 'ABC',
+        results: { primaryValue: 75, primaryUnit: '%', meta: { classColor: 'green' } },
+        created_at: '2026-05-10T00:00:00.000Z',
+      },
+    ])
+    const abc = all.find(o => o.measureId === 'ABC')
+    const fss = all.find(o => o.measureId === 'FSS')
+
+    expect(abc.hasPriorAssessment).toBe(true)
+    expect(abc.sourceAssessmentId).toBe('abc-1')
+    expect(abc.resultLabel).toBe('75%')
+    expect(fss.hasPriorAssessment).toBe(false)
+    expect(fss.sourceAssessmentId).toBeNull()
+    expect(fss.resultLabel).toBeNull()
   })
 
   it('lists latest completed eligible questionnaires for a patient', () => {

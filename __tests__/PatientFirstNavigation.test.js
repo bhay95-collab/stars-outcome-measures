@@ -213,7 +213,7 @@ describe('patient-first app navigation', () => {
 
     render(<App />)
 
-    expect(await screen.findByText(/secure links for patients to repeat questionnaires/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Send questionnaires to patients before or after sessions/i)).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1, name: /follow-up/i })).toBeInTheDocument()
   })
 
@@ -266,7 +266,7 @@ describe('patient-first app navigation', () => {
 
     render(<App />)
 
-    await screen.findByText(/secure links for patients to repeat questionnaires/i)
+    await screen.findByText(/Send questionnaires to patients before or after sessions/i)
     await user.click(screen.getByRole('button', { name: /create secure link/i }))
 
     expect(await screen.findByDisplayValue('http://localhost:3000/followup/raw-token')).toBeInTheDocument()
@@ -342,7 +342,7 @@ describe('patient-first app navigation', () => {
 
     render(<App />)
 
-    await screen.findByText(/secure links for patients to repeat questionnaires/i)
+    await screen.findByText(/Send questionnaires to patients before or after sessions/i)
     await user.click(screen.getByRole('button', { name: /create and send email/i }))
 
     expect(await screen.findByRole('status')).toHaveTextContent('Email sent to patient@example.com.')

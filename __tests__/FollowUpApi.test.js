@@ -353,8 +353,8 @@ describe('follow-up API routes', () => {
     expect(global.fetch).not.toHaveBeenCalled()
   })
 
-  it('requires the selected questionnaire to have been completed for the patient', async () => {
-    mockAdmin({ assessments: [] })
+  it('creates a first-capture follow-up when the patient has no prior assessment for the measure', async () => {
+    const { state } = mockAdmin({ assessments: [] })
     const req = makeReq({
       method: 'POST',
       body: {
@@ -368,8 +368,14 @@ describe('follow-up API routes', () => {
 
     await followupsHandler(req, res)
 
-    expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/complete this questionnaire/i)
+    expect(res.statusCode).toBe(201)
+    expect(state.inserts[0]).toEqual(expect.objectContaining({
+      table: 'followup_requests',
+      payload: expect.objectContaining({
+        measure_id: 'ABC',
+        source_assessment_id: null,
+      }),
+    }))
   })
 
   it('blocks creating a follow-up for a patient the clinician does not own', async () => {
