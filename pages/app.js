@@ -696,6 +696,14 @@ export default function App() {
     return data.followup
   }
 
+  async function handleMarkFollowUpReviewed(followupId) {
+    const response = await fetch(`/api/followups/${encodeURIComponent(followupId)}`, { method: 'PATCH' })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error || 'Could not mark as reviewed.')
+    setFollowups(prev => prev.map(item => item.id === data.followup.id ? data.followup : item))
+    loadFollowUpAttentionBoard()
+  }
+
   function handleConfirmClose() {
     setConfirmDialog({ open: false, message: '', onConfirm: null })
   }
@@ -872,6 +880,7 @@ export default function App() {
                 onCancel={handleCancelFollowUp}
                 onResend={handleSendFollowUp}
                 onRefresh={() => loadPatientFollowUps(selectedPatient.id)}
+                onMarkReviewed={handleMarkFollowUpReviewed}
                 onMeasure={(measureId) => goToSection('measures', { measureId: measureId ?? selectedPathway?.preferredMeasureId ?? 'TUG' })}
                 onReports={() => goToSection('reports')}
               />
@@ -1563,6 +1572,7 @@ function FollowUpWorkspace({
   onCancel,
   onResend,
   onRefresh,
+  onMarkReviewed,
   onMeasure,
   onReports,
 }) {
@@ -1576,6 +1586,7 @@ function FollowUpWorkspace({
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [reviewing, setReviewing] = useState(false)
   const summary = summarizeFollowUpRecords(followups)
   const latestRecord = summary.latestResponse ?? null
   const latestAttention = getFollowUpRecordAttention(latestRecord)
@@ -1700,9 +1711,22 @@ function FollowUpWorkspace({
             {latestRecord.assessment?.interpretation && <p>{latestRecord.assessment.interpretation}</p>}
             {latestRecord.response?.concern_text && <p>{latestRecord.response.concern_text}</p>}
           </div>
-          <button type="button" onClick={latestRecord.assessment ? onReports : onMeasure}>
-            {latestRecord.assessment ? 'Open reports' : 'Record outcome measure'}
-          </button>
+          <div className="followup-attention-panel__actions">
+            <button type="button" onClick={latestRecord.assessment ? onReports : onMeasure}>
+              {latestRecord.assessment ? 'Open reports' : 'Record outcome measure'}
+            </button>
+            <button
+              type="button"
+              className="secondary-action"
+              disabled={reviewing}
+              onClick={async () => {
+                setReviewing(true)
+                try { await onMarkReviewed?.(latestRecord.id) } finally { setReviewing(false) }
+              }}
+            >
+              Mark reviewed
+            </button>
+          </div>
         </article>
       )}
 
@@ -5509,6 +5533,13 @@ const globalStyles = `
     gap: 18px;
     padding: 18px;
     box-shadow: inset 0 0 0 1px rgba(9,75,138,0.06);
+  }
+
+  .followup-attention-panel__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
   .directory-stack {

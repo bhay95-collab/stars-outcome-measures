@@ -321,13 +321,13 @@ describe('follow-up API routes', () => {
     expect(res.body.publicUrl).toBe('http://localhost:3000/followup/raw-public-token-with-length')
     expect(res.body.email).toEqual({
       status: 'failed',
-      error: 'Invalid API key',
+      error: 'Follow-up email could not be sent.',
       providerMessageId: null,
     })
     expect(res.body.followup).toEqual(expect.objectContaining({
       status: 'pending',
       email_status: 'failed',
-      email_error: 'Invalid API key',
+      email_error: 'Follow-up email could not be sent.',
     }))
   })
 
@@ -460,7 +460,7 @@ describe('follow-up API routes', () => {
     expect(res.body.publicUrl).toBe('http://localhost:3000/followup/rotated-public-token-with-length')
     expect(res.body.email).toEqual({
       status: 'failed',
-      error: 'Domain not verified',
+      error: 'Follow-up email could not be sent.',
       providerMessageId: null,
     })
     expect(state.updates.find(item => item.payload.token_hash).payload).toEqual(expect.objectContaining({
@@ -470,7 +470,7 @@ describe('follow-up API routes', () => {
     }))
     expect(state.updates.find(item => item.payload.email_status === 'failed').payload).toEqual(expect.objectContaining({
       email_status: 'failed',
-      email_error: 'Domain not verified',
+      email_error: 'Follow-up email could not be sent.',
     }))
   })
 
