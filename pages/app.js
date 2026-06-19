@@ -1526,7 +1526,7 @@ function SmartPathwayWorkspace({ patient, pathway, onEditPatient, onMeasure, onR
                     className="pathway-exclude-btn"
                     onClick={() => onExclude(item.id)}
                   >
-                    Not indicated — exclude from pathway
+                    Not Indicated
                   </button>
                 )}
               </div>
