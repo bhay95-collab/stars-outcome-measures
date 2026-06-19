@@ -7056,8 +7056,6 @@ const globalStyles = `
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid var(--color-border);
-    display: flex;
-    justify-content: center;
   }
   .ep-delete-confirm {
     padding: 24px 28px 28px;
