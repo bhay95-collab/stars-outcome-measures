@@ -227,7 +227,7 @@ export default function EditPatientModal({ userId, patient, onUpdated, onDeleted
 
             {error && <p className="error" role="alert">{error}</p>}
 
-            <div>
+            <div className="ep-form-actions">
               <button type="button" onClick={onClose}>Cancel</button>
               <button type="submit" disabled={loading}>
                 {loading ? (

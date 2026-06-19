@@ -1498,10 +1498,10 @@ function SmartPathwayWorkspace({ patient, pathway, onEditPatient, onMeasure, onR
           <section key={group.title} className="pathway-measure-column">
             <h3>{group.title}</h3>
             {group.items.length ? group.items.map(item => (
-              <div key={`${group.state}-${item.id}`} className="pathway-measure-card-wrap">
+              <div key={`${group.state}-${item.id}`} className="pathway-measure-card-wrap" data-state={group.state}>
                 <button
                   type="button"
-                  data-state={group.state}
+                  className="pathway-card-measure-btn"
                   onClick={() => onMeasure(item.id)}
                 >
                   <span>{item.id}</span>
@@ -2613,8 +2613,8 @@ const globalStyles = `
   /* Header section-label: no bottom margin */
   .modal-content > header .section-label { margin-bottom: 0; }
 
-  /* Modal: form action buttons row (last div in form) */
-  .modal-content form > div:last-child {
+  /* Modal: form action buttons row */
+  .modal-content form .ep-form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
@@ -5262,32 +5262,18 @@ const globalStyles = `
     justify-self: start;
   }
 
-  .pathway-measure-column button {
+  .pathway-card-measure-btn {
     display: grid;
     gap: 3px;
-    padding: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    background: var(--color-surface);
+    padding: 0;
+    border: none;
+    background: transparent;
     cursor: pointer;
     text-align: left;
-    transition: border-color 0.15s, background 0.15s;
   }
 
-  .pathway-measure-column button:hover {
-    border-color: rgba(9,75,138,0.28);
-    background: var(--color-primary-soft);
-  }
-
-  .pathway-measure-column button[data-state="missing"],
-  .pathway-measure-column button[data-state="due"] {
-    background: var(--color-amber-soft);
-    border-color: var(--color-amber-border);
-  }
-
-  .pathway-measure-column button[data-state="recorded"] {
-    background: var(--color-green-soft);
-    border-color: var(--color-green-border);
+  .pathway-card-measure-btn:hover {
+    opacity: 0.75;
   }
 
   .pathway-measure-column span {
@@ -5310,29 +5296,39 @@ const globalStyles = `
 
   .pathway-measure-card-wrap {
     display: grid;
-    gap: 4px;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface);
   }
 
-  .pathway-measure-column .pathway-exclude-btn {
-    padding: 3px 0;
+  .pathway-measure-card-wrap[data-state="missing"],
+  .pathway-measure-card-wrap[data-state="due"] {
+    background: var(--color-amber-soft);
+    border-color: var(--color-amber-border);
+  }
+
+  .pathway-measure-card-wrap[data-state="recorded"] {
+    background: var(--color-green-soft);
+    border-color: var(--color-green-border);
+  }
+
+  .pathway-exclude-btn {
+    justify-self: start;
+    padding: 5px 10px;
     border: none;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    color: var(--color-subtle);
+    border-radius: 6px;
+    background: var(--color-primary);
+    color: var(--color-surface);
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
-    text-align: left;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    transition: color 0.15s;
+    transition: background 0.15s;
   }
 
-  .pathway-measure-column .pathway-exclude-btn:hover {
-    background: transparent;
-    border-color: transparent;
-    color: var(--color-ink);
+  .pathway-exclude-btn:hover {
+    background: var(--color-primary-dark);
   }
 
   .pathway-excluded-section {
