@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { Accessibility, BarChart3, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, MessageSquare, RefreshCw, Route, Search, Users, XCircle } from 'lucide-react'
+import { Accessibility, BarChart3, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, Mail, MessageSquare, RefreshCw, Route, Search, Users, XCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
@@ -1731,48 +1731,55 @@ function FollowUpWorkspace({
       )}
 
       <form className="followup-create-panel" onSubmit={handleCreate}>
-        <div>
-          <span className="section-label">Create secure link</span>
-          <h3>Patient questionnaire</h3>
-          <p>Choose a questionnaire and send by email or create a manual link to copy and share.</p>
+        <div className="followup-create-panel__head">
+          <div>
+            <span className="section-label">Create secure link</span>
+            <h3>Patient questionnaire</h3>
+            <p>Choose a questionnaire, set the timing, then send by email or create a manual link.</p>
+          </div>
+          <div className="followup-email-target" data-state={patient?.email ? 'ready' : 'missing'}>
+            <span>Email delivery</span>
+            <strong>{patient?.email || 'No patient email'}</strong>
+            <small>{patient?.email ? 'Stored on the patient record.' : 'Edit patient details to enable email sending.'}</small>
+          </div>
         </div>
-        <div className="followup-email-target">
-          <span>Email</span>
-          <strong>{patient?.email || 'No patient email'}</strong>
-          <small>{patient?.email ? 'Stored on the patient record.' : 'Edit patient details to enable email sending.'}</small>
+        <div className="followup-create-panel__fields">
+          <label className="followup-create-field followup-create-field--questionnaire">
+            <span>Questionnaire</span>
+            <select
+              className="field-input"
+              value={selectedMeasureId}
+              disabled={creating}
+              onChange={event => setSelectedMeasureId(event.target.value)}
+            >
+              {allQuestionnaires.map(option => (
+                <option key={option.measureId} value={option.measureId}>
+                  {option.hasPriorAssessment
+                    ? `${option.measureId} — ${option.resultLabel} (${formatFollowUpDate(option.latestCreatedAt)})`
+                    : `${option.measureId} — First capture`}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="followup-create-field">
+            <span>Due date</span>
+            <input className="field-input" type="date" value={dueDate} onChange={event => setDueDate(event.target.value)} />
+          </label>
+          <label className="followup-create-field">
+            <span>Link expires</span>
+            <input className="field-input" type="date" value={expiresDate} onChange={event => setExpiresDate(event.target.value)} />
+          </label>
         </div>
-        <label>
-          <span>Questionnaire</span>
-          <select
-            className="field-input"
-            value={selectedMeasureId}
-            disabled={creating}
-            onChange={event => setSelectedMeasureId(event.target.value)}
-          >
-            {allQuestionnaires.map(option => (
-              <option key={option.measureId} value={option.measureId}>
-                {option.hasPriorAssessment
-                  ? `${option.measureId} — ${option.resultLabel} (${formatFollowUpDate(option.latestCreatedAt)})`
-                  : `${option.measureId} — First capture`}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>Due date</span>
-          <input className="field-input" type="date" value={dueDate} onChange={event => setDueDate(event.target.value)} />
-        </label>
-        <label>
-          <span>Link expires</span>
-          <input className="field-input" type="date" value={expiresDate} onChange={event => setExpiresDate(event.target.value)} />
-        </label>
         <div className="followup-create-actions">
-          <button type="submit" disabled={creating || manualCreating || !patient?.email}>
-            {creating ? 'Sending...' : 'Create and send email'}
-          </button>
-          <button type="button" data-secondary="" disabled={creating || manualCreating} onClick={handleManualCreate}>
-            {manualCreating ? 'Creating...' : 'Create secure link'}
-          </button>
+          <span>{patient?.email ? 'Ready for email delivery' : 'Manual link only until an email is added'}</span>
+          <div className="followup-create-actions__buttons">
+            <button type="submit" disabled={creating || manualCreating || !patient?.email}>
+              <Mail size={15} aria-hidden="true" /> {creating ? 'Sending...' : 'Create and send email'}
+            </button>
+            <button type="button" data-secondary="" disabled={creating || manualCreating} onClick={handleManualCreate}>
+              <Link2 size={15} aria-hidden="true" /> {manualCreating ? 'Creating...' : 'Create secure link'}
+            </button>
+          </div>
         </div>
       </form>
 
@@ -5901,7 +5908,7 @@ const globalStyles = `
   }
 
   .followup-attention-panel p,
-  .followup-create-panel p {
+  .followup-create-panel__head p {
     margin-top: 6px;
     color: var(--color-muted);
     font-size: 14px;
@@ -5926,35 +5933,44 @@ const globalStyles = `
 
   .followup-create-panel {
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 14px;
-    align-items: end;
-    padding: 18px;
+    gap: 18px;
+    padding: 20px;
+    background: var(--color-surface);
+    box-shadow: inset 0 0 0 1px rgba(28,43,54,0.02);
   }
 
   .followup-create-panel > * {
     min-width: 0;
   }
 
-  .followup-create-panel > div:first-child {
-    grid-column: span 3;
+  .followup-create-panel__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    gap: 24px;
+    align-items: start;
   }
 
-  .followup-create-panel label:first-of-type {
-    grid-column: span 3;
+  .followup-create-panel__head > div:first-child {
+    max-width: 560px;
   }
 
-  .followup-create-panel label {
-    grid-column: span 2;
+  .followup-create-panel__fields {
+    display: grid;
+    grid-template-columns: minmax(260px, 1.5fr) minmax(150px, 0.75fr) minmax(150px, 0.75fr);
+    gap: 14px;
+    align-items: end;
+    padding-top: 18px;
+    border-top: 1px solid var(--color-line);
   }
 
-  .followup-create-panel label {
+  .followup-create-field {
     display: grid;
     gap: 7px;
     min-width: 0;
   }
 
-  .followup-create-panel label span {
+  .followup-create-field span,
+  .followup-email-target span {
     color: var(--color-muted);
     font-size: 11px;
     font-weight: 800;
@@ -5964,30 +5980,25 @@ const globalStyles = `
 
   .followup-email-target {
     display: grid;
-    grid-column: span 2;
     gap: 5px;
+    align-content: center;
     min-width: 0;
-    padding: 10px 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    background: var(--color-surface-raised);
-  }
-
-  .followup-email-target span {
-    color: var(--color-muted);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    min-height: 68px;
+    padding-left: 22px;
+    border-left: 1px solid var(--color-line);
   }
 
   .followup-email-target strong {
     color: var(--color-ink);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .followup-email-target[data-state="missing"] strong {
+    color: var(--color-amber);
   }
 
   .followup-email-target small {
@@ -5997,18 +6008,53 @@ const globalStyles = `
   }
 
   .followup-create-actions {
-    display: grid;
-    grid-column: 1 / -1;
-    grid-template-columns: repeat(2, minmax(150px, max-content));
-    justify-content: end;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .followup-create-actions > span {
+    color: var(--color-subtle);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .followup-create-actions__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 8px;
     min-width: 0;
   }
 
+  .followup-create-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    white-space: nowrap;
+  }
+
   .followup-create-actions button[data-secondary] {
     border: 1px solid var(--color-border);
-    background: #fff;
+    background: var(--color-surface);
     color: var(--color-primary);
+  }
+
+  @media (hover: hover) {
+    .followup-create-actions button:not(:disabled):hover {
+      background: var(--color-primary-dark);
+    }
+    .followup-create-actions button[data-secondary]:not(:disabled):hover {
+      border-color: var(--color-primary-border);
+      background: var(--color-primary-soft);
+      color: var(--color-primary-dark);
+    }
   }
 
   .followup-create-panel button:disabled,
@@ -6826,21 +6872,34 @@ const globalStyles = `
     .pathway-action-grid,
     .pathway-measure-columns,
     .followup-stat-grid,
-    .followup-create-panel,
     .followup-report-grid,
     .overview-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .followup-create-panel > div:first-child,
-    .followup-create-panel label:first-of-type,
-    .followup-create-panel label,
-    .followup-email-target,
-    .followup-create-actions {
-      grid-column: auto;
+    .followup-create-panel__head {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .followup-email-target {
+      min-height: 0;
+      padding: 16px 0 0;
+      border-top: 1px solid var(--color-line);
+      border-left: 0;
+    }
+    .followup-create-panel__fields {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .followup-create-field--questionnaire {
+      grid-column: 1 / -1;
     }
     .followup-create-actions {
+      align-items: stretch;
+      flex-direction: column;
+    }
+    .followup-create-actions__buttons {
+      display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      justify-content: stretch;
+      width: 100%;
     }
     .patient-summary-card__body {
       grid-template-columns: 130px 1fr;
@@ -6967,13 +7026,16 @@ const globalStyles = `
     .pathway-action-grid,
     .pathway-measure-columns,
     .followup-stat-grid,
-    .followup-create-panel,
+    .followup-create-panel__fields,
     .followup-report-grid,
     .overview-grid,
     .skeleton-workspace,
     [data-measure-layout] {
       grid-template-columns: 1fr;
       display: grid;
+    }
+    .followup-create-field--questionnaire {
+      grid-column: auto;
     }
     .overview-measure-list button {
       grid-template-columns: 1fr;
@@ -6986,6 +7048,9 @@ const globalStyles = `
     .followup-row-actions button {
       width: 100%;
       justify-content: center;
+    }
+    .followup-create-actions__buttons {
+      grid-template-columns: 1fr;
     }
     .app-insights__head-actions {
       width: 100%;
