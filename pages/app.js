@@ -2616,7 +2616,6 @@ const globalStyles = `
   /* Modal: form action buttons row */
   .modal-content form .ep-form-actions {
     display: flex;
-    justify-content: flex-end;
     gap: 8px;
     margin-top: 16px;
     padding-top: 16px;
