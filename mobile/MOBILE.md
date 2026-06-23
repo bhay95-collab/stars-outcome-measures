@@ -47,6 +47,7 @@ Scoring, registry, and MCID logic are **not duplicated** — they are imported f
 | Auth | Adds native Sign in with Apple (hashed-nonce `signInWithIdToken`); OAuth redirect `rehabmetricsiq://auth/callback` |
 | Account deletion | Three-stage `AccountSettingsSheet`; Apple-login users re-authenticate so the server can revoke the Apple authorization |
 | Theme | `src/theme/tokens.ts` mirrors web tokens; `primarySoft` is `#E9F3FF` (stronger than web — selected rows often have no border) |
+| Theme — surface field (2026-06, **pending mobile parity**) | Web cooled its working surface from warm bone to a clinical near-white; mobile `tokens.ts` still holds the **old warm values**. To bring mobile in line in one pass, update: `bg` `#F8F8F2`→`#F4F6F4`, `surfaceSoft` `#F6F6F0`→`#EEF2EF`, `surfaceMuted` `#EFEFE6`→`#E8ECE9`, `panel` `#FBFBF7`→`#FBFCFB`. Do **not** touch `surface` (`#FFFFFF`) or `primarySoft`. After updating, device-QA the screens (contrast against white cards) before release. |
 
 ## Established mobile patterns (do not regress)
 

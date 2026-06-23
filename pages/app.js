@@ -3040,12 +3040,12 @@ const globalStyles = `
     --color-subtle:         #69787a;
 
     /* Surfaces — near-white with a warm cast: clinical, not beige */
-    --color-bg:             #f8f8f2;
+    --color-bg:             #f4f6f4;
     --color-surface:        #ffffff;
-    --color-surface-raised: #fbfbf7;
-    --color-surface-soft:   #f6f6f0;
-    --color-surface-muted:  #efefe6;
-    --color-panel:          #fbfbf7;
+    --color-surface-raised: #fbfcfb;
+    --color-surface-soft:   #eef2ef;
+    --color-surface-muted:  #e8ece9;
+    --color-panel:          #fbfcfb;
     --color-border:         #d9dacb;
     --color-border-strong:  #a4a896;
     --color-line-strong:    #dedfd1;
@@ -3056,8 +3056,15 @@ const globalStyles = `
     --shadow-card:  0 1px 2px rgba(28,43,54,0.04), 0 10px 22px -8px rgba(28,43,54,0.12);
     --shadow-md:    0 4px 16px rgba(28,43,54,0.10), 0 1px 4px rgba(28,43,54,0.06);
 
+    /* Elevation — machined depth: inset top highlight + layered warm-slate ambient */
+    --elevation-rest:   inset 0 1px 0 rgba(255,255,255,0.65), 0 1px 2px rgba(28,43,54,0.04), 0 12px 28px -14px rgba(28,43,54,0.16);
+    --elevation-raised: inset 0 1px 0 rgba(255,255,255,0.72), 0 2px 6px rgba(28,43,54,0.06), 0 22px 46px -18px rgba(28,43,54,0.22);
+
+    /* Motion — shared premium easing (spring-like settle) */
+    --ease-premium: cubic-bezier(0.32, 0.72, 0, 1);
+
     /* Layout spine — one shared content column across every workspace */
-    --content-max: 1280px;
+    --content-max: 1360px;
 
     /* Radius */
     --radius-xs:    4px;
@@ -3395,7 +3402,7 @@ const globalStyles = `
     justify-content: space-between;
     gap: 24px;
     width: min(100%, var(--content-max));
-    margin: 0 0 24px;
+    margin: 0 auto 24px;
     padding: 26px 0 18px;
     border-bottom: 1px solid var(--color-border);
   }
@@ -3479,7 +3486,7 @@ const globalStyles = `
     border: 1px solid var(--color-line-strong);
     border-radius: 10px;
     background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .skeleton-directory {
@@ -3558,6 +3565,20 @@ const globalStyles = `
     100% { background-position: -120% 0; }
   }
 
+  @keyframes dash-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .patient-summary-card { animation: dash-rise 0.7s var(--ease-premium) both; }
+    .domain-card { animation: dash-rise 0.6s var(--ease-premium) both; }
+    .domain-card:nth-child(2) { animation-delay: 0.05s; }
+    .domain-card:nth-child(3) { animation-delay: 0.10s; }
+    .domain-card:nth-child(4) { animation-delay: 0.15s; }
+    .domain-card:nth-child(5) { animation-delay: 0.20s; }
+  }
+
   .brand-iq-mark {
     color: rgba(96,176,250,0.42);
     font-family: 'Source Serif 4', Georgia, serif;
@@ -3575,7 +3596,7 @@ const globalStyles = `
     border: 1px solid var(--color-line-strong);
     border-radius: 10px;
     background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .patient-summary-card {
@@ -3586,7 +3607,7 @@ const globalStyles = `
     border-radius: 10px;
     border-color: var(--color-line-strong);
     background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .patient-summary-card > * {
@@ -3608,10 +3629,11 @@ const globalStyles = `
 
   .patient-summary-card__intro h2 {
     color: var(--color-ink);
-    font-size: clamp(26px, 2.8vw, 38px);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(27px, 2.9vw, 40px);
     font-weight: 700;
-    line-height: 1.04;
-    letter-spacing: -0.3px;
+    line-height: 1.02;
+    letter-spacing: -0.5px;
   }
 
   .patient-summary-card__intro p {
@@ -3642,6 +3664,17 @@ const globalStyles = `
     color: #fff;
     cursor: pointer;
     font-weight: 700;
+    transition: transform 0.25s var(--ease-premium), box-shadow 0.25s var(--ease-premium), background 0.25s var(--ease-premium);
+  }
+
+  .patient-summary-card__head button:hover {
+    background: var(--color-primary-dark);
+    box-shadow: 0 12px 24px rgba(6,55,100,0.28);
+    transform: translateY(-1px);
+  }
+
+  .patient-summary-card__head button:active {
+    transform: translateY(0) scale(0.98);
   }
 
   .patient-summary-card__actions {
@@ -3765,7 +3798,7 @@ const globalStyles = `
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .summary-card--wide {
@@ -3775,7 +3808,7 @@ const globalStyles = `
   .summary-card--anchor {
     border-color: var(--color-line-strong);
     background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .dashboard-zone {
@@ -3800,9 +3833,11 @@ const globalStyles = `
   .dashboard-zone__head h2 {
     margin-top: 5px;
     color: var(--color-ink);
-    font-size: 20px;
-    font-weight: 800;
-    line-height: 1.15;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -0.3px;
   }
 
   .dashboard-zone__head p {
@@ -4418,15 +4453,15 @@ const globalStyles = `
     align-content: start;
     gap: 12px;
     padding: 16px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-line-strong);
     border-radius: 10px;
     background: var(--color-surface);
-    box-shadow: none;
+    box-shadow: var(--elevation-rest);
   }
 
-  .domain-card[data-tone="green"] { background: var(--color-green-soft); border-color: var(--color-green-border); }
-  .domain-card[data-tone="amber"] { background: var(--color-amber-soft); border-color: var(--color-amber-border); }
-  .domain-card[data-tone="red"] { background: var(--color-red-soft); border-color: var(--color-red-border); }
+  .domain-card[data-tone="green"] { background: var(--color-green-soft); border-color: var(--color-line-strong); }
+  .domain-card[data-tone="amber"] { background: var(--color-amber-soft); border-color: var(--color-line-strong); }
+  .domain-card[data-tone="red"] { background: var(--color-red-soft); border-color: var(--color-line-strong); }
 
   .domain-card__top {
     display: flex;
@@ -4848,7 +4883,7 @@ const globalStyles = `
   .workspace-shell,
   .reports-workspace {
     width: min(100%, var(--content-max));
-    margin: 0;
+    margin: 0 auto;
   }
 
   .workspace-shell {
@@ -4938,7 +4973,7 @@ const globalStyles = `
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .workspace-stat-grid span {
@@ -4969,7 +5004,7 @@ const globalStyles = `
     border: 1px solid var(--color-primary-border);
     border-radius: var(--radius-lg);
     background: var(--color-primary-soft);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .next-action-panel[data-tone="good"] {
@@ -5033,7 +5068,7 @@ const globalStyles = `
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
     overflow: hidden;
   }
 
@@ -5071,7 +5106,7 @@ const globalStyles = `
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .overview-signal {
@@ -5158,7 +5193,7 @@ const globalStyles = `
     border: 1px solid var(--color-primary-border);
     border-radius: var(--radius-lg);
     background: var(--color-primary-soft);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .pathway-hero[data-tone="good"] {
@@ -5231,7 +5266,7 @@ const globalStyles = `
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .pathway-action-grid article {
@@ -5349,7 +5384,7 @@ const globalStyles = `
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-surface-soft);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .pathway-excluded-section > h3 {
@@ -5419,7 +5454,7 @@ const globalStyles = `
     display: grid;
     gap: 14px;
     width: min(100%, var(--content-max));
-    margin: 0;
+    margin: 0 auto;
   }
 
   .measure-priority-strip {
@@ -5554,7 +5589,7 @@ const globalStyles = `
     gap: 16px;
     align-items: start;
     width: min(100%, var(--content-max));
-    margin: 0;
+    margin: 0 auto;
   }
 
   .followup-attention-board .summary-card__head > span[data-attention] {
@@ -6331,7 +6366,7 @@ const globalStyles = `
     border: 1px solid var(--color-line-strong);
     border-radius: 10px;
     background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   .patient-workspace-hero {
@@ -6549,7 +6584,7 @@ const globalStyles = `
     border-radius: 10px;
     overflow: hidden;
     background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--elevation-rest);
   }
 
   [data-measure-panel] > .measure-header {

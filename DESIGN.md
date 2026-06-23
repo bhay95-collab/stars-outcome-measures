@@ -6,7 +6,7 @@ This is the single source of truth for visual language, tokens, component patter
 
 ## Design intent
 
-RehabMetrics IQ should feel calm, clinical, precise, trustworthy, and premium-but-restrained. The app is a **modern clinical intelligence dashboard with quiet premium styling** on a warm near-white field — colour reads as deliberate accents, never decoration.
+RehabMetrics IQ should feel calm, clinical, precise, trustworthy, and premium-but-restrained. The app is a **modern clinical intelligence dashboard with quiet premium styling** on a clean, clinical near-white field — colour reads as deliberate accents, never decoration.
 
 Avoid: flashy SaaS styling, generic dashboards, browser-default forms, harsh edges, clutter, decorative UI without clinical purpose, and anything that makes the page feel "blue-washed."
 
@@ -19,7 +19,7 @@ Avoid: flashy SaaS styling, generic dashboards, browser-default forms, harsh edg
 
 ## Typography
 
-- **App (`pages/app.js`):** `Geist` for all UI, `Geist Mono` for numeric clinical values/scores/compact data (tabular numerals are set on `body`), `Source Serif 4` for select headings.
+- **App (`pages/app.js`):** `Geist` for all UI, `Geist Mono` for numeric clinical values/scores/compact data (tabular numerals are set on `body`), `Source Serif 4` for the editorial headings — the patient-name hero (`.patient-summary-card__intro h2`) and dashboard zone titles (`.dashboard-zone__head h2`).
 - **Landing (`pages/index.js`):** `Inter` (body/UI) + `Source Serif 4` (hero/editorial headings), self-hosted via `next/font/local` from `assets/fonts/` for slow-connection performance.
 - **Mobile:** system font stack via `mobile/src/theme` typography.
 - No browser-default form typography; numeric clinical data must be easy to scan.
@@ -27,6 +27,8 @@ Avoid: flashy SaaS styling, generic dashboards, browser-default forms, harsh edg
 ## App colour system (both platforms)
 
 The app palette is the **deep-blue + warm-bone system**. Web tokens live in the `:root` block inside `globalStyles` in `pages/app.js`; mobile mirrors them in `mobile/src/theme/tokens.ts`.
+
+> **Web/mobile field parity (2026-06):** the web working surface (`--color-bg` and the `raised`/`soft`/`muted`/`panel` neutrals) was cooled to a clinical near-white; mobile `tokens.ts` still holds the older warm-bone values. The exact old→new mapping to realign mobile in one pass is recorded in [`mobile/MOBILE.md`](mobile/MOBILE.md) (Platform deviations → "Theme — surface field"). The `--color-*` values in this doc are the web source of truth.
 
 ### Brand
 
@@ -53,19 +55,21 @@ The app palette is the **deep-blue + warm-bone system**. Web tokens live in the 
 
 **No orange anywhere in the clinical UI.** Former orange meant either caution (→ amber family) or concern (→ red family).
 
+**Domain summary cards** (`.domain-card`) read calm: soft tonal fill + the tinted clinical number on a **neutral hairline** border — one colour signal, not a saturated coloured outline. The full triplet still applies to alert/badge contexts.
+
 ### Text and surfaces
 
 | Token | Value | Token | Value |
 |---|---|---|---|
-| `--color-ink` | `#1c2b36` | `--color-bg` | `#f8f8f2` (warm near-white page/screen) |
+| `--color-ink` | `#1c2b36` | `--color-bg` | `#f4f6f4` (clean clinical near-white page/screen — faint green-cool undertone; not beige, not blue-washed) |
 | `--color-muted` | `#334b49` | `--color-surface` | `#ffffff` (cards) |
-| `--color-subtle` | `#69787a` | `--color-surface-raised` / `--color-panel` | `#fbfbf7` |
-| | | `--color-surface-soft` | `#f6f6f0` |
-| | | `--color-surface-muted` | `#efefe6` |
+| `--color-subtle` | `#69787a` | `--color-surface-raised` / `--color-panel` | `#fbfcfb` |
+| | | `--color-surface-soft` | `#eef2ef` |
+| | | `--color-surface-muted` | `#e8ece9` |
 | | | `--color-border` | `#d9dacb` / strong `#a4a896` |
 | | | `--color-line` | `#e8e9dc` / strong `#dedfd1` |
 
-Shadows are warm slate (`rgba(28,43,54, …)`), never blue. Radii: 4/6/10/14px + full. Shared content column: `--content-max: 1280px`.
+Shadows are warm slate (`rgba(28,43,54, …)`), never blue. **Elevation:** card surfaces use `--elevation-rest` (inset top highlight + layered warm-slate ambient — the "machined" depth) and `--elevation-raised` for hover; the legacy `--shadow-card` is retired from cards (still defined for any future use). **Motion:** `--ease-premium` (`cubic-bezier(0.32,0.72,0,1)`) is the shared easing for hover and entrance. Radii: 4/6/10/14px + full. Shared content column: `--content-max: 1360px`, **centred** in the main area (`margin: 0 auto` on `.page-toolbar`, `.workspace-shell`/`.reports-workspace`, `.outcome-measures-workspace`, `.directory-stack`) so wide screens balance whitespace on both sides rather than left-pinning.
 
 ### Semantic rules
 
@@ -77,7 +81,7 @@ Shadows are warm slate (`rgba(28,43,54, …)`), never blue. Radii: 4/6/10/14px +
 
 ### Banned (the pre-2026 palettes — do not reintroduce)
 
-The old navy/Tailwind system (`#1d5590`, `#0d9488` as app secondary, `#bbf7d0`/`#fde68a`/`#fecaca` status fills, blue-tinted surfaces like `#e8eef5`/`#f6f9fc`, slate `#64748b` comparison, Tailwind violet `#7c3aed`) and all orange/rust values (`#ee8a70`, `#b5451b`, `#c47b43` in app UI). Email HTML (`lib/followupEmail.js`) and PDFs (`lib/clinical/patientReportPdf.js`) use raw hex mirrors of the current tokens — keep them in sync when tokens change.
+The old navy/Tailwind system (`#1d5590`, `#0d9488` as app secondary, `#bbf7d0`/`#fde68a`/`#fecaca` status fills, blue-tinted surfaces like `#e8eef5`/`#f6f9fc`, slate `#64748b` comparison, Tailwind violet `#7c3aed`) and all orange/rust values (`#ee8a70`, `#b5451b`, `#c47b43` in app UI). Email HTML (`lib/followupEmail.js`) and PDFs (`lib/clinical/patientReportPdf.js`) use raw hex mirrors of the current tokens — keep them in sync when tokens change. **Deliberate divergence (2026-06):** the app working surface was cooled from the warm bone (`#f8f8f2` field / `#fbfbf7` raised / `#f6f6f0` soft) to the clinical near-white above; the email and PDF intentionally **retain the warmer bone** as patient-facing branded artifacts, so do not treat that as drift to "fix".
 
 ## Landing page system (`pages/index.js`)
 
