@@ -3,11 +3,17 @@ export interface MeasureInstructionItem {
   detail?: string;
 }
 
+export interface MeasureInstructionLink {
+  text: string;
+  url?: string;
+}
+
 export interface MeasureInstructionSection {
   title: string;
   body?: string;
   bullets?: string[];
   items?: MeasureInstructionItem[];
+  links?: MeasureInstructionLink[];
 }
 
 export interface MeasureInstructionContent {
@@ -46,6 +52,19 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Speed = 10 metres divided by time in seconds.', 'Community ambulation bands are shown after entry.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Perry J, et al. Classification of walking handicap in the stroke population. Stroke. 1995;26(6):982–9.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/7780938',
+          },
+          {
+            text: 'Fritz S, Lusardi M. White paper: "walking speed: the sixth vital sign." J Geriatr Phys Ther. 2009;32(2):46–9.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/20104166',
+          },
+        ],
+      },
     ],
   },
   TUG: {
@@ -70,6 +89,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Record time in seconds. Lower time indicates better performance.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Podsiadlo D, Richardson S. The timed "Up & Go": a test of basic functional mobility for frail elderly persons. J Am Geriatr Soc. 1991;39(2):142–8.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/1991946',
+          },
+        ],
+      },
     ],
   },
   FAC: {
@@ -96,6 +124,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
           { label: '5', detail: 'Independent ambulator on level and non-level surfaces.' },
         ],
       },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Holden MK, et al. Clinical gait assessment in the neurologically impaired: reliability and meaningfulness. Phys Ther. 1984;64(1):35–40.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/6691052',
+          },
+        ],
+      },
     ],
   },
   '6MWT': {
@@ -120,6 +157,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Record total distance in metres. Higher distance indicates better endurance.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'ATS Committee on Proficiency Standards for Clinical Pulmonary Function Laboratories. ATS statement: guidelines for the six-minute walk test. Am J Respir Crit Care Med. 2002;166(1):111–7.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/12091180',
+          },
+        ],
+      },
     ],
   },
   BBS: {
@@ -155,6 +201,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Each item is scored 0 to 4. Total range is 0 to 56.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Berg KO, et al. Clinical and laboratory measures of postural balance in an elderly population. Arch Phys Med Rehabil. 1992;73(11):1073–80.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/1444775',
+          },
+        ],
+      },
     ],
   },
   PASS: {
@@ -178,6 +233,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['12 items scored 0 to 3. Total range is 0 to 36.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Benaim C, et al. Validation of a standardized assessment of postural control in stroke patients: the Postural Assessment Scale for Stroke Patients (PASS). Stroke. 1999;30(9):1862–8.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/10471434',
+          },
+        ],
+      },
     ],
   },
   TIS: {
@@ -201,6 +265,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Enter each subscale total. Overall score range is 0 to 23.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Verheyden G, et al. The Trunk Impairment Scale: a new tool to measure motor impairment of the trunk after stroke. Clin Rehabil. 2004;18(3):326–34.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/15180128',
+          },
+        ],
+      },
     ],
   },
   MAS: {
@@ -229,6 +302,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['8 items scored 0 to 6. Total range is 0 to 48.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Carr JH, et al. Investigation of a new motor assessment scale for stroke patients. Phys Ther. 1985;65(2):175–80.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/3969505',
+          },
+        ],
+      },
     ],
   },
   COVS: {
@@ -254,6 +336,14 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['13 items scored 1 to 7. Total range is 13 to 91.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Seaby L, Torrance G. A physiotherapy outcome measure for stroke rehabilitation. Physiother Can. 1989;41(3):119–25.',
+          },
+        ],
+      },
     ],
   },
   FGA: {
@@ -284,6 +374,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['10 items scored 0 to 3. Total range is 0 to 30.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Wrisley DM, et al. Reliability, internal consistency, and validity of data obtained with the functional gait assessment. Phys Ther. 2004;84(10):906–18.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/15449976',
+          },
+        ],
+      },
     ],
   },
   HiMAT: {
@@ -321,6 +420,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['The mobile form progresses through 11 input steps and calculates a total score out of 54.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Williams G, et al. High-Level Mobility Assessment Tool (HiMAT): interrater reliability, retest reliability, and internal consistency. Phys Ther. 2006;86(3):395–400.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/16504976',
+          },
+        ],
+      },
     ],
   },
   SARA: {
@@ -349,6 +457,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Total range is 0 to 40. Lower score indicates less ataxia.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Schmitz-Hübsch T, et al. Scale for the assessment and rating of ataxia: development of a new clinical scale. Neurology. 2006;66(11):1717–20.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/16769946',
+          },
+        ],
+      },
     ],
   },
   Step: {
@@ -365,6 +482,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Record the number of completed steps in 15 seconds. The app can calculate asymmetry when both sides are entered.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Hill KD, et al. A new test of dynamic standing balance for stroke patients: reliability, validity and comparison with healthy elderly. Physiother Can. 1996;48(4):257–62.',
+            url: 'https://doi.org/10.3138/ptc.48.4.257',
+          },
+        ],
+      },
     ],
   },
   AMP: {
@@ -387,6 +513,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['The app maps the total score to K-level mobility categories.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Gailey RS, et al. The amputee mobility predictor: an instrument to assess determinants of the lower-limb amputee\'s ability to ambulate. Arch Phys Med Rehabil. 2002;83(5):613–27.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/12001005',
+          },
+        ],
+      },
     ],
   },
   BOOMER: {
@@ -404,6 +539,23 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Each component contributes to a total score out of 16.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Podsiadlo D, Richardson S. The timed "Up & Go." J Am Geriatr Soc. 1991;39(2):142–8. [TUG component]',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/1991946',
+          },
+          {
+            text: 'Duncan PW, et al. Functional reach: a new clinical measure of balance. J Gerontol. 1990;45(6):M192–7. [Functional Reach component]',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/2229941',
+          },
+          {
+            text: 'Hill KD, et al. A new test of dynamic standing balance for stroke patients. Physiother Can. 1996;48(4):257–62. [Step Test component]',
+            url: 'https://doi.org/10.3138/ptc.48.4.257',
+          },
+        ],
+      },
     ],
   },
   FSS: {
@@ -420,6 +572,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Total range is 9 to 63. A total of 36 or above is commonly used as a clinically significant fatigue threshold.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Krupp LB, et al. The fatigue severity scale: application to patients with multiple sclerosis and systemic lupus erythematosus. Arch Neurol. 1989;46(10):1121–3.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/2803071',
+          },
+        ],
+      },
     ],
   },
   HADS: {
@@ -436,6 +597,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Each subscale ranges from 0 to 21. Higher score indicates greater symptom burden.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Zigmond AS, Snaith RP. The hospital anxiety and depression scale. Acta Psychiatr Scand. 1983;67(6):361–70.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/6880820',
+          },
+        ],
+      },
     ],
   },
   RPQ: {
@@ -452,6 +622,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Total range is 0 to 64. The app also tracks RPQ-3, RPQ-13, and symptom count.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'King NS, et al. The Rivermead Post Concussion Symptoms Questionnaire: a measure of symptoms commonly experienced after head injury and its reliability. J Neurol. 1995;242(9):587–92.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/7562970',
+          },
+        ],
+      },
     ],
   },
   PDQ8: {
@@ -468,6 +647,19 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['The app calculates the Summary Index as a percentage: item sum divided by 32, multiplied by 100.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: "Jenkinson C, et al. The Parkinson's Disease Questionnaire (PDQ-39): development and validation of a Parkinson's disease summary index score. Age Ageing. 1997;26(5):353–7.",
+            url: 'https://pubmed.ncbi.nlm.nih.gov/9271288',
+          },
+          {
+            text: 'Jenkinson C, Fitzpatrick R. Cross-cultural evaluation of the short form 8-item Parkinson\'s Disease Questionnaire (PDQ-8). Parkinsonism Relat Disord. 2007;13(1):22–8.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/16839792',
+          },
+        ],
+      },
     ],
   },
   ABC: {
@@ -484,6 +676,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['The app reports the mean percentage across 16 activities. Higher score indicates greater balance confidence.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Powell LE, Myers AM. The Activities-specific Balance Confidence (ABC) Scale. J Gerontol A Biol Sci Med Sci. 1995;50A(1):M28–34.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/7814786',
+          },
+        ],
+      },
     ],
   },
   BIVI: {
@@ -500,6 +701,14 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Total range is 0 to 45. Higher score indicates greater vision-related impact.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Brain Injury Vision Inventory (BIVI): a 15-item patient-reported outcome measure of vision difficulties following acquired brain injury.',
+          },
+        ],
+      },
     ],
   },
   Barthel: {
@@ -530,6 +739,18 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Total range is 0 to 100. Higher score indicates greater independence.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Mahoney FI, Barthel DW. Functional evaluation: the Barthel Index. Md State Med J. 1965;14:61–5.',
+          },
+          {
+            text: 'Collin C, et al. The Barthel ADL Index: a reliability study. Int Disabil Stud. 1988;10(2):61–3.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/3403500',
+          },
+        ],
+      },
     ],
   },
   SCIM: {
@@ -553,6 +774,15 @@ export const MEASURE_INSTRUCTIONS: Record<string, MeasureInstructionContent> = {
         ],
       },
       { title: 'Scoring', bullets: ['Total range is 0 to 100. Higher score indicates greater independence.'] },
+      {
+        title: 'References',
+        links: [
+          {
+            text: 'Catz A, et al. SCIM — spinal cord independence measure: a new disability scale for patients with spinal cord lesions. Spinal Cord. 1997;35(12):850–6.',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/9429267',
+          },
+        ],
+      },
     ],
   },
 };

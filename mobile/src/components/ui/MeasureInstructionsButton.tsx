@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Linking,
   Modal,
   Pressable,
   ScrollView,
@@ -35,6 +36,20 @@ function InstructionSection({ section }: { section: MeasureInstructionSection })
           {item.detail ? <Text style={styles.itemDetail}>{item.detail}</Text> : null}
         </View>
       ))}
+      {section.links?.map((link, index) =>
+        link.url ? (
+          <Pressable
+            key={`${section.title}-link-${index}`}
+            onPress={() => Linking.openURL(link.url!)}
+            accessibilityRole="link"
+            accessibilityLabel={link.text}
+          >
+            <Text style={styles.linkText}>{link.text}</Text>
+          </Pressable>
+        ) : (
+          <Text key={`${section.title}-citation-${index}`} style={styles.citationText}>{link.text}</Text>
+        )
+      )}
     </View>
   );
 }
@@ -256,5 +271,17 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: typography.sizeSm,
     lineHeight: 20,
+  },
+  linkText: {
+    color: colors.primary,
+    fontSize: typography.sizeSm,
+    lineHeight: 20,
+    textDecorationLine: 'underline',
+  },
+  citationText: {
+    color: colors.muted,
+    fontSize: typography.sizeSm,
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
 });
