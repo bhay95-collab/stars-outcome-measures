@@ -484,9 +484,17 @@ export default function App() {
     const routePatient = routePatientId
       ? patients.find(patient => String(patient.id) === String(routePatientId))
       : null
-    const nextPatient = routePatient ?? selectedPatient ?? patients[0]
+    const nextPatient = routePatient ?? selectedPatient
 
-    if (nextPatient && selectedPatient?.id !== nextPatient.id) {
+    if (!nextPatient) {
+      setActiveSection('directory')
+      if (routeSection !== 'directory') {
+        router.replace(buildAppRoute({ section: 'directory' }), undefined, { shallow: true })
+      }
+      return
+    }
+
+    if (selectedPatient?.id !== nextPatient.id) {
       handlePatientSelect(nextPatient)
     }
 
@@ -497,7 +505,7 @@ export default function App() {
       router.replace(
         buildAppRoute({
           section: routeSection,
-          patientId: nextPatient?.id,
+          patientId: nextPatient.id,
           measureId: routeSection === 'measures' ? routeMeasureId : null,
         }),
         undefined,
