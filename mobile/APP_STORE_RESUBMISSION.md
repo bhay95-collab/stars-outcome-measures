@@ -3,22 +3,23 @@
 ## Build
 
 - Version: `1.0`
-- Minimum resubmission build: `11`
-- Rejection being addressed: submission `a2cda48f-32c3-4135-b255-b087f9e63617`, reviewed June 10, 2026
+- Minimum resubmission build: `17`
+- Rejection being addressed: submission `a2cda48f-32c3-4135-b255-b087f9e63617`, reviewed June 23, 2026
 
 ## App Review Reply
 
 Use this as the starting reply after all sandbox and device checks pass:
 
-> We addressed all issues identified in the previous review.
+> We addressed all issues identified in the most recent review.
 >
-> Guideline 4.8: Sign in with Apple is now available on the login screen alongside Google and email login. It supports Hide My Email and creates the same RehabMetrics IQ account and 14-day trial as the other registration methods.
+> Guideline 1.4.1 — Citations: Every outcome measure in the app now includes a References section accessible via the Guide button in the header of each assessment screen. The Guide button is visible on all 23 measure forms. The References section lists the original peer-reviewed validation papers for each measure with author, journal, year, and a tappable link to the source on PubMed or the publisher's DOI. For example, the Berg Balance Scale references Berg et al. (Arch Phys Med Rehabil, 1992, pubmed.ncbi.nlm.nih.gov/1444775) and the Timed Up and Go references Podsiadlo & Richardson (J Am Geriatr Soc, 1991, pubmed.ncbi.nlm.nih.gov/1991946). To review: open any patient record, select a measure, and tap Guide in the top-right header.
 >
-> Guideline 3.1.1: When a signed-in user has no active trial or subscription, the app opens a native subscription screen offering monthly and annual auto-renewable subscriptions through Apple In-App Purchase. The same screen includes Restore Purchases. Existing customers with an active web subscription continue to receive access.
+> Guideline 5.1.1(ix) — Organisation account: We have submitted an application to Apple Developer Support to convert the individual developer account to an organisation account. We will resubmit under the organisation account once Apple confirms the conversion.
 >
-> Guideline 5.1.1(v): Account deletion is available from Account on both the Patient Directory and subscription screen. The flow includes two confirmations, removes the user account and clinical data, and reauthenticates Sign in with Apple users so the Apple authorization can be revoked.
+> The issues from the previous review cycle (4.8, 3.1.1, 5.1.1(v)) remain resolved in this build.
 >
 > Review paths:
+> - Citations: Open any patient, select any measure (e.g. Berg Balance Scale), tap Guide in the top-right header, scroll to References
 > - Sign in with Apple: Login screen, Continue with Apple
 > - In-App Purchase: Sign in with the expired-trial review account, then choose Monthly or Annual
 > - Restore Purchases: Subscription screen, Restore Purchases
@@ -45,3 +46,5 @@ Use this as the starting reply after all sandbox and device checks pass:
 - Existing Stripe subscribers retain access on iOS and web.
 - Deletion succeeds for email, Google, and Apple accounts.
 - A physical-device pass is complete on iPhone and iPad Air 11-inch.
+- Every measure form shows a Guide button; Guide modal includes a References section with citations and tappable PubMed/DOI links.
+- Organisation account conversion is confirmed by Apple before final submission.
