@@ -126,7 +126,7 @@ export function AccountSettingsSheet({
           <>
             <View style={styles.userRow}>
               {avatarUrl ? (
-                <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+                <Image source={{ uri: avatarUrl }} style={styles.avatar} resizeMode="cover" />
               ) : (
                 <View style={styles.avatarFallback}>
                   <Text style={styles.avatarInitials}>{getInitials(name, user.email)}</Text>

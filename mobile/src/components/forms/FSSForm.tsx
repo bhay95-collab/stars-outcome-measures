@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,9 +57,13 @@ export function FSSForm({ patientId }: { patientId: string }) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+
   useEffect(() => {
     getPatient(patientId).then(p => setPatient(p)).catch(() => null);
   }, [patientId]);
+
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   function resetSaveState() {
     setSaveState('idle');
@@ -79,8 +83,10 @@ export function FSSForm({ patientId }: { patientId: string }) {
     let timedOut = false;
     const timeoutId = setTimeout(() => {
       timedOut = true;
-      setSaveState('timed-out');
-      setSaveError('Save timed out. Your result may not have been saved. Check your connection before trying again.');
+      if (mountedRef.current) {
+        setSaveState('timed-out');
+        setSaveError('Save timed out. Your result may not have been saved. Check your connection before trying again.');
+      }
     }, ACTION_TIMEOUT_MS);
     try {
       await saveAssessment({
@@ -95,11 +101,11 @@ export function FSSForm({ patientId }: { patientId: string }) {
       clearTimeout(timeoutId);
       if (!timedOut) {
         setSaveState('saved');
-        setTimeout(() => setSaveState('idle'), 3000);
+        setTimeout(() => { if (mountedRef.current) setSaveState('idle'); }, 3000);
       }
     } catch (e) {
       clearTimeout(timeoutId);
-      if (!timedOut) {
+      if (!timedOut && mountedRef.current) {
         setSaveError(e instanceof Error ? e.message : 'Unable to save result. Please try again.');
         setSaveState('error');
       }
