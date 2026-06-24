@@ -3,8 +3,9 @@
 ## Build
 
 - Version: `1.0`
-- Minimum resubmission build: `17`
+- Minimum resubmission build: `18`
 - Rejection being addressed: submission `a2cda48f-32c3-4135-b255-b087f9e63617`, reviewed June 23, 2026
+- Build 17 triggered a WatchdogTermination (OOM kill, Sentry issue 7571375518) on the reviewer's iPad (iOS 26.5) at the sign-in screen. Root cause: app was built with `jsEngine: jsc`; build 18 switches to Hermes, which reduces JS heap by ~30–50%. Also adds `checkAutomatically: ON_LOAD` explicitly to the updates config to avoid ambiguity in future SDK upgrades.
 
 ## App Review Reply
 
@@ -47,4 +48,5 @@ Use this as the starting reply after all sandbox and device checks pass:
 - Deletion succeeds for email, Google, and Apple accounts.
 - A physical-device pass is complete on iPhone and iPad Air 11-inch.
 - Every measure form shows a Guide button; Guide modal includes a References section with citations and tappable PubMed/DOI links.
+- App launches without crash on iOS 26 beta (test on Xcode 26 simulator or a device running iOS 26).
 - Organisation account conversion is confirmed by Apple before final submission.

@@ -8,7 +8,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "jsEngine": "jsc",
+    "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
@@ -58,7 +58,8 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/7012551f-e4e4-4c63-8657-c3e51880c233"
+      "url": "https://u.expo.dev/7012551f-e4e4-4c63-8657-c3e51880c233",
+      "checkAutomatically": "ON_LOAD"
     }
   }
 }
