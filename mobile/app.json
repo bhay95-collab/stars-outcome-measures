@@ -45,7 +45,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#094b8a"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "router": {},
