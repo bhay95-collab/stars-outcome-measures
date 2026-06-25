@@ -1,6 +1,6 @@
 # RehabMetrics IQ App Store Resubmission Handoff
 
-Updated: June 11, 2026
+Updated: June 26, 2026
 
 This is the step-by-step runbook for completing the Apple resubmission work. Follow it in order. Do not create the final App Store build until the Apple, RevenueCat, Supabase, Vercel, and EAS configuration sections are complete.
 
@@ -15,25 +15,23 @@ Already completed:
 - [x] In-app account deletion and Apple token revocation support
 - [x] Supabase migration `20260610090000_add_app_store_subscriptions.sql`
 - [x] iOS bundle identifier and Sign in with Apple Expo configuration
-- [x] iOS build number set to `11`
 - [x] EAS project and App Store Connect application identifiers
 - [x] RevenueCat account created
+- [x] `useMountedRef` hook — all 26 form components + PatientEditSheet guarded against post-unmount setState
+- [x] Supabase session migrated from AsyncStorage to `LargeSecureStore` (iOS Keychain, chunked JWTs)
+- [x] Subscription screen prices — hardcoded AUD fallbacks removed; prices come from StoreKit only
+- [x] App Privacy configured: Purchases → Used for App Functionality + Linked to User Identity (RevenueCat)
+- [x] App description updated: ISNCSCI removed (web-only), AUD prices removed, auto-renewal disclosure added
+- [x] `legacy-peer-deps=true` in `.npmrc` — resolves duplicate react-native EAS Metro bundling failure
+- [x] Production build 19 created and uploaded to App Store Connect
 
 Still required:
 
-- [ ] Complete Apple paid-app agreements, tax, and banking
-- [ ] Create the two subscriptions in App Store Connect
-- [ ] Create the required Apple keys
-- [ ] Enable Apple authentication in Supabase
-- [ ] Configure the RevenueCat project
-- [ ] Configure RevenueCat webhooks and Apple server notifications
-- [ ] Add the new server secrets to Vercel and redeploy
-- [ ] Add the RevenueCat public key to EAS
-- [ ] Create and upload a production iOS build
-- [ ] Complete physical-device and TestFlight QA
-- [ ] Prepare screenshots, review accounts, and deletion recording
-- [ ] Attach both subscriptions to the app version
-- [ ] Update App Privacy and resubmit
+- [ ] Apple org account conversion (Guideline 5.1.1(ix)) — in progress with Apple; do not submit until confirmed
+- [ ] Complete physical-device and TestFlight QA (Phase 13)
+- [ ] Prepare screenshots, review accounts, and deletion recording (Phase 14)
+- [ ] Attach both subscriptions to version 1.0 (Phase 16)
+- [ ] Final acceptance gate then submit (Phase 17–18)
 
 ## Permanent Identifiers
 
@@ -49,7 +47,7 @@ Use these values exactly. Product identifiers cannot be reused after creation, e
 | Expo project slug | `rehabmetrics-iq` |
 | Expo project ID | `7012551f-e4e4-4c63-8657-c3e51880c233` |
 | App version | `1.0` |
-| Minimum build | `11` |
+| Minimum build | `19` |
 | RevenueCat entitlement | `pro` |
 | RevenueCat offering | `default` |
 | Subscription group | `RehabMetrics IQ Pro` |
@@ -840,7 +838,7 @@ cd /Users/benjaminhay/stars-outcome-measures/mobile
 eas build --profile production --platform ios
 ```
 
-The production profile has auto-increment enabled, so the resulting build may be higher than `11`. That is acceptable.
+Build 19 is the current production build. If a new build is required, increment is automatic.
 
 When the build succeeds:
 
@@ -1163,17 +1161,18 @@ These are the app's first App Store subscriptions, so Apple requires them to be 
 1. Open **My Apps**, **RehabMetrics IQ**.
 2. Open iOS version `1.0`.
 3. Select the uploaded build `11` or later.
-4. Scroll to **In-App Purchases and Subscriptions**.
-5. Click **Select In-App Purchases or Subscriptions**.
-6. Select both:
+4. Select build `19` (or the latest uploaded build).
+5. Scroll to **In-App Purchases and Subscriptions**.
+6. Click **Select In-App Purchases or Subscriptions**.
+7. Select both:
 
 ```text
 com.rehabmetricsiq.app.subscription.pro.monthly
 com.rehabmetricsiq.app.subscription.pro.annual
 ```
 
-7. Click **Done**.
-8. Confirm both products are visibly attached to version `1.0`.
+8. Click **Done**.
+9. Confirm both products are visibly attached to version `1.0`.
 
 Do not submit either first subscription separately from the app version.
 
@@ -1221,7 +1220,7 @@ Submission:
 
 - [ ] Both subscriptions are Ready to Submit
 - [ ] Both subscriptions are attached to version `1.0`
-- [ ] Build `11` or later is selected
+- [ ] Build `19` (or later) is selected
 - [ ] Revised iPhone screenshots are uploaded
 - [ ] Revised iPad screenshots are uploaded
 - [ ] App Privacy is updated
