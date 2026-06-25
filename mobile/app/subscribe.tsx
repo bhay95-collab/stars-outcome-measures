@@ -67,7 +67,7 @@ export default function SubscribeScreen() {
       id: 'annual' as const,
       title: 'Annual',
       detail: 'Best value for ongoing clinical use',
-      price: packages.annual?.product.priceString ?? 'A$250',
+      price: packages.annual?.product.priceString ?? null,
       period: 'per year',
       badge: 'Save compared with monthly',
     },
@@ -75,7 +75,7 @@ export default function SubscribeScreen() {
       id: 'monthly' as const,
       title: 'Monthly',
       detail: 'Flexible month-to-month access',
-      price: packages.monthly?.product.priceString ?? 'A$29',
+      price: packages.monthly?.product.priceString ?? null,
       period: 'per month',
       badge: null,
     },
@@ -178,7 +178,7 @@ export default function SubscribeScreen() {
                     ]}
                     accessibilityRole="radio"
                     accessibilityState={{ selected }}
-                    accessibilityLabel={`${plan.title}, ${plan.price} ${plan.period}`}
+                    accessibilityLabel={plan.price ? `${plan.title}, ${plan.price} ${plan.period}` : plan.title}
                   >
                     <View style={styles.radioOuter}>
                       {selected ? <View style={styles.radioInner} /> : null}
@@ -191,7 +191,7 @@ export default function SubscribeScreen() {
                       <Text style={styles.planDetail}>{plan.detail}</Text>
                     </View>
                     <View style={styles.priceCopy}>
-                      <Text style={styles.price}>{plan.price}</Text>
+                      {plan.price ? <Text style={styles.price}>{plan.price}</Text> : null}
                       <Text style={styles.period}>{plan.period}</Text>
                     </View>
                   </Pressable>
