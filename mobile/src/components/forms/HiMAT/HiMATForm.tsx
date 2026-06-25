@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useMountedRef } from '../../../hooks/useMountedRef';
 import { router } from 'expo-router';
 // @ts-ignore — JS clinical module, no type declarations
 import { calcHiMAT } from '@clinical/himat';
@@ -66,13 +67,12 @@ export function HiMATForm({ patientId }: { patientId: string }) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const mountedRef = useRef(true);
+  const mountedRef = useMountedRef();
 
   useEffect(() => {
     getPatient(patientId).then((p: Patient | null) => setPatient(p)).catch(() => null);
   }, [patientId]);
 
-  useEffect(() => () => { mountedRef.current = false; }, []);
 
   function handleBack() {
     if (step === 0) {

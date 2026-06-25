@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useMountedRef } from '../../hooks/useMountedRef';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,7 +53,7 @@ export function TUGForm({ patientId }: { patientId: string }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [timerResetSignal, setTimerResetSignal] = useState(0);
 
-  const mountedRef = useRef(true);
+  const mountedRef = useMountedRef();
 
   useEffect(() => {
     getPatient(patientId)
@@ -60,7 +61,6 @@ export function TUGForm({ patientId }: { patientId: string }) {
       .catch(() => null);
   }, [patientId]);
 
-  useEffect(() => () => { mountedRef.current = false; }, []);
 
   function resetSaveState() {
     setSaveState('idle');

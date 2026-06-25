@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useMountedRef } from '../../hooks/useMountedRef';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -37,6 +38,7 @@ interface PatientEditSheetProps {
 
 export function PatientEditSheet({ visible, patient, onUpdated, onDeleted, onDismiss }: PatientEditSheetProps) {
   const insets = useSafeAreaInsets();
+  const mountedRef = useMountedRef();
   const [initials, setInitials] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState<PatientGender | null>(null);
@@ -118,9 +120,9 @@ export function PatientEditSheet({ visible, patient, onUpdated, onDeleted, onDis
       });
       onUpdated(updated);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update patient. Please try again.');
+      if (mountedRef.current) setError(e instanceof Error ? e.message : 'Unable to update patient. Please try again.');
     } finally {
-      setIsSaving(false);
+      if (mountedRef.current) setIsSaving(false);
     }
   }
 

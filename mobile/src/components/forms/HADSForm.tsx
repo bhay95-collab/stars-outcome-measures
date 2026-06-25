@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useMountedRef } from '../../hooks/useMountedRef';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -64,13 +65,12 @@ export function HADSForm({ patientId }: { patientId: string }) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const mountedRef = useRef(true);
+  const mountedRef = useMountedRef();
 
   useEffect(() => {
     getPatient(patientId).then(p => setPatient(p)).catch(() => null);
   }, [patientId]);
 
-  useEffect(() => () => { mountedRef.current = false; }, []);
 
   function resetSaveState() {
     setSaveState('idle');
@@ -106,7 +106,7 @@ export function HADSForm({ patientId }: { patientId: string }) {
         },
       });
       clearTimeout(timeoutId);
-      if (!timedOut) {
+      if (!timedOut && mountedRef.current) {
         setSaveState('saved');
         setTimeout(() => { if (mountedRef.current) setSaveState('idle'); }, 3000);
       }

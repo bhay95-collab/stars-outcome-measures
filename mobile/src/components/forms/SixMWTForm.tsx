@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useMountedRef } from '../../hooks/useMountedRef';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,13 +47,12 @@ export function SixMWTForm({ patientId }: { patientId: string }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [timerResetSignal, setTimerResetSignal] = useState(0);
 
-  const mountedRef = useRef(true);
+  const mountedRef = useMountedRef();
 
   useEffect(() => {
     getPatient(patientId).then(p => setPatient(p)).catch(() => null);
   }, [patientId]);
 
-  useEffect(() => () => { mountedRef.current = false; }, []);
 
   function resetSaveState() {
     setSaveState('idle');
