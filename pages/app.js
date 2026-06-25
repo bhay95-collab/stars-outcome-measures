@@ -488,9 +488,7 @@ export default function App() {
 
     if (!nextPatient) {
       setActiveSection('directory')
-      if (routeSection !== 'directory') {
-        router.replace(buildAppRoute({ section: 'directory' }), undefined, { shallow: true })
-      }
+      router.replace(buildAppRoute({ section: 'directory' }), undefined, { shallow: true })
       return
     }
 
