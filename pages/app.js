@@ -1170,7 +1170,21 @@ function AppShellSkeleton() {
 
 function PatientFollowUpPanel({ attentionEntries, dueSignals, dueLoading, patients, onOpenFollowUp, onSelect }) {
   const hasReview = attentionEntries?.length > 0
-  const hasDue = dueSignals?.length > 0
+
+  // Collapse per-measure signals into one row per patient (most-overdue measure surfaces first)
+  const dueByPatient = (() => {
+    const map = new Map()
+    for (const signal of (dueSignals ?? [])) {
+      const existing = map.get(signal.patientId)
+      map.set(signal.patientId, existing
+        ? { ...existing, measureCount: existing.measureCount + 1 }
+        : { ...signal, measureCount: 1 }
+      )
+    }
+    return [...map.values()]
+  })()
+
+  const hasDue = dueByPatient.length > 0
   if (!hasReview && !hasDue && !dueLoading) return null
 
   return (
@@ -1212,7 +1226,7 @@ function PatientFollowUpPanel({ attentionEntries, dueSignals, dueLoading, patien
             <span className="followup-panel__zone-label">Reassessments Due</span>
             {!dueLoading && (
               <span className="followup-panel__zone-badge followup-panel__zone-badge--due">
-                {dueSignals.length}
+                {dueByPatient.length} patient{dueByPatient.length === 1 ? '' : 's'}
               </span>
             )}
           </div>
@@ -1220,19 +1234,19 @@ function PatientFollowUpPanel({ attentionEntries, dueSignals, dueLoading, patien
           {dueLoading
             ? <p className="followup-panel__zone-loading">Checking caseload…</p>
             : <div className="followup-panel__rows">
-            {dueSignals.map(signal => (
-              <article key={`${signal.patientId}-${signal.measureId}`} className="followup-panel__row" data-type="due">
+            {dueByPatient.map(entry => (
+              <article key={entry.patientId} className="followup-panel__row" data-type="due">
                 <div className="followup-panel__row-info">
-                  <strong>{signal.patientLabel}</strong>
-                  <span>{signal.measureName}</span>
+                  <strong>{entry.patientLabel}</strong>
+                  <span>{entry.measureCount} pathway measure{entry.measureCount === 1 ? '' : 's'} due</span>
                 </div>
                 <div className="followup-panel__row-detail">
-                  <small>Last recorded {signal.lastRecordedLabel} · {signal.daysSinceLast} days ago</small>
+                  <small>Oldest: last recorded {entry.lastRecordedLabel} · {entry.daysSinceLast} days ago</small>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    const patient = patients.find(p => p.id === signal.patientId)
+                    const patient = patients.find(p => p.id === entry.patientId)
                     if (patient) onSelect(patient)
                   }}
                 >
