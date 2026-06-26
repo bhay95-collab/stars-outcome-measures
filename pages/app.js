@@ -19,7 +19,9 @@ import { MEASURES } from '../lib/clinical'
 import { buildOutcomesIntelligence } from '../lib/clinical/outcomesIntelligence'
 import { buildPatientPathway } from '../lib/clinical/pathways'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
-import { buildPatientSummary, fmtDate } from '../lib/clinical/patientSummary'
+import { buildPatientSummary, fmtDate, groupAssessmentsByMeasure } from '../lib/clinical/patientSummary'
+import dynamic from 'next/dynamic'
+const MeasureTrendChart = dynamic(() => import('../components/MeasureTrendChart'), { ssr: false })
 import {
   FOLLOWUP_ATTENTION,
   FOLLOWUP_STATUS,
@@ -1305,6 +1307,16 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
   const latestAssessment = summary.assessments[0] ?? null
   const prioritySignal = summary.flags[0] ?? null
   const latestEntries = summary.entries.slice(0, 4)
+  const condition = patient?.diagnosis ?? patient?.condition ?? null
+
+  const assessmentGroups = groupAssessmentsByMeasure(assessments)
+  const trendMeasures = Object.keys(assessmentGroups)
+    .filter(id => MEASURES[id]?.chart && assessmentGroups[id].length >= 2)
+    .sort((a, b) => {
+      const aDate = assessmentGroups[a][0]?.created_at ?? ''
+      const bDate = assessmentGroups[b][0]?.created_at ?? ''
+      return bDate.localeCompare(aDate)
+    })
 
   function handleNextAction() {
     if (followUpAction?.action === 'measure') {
@@ -1347,87 +1359,110 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
         </div>
       </div>
 
-      <div className="overview-grid">
-        <article className="next-action-panel overview-next-action" data-tone={pathway?.statusTone}>
-          <div>
-            <h3>{followUpAction?.label ?? nextAction?.label ?? 'Open Smart Pathway'}</h3>
-            <p>{followUpAction?.detail ?? nextAction?.detail ?? 'Review the pathway to choose the next useful clinical action.'}</p>
+      <div className="overview-layout">
+        <div className="overview-left">
+          <div className="overview-meta-strip">
+            <div><strong>{summary.totals.assessments}</strong><span>Assessments</span></div>
+            <div><strong>{summary.totals.measures}</strong><span>Measures</span></div>
+            <div><strong>{summary.totals.domains}</strong><span>Domains</span></div>
+            <div><strong>{formatAssessmentDate(latestAssessment?.created_at)}</strong><span>Latest assessment</span></div>
           </div>
-          <button type="button" onClick={handleNextAction}>
-            {followUpAction?.button ?? pathwayActionLabel(nextAction)}
-          </button>
-        </article>
 
-        <div className="overview-meta-strip">
-          <div><strong>{summary.totals.assessments}</strong><span>Assessments</span></div>
-          <div><strong>{summary.totals.measures}</strong><span>Measures</span></div>
-          <div><strong>{summary.totals.domains}</strong><span>Domains</span></div>
-          <div><strong>{formatAssessmentDate(latestAssessment?.created_at)}</strong><span>Latest assessment</span></div>
+          <article className="next-action-panel overview-next-action" data-tone={pathway?.statusTone}>
+            <div>
+              <h3>{followUpAction?.label ?? nextAction?.label ?? 'Open Smart Pathway'}</h3>
+              <p>{followUpAction?.detail ?? nextAction?.detail ?? 'Review the pathway to choose the next useful clinical action.'}</p>
+            </div>
+            <button type="button" onClick={handleNextAction}>
+              {followUpAction?.button ?? pathwayActionLabel(nextAction)}
+            </button>
+          </article>
+
+          <article className="overview-card overview-card--signal">
+            <div className="summary-card__head">
+              <div>
+                <h3>Clinical signal</h3>
+                <p>Highest current flag from recorded measures.</p>
+              </div>
+            </div>
+            {prioritySignal ? (
+              <div className="overview-signal" data-tone={prioritySignal.tone}>
+                <strong>{prioritySignal.title}</strong>
+                <span>{prioritySignal.value}</span>
+                <p>{prioritySignal.text}</p>
+              </div>
+            ) : (
+              <p className="empty-hint">No elevated clinical signal is currently recorded.</p>
+            )}
+          </article>
+
+          <article className="overview-card overview-card--measures">
+            <div className="summary-card__head">
+              <div>
+                <h3>Latest measures</h3>
+                <p>Recent recorded outcome values for fast scanning.</p>
+              </div>
+              <button type="button" onClick={onReports}>History</button>
+            </div>
+            <div className="overview-measure-list">
+              {latestEntries.length ? latestEntries.map(entry => (
+                <button key={entry.measureId} type="button" onClick={() => onMeasure(entry.measureId)}>
+                  <span>{entry.measure.id}</span>
+                  <strong>{entry.valueLabel}</strong>
+                  <em>{entry.interpretation}</em>
+                </button>
+              )) : (
+                <p className="empty-hint">Record a baseline measure to populate this view.</p>
+              )}
+            </div>
+          </article>
+
+          <article className="overview-card overview-card--followup">
+            <div className="summary-card__head">
+              <div>
+                <h3>Patient follow-up</h3>
+                <p>Remote questionnaire links and patient-reported attention signals.</p>
+              </div>
+              <button type="button" onClick={onFollowUp}>Open</button>
+            </div>
+            <div className="followup-overview-status" data-attention={followUpSummary.attentionLevel}>
+              <span>{followUpAttentionLabel(followUpSummary.attentionLevel)}</span>
+              <strong>
+                {followUpSummary.latestResponse
+                  ? latestFollowUpLine(followUpSummary.latestResponse)
+                  : 'No patient-reported follow-up yet'}
+              </strong>
+              <p>
+                {followUpSummary.overdueCount
+                  ? `${followUpSummary.overdueCount} questionnaire link${followUpSummary.overdueCount === 1 ? '' : 's'} overdue.`
+                  : followUpSummary.pendingCount
+                    ? `${followUpSummary.pendingCount} secure link${followUpSummary.pendingCount === 1 ? '' : 's'} pending.`
+                    : 'Create a secure link when you want the patient to repeat a completed questionnaire.'}
+              </p>
+            </div>
+          </article>
         </div>
 
-        <article className="overview-card overview-card--signal">
-          <div className="summary-card__head">
-            <div>
-              <h3>Clinical signal</h3>
-              <p>Highest current flag from recorded measures.</p>
-            </div>
+        <div className="overview-charts-panel">
+          <div className="overview-charts-head">
+            <h3>Outcome Trends</h3>
+            <p>Per-measure progress with clinical reference ranges</p>
           </div>
-          {prioritySignal ? (
-            <div className="overview-signal" data-tone={prioritySignal.tone}>
-              <strong>{prioritySignal.title}</strong>
-              <span>{prioritySignal.value}</span>
-              <p>{prioritySignal.text}</p>
-            </div>
+          {trendMeasures.length ? (
+            trendMeasures.map(measureId => (
+              <MeasureTrendChart
+                key={measureId}
+                measureId={measureId}
+                assessments={assessmentGroups[measureId]}
+                condition={condition}
+              />
+            ))
           ) : (
-            <p className="empty-hint">No elevated clinical signal is currently recorded.</p>
+            <div className="charts-empty">
+              <span>Record two or more assessments for any measure to see progress trends and clinical reference ranges here.</span>
+            </div>
           )}
-        </article>
-
-        <article className="overview-card overview-card--measures">
-          <div className="summary-card__head">
-            <div>
-              <h3>Latest measures</h3>
-              <p>Recent recorded outcome values for fast scanning.</p>
-            </div>
-            <button type="button" onClick={onReports}>History</button>
-          </div>
-          <div className="overview-measure-list">
-            {latestEntries.length ? latestEntries.map(entry => (
-              <button key={entry.measureId} type="button" onClick={() => onMeasure(entry.measureId)}>
-                <span>{entry.measure.id}</span>
-                <strong>{entry.valueLabel}</strong>
-                <em>{entry.interpretation}</em>
-              </button>
-            )) : (
-              <p className="empty-hint">Record a baseline measure to populate this view.</p>
-            )}
-          </div>
-        </article>
-
-        <article className="overview-card overview-card--followup">
-          <div className="summary-card__head">
-            <div>
-              <h3>Patient follow-up</h3>
-              <p>Remote questionnaire links and patient-reported attention signals.</p>
-            </div>
-            <button type="button" onClick={onFollowUp}>Open</button>
-          </div>
-          <div className="followup-overview-status" data-attention={followUpSummary.attentionLevel}>
-            <span>{followUpAttentionLabel(followUpSummary.attentionLevel)}</span>
-            <strong>
-              {followUpSummary.latestResponse
-                ? latestFollowUpLine(followUpSummary.latestResponse)
-                : 'No patient-reported follow-up yet'}
-            </strong>
-            <p>
-              {followUpSummary.overdueCount
-                ? `${followUpSummary.overdueCount} questionnaire link${followUpSummary.overdueCount === 1 ? '' : 's'} overdue.`
-                : followUpSummary.pendingCount
-                  ? `${followUpSummary.pendingCount} secure link${followUpSummary.pendingCount === 1 ? '' : 's'} pending.`
-                  : 'Create a secure link when you want the patient to repeat a completed questionnaire.'}
-            </p>
-          </div>
-        </article>
+        </div>
       </div>
     </section>
   )
@@ -3045,8 +3080,8 @@ const globalStyles = `
     --color-muted:          #334b49;
     --color-subtle:         #69787a;
 
-    /* Surfaces — near-white with a warm cast: clinical, not beige */
-    --color-bg:             #f4f6f4;
+    /* Surfaces — soft white-blue that pairs with the dark sidebar */
+    --color-bg:             #f6f9fc;
     --color-surface:        #ffffff;
     --color-surface-raised: #fbfcfb;
     --color-surface-soft:   #eef2ef;
@@ -3099,9 +3134,72 @@ const globalStyles = `
     display: flex;
     flex-direction: column;
     padding: 28px 14px 18px;
-    border-right: 1px solid var(--color-border);
-    background: var(--color-surface);
-    box-shadow: inset -1px 0 var(--color-border);
+    border-right: none;
+    background: var(--color-primary-dark);
+    box-shadow: 3px 0 24px rgba(6,55,100,0.18);
+  }
+
+  /* ── Dark sidebar colour overrides (all scoped to .app-sidebar for specificity) ── */
+  .app-sidebar .logo-wordmark { color: #ffffff; }
+  .app-sidebar .patient-switcher {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.12);
+  }
+  .app-sidebar .section-label { color: rgba(255,255,255,0.52); }
+  .app-sidebar .patient-switcher__head button {
+    background: rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.9);
+    border-color: rgba(255,255,255,0.18);
+  }
+  .app-sidebar .patient-switcher__select {
+    background: rgba(255,255,255,0.09);
+    border-color: rgba(255,255,255,0.13);
+    color: rgba(255,255,255,0.65);
+  }
+  .app-sidebar .patient-switcher__select select { color: #ffffff; }
+  .app-sidebar .patient-switcher__select select:disabled { color: rgba(255,255,255,0.38); }
+  .app-sidebar .patient-switcher__meta { color: rgba(255,255,255,0.55); }
+  .app-sidebar .app-nav__group-label { color: rgba(255,255,255,0.40); }
+  .app-sidebar .app-nav__group-label--separate { border-top-color: rgba(255,255,255,0.10); }
+  .app-sidebar .app-nav button,
+  .app-sidebar .app-sidebar__settings { color: rgba(255,255,255,0.80); }
+  .app-sidebar .app-nav__copy span { color: rgba(255,255,255,0.52) !important; }
+  .app-sidebar .app-nav button:hover,
+  .app-sidebar .app-sidebar__settings:hover {
+    background: rgba(255,255,255,0.09);
+    color: #ffffff;
+  }
+  .app-sidebar .app-nav button[data-active] {
+    background: rgba(255,255,255,0.13);
+    box-shadow: inset 3px 0 0 #ffffff;
+    color: #ffffff;
+  }
+  .app-sidebar .app-nav button[data-active] .app-nav__copy strong { color: #ffffff; }
+  .app-sidebar .app-nav button[data-active] .app-nav__copy span { color: rgba(255,255,255,0.75) !important; }
+  .app-sidebar .nav-badge { background: rgba(255,255,255,0.16); color: #ffffff; }
+  .app-sidebar .app-nav button[data-active] .nav-badge {
+    background: #ffffff;
+    color: var(--color-primary-dark);
+  }
+  .app-sidebar .app-sidebar__bottom { border-top-color: rgba(255,255,255,0.10); }
+  .app-sidebar .profile-strip { color: rgba(255,255,255,0.80); }
+  .app-sidebar .profile-strip:hover { background: rgba(255,255,255,0.09); color: #ffffff; }
+  .app-sidebar .profile-strip__copy strong { color: #ffffff; }
+  .app-sidebar .profile-strip__copy small { color: rgba(255,255,255,0.52); }
+  .app-sidebar .profile-strip__chevron { color: rgba(255,255,255,0.40); }
+  .app-sidebar span.profile-strip__avatar {
+    background: rgba(255,255,255,0.18) !important;
+    color: #ffffff !important;
+  }
+  .app-sidebar .sidebar-signout {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.65);
+  }
+  .app-sidebar .sidebar-signout:hover {
+    background: rgba(255,255,255,0.13);
+    border-color: rgba(255,255,255,0.28);
+    color: #ffffff;
   }
 
   .app-sidebar__logo {
@@ -3433,7 +3531,7 @@ const globalStyles = `
     position: relative;
     overflow: hidden;
     border-radius: 8px;
-    background: linear-gradient(90deg, #edede4 0%, #f7f7f1 46%, #edede4 100%);
+    background: linear-gradient(90deg, #e4e9f0 0%, #f1f5f9 46%, #e4e9f0 100%);
     background-size: 220% 100%;
   }
 
@@ -5051,23 +5149,126 @@ const globalStyles = `
     gap: 10px;
   }
 
-  .overview-grid {
+  /* ── Overview two-column layout ── */
+  .overview-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
-    grid-template-areas:
-      "next-action next-action"
-      "stats       stats"
-      "signal      measures"
-      "followup    measures";
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) 348px;
+    gap: 24px;
     align-items: start;
   }
 
-  .overview-next-action { grid-area: next-action; }
-  .overview-meta-strip  { grid-area: stats; }
-  .overview-card--signal  { grid-area: signal; }
-  .overview-card--measures { grid-area: measures; }
-  .overview-card--followup { grid-area: followup; }
+  .overview-left {
+    display: grid;
+    gap: 16px;
+  }
+
+  /* ── Outcome Trends panel (right column) ── */
+  .overview-charts-panel {
+    display: grid;
+    gap: 14px;
+    position: sticky;
+    top: 24px;
+    max-height: calc(100vh - 72px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding-bottom: 2px;
+  }
+
+  .overview-charts-head { margin-bottom: 2px; }
+  .overview-charts-head h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-ink);
+    letter-spacing: -0.1px;
+  }
+  .overview-charts-head p {
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--color-subtle);
+  }
+
+  .measure-trend-chart {
+    padding: 14px 16px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--elevation-rest);
+  }
+
+  .measure-trend-chart__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+
+  .measure-trend-chart__name {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .measure-trend-chart__dir {
+    font-size: 9.5px;
+    color: var(--color-subtle);
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .measure-trend-chart__legend {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .mtc-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9.5px;
+    color: var(--color-muted);
+    line-height: 1.3;
+  }
+
+  .mtc-legend-line {
+    width: 16px;
+    height: 2px;
+    border-radius: 1px;
+    flex: 0 0 auto;
+    opacity: 0.75;
+  }
+
+  .mtc-legend-dash {
+    width: 16px;
+    height: 0;
+    border-top: 2px dashed var(--color-primary);
+    flex: 0 0 auto;
+    opacity: 0.8;
+  }
+
+  .charts-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--color-subtle);
+    font-size: 12px;
+    line-height: 1.7;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
 
   .overview-meta-strip {
     display: flex;
@@ -6284,7 +6485,7 @@ const globalStyles = `
     display: block;
     height: 66px;
     border-radius: 10px;
-    background: linear-gradient(90deg, #edede4 0%, #f7f7f1 46%, #edede4 100%);
+    background: linear-gradient(90deg, #e4e9f0 0%, #f1f5f9 46%, #e4e9f0 100%);
     background-size: 220% 100%;
   }
 

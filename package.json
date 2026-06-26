@@ -17,6 +17,8 @@
     "pdf-lib": "^1.17.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "react-is": "^19.2.7",
+    "recharts": "^3.9.0",
     "stripe": "^22.0.2"
   },
   "devDependencies": {
