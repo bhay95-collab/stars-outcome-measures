@@ -22,6 +22,7 @@ import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
 import { buildPatientSummary, fmtDate, groupAssessmentsByMeasure } from '../lib/clinical/patientSummary'
 import dynamic from 'next/dynamic'
 const MeasureTrendChart = dynamic(() => import('../components/MeasureTrendChart'), { ssr: false })
+const PathwayCoverageDonut = dynamic(() => import('../components/PathwayCoverageDonut'), { ssr: false })
 import {
   FOLLOWUP_ATTENTION,
   FOLLOWUP_STATUS,
@@ -1444,6 +1445,7 @@ function PatientOverview({ patient, assessments, followups, pathway, onEditPatie
         </div>
 
         <div className="overview-charts-panel">
+          <PathwayCoverageDonut pathway={pathway} onMeasure={onMeasure} />
           <div className="overview-charts-head">
             <h3>Outcome Trends</h3>
             <p>Per-measure progress with clinical reference ranges</p>
@@ -5175,6 +5177,124 @@ const globalStyles = `
     scrollbar-width: thin;
     padding-bottom: 2px;
   }
+
+  /* ── Pathway Coverage Donut ── */
+  .pathway-coverage-donut {
+    padding: 18px 20px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--elevation-rest);
+  }
+  .pcd-header { margin-bottom: 14px; }
+  .pcd-header h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-ink);
+    letter-spacing: -0.1px;
+  }
+  .pcd-header p {
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--color-subtle);
+  }
+  .pcd-body {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .pcd-chart-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 160px;
+    height: 160px;
+  }
+  .pcd-centre-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .pcd-centre-label strong {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--color-ink);
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+  .pcd-centre-label span {
+    font-size: 10px;
+    color: var(--color-subtle);
+    margin-top: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .pcd-lists {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    max-height: 160px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .pcd-list-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-subtle);
+    margin-bottom: 5px;
+  }
+  .pcd-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 4px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 12px;
+    color: var(--color-ink);
+    transition: background 0.12s;
+  }
+  .pcd-item:hover { background: var(--color-surface-soft); }
+  .pcd-item em {
+    margin-left: auto;
+    font-style: normal;
+    font-size: 10px;
+    color: var(--color-subtle);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .pcd-item--missing em, .pcd-item--due em {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+  .pcd-item-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .pcd-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .pcd-dot--recorded { background: #094b8a; }
+  .pcd-dot--due { background: #f59e0b; }
+  .pcd-dot--missing { background: #d1d9e6; border: 1.5px solid #9aaabb; }
 
   .overview-charts-head { margin-bottom: 2px; }
   .overview-charts-head h3 {
