@@ -1,6 +1,6 @@
 # Architecture — RehabMetrics IQ
 
-Last verified against the codebase: 2026-06-13
+Last verified against the codebase: 2026-06-26
 
 RehabMetrics IQ is a monorepo containing two apps that share one Supabase backend and one clinical scoring engine:
 
@@ -32,6 +32,9 @@ pages/
 components/         Presentational/workflow React components. One Form<MEASURE>.js per
                     outcome measure, plus workspace components (SummaryTab, PatientList,
                     OutcomesIntelligenceWorkspace, WheelchairPrescriptionTool, ...).
+                    Chart components (both dynamically imported with `ssr: false`):
+                      MeasureTrendChart.js — per-measure LineChart with threshold + MCID lines
+                      PathwayCoverageDonut.js — Smart Pathway coverage ring chart, clickable measures
 lib/                Server + shared helpers (Supabase clients, Stripe, Apple, RevenueCat,
                     follow-ups, rate limiting, Sentry scrubbing).
 lib/clinical/       The clinical engine — pure JavaScript only (see below).
@@ -135,6 +138,7 @@ Before changing patient or assessment fields: map the Supabase schema to UI fiel
 ## Cross-cutting concerns
 
 - **Styling:** plain CSS inside page-level template strings. No Tailwind, no CSS modules, no styling libraries. See [DESIGN.md](DESIGN.md).
+- **Charts:** `recharts` (v3.9.0) with peer dependency `react-is`. Chart components that use recharts must be dynamically imported with `ssr: false` — `ResponsiveContainer` requires the DOM and will break SSR. Both `MeasureTrendChart` and `PathwayCoverageDonut` follow this pattern.
 - **Error monitoring:** Sentry on both platforms, errors only (no tracing/replay), with centralised PHI scrubbing (`lib/sentry-scrub.js`, `mobile/sentry.ts`). See [SECURITY.md](SECURITY.md).
 - **Email:** Resend, server-side only, for follow-up questionnaire links (`lib/followupEmail.js`). Email content is limited to the link, questionnaire name, expiry, and a non-emergency disclaimer.
 - **PDF export:** `pdf-lib` on web (patient reports, service reports, ISNCSCI export).

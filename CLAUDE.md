@@ -54,9 +54,9 @@ Working documents (kept current as work lands):
 - **Sensitive changes** (auth, Stripe, RevenueCat, subscription gates, RLS, deletion): read SECURITY.md first, preserve existing flows, run a security review.
 - **Preserve existing functionality and patterns** — the preservation lists in DESIGN.md and the failure conditions in CONTRIBUTING.md define what must not break.
 
-## Known build patterns and gotchas (audited 2026-06-13)
+## Known build patterns and gotchas (audited 2026-06-26)
 
-1. `pages/app.js` is the **entire authenticated web app** in one large file — UI, state, and the design-token `:root` block (~line 2913). This is the accepted pattern; don't split it casually.
+1. `pages/app.js` is the **entire authenticated web app** in one large file — UI, state, and the design-token `:root` block (~line 3086). This is the accepted pattern; don't split it casually.
 2. **Migration order:** apply Supabase migrations before deploying web code that selects new columns — a failed `profiles` select is treated as "no access" and locks users out.
 3. The **`@clinical` alias** (mobile → `../lib/clinical`) is wired in three files that must stay in sync: `mobile/tsconfig.json`, `mobile/babel.config.js`, `mobile/metro.config.js`. `npm run test:clinical` smoke-tests it.
 4. **EAS `autoIncrement`** writes the iOS build number into `mobile/app.json` at build time — commit the bump after each production build.
@@ -68,3 +68,6 @@ Working documents (kept current as work lands):
 10. Mobile save flow: UI feedback via `setTimeout` only; the original `await` keeps Save disabled (never `withTimeout` around `saveAssessment()`). Mobile session: `getSession()` failure sets `isSessionCheckFailed`, never clears the session.
 11. Web API routes authenticate via the `stars-auth` cookie (`getUserFromRequest`) — it is not HttpOnly yet (known deferred item in SECURITY.md).
 12. Apple account deletion is a **hard gate**: server-side Apple token revocation must succeed before data deletion proceeds for Apple-login users.
+13. **recharts needs `react-is` as a peer dep** — `recharts` v3.x does not bundle it. If you see `Module not found: Can't resolve 'react-is'`, run `npm install react-is --legacy-peer-deps`.
+14. **recharts components must be dynamically imported with `ssr: false`** — `ResponsiveContainer` uses `ResizeObserver` and will crash the Next.js SSR pass. Use `next/dynamic` with `{ ssr: false }` for any component that renders recharts. `MeasureTrendChart` and `PathwayCoverageDonut` already follow this pattern.
+15. **Dark sidebar CSS specificity** — sidebar colour overrides live at a lower position in the stylesheet than the base button/nav styles. They win by using `.app-sidebar` as a parent prefix (specificity 0-2-1 vs 0-1-1), not by order. Always scope dark-sidebar overrides with `.app-sidebar .target-class`, not bare selectors.

@@ -1,6 +1,6 @@
 # Design — RehabMetrics IQ
 
-Last verified against the codebase: 2026-06-13
+Last verified against the codebase: 2026-06-26
 
 This is the single source of truth for visual language, tokens, component patterns, and accessibility. If a value here disagrees with any other document, **the `:root` block in `pages/app.js` (app) and `const styles` in `pages/index.js` (landing) are authoritative** — update this file to match them.
 
@@ -26,9 +26,9 @@ Avoid: flashy SaaS styling, generic dashboards, browser-default forms, harsh edg
 
 ## App colour system (both platforms)
 
-The app palette is the **deep-blue + warm-bone system**. Web tokens live in the `:root` block inside `globalStyles` in `pages/app.js`; mobile mirrors them in `mobile/src/theme/tokens.ts`.
+The app palette is the **deep-blue + clinical near-white system**. Web tokens live in the `:root` block inside `globalStyles` in `pages/app.js`; mobile mirrors them in `mobile/src/theme/tokens.ts`.
 
-> **Web/mobile field parity (2026-06):** the web working surface (`--color-bg` and the `raised`/`soft`/`muted`/`panel` neutrals) was cooled to a clinical near-white; mobile `tokens.ts` still holds the older warm-bone values. The exact old→new mapping to realign mobile in one pass is recorded in [`mobile/MOBILE.md`](mobile/MOBILE.md) (Platform deviations → "Theme — surface field"). The `--color-*` values in this doc are the web source of truth.
+> **Web/mobile field parity (2026-06):** the web working surface (`--color-bg` and the `raised`/`soft`/`muted`/`panel` neutrals) was cooled from the older warm-bone values to a clinical blue-grey near-white in June 2026; mobile `tokens.ts` still holds the older warm-bone values. The exact old→new mapping to realign mobile in one pass is recorded in [`mobile/MOBILE.md`](mobile/MOBILE.md) (Platform deviations → "Theme — surface field"). The `--color-*` values in this doc are the web source of truth.
 
 ### Brand
 
@@ -61,13 +61,13 @@ The app palette is the **deep-blue + warm-bone system**. Web tokens live in the 
 
 | Token | Value | Token | Value |
 |---|---|---|---|
-| `--color-ink` | `#1c2b36` | `--color-bg` | `#f4f6f4` (clean clinical near-white page/screen — faint green-cool undertone; not beige, not blue-washed) |
+| `--color-ink` | `#1c2b36` | `--color-bg` | `#f6f9fc` (clinical blue-grey near-white page field) |
 | `--color-muted` | `#334b49` | `--color-surface` | `#ffffff` (cards) |
-| `--color-subtle` | `#69787a` | `--color-surface-raised` / `--color-panel` | `#fbfcfb` |
-| | | `--color-surface-soft` | `#eef2ef` |
-| | | `--color-surface-muted` | `#e8ece9` |
-| | | `--color-border` | `#d9dacb` / strong `#a4a896` |
-| | | `--color-line` | `#e8e9dc` / strong `#dedfd1` |
+| `--color-subtle` | `#69787a` | `--color-surface-raised` / `--color-panel` | `#fafbfd` |
+| | | `--color-surface-soft` | `#edf1f7` |
+| | | `--color-surface-muted` | `#e2e8f0` |
+| | | `--color-border` | `#d1d9e6` / strong `#9aaabb` |
+| | | `--color-line` | `#e2eaf2` / strong `#d4dce8` |
 
 Shadows are warm slate (`rgba(28,43,54, …)`), never blue. **Elevation:** card surfaces use `--elevation-rest` (inset top highlight + layered warm-slate ambient — the "machined" depth) and `--elevation-raised` for hover; the legacy `--shadow-card` is retired from cards (still defined for any future use). **Motion:** `--ease-premium` (`cubic-bezier(0.32,0.72,0,1)`) is the shared easing for hover and entrance. Radii: 4/6/10/14px + full. Shared content column: `--content-max: 1360px`, **centred** in the main area (`margin: 0 auto` on `.page-toolbar`, `.workspace-shell`/`.reports-workspace`, `.outcome-measures-workspace`, `.directory-stack`) so wide screens balance whitespace on both sides rather than left-pinning.
 
@@ -81,7 +81,7 @@ Shadows are warm slate (`rgba(28,43,54, …)`), never blue. **Elevation:** card 
 
 ### Banned (the pre-2026 palettes — do not reintroduce)
 
-The old navy/Tailwind system (`#1d5590`, `#0d9488` as app secondary, `#bbf7d0`/`#fde68a`/`#fecaca` status fills, blue-tinted surfaces like `#e8eef5`/`#f6f9fc`, slate `#64748b` comparison, Tailwind violet `#7c3aed`) and all orange/rust values (`#ee8a70`, `#b5451b`, `#c47b43` in app UI). Email HTML (`lib/followupEmail.js`) and PDFs (`lib/clinical/patientReportPdf.js`) use raw hex mirrors of the current tokens — keep them in sync when tokens change. **Deliberate divergence (2026-06):** the app working surface was cooled from the warm bone (`#f8f8f2` field / `#fbfbf7` raised / `#f6f6f0` soft) to the clinical near-white above; the email and PDF intentionally **retain the warmer bone** as patient-facing branded artifacts, so do not treat that as drift to "fix".
+The old navy/Tailwind system (`#1d5590`, `#0d9488` as app secondary, `#bbf7d0`/`#fde68a`/`#fecaca` status fills, slate `#64748b` comparison, Tailwind violet `#7c3aed`) and all orange/rust values (`#ee8a70`, `#b5451b`, `#c47b43` in app UI). The former warm-bone working surface (`#f8f8f2` field / `#fbfbf7` raised / `#f6f6f0` soft / `#f4f6f4` bg / `#d9dacb` border / `#e8e9dc` line) is also retired from the web app — the tokens above are the current source of truth. Email HTML (`lib/followupEmail.js`) and PDFs (`lib/clinical/patientReportPdf.js`) use raw hex mirrors of the current tokens — keep them in sync when tokens change. **Deliberate divergence (2026-06):** the email and PDF intentionally **retain the warmer bone** as patient-facing branded artifacts, so do not treat that as drift to "fix".
 
 ## Landing page system (`pages/index.js`)
 
@@ -106,6 +106,10 @@ Use existing systems: `app-*`, `patient-*`, `summary-*`, `domain-*`, `measure-*`
 
 `.app-shell`, `.app-sidebar`, `.app-nav`, `.app-main`, `.page-toolbar`, `.new-assessment-btn`, `.patient-summary-card`, `.summary-card`, `.summary-dashboard`, `.domain-grid`, `.domain-card`, `.patients-workspace`, `.patient-workspace-panel`, `.result-box`, `.modal`, `.modal-content`, and the `[data-measure-*]` attribute system. Sidebar-first app shell on desktop; patient overview as the main clinical landing state; do not revert to a top-header layout, plain document UI, or a generic form stack.
 
+**Dark sidebar (2026-06):** `.app-sidebar` background is `--color-primary-dark` (`#063764`). All child elements (nav buttons, patient switcher, sign-out button, labels, copy) are overridden to white/light via `.app-sidebar`-prefixed CSS selectors. This specificity approach (0-2-1 beats the base 0-1-1 later in the sheet) is intentional — always scope sidebar colour overrides with `.app-sidebar` as the parent selector.
+
+**PatientOverview two-column layout (2026-06):** the overview uses `.overview-layout` — a CSS grid with `420px minmax(0,1fr)` columns. Left column (`.overview-left`) holds the summary cards; right column (`.overview-charts-panel`) is sticky and contains the `PathwayCoverageDonut` at the top followed by `MeasureTrendChart` instances. This layout is the established pattern for the overview workspace — do not revert to a centred single-column view.
+
 ## Forms and inputs
 
 - All inputs must look styled — no browser-default appearance. Use `.field-group`, `.field-label`, `.field-input`, `.input-narrow`, styled selects, and table inputs where clinically useful.
@@ -115,6 +119,11 @@ Use existing systems: `app-*`, `patient-*`, `summary-*`, `domain-*`, `measure-*`
 ## Charts
 
 Charts must answer "what changed, and does it matter?" Use clinically appropriate scales (no arbitrary maxima, no auto-scaling that hides meaning), label units, include threshold/MCID/reference context from the registry — never from component-local values — and visually distinguish current, previous, threshold, and MCID.
+
+**recharts components (2026-06):** two chart components live in `components/` and are dynamically imported with `ssr: false` (recharts requires DOM):
+
+- `MeasureTrendChart` — `LineChart` per outcome measure. Shows all historical data points, clinical threshold reference lines (dashed, from `measure.chart.thresholds`), and an MCID goal line (condition-resolved from `MCID_VALS`). Only renders when the measure has a `chart` config in the registry and ≥2 assessments. Chart series colour is `#094b8a`; threshold colours come from the registry 4-step ramp.
+- `PathwayCoverageDonut` — `PieChart` (ring) showing Smart Pathway coverage %. Segments: recorded (`#094b8a`), due for reassessment (`#f59e0b` amber), not yet recorded (`#e2e8f0` grey). Each measure in the list is clickable and calls `onMeasure(id)` to open that measure's assessment form. Renders nothing if no pathway is configured.
 
 ## Responsive
 

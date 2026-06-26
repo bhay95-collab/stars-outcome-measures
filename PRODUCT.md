@@ -1,6 +1,6 @@
 # Product — RehabMetrics IQ
 
-Last verified against the codebase: 2026-06-13
+Last verified against the codebase: 2026-06-26
 
 ## What it is
 
@@ -34,6 +34,7 @@ MCID/MDC logic is **condition-aware**: thresholds move with patient diagnosis vi
 - **Patient workspace** — patient directory, patient overview, creation/editing, runtime age from `date_of_birth`.
 - **Assessment workflow** — measure forms, scoring with clinically accurate interpretation, previous-vs-current comparison, MCID/trend context, unsaved-changes warning, newest-first history.
 - **Summary dashboard** — domain cards, trend charts with threshold/MCID context.
+- **Patient overview clinical visualisations (2026-06)** — two-column overview layout: left column shows summary cards and next-action panel; right column shows a Smart Pathway Coverage donut (% complete, recorded/due/missing breakdown, tap any measure to open it) and per-measure trend charts with clinical reference ranges, threshold lines, and condition-aware MCID goal lines. Charts render when ≥2 assessments exist for a measure.
 - **Smart Rehab Pathways** — diagnosis-driven recommended measures, baselines still required, reassessments due (28-day default interval — a known default to revisit), next best action.
 - **Patient-reported follow-up** (web only) — validated questionnaires via secure tokenised email links (Resend) or manual share; responses scored by the same engine, badged as patient-reported, with red/amber attention signals and a caseload Follow-Up Attention board.
 - **Outcomes Intelligence** — caseload-wide improvement rates, MCID achievement, diagnosis cohort summaries, and an aggregate-only proof-of-value PDF service report (no patient identifiers).

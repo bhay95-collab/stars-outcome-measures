@@ -14,6 +14,17 @@ Deferred from this phase:
 - Date-range and discharge-episode filtering (v1 reports across all recorded data).
 - Multi-clinician clinic rollups (v1 reports per signed-in clinician account, matching the data-access model).
 
+## Delivered: Overview Redesign & Clinical Visualisations (2026-06-26)
+
+A web-only visual overhaul of the authenticated app shell and patient overview:
+
+- **Dark sidebar:** left sidebar background set to `--color-primary-dark` (#063764); all child elements (nav, patient switcher, sign-out, labels) switched to white/light via scoped CSS overrides.
+- **Background palette:** all surface and border tokens updated from the former warm-bone palette to a clinical blue-grey near-white (`--color-bg #f6f9fc`, updated `surface-soft`, `surface-muted`, `border`, `line` tokens).
+- **Two-column patient overview:** summary cards on the left (420 px fixed); interactive right panel (fills remaining space) with:
+  - **Smart Pathway Coverage donut** at the top — shows % complete with recorded (blue), due (amber), and missing (grey) segments; each measure in the list is tappable and opens the assessment form directly.
+  - **Per-measure trend charts** below — `LineChart` per outcome measure with clinical threshold reference lines, condition-aware MCID goal line, custom tooltip, and directional legend. Only renders for measures with chart config and ≥2 assessments.
+- recharts (v3.9.0) added as a web dependency (with react-is peer dep).
+
 ## Delivered: Smart Rehab Pathways MVP
 
 A no-schema-change pathway layer that uses the patient's recorded diagnosis, existing recommended-measure mappings, and saved assessments to surface baseline measures still required, reassessments due after the default review interval, pathway coverage, and the next best assessment action. Surfaced in the patient overview, the Smart Pathway workspace, the patient directory, and the sidebar badge.
