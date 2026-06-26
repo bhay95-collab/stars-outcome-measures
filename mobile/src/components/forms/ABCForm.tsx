@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     gap: spacing.sm,
   },
   itemBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },

@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.surfaceMuted,
     backgroundColor: colors.surfaceSoft,
     alignItems: 'center',
     justifyContent: 'center',
