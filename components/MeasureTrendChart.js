@@ -92,8 +92,8 @@ export default function MeasureTrendChart({ measureId, assessments, condition })
         <span className="measure-trend-chart__name">{measure.name}</span>
         <span className="measure-trend-chart__dir">{direction}</span>
       </div>
-      <ResponsiveContainer width="100%" height={148}>
-        <LineChart data={data} margin={{ top: 8, right: 10, bottom: 0, left: -14 }}>
+      <ResponsiveContainer width="100%" height={240}>
+        <LineChart data={data} margin={{ top: 10, right: 14, bottom: 4, left: -10 }}>
           <CartesianGrid
             strokeDasharray="3 3"
             stroke="rgba(0,0,0,0.05)"
@@ -101,17 +101,17 @@ export default function MeasureTrendChart({ measureId, assessments, condition })
           />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 9, fill: '#69787a' }}
+            tick={{ fontSize: 11, fill: '#69787a' }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
             domain={[yMin, yMax]}
-            tick={{ fontSize: 9, fill: '#69787a' }}
+            tick={{ fontSize: 11, fill: '#69787a' }}
             tickLine={false}
             axisLine={false}
-            width={36}
+            width={40}
             tickFormatter={v => {
               if (Math.abs(v) >= 100) return Math.round(v)
               if (Number.isInteger(v)) return v
@@ -124,27 +124,27 @@ export default function MeasureTrendChart({ measureId, assessments, condition })
               key={i}
               y={t.value}
               stroke={t.color}
-              strokeWidth={1}
-              strokeDasharray="5 3"
-              opacity={0.7}
+              strokeWidth={1.5}
+              strokeDasharray="6 4"
+              opacity={0.75}
             />
           ))}
           {mcidGoal && (
             <ReferenceLine
               y={mcidGoal.value}
               stroke="#094b8a"
-              strokeWidth={1.5}
-              strokeDasharray="2 5"
-              opacity={0.8}
+              strokeWidth={2}
+              strokeDasharray="3 5"
+              opacity={0.85}
             />
           )}
           <Line
             type="monotone"
             dataKey="value"
             stroke="#094b8a"
-            strokeWidth={2}
-            dot={{ r: 3.5, fill: '#094b8a', stroke: '#ffffff', strokeWidth: 2 }}
-            activeDot={{ r: 5, fill: '#094b8a', stroke: '#ffffff', strokeWidth: 2 }}
+            strokeWidth={2.5}
+            dot={{ r: 5, fill: '#094b8a', stroke: '#ffffff', strokeWidth: 2 }}
+            activeDot={{ r: 7, fill: '#094b8a', stroke: '#ffffff', strokeWidth: 2 }}
             connectNulls
           />
         </LineChart>

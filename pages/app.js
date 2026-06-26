@@ -3080,17 +3080,17 @@ const globalStyles = `
     --color-muted:          #334b49;
     --color-subtle:         #69787a;
 
-    /* Surfaces — soft white-blue that pairs with the dark sidebar */
+    /* Surfaces — neutral blue-grey to match dark sidebar, no green undertone */
     --color-bg:             #f6f9fc;
     --color-surface:        #ffffff;
-    --color-surface-raised: #fbfcfb;
-    --color-surface-soft:   #eef2ef;
-    --color-surface-muted:  #e8ece9;
-    --color-panel:          #fbfcfb;
-    --color-border:         #d9dacb;
-    --color-border-strong:  #a4a896;
-    --color-line-strong:    #dedfd1;
-    --color-line:           #e8e9dc;
+    --color-surface-raised: #fafbfd;
+    --color-surface-soft:   #edf1f7;
+    --color-surface-muted:  #e2e8f0;
+    --color-panel:          #fafbfd;
+    --color-border:         #d1d9e6;
+    --color-border-strong:  #9aaabb;
+    --color-line-strong:    #d4dce8;
+    --color-line:           #e2eaf2;
 
     /* Shadows — warm slate, not blue */
     --shadow-sm:    0 1px 2px rgba(28,43,54,0.05), 0 1px 3px rgba(28,43,54,0.04);
@@ -3141,24 +3141,26 @@ const globalStyles = `
 
   /* ── Dark sidebar colour overrides (all scoped to .app-sidebar for specificity) ── */
   .app-sidebar .logo-wordmark { color: #ffffff; }
+
+  /* Patient switcher — white card sitting on the dark sidebar */
   .app-sidebar .patient-switcher {
-    background: rgba(255,255,255,0.07);
-    border-color: rgba(255,255,255,0.12);
-  }
-  .app-sidebar .section-label { color: rgba(255,255,255,0.52); }
-  .app-sidebar .patient-switcher__head button {
-    background: rgba(255,255,255,0.10);
-    color: rgba(255,255,255,0.9);
+    background: #ffffff;
     border-color: rgba(255,255,255,0.18);
   }
-  .app-sidebar .patient-switcher__select {
-    background: rgba(255,255,255,0.09);
-    border-color: rgba(255,255,255,0.13);
-    color: rgba(255,255,255,0.65);
+  .app-sidebar .section-label { color: var(--color-subtle); }
+  .app-sidebar .patient-switcher__head button {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-color: var(--color-primary);
   }
-  .app-sidebar .patient-switcher__select select { color: #ffffff; }
-  .app-sidebar .patient-switcher__select select:disabled { color: rgba(255,255,255,0.38); }
-  .app-sidebar .patient-switcher__meta { color: rgba(255,255,255,0.55); }
+  .app-sidebar .patient-switcher__select {
+    background: var(--color-surface-soft);
+    border-color: var(--color-border);
+    color: var(--color-muted);
+  }
+  .app-sidebar .patient-switcher__select select { color: var(--color-ink); }
+  .app-sidebar .patient-switcher__select select:disabled { color: var(--color-subtle); }
+  .app-sidebar .patient-switcher__meta { color: var(--color-muted); }
   .app-sidebar .app-nav__group-label { color: rgba(255,255,255,0.40); }
   .app-sidebar .app-nav__group-label--separate { border-top-color: rgba(255,255,255,0.10); }
   .app-sidebar .app-nav button,
@@ -3192,14 +3194,14 @@ const globalStyles = `
     color: #ffffff !important;
   }
   .app-sidebar .sidebar-signout {
-    background: rgba(255,255,255,0.07);
-    border-color: rgba(255,255,255,0.14);
-    color: rgba(255,255,255,0.65);
+    background: #ffffff;
+    border-color: rgba(255,255,255,0.25);
+    color: var(--color-primary-dark);
   }
   .app-sidebar .sidebar-signout:hover {
-    background: rgba(255,255,255,0.13);
-    border-color: rgba(255,255,255,0.28);
-    color: #ffffff;
+    background: #f0f5fb;
+    border-color: rgba(255,255,255,0.4);
+    color: var(--color-primary);
   }
 
   .app-sidebar__logo {
@@ -5149,11 +5151,11 @@ const globalStyles = `
     gap: 10px;
   }
 
-  /* ── Overview two-column layout ── */
+  /* ── Overview two-column layout: narrow card column, charts fill remaining ── */
   .overview-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 348px;
-    gap: 24px;
+    grid-template-columns: 420px minmax(0, 1fr);
+    gap: 28px;
     align-items: start;
   }
 
@@ -5165,7 +5167,7 @@ const globalStyles = `
   /* ── Outcome Trends panel (right column) ── */
   .overview-charts-panel {
     display: grid;
-    gap: 14px;
+    gap: 18px;
     position: sticky;
     top: 24px;
     max-height: calc(100vh - 72px);
@@ -5189,7 +5191,7 @@ const globalStyles = `
   }
 
   .measure-trend-chart {
-    padding: 14px 16px 12px;
+    padding: 18px 20px 16px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-surface);
@@ -5201,11 +5203,11 @@ const globalStyles = `
     align-items: baseline;
     justify-content: space-between;
     gap: 8px;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
   }
 
   .measure-trend-chart__name {
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--color-ink);
     overflow: hidden;
@@ -5216,7 +5218,7 @@ const globalStyles = `
   }
 
   .measure-trend-chart__dir {
-    font-size: 9.5px;
+    font-size: 11px;
     color: var(--color-subtle);
     white-space: nowrap;
     flex: 0 0 auto;
@@ -5224,46 +5226,46 @@ const globalStyles = `
 
   .measure-trend-chart__legend {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 10px;
-    padding-top: 9px;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    margin-top: 12px;
+    padding-top: 10px;
     border-top: 1px solid var(--color-line);
   }
 
   .mtc-legend-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 9.5px;
+    gap: 7px;
+    font-size: 11px;
     color: var(--color-muted);
     line-height: 1.3;
   }
 
   .mtc-legend-line {
-    width: 16px;
+    width: 18px;
     height: 2px;
     border-radius: 1px;
     flex: 0 0 auto;
-    opacity: 0.75;
+    opacity: 0.8;
   }
 
   .mtc-legend-dash {
-    width: 16px;
+    width: 18px;
     height: 0;
     border-top: 2px dashed var(--color-primary);
     flex: 0 0 auto;
-    opacity: 0.8;
+    opacity: 0.85;
   }
 
   .charts-empty {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px;
+    padding: 60px 32px;
     text-align: center;
     color: var(--color-subtle);
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.7;
     border: 1px dashed var(--color-border);
     border-radius: var(--radius-lg);
