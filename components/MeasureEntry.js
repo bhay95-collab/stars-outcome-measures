@@ -198,8 +198,11 @@ export default function MeasureEntry({
 
     const encounterId = makeEncounterId()
     const encounterDate = new Date().toISOString()
-    const nextAssessmentAt = repeatWeeks
-      ? new Date(Date.now() + repeatWeeks * 7 * 24 * 60 * 60 * 1000).toISOString()
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+    const ALLOWED_REPEAT_WEEKS = new Set([2, 4, 6, 8])
+    const validatedWeeks = repeatWeeks !== null && ALLOWED_REPEAT_WEEKS.has(Number(repeatWeeks)) ? Number(repeatWeeks) : null
+    const nextAssessmentAt = validatedWeeks
+      ? new Date(Date.now() + validatedWeeks * WEEK_MS).toISOString()
       : null
     const rows = drafts.map(item => ({
       user_id: userId,

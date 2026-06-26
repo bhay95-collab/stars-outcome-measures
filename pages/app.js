@@ -158,7 +158,7 @@ export default function App() {
   const [followUpAttentionBoard, setFollowUpAttentionBoard] = useState([])
   const [latestFollowUpUrl, setLatestFollowUpUrl] = useState('')
   const [caseloadAssessments, setCaseloadAssessments] = useState(null)
-  const [insightsLoading, setInsightsLoading] = useState(false)
+  const [caseloadLoading, setCaseloadLoading] = useState(false)
   const [showNewPatient, setShowNewPatient] = useState(false)
   const [editingPatient, setEditingPatient] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
@@ -421,11 +421,11 @@ export default function App() {
 
   const loadCaseloadAssessments = useCallback(async () => {
     if (!user?.id) return
-    setInsightsLoading(true)
+    setCaseloadLoading(true)
     try {
       const { data, error } = await supabase
         .from('assessments')
-        .select('id, patient_id, measure, results, created_at')
+        .select('id, patient_id, measure, results, created_at, next_assessment_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -433,7 +433,7 @@ export default function App() {
     } catch {
       // Keep any previously loaded caseload data; the workspace shows a retry state when none exists.
     } finally {
-      setInsightsLoading(false)
+      setCaseloadLoading(false)
     }
   }, [user?.id])
 
@@ -732,9 +732,12 @@ export default function App() {
   const insightsModel = activeSection === 'insights' && caseloadAssessments
     ? buildOutcomesIntelligence(patients, caseloadAssessments)
     : null
-  const caseloadDueSignals = activeSection === 'directory' && caseloadAssessments
-    ? buildCaseloadDueSignals(patients, caseloadAssessments)
-    : []
+  const caseloadDueSignals = useMemo(
+    () => activeSection === 'directory' && caseloadAssessments
+      ? buildCaseloadDueSignals(patients, caseloadAssessments)
+      : [],
+    [activeSection, caseloadAssessments, patients]
+  )
 
   if (bootState === 'checking-auth' || bootState === 'unauthenticated') {
     return (
@@ -843,7 +846,7 @@ export default function App() {
             {activeSection === 'insights' ? (
               <OutcomesIntelligenceWorkspace
                 model={insightsModel}
-                loading={insightsLoading}
+                loading={caseloadLoading}
                 onRefresh={loadCaseloadAssessments}
               />
             ) : activeSection === 'directory' || !selectedPatient ? (
@@ -853,6 +856,7 @@ export default function App() {
                 selectedAssessments={assessments}
                 attentionBoard={followUpAttentionBoard}
                 dueSignals={caseloadDueSignals}
+                dueLoading={caseloadAssessments === null}
                 onSelect={(patient) => goToSection(DEFAULT_PATIENT_SECTION, { patient })}
                 onNew={() => setShowNewPatient(true)}
                 onMeasure={(measureId) => goToSection('measures', { measureId })}
@@ -1164,10 +1168,10 @@ function AppShellSkeleton() {
   )
 }
 
-function PatientFollowUpPanel({ attentionEntries, dueSignals, patients, onOpenFollowUp, onSelect }) {
+function PatientFollowUpPanel({ attentionEntries, dueSignals, dueLoading, patients, onOpenFollowUp, onSelect }) {
   const hasReview = attentionEntries?.length > 0
   const hasDue = dueSignals?.length > 0
-  if (!hasReview && !hasDue) return null
+  if (!hasReview && !hasDue && !dueLoading) return null
 
   return (
     <section className="followup-panel" aria-label="Patient follow-up">
@@ -1202,16 +1206,20 @@ function PatientFollowUpPanel({ attentionEntries, dueSignals, patients, onOpenFo
         </div>
       )}
 
-      {hasDue && (
+      {(hasDue || dueLoading) && (
         <div className="followup-panel__zone followup-panel__zone--due">
           <div className="followup-panel__zone-head">
             <span className="followup-panel__zone-label">Reassessments Due</span>
-            <span className="followup-panel__zone-badge followup-panel__zone-badge--due">
-              {dueSignals.length}
-            </span>
+            {!dueLoading && (
+              <span className="followup-panel__zone-badge followup-panel__zone-badge--due">
+                {dueSignals.length}
+              </span>
+            )}
           </div>
           <p className="followup-panel__zone-desc">Pathway measures due for repeat. Consider booking a follow-up session.</p>
-          <div className="followup-panel__rows">
+          {dueLoading
+            ? <p className="followup-panel__zone-loading">Checking caseload…</p>
+            : <div className="followup-panel__rows">
             {dueSignals.map(signal => (
               <article key={`${signal.patientId}-${signal.measureId}`} className="followup-panel__row" data-type="due">
                 <div className="followup-panel__row-info">
@@ -1232,7 +1240,7 @@ function PatientFollowUpPanel({ attentionEntries, dueSignals, patients, onOpenFo
                 </button>
               </article>
             ))}
-          </div>
+          </div>}
         </div>
       )}
     </section>
@@ -1245,6 +1253,7 @@ function PatientDirectoryWorkspace({
   selectedAssessments,
   attentionBoard,
   dueSignals,
+  dueLoading,
   onSelect,
   onNew,
   onMeasure,
@@ -1274,6 +1283,7 @@ function PatientDirectoryWorkspace({
       <PatientFollowUpPanel
         attentionEntries={attentionBoard}
         dueSignals={dueSignals}
+        dueLoading={dueLoading}
         patients={patients}
         onOpenFollowUp={onOpenFollowUp}
         onSelect={onSelect}
@@ -6192,6 +6202,12 @@ const globalStyles = `
   }
 
   .followup-panel__row button:hover { opacity: 0.8; }
+
+  .followup-panel__zone-loading {
+    margin: 0;
+    font-size: 12px;
+    color: var(--color-subtle);
+  }
 
   .provenance-chip {
     display: inline-flex;
