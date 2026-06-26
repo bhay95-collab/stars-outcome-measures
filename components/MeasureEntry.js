@@ -117,6 +117,7 @@ export default function MeasureEntry({
   const [assessmentSaveState, setAssessmentSaveState] = useState('idle')
   const [assessmentSaveNotice, setAssessmentSaveNotice] = useState(null)
   const [formResetCount, setFormResetCount] = useState(0)
+  const [repeatWeeks, setRepeatWeeks] = useState(null)
   const assessmentSaveTimer = useRef(null)
 
   function clearAssessmentSaveTimer() {
@@ -197,6 +198,9 @@ export default function MeasureEntry({
 
     const encounterId = makeEncounterId()
     const encounterDate = new Date().toISOString()
+    const nextAssessmentAt = repeatWeeks
+      ? new Date(Date.now() + repeatWeeks * 7 * 24 * 60 * 60 * 1000).toISOString()
+      : null
     const rows = drafts.map(item => ({
       user_id: userId,
       patient_id: patient.id,
@@ -210,6 +214,7 @@ export default function MeasureEntry({
           encounterDate,
         },
       },
+      ...(nextAssessmentAt ? { next_assessment_at: nextAssessmentAt } : {}),
     }))
 
     const { data, error: insertError } = await supabase
@@ -225,6 +230,7 @@ export default function MeasureEntry({
 
     setDrafts([])
     setCompleted(new Set())
+    setRepeatWeeks(null)
     setLoading(false)
     onSaved(data ?? [])
   }
@@ -418,6 +424,21 @@ export default function MeasureEntry({
       </div>
 
       <div data-measure-footer="">
+        <div className="encounter-repeat">
+          <label htmlFor="encounter-repeat-select">Schedule repeat</label>
+          <select
+            id="encounter-repeat-select"
+            value={repeatWeeks ?? ''}
+            disabled={!drafts.length || loading || assessmentSaving}
+            onChange={e => setRepeatWeeks(e.target.value ? Number(e.target.value) : null)}
+          >
+            <option value="">Skip</option>
+            <option value="2">2 weeks</option>
+            <option value="4">4 weeks</option>
+            <option value="6">6 weeks</option>
+            <option value="8">8 weeks</option>
+          </select>
+        </div>
         <button type="button" data-secondary="" disabled={assessmentSaving} onClick={handleDone}>Done</button>
         <button type="button" data-save-encounter="" disabled={!drafts.length || loading || assessmentSaving} onClick={saveEncounter}>
           {loading ? (

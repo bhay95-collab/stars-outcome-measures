@@ -17,7 +17,7 @@ import AuthGateway from '../components/AuthGateway'
 import OutcomesIntelligenceWorkspace from '../components/OutcomesIntelligenceWorkspace'
 import { MEASURES } from '../lib/clinical'
 import { buildOutcomesIntelligence } from '../lib/clinical/outcomesIntelligence'
-import { buildPatientPathway } from '../lib/clinical/pathways'
+import { buildPatientPathway, buildCaseloadDueSignals } from '../lib/clinical/pathways'
 import { exportPatientSummaryPdf } from '../lib/clinical/patientReportPdf'
 import { buildPatientSummary, fmtDate, groupAssessmentsByMeasure } from '../lib/clinical/patientSummary'
 import dynamic from 'next/dynamic'
@@ -438,7 +438,7 @@ export default function App() {
   }, [user?.id])
 
   useEffect(() => {
-    if (bootState !== 'ready' || !hasAccess || activeSection !== 'insights') return
+    if (bootState !== 'ready' || !hasAccess || !['insights', 'directory'].includes(activeSection)) return
     loadCaseloadAssessments()
   }, [bootState, hasAccess, activeSection, loadCaseloadAssessments])
 
@@ -732,6 +732,9 @@ export default function App() {
   const insightsModel = activeSection === 'insights' && caseloadAssessments
     ? buildOutcomesIntelligence(patients, caseloadAssessments)
     : null
+  const caseloadDueSignals = activeSection === 'directory' && caseloadAssessments
+    ? buildCaseloadDueSignals(patients, caseloadAssessments)
+    : []
 
   if (bootState === 'checking-auth' || bootState === 'unauthenticated') {
     return (
@@ -849,6 +852,7 @@ export default function App() {
                 selectedPatient={selectedPatient}
                 selectedAssessments={assessments}
                 attentionBoard={followUpAttentionBoard}
+                dueSignals={caseloadDueSignals}
                 onSelect={(patient) => goToSection(DEFAULT_PATIENT_SECTION, { patient })}
                 onNew={() => setShowNewPatient(true)}
                 onMeasure={(measureId) => goToSection('measures', { measureId })}
@@ -1160,39 +1164,77 @@ function AppShellSkeleton() {
   )
 }
 
-function FollowUpAttentionBoard({ entries, onOpenFollowUp }) {
-  if (!entries?.length) return null
+function PatientFollowUpPanel({ attentionEntries, dueSignals, patients, onOpenFollowUp, onSelect }) {
+  const hasReview = attentionEntries?.length > 0
+  const hasDue = dueSignals?.length > 0
+  if (!hasReview && !hasDue) return null
 
   return (
-    <section className="summary-card followup-attention-board" aria-label="Patient-reported follow-up attention">
-      <div className="summary-card__head">
-        <div>
-          <h3>Follow-Up Attention</h3>
-          <p>Patient-reported signals and overdue links across your caseload.</p>
+    <section className="followup-panel" aria-label="Patient follow-up">
+      {hasReview && (
+        <div className="followup-panel__zone followup-panel__zone--review">
+          <div className="followup-panel__zone-head">
+            <span className="followup-panel__zone-label">Needs Review</span>
+            <span className="followup-panel__zone-badge followup-panel__zone-badge--review">
+              {attentionEntries.length} patient{attentionEntries.length === 1 ? '' : 's'}
+            </span>
+          </div>
+          <p className="followup-panel__zone-desc">Patient-reported results awaiting your review.</p>
+          <div className="followup-panel__rows">
+            {attentionEntries.map(entry => (
+              <article key={entry.patientId} className="followup-panel__row" data-type="review" data-attention={entry.attentionLevel}>
+                <div className="followup-panel__row-info">
+                  <strong>{entry.patientLabel}</strong>
+                  <span>{entry.attentionLevel === FOLLOWUP_ATTENTION.GREEN ? 'Links overdue' : entry.attentionLabel}</span>
+                </div>
+                <div className="followup-panel__row-detail">
+                  {entry.latestLine && <p>{entry.latestLine}</p>}
+                  {entry.latestComparisonLine && <p>{entry.latestComparisonLine}</p>}
+                  <small>
+                    {entry.latestCompletedAt ? `Submitted ${formatFollowUpDate(entry.latestCompletedAt)}` : 'Awaiting response'}
+                    {entry.overdueCount ? ` · ${entry.overdueCount} overdue link${entry.overdueCount === 1 ? '' : 's'}` : ''}
+                  </small>
+                </div>
+                <button type="button" onClick={() => onOpenFollowUp(entry.patientId)}>Review</button>
+              </article>
+            ))}
+          </div>
         </div>
-        <span data-attention={entries.some(entry => entry.attentionLevel === FOLLOWUP_ATTENTION.RED) ? FOLLOWUP_ATTENTION.RED : FOLLOWUP_ATTENTION.AMBER}>
-          {entries.length} patient{entries.length === 1 ? '' : 's'}
-        </span>
-      </div>
-      <div className="followup-attention-board__list">
-        {entries.map(entry => (
-          <article key={entry.patientId} data-attention={entry.attentionLevel}>
-            <div>
-              <strong>{entry.patientLabel}</strong>
-              <span>{entry.attentionLevel === FOLLOWUP_ATTENTION.GREEN ? 'Links overdue' : entry.attentionLabel}</span>
-            </div>
-            <div>
-              {entry.latestLine && <p>{entry.latestLine}</p>}
-              {entry.latestComparisonLine && <p>{entry.latestComparisonLine}</p>}
-              <small>
-                {entry.latestCompletedAt ? `Last response ${formatFollowUpDate(entry.latestCompletedAt)}` : 'No response yet'}
-                {entry.overdueCount ? ` · ${entry.overdueCount} overdue link${entry.overdueCount === 1 ? '' : 's'}` : ''}
-              </small>
-            </div>
-            <button type="button" onClick={() => onOpenFollowUp(entry.patientId)}>Open follow-up</button>
-          </article>
-        ))}
-      </div>
+      )}
+
+      {hasDue && (
+        <div className="followup-panel__zone followup-panel__zone--due">
+          <div className="followup-panel__zone-head">
+            <span className="followup-panel__zone-label">Reassessments Due</span>
+            <span className="followup-panel__zone-badge followup-panel__zone-badge--due">
+              {dueSignals.length}
+            </span>
+          </div>
+          <p className="followup-panel__zone-desc">Pathway measures due for repeat. Consider booking a follow-up session.</p>
+          <div className="followup-panel__rows">
+            {dueSignals.map(signal => (
+              <article key={`${signal.patientId}-${signal.measureId}`} className="followup-panel__row" data-type="due">
+                <div className="followup-panel__row-info">
+                  <strong>{signal.patientLabel}</strong>
+                  <span>{signal.measureName}</span>
+                </div>
+                <div className="followup-panel__row-detail">
+                  <small>Last recorded {signal.lastRecordedLabel} · {signal.daysSinceLast} days ago</small>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const patient = patients.find(p => p.id === signal.patientId)
+                    if (patient) onSelect(patient)
+                  }}
+                >
+                  View patient
+                </button>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   )
 }
@@ -1202,6 +1244,7 @@ function PatientDirectoryWorkspace({
   selectedPatient,
   selectedAssessments,
   attentionBoard,
+  dueSignals,
   onSelect,
   onNew,
   onMeasure,
@@ -1228,7 +1271,13 @@ function PatientDirectoryWorkspace({
 
   return (
     <div className="directory-stack">
-      <FollowUpAttentionBoard entries={attentionBoard} onOpenFollowUp={onOpenFollowUp} />
+      <PatientFollowUpPanel
+        attentionEntries={attentionBoard}
+        dueSignals={dueSignals}
+        patients={patients}
+        onOpenFollowUp={onOpenFollowUp}
+        onSelect={onSelect}
+      />
       <div className="patients-workspace patient-directory-workspace">
       <div className="patient-directory-card">
         <PatientList
@@ -2836,10 +2885,43 @@ const globalStyles = `
 
   [data-measure-footer] {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
+    gap: 10px;
     padding: 16px 24px;
     border-top: 1px solid var(--color-border);
     background: var(--color-surface-soft);
+  }
+
+  .encounter-repeat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: auto;
+  }
+
+  .encounter-repeat label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-subtle);
+    white-space: nowrap;
+  }
+
+  .encounter-repeat select {
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 12px;
+    font-family: 'Geist', sans-serif;
+    cursor: pointer;
+  }
+
+  .encounter-repeat select:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   [data-measure-footer] button {
@@ -5966,91 +6048,150 @@ const globalStyles = `
     width: 100%;
   }
 
-  .followup-attention-board .summary-card__head > span[data-attention] {
+  /* ── PATIENT FOLLOW-UP PANEL ── */
+
+  .followup-panel {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--color-surface);
+  }
+
+  .followup-panel__zone {
+    padding: 16px 18px;
+  }
+
+  .followup-panel__zone + .followup-panel__zone {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .followup-panel__zone--review {
+    background: var(--color-amber-soft);
+  }
+
+  .followup-panel__zone--due {
+    background: var(--color-primary-soft);
+  }
+
+  .followup-panel__zone-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+
+  .followup-panel__zone-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--color-ink);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .followup-panel__zone-badge {
     display: inline-flex;
     align-items: center;
-    padding: 4px 12px;
-    border: 1px solid var(--color-amber-border);
-    border-radius: 999px;
+    padding: 1px 8px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .followup-panel__zone-badge--review {
     background: var(--color-amber-soft);
     color: var(--color-amber);
-    font-size: 12px;
-    font-weight: 800;
+    border: 1px solid var(--color-amber-border);
   }
 
-  .followup-attention-board .summary-card__head > span[data-attention="red"] {
-    border-color: var(--color-red-border);
-    background: var(--color-red-soft);
-    color: var(--color-red);
+  .followup-panel__zone-badge--due {
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary-border);
   }
 
-  .followup-attention-board__list {
-    display: grid;
-    gap: 10px;
-  }
-
-  .followup-attention-board__list article {
-    display: grid;
-    grid-template-columns: 150px minmax(0, 1fr) auto;
-    gap: 14px;
-    align-items: center;
-    padding: 12px 14px;
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
-    background: var(--color-surface-raised);
-  }
-
-  .followup-attention-board__list article[data-attention="amber"] {
-    border-color: var(--color-amber-border);
-    background: var(--color-amber-soft);
-  }
-
-  .followup-attention-board__list article[data-attention="red"] {
-    border-color: var(--color-red-border);
-    background: var(--color-red-soft);
-  }
-
-  .followup-attention-board__list article strong {
-    display: block;
-    color: var(--color-ink);
-    font-size: 15px;
-    font-weight: 800;
-  }
-
-  .followup-attention-board__list article > div:first-child span {
-    display: block;
-    margin-top: 2px;
+  .followup-panel__zone-desc {
+    margin: 0 0 12px;
     color: var(--color-muted);
     font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .followup-panel__rows {
+    display: grid;
+    gap: 8px;
+  }
+
+  .followup-panel__row {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 13px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .followup-panel__row[data-type="review"][data-attention="amber"] {
+    border-color: var(--color-amber-border);
+  }
+
+  .followup-panel__row[data-type="review"][data-attention="red"] {
+    border-color: var(--color-red-border);
+    background: var(--color-red-soft);
+  }
+
+  .followup-panel__row-info strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  .followup-panel__row-info span {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
     font-weight: 700;
+    color: var(--color-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
 
-  .followup-attention-board__list article p {
+  .followup-panel__row-detail p {
     margin: 0;
-    color: var(--color-muted);
     font-size: 13px;
-    line-height: 1.45;
+    color: var(--color-muted);
+    line-height: 1.4;
   }
 
-  .followup-attention-board__list article small {
-    color: var(--color-subtle);
+  .followup-panel__row-detail small {
     font-size: 12px;
+    color: var(--color-subtle);
   }
 
-  .followup-attention-board__list article button {
-    min-height: 34px;
-    padding: 0 13px;
-    border: 0;
-    border-radius: 8px;
-    background: var(--color-primary);
-    color: #fff;
+  .followup-panel__row button {
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-ink);
     cursor: pointer;
     font-family: 'Geist', sans-serif;
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: opacity 0.12s;
   }
+
+  .followup-panel__row[data-type="review"] button {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+  }
+
+  .followup-panel__row button:hover { opacity: 0.8; }
 
   .provenance-chip {
     display: inline-flex;
@@ -6293,7 +6434,7 @@ const globalStyles = `
   }
 
   @media (max-width: 760px) {
-    .followup-attention-board__list article {
+    .followup-panel__row {
       grid-template-columns: minmax(0, 1fr);
     }
   }
