@@ -24,9 +24,10 @@ through every `getMCIDStatus` call site. See `[[project_condition_aware_mcid]]`.
 
 Remaining licence-clear queue (deferred — each needs its own verification/build):
 
-- 🟡 **OMAS** (Olerud–Molander Ankle Score) — blocked on confirming the exact
-  per-item point weights against a primary source before coding (weights vary
-  0–5 … 0–25 by item; not yet verified, so not invented).
+- ✅ **OMAS** (Olerud–Molander Ankle Score) — **built in Wave 3** (2026-06-27).
+  The blocker (unverified per-item weights) is resolved: weights confirmed
+  against the Turkish (Turhan 2017) and Brazilian (Castilho 2021) validations.
+  See the Wave 3 section below.
 - **Harris Hip Score** — clinician composite (pain 44 / function 47 / deformity 4
   / ROM 5); larger multi-part form, build separately.
 - **Mayo Elbow Performance Index** — clinician composite (pain 45 / motion 20 /
@@ -50,6 +51,19 @@ reference card + follow-up eligibility + migration + tests):
   Trend-chart `SERIES_PALETTE` extended 3→6 so all 6 series are distinguishable
   (also fixes KOOS/HOOS 5th series). Follow-up migration:
   `20260627000000_extend_followups_for_hagos.sql` (apply before deploying web).
+
+- ✅ **OMAS** — Olerud–Molander Ankle Score (Olerud & Molander 1984). 9 weighted
+  items summed to a 0–100 total (Pain 25 · Stiffness 10 · Swelling 10 · Stairs 10
+  · Running 5 · Jumping 5 · Squatting 5 · Supports 10 · Work/ADL 20), higher =
+  better. Per-item weights and option wording cross-verified against the Turkish
+  (Turhan 2017) and Brazilian (Castilho 2021) validations. New **Ankle Fracture**
+  condition (DIAG_RECS: OMAS, NPRS, LEFS). Unlike HAGOS, OMAS has a real anchored
+  MCID, so it uses standard "MCID met" labels: `mcid.js` key `omas` thresh **12.5**
+  (ROC, 3–6 mo; published range 10.5–15, Lehnert 2022; MDC ≈4.7–5.2). Bands
+  (Castilho 2021): poor ≤30 / fair 31–60 / good 61–90 / excellent 91–100, rendered
+  as 4 chart zones. Built on the CAIT template (per-item weighted options, single
+  total). Follow-up migration: `20260627100000_extend_followups_for_omas.sql`
+  (apply before deploying web).
 
 Carried forward for HAGOS (same standard as KOOS/HOOS): proof-read the 37 item
 wordings against the **official koos.nu / Thorborg 2011 HAGOS PDF** before public

@@ -1,8 +1,9 @@
-// Wave 3 MSK measure (HAGOS) — subscale scoring, missing-item rules,
-// directionality, condition-aware MDC wiring, registry, pathway, and follow-up
-// eligibility. Values cite lib/clinical/hagos.js and mcid.js headers.
+// Wave 3 MSK measures (HAGOS, OMAS) — scoring, missing-item / validation rules,
+// directionality, MCID/MDC wiring, registry, pathway, and follow-up eligibility.
+// Values cite lib/clinical/hagos.js, lib/clinical/omas.js, and mcid.js headers.
 
 const { calcHAGOS, HAGOS_SECTIONS } = require('../lib/clinical/hagos')
+const { calcOMAS, OMAS_ITEMS } = require('../lib/clinical/omas')
 const { getMCIDStatus } = require('../lib/clinical/mcid')
 const { MEASURES } = require('../lib/clinical/measures')
 const { CONDITION_OPTIONS, DIAG_RECS } = require('../lib/clinical/constants')
@@ -151,6 +152,101 @@ describe('HAGOS — follow-up eligibility', () => {
 
   it('rejects a HAGOS follow-up with the wrong number of answers', () => {
     const { error } = validateFollowUpQuestionnaireAnswers('HAGOS', { items: Array(36).fill(0) })
+    expect(error).toBeTruthy()
+  })
+})
+
+// Best (max) and worst (0) answer for every OMAS item, in canonical order.
+const OMAS_BEST = OMAS_ITEMS.map(item => Math.max(...item.options.map(o => o.value)))
+const OMAS_WORST = OMAS_ITEMS.map(() => 0)
+
+describe('calcOMAS — scoring', () => {
+  it('has nine weighted items summing to a max of 100', () => {
+    expect(OMAS_ITEMS).toHaveLength(9)
+    expect(OMAS_BEST.reduce((a, b) => a + b, 0)).toBe(100)
+  })
+
+  it('scores 100 for the best answers and 0 for the worst', () => {
+    const best = calcOMAS({ items: OMAS_BEST })
+    expect(best.primaryValue).toBe(100)
+    expect(best.primaryUnit).toBe('/100')
+    expect(calcOMAS({ items: OMAS_WORST }).primaryValue).toBe(0)
+  })
+
+  it('sums item weights (e.g. mild pain drops total to 85)', () => {
+    const items = [...OMAS_BEST]
+    items[0] = 10 // Pain: "even ground outdoors" = 10 instead of 25
+    expect(calcOMAS({ items }).primaryValue).toBe(85)
+  })
+
+  it('classifies the four interpretation bands by total', () => {
+    // poor ≤30, fair 31–60, good 61–90, excellent 91–100 (Castilho 2021)
+    const totalFromPain = pain => calcOMAS({ items: [pain, ...OMAS_BEST.slice(1)] })
+    expect(totalFromPain(25).meta.classColor).toBe('green')   // 100 excellent
+    expect(totalFromPain(25).interpretation).toContain('Excellent')
+    const poor = calcOMAS({ items: [0, 0, 0, 0, 0, 0, 0, 0, 20] }) // total 20
+    expect(poor.interpretation).toContain('Poor')
+    expect(poor.meta.classColor).toBe('red')
+  })
+})
+
+describe('calcOMAS — validation', () => {
+  it('returns null for the wrong number of items', () => {
+    expect(calcOMAS({ items: OMAS_BEST.slice(0, 8) })).toBeNull()
+    expect(calcOMAS({ items: [] })).toBeNull()
+  })
+
+  it('rejects values that are not an allowed point for that item', () => {
+    const bad = [...OMAS_BEST]
+    bad[0] = 7 // 7 is not a valid Pain point (only 0/5/10/20/25)
+    expect(calcOMAS({ items: bad })).toBeNull()
+    const nonNumeric = [...OMAS_BEST]
+    nonNumeric[1] = 'x'
+    expect(calcOMAS({ items: nonNumeric })).toBeNull()
+  })
+})
+
+describe('OMAS — registry, MCID, pathway', () => {
+  it('registers OMAS as a higher-is-better MSK questionnaire', () => {
+    expect(MEASURES.OMAS.domains).toEqual(['msk'])
+    expect(MEASURES.OMAS.category).toBe('questionnaire')
+    expect(MEASURES.OMAS.higherIsBetter).toBe(true)
+    expect(MEASURES.OMAS.mcidKey).toBe('omas')
+  })
+
+  it('labels change against the anchored MCID (12.5 pts), not a measurement-error floor', () => {
+    const met = getMCIDStatus('omas', 80, 65) // +15 ≥ 12.5
+    expect(met.improved).toBe(true)
+    expect(met.meetsThreshold).toBe(true)
+    expect(met.label).toContain('MCID met')
+
+    const small = getMCIDStatus('omas', 70, 65) // +5 < 12.5
+    expect(small.meetsThreshold).toBe(false)
+  })
+
+  it('adds the Ankle Fracture pathway recommending OMAS, NPRS, LEFS', () => {
+    expect(CONDITION_OPTIONS).toContain('Ankle Fracture')
+    expect(DIAG_RECS['Ankle Fracture']).toEqual(['OMAS', 'NPRS', 'LEFS'])
+  })
+})
+
+describe('OMAS — follow-up eligibility', () => {
+  it('lists OMAS as an eligible patient questionnaire', () => {
+    expect(FOLLOWUP_QUESTIONNAIRE_MEASURE_IDS).toContain('OMAS')
+  })
+
+  it('builds a 9-question OMAS follow-up and scores valid answers', () => {
+    const q = getFollowUpQuestionnaire('OMAS')
+    expect(q.questions).toHaveLength(9)
+    const { results, error } = validateFollowUpQuestionnaireAnswers('OMAS', { items: OMAS_BEST })
+    expect(error).toBeUndefined()
+    expect(results.primaryValue).toBe(100)
+  })
+
+  it('rejects an OMAS follow-up answer that is not a valid point value', () => {
+    const bad = [...OMAS_BEST]
+    bad[0] = 7
+    const { error } = validateFollowUpQuestionnaireAnswers('OMAS', { items: bad })
     expect(error).toBeTruthy()
   })
 })
