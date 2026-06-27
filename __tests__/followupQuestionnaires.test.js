@@ -10,7 +10,7 @@ import {
 describe('patient follow-up questionnaires', () => {
   it('exposes safe public questionnaire metadata for eligible measures', () => {
     expect(FOLLOWUP_QUESTIONNAIRE_MEASURE_IDS).toEqual(
-      ['ABC', 'FSS', 'HADS', 'PDQ8', 'RPQ', 'BIVI', 'NPRS', 'LEFS', 'BPFS', 'KOOS', 'HOOS', 'CAIT', 'ATRS', 'FABQ']
+      ['ABC', 'FSS', 'HADS', 'PDQ8', 'RPQ', 'BIVI', 'NPRS', 'LEFS', 'BPFS', 'KOOS', 'HOOS', 'HAGOS', 'CAIT', 'ATRS', 'FABQ']
     )
 
     const abc = getFollowUpQuestionnaire('ABC')
@@ -75,9 +75,9 @@ describe('patient follow-up questionnaires', () => {
     expect(questionnaireAttentionLevel('BIVI', green.results)).toBe('green')
   })
 
-  it('returns all 14 eligible measures regardless of prior assessments', () => {
+  it('returns all 15 eligible measures regardless of prior assessments', () => {
     const all = getAllEligibleFollowUpQuestionnaireOptions([])
-    expect(all).toHaveLength(14)
+    expect(all).toHaveLength(15)
     expect(all.every(o => !o.hasPriorAssessment)).toBe(true)
     expect(all.every(o => o.sourceAssessmentId === null)).toBe(true)
     expect(all.every(o => o.resultLabel === null)).toBe(true)

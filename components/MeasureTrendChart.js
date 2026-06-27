@@ -16,7 +16,11 @@ import { MEASURES } from '../lib/clinical/measures'
 import { MCID_VALS } from '../lib/clinical/mcid'
 import { fmtDate, toFiniteNumber } from '../lib/clinical/patientSummary'
 
-const SERIES_PALETTE = ['#094b8a', '#0891b2', '#7c3aed']
+// Distinct series colours for the primary value + up to 5 subscales (HAGOS has
+// the most: Pain + 5). The first three are unchanged from earlier waves so
+// existing KOOS/HOOS/HADS charts keep their colours; the rest are added so no
+// two subscales collapse onto the same grey fallback.
+const SERIES_PALETTE = ['#094b8a', '#0891b2', '#7c3aed', '#be123c', '#15803d', '#b45309']
 
 function resolveThresh(mcidEntry, condition) {
   if (!mcidEntry || !condition || !mcidEntry.byCondition) return mcidEntry

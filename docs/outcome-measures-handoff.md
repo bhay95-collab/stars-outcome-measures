@@ -22,7 +22,7 @@ Also this session: the neuro MCID/classification engine was made **condition-awa
 `thresholdType: 'mdc'` honesty label, and the patient condition is now threaded
 through every `getMCIDStatus` call site. See `[[project_condition_aware_mcid]]`.
 
-Remaining licence-clear Wave 2 queue (deferred — each needs its own verification/build):
+Remaining licence-clear queue (deferred — each needs its own verification/build):
 
 - 🟡 **OMAS** (Olerud–Molander Ankle Score) — blocked on confirming the exact
   per-item point weights against a primary source before coding (weights vary
@@ -30,9 +30,30 @@ Remaining licence-clear Wave 2 queue (deferred — each needs its own verificati
 - **Harris Hip Score** — clinician composite (pain 44 / function 47 / deformity 4
   / ROM 5); larger multi-part form, build separately.
 - **Mayo Elbow Performance Index** — clinician composite (pain 45 / motion 20 /
-  stability 10 / function 25); needs a new "Elbow" condition + form.
-- **HAGOS** — 6-subscale hip/groin PROM; reuses the KOOS/HOOS engine but needs
-  exact HAGOS item wording + a new hip/groin condition.
+  stability 10 / function 25); needs a new "Elbow" condition + form. Deferred by
+  Ben (2026-06-27) — opening the Elbow region is its own focused task.
+
+---
+
+## Wave 3 build status (2026-06-27)
+
+Built this wave (licence-clear, patient-reported, full pipeline — calc +
+registry + per-subscale MDC + form + MeasureEntry dispatch + summary domain +
+reference card + follow-up eligibility + migration + tests):
+
+- ✅ **HAGOS** — Copenhagen Hip and Groin Outcome Score (Thorborg 2011). 6
+  subscales / 37 items, reuses the `koosFamily.js` engine (added one
+  `KF_OPTIONS.freqAllTime` option set). New **Hip / Groin Pain** condition
+  (DIAG_RECS: HAGOS, NPRS, PSFS). No anchored MCID — each subscale uses its
+  published individual-level **MDC** (Groen 2017 HAGOS-NL: Symptoms 18.9, Pain
+  25.2, ADL 19.7, Sport 26.8, PA 34.1, QOL 18.3) with `thresholdType: 'mdc'`.
+  Trend-chart `SERIES_PALETTE` extended 3→6 so all 6 series are distinguishable
+  (also fixes KOOS/HOOS 5th series). Follow-up migration:
+  `20260627000000_extend_followups_for_hagos.sql` (apply before deploying web).
+
+Carried forward for HAGOS (same standard as KOOS/HOOS): proof-read the 37 item
+wordings against the **official koos.nu / Thorborg 2011 HAGOS PDF** before public
+release (current wording transcribed from a reputable secondary source).
 
 All ⚠️ measures (ODI, NDI, QuickDASH, OSS, PCS, MSK-HQ) and 🟡 verify-first
 measures (IKDC, iHOT-12, FFI, KOS, PSEQ, TSK, CSI) remain out of scope until
