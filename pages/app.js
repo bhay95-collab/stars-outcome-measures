@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { Accessibility, BarChart3, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, Mail, MessageSquare, RefreshCw, Route, Search, Users, XCircle } from 'lucide-react'
+import { Accessibility, Activity, BarChart3, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, Mail, MessageSquare, RefreshCw, Route, Search, Users, XCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
@@ -15,6 +15,7 @@ import LogoWordmark from '../components/LogoWordmark'
 import WheelchairPrescriptionTool from '../components/WheelchairPrescriptionTool'
 import AuthGateway from '../components/AuthGateway'
 import OutcomesIntelligenceWorkspace from '../components/OutcomesIntelligenceWorkspace'
+import ACLPathwayPanel from '../components/ACLPathwayPanel'
 import { MEASURES } from '../lib/clinical'
 import { buildOutcomesIntelligence } from '../lib/clinical/outcomesIntelligence'
 import { buildPatientPathway, buildCaseloadDueSignals } from '../lib/clinical/pathways'
@@ -44,8 +45,8 @@ import { sortPatientsByLabel } from '../lib/patientDetails'
 
 export async function getServerSideProps() { return { props: {} } }
 
-const APP_SECTIONS = ['directory', 'insights', 'overview', 'pathway', 'followup', 'measures', 'reports', 'wheelchair']
-const PATIENT_SECTIONS = new Set(['overview', 'pathway', 'followup', 'measures', 'reports', 'wheelchair'])
+const APP_SECTIONS = ['directory', 'insights', 'overview', 'pathway', 'followup', 'measures', 'acl', 'reports', 'wheelchair']
+const PATIENT_SECTIONS = new Set(['overview', 'pathway', 'followup', 'measures', 'acl', 'reports', 'wheelchair'])
 const CASELOAD_SECTIONS = new Set(['directory', 'insights'])
 const DEFAULT_PATIENT_SECTION = 'overview'
 
@@ -77,6 +78,7 @@ function getSectionTitle(section) {
     case 'pathway': return 'Smart Pathway'
     case 'followup': return 'Follow-Up'
     case 'measures': return 'Outcome Measures'
+    case 'acl': return 'ACL Pathway & RTS'
     case 'reports': return 'Reports & Notes'
     case 'wheelchair': return 'Wheelchair Prescription'
     default: return 'Patient Overview'
@@ -914,6 +916,20 @@ export default function App() {
                 onDone={() => goToSection('overview')}
                 onDirtyChange={setAssessmentDirty}
               />
+            ) : activeSection === 'acl' ? (
+              <div className="workspace-shell">
+                <div className="workspace-head">
+                  <div>
+                    <h2>ACL Pathway &amp; Return to Sport</h2>
+                    <p>Criterion-based rehab phases and the return-to-sport readiness battery.</p>
+                  </div>
+                </div>
+                <ACLPathwayPanel
+                  patient={selectedPatient}
+                  userId={user.id}
+                  assessments={assessments}
+                />
+              </div>
             ) : activeSection === 'reports' ? (
               <ReportsWorkspace
                 patient={selectedPatient}
@@ -997,6 +1013,16 @@ function AppSidebar({
       job: 'Record the encounter',
       icon: ClipboardList,
       disabled: patientSectionsDisabled,
+    },
+    {
+      section: 'acl',
+      label: 'ACL Pathway & RTS',
+      job: 'Rehab phases & return-to-sport readiness',
+      icon: Activity,
+      disabled: patientSectionsDisabled,
+      // MSK-specific tool — hidden for rehab/neuro-focused clinicians (restored
+      // via the profile clinical focus setting).
+      hidden: profileData.clinicalFocus === 'rehab',
     },
     {
       section: 'reports',

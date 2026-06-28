@@ -40,9 +40,12 @@ import FormCAIT from './FormCAIT'
 import FormATRS from './FormATRS'
 import FormFABQ from './FormFABQ'
 import FormOMAS from './FormOMAS'
+import FormQuadLSI from './FormQuadLSI'
+import FormHopBattery from './FormHopBattery'
+import FormLESS from './FormLESS'
 import ThreeBarMotif from './ThreeBarMotif'
 
-const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI', 'NPRS', 'PSFS', 'LEFS', 'BPFS', 'KOOS', 'HOOS', 'HAGOS', 'FAAM', '30STS', 'FTSTS', 'CMS', 'CAIT', 'ATRS', 'FABQ', 'OMAS'])
+const IMPLEMENTED = new Set(['10MWT', 'TUG', 'BBS', '6MWT', 'FAC', 'FSS', 'HADS', 'Barthel', 'Step', 'PASS', 'FGA', 'SARA', 'PDQ8', 'ABC', 'TIS', 'MAS', 'COVS', 'BOOMER', 'HiMAT', 'AMP', 'SCIM', 'RPQ', 'BIVI', 'ISNCSCI', 'NPRS', 'PSFS', 'LEFS', 'BPFS', 'KOOS', 'HOOS', 'HAGOS', 'FAAM', '30STS', 'FTSTS', 'CMS', 'CAIT', 'ATRS', 'FABQ', 'OMAS', 'QuadLSI', 'HopBattery', 'LESS'])
 const CATEGORY_ORDER = ['performance', 'independence', 'questionnaire']
 const CATEGORY_LABELS = {
   performance: 'Performance',
@@ -424,6 +427,9 @@ export default function MeasureEntry({
             {activeMeasure === 'ATRS'    && <FormATRS     onSubmit={handleSubmit} loading={formLoading} />}
             {activeMeasure === 'FABQ'    && <FormFABQ     onSubmit={handleSubmit} loading={formLoading} />}
             {activeMeasure === 'OMAS'    && <FormOMAS     onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'QuadLSI'    && <FormQuadLSI    onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'HopBattery' && <FormHopBattery onSubmit={handleSubmit} loading={formLoading} />}
+            {activeMeasure === 'LESS'       && <FormLESS       onSubmit={handleSubmit} loading={formLoading} />}
           </div>
           {error && <p className="error">{error}</p>}
         </div>

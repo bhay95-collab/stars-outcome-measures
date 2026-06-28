@@ -117,6 +117,7 @@ Mobile client
 | `subscriptions` | Stripe subscription state. |
 | `app_store_subscriptions` | RevenueCat/App Store entitlement state. Either source can grant access. |
 | `followup_requests` / `followup_responses` | Tokenised patient-reported questionnaire links and responses. |
+| `acl_pathways` | Per-patient ACL rehab Phase Tracker state (the only stateful per-patient table — outcome data otherwise lives in `assessments`). One row per patient: `pathway_type`, `index_date`, `current_phase` (1–6), `phase_history` JSONB. Gate tests are read from `assessments`, not duplicated. RLS like `followup_requests`; INSERT validates patient ownership. |
 | `leads` | Landing/pilot lead capture. |
 | `deleted_accounts` | Hashed-email tombstones; admin-client only. |
 

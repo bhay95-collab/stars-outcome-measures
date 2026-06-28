@@ -75,6 +75,45 @@ licensing/verification clears.
 
 ---
 
+## ACL Rehab & Return-to-Sport tool (2026-06-28)
+
+A composite **pathway tool**, not a single measure. Two linked modules on one
+patient timeline, surgical pathway, generic sport (conservative arm + sport
+tiering deferred to v2). Built licence-clear; the licensed PROMs are stubbed.
+
+**Module B — RTS readiness battery** (`lib/clinical/aclRts.js`,
+`components/RTSBatteryDashboard.js`): grades published cut-offs and renders a
+continuum dashboard — never a "cleared" stamp. Thresholds: time ≥ 9 months
+(Grindem 2016; Beischer 2020), quad LSI ≥ 90% (Grindem 2016; Kyritsis 2016),
+hop battery each LSI ≥ 90% (Reid 2007), effusion trace-to-zero, LESS < 5
+(Padua 2009). Carries the predictive-validity caveat (Losciale 2019; Webster &
+Hewett 2019). **Licence-pending, stubbed (not graded):** IKDC/KOS-ADLS ≥ 90%
+and ACL-RSI ≥ 56/75 (Webster 2008; Müller 2021) — present as `pending` criteria,
+no substitute cut-off invented. KOOS (already built) is the interim function PROM.
+
+**Module A — Phase Tracker** (`lib/clinical/aclPhases.js`,
+`components/ACLPathwayPanel.js`): 6 criterion-gated phases (pre-op → secondary
+prevention) from van Melick 2016 / Melbourne ACL Guide 2.0. Intermediate gates
+quad/hop LSI ≥ 80% (van Melick); RTS gate = full battery + 9-month gate. The
+tool shows gate readiness; the **clinician advances the phase** (never auto).
+First stateful per-patient construct: new `acl_pathways` table (migration
+`20260628000000_add_acl_pathways.sql`, RLS like `followup_requests` — **apply
+before deploying web**). Effusion / full-extension are session-local clinician
+toggles (not persisted in v1).
+
+**New licence-clear field-test measures** (registry + forms + trend charts +
+ACL pathway DIAG_RECS): **QuadLSI** (involved/uninvolved ×100), **HopBattery**
+(4 hops, limiting LSI, timed hop inverts), **LESS** (errors /17, lower better).
+Surfaced as a new patient workspace section ("ACL Pathway & RTS", hidden for
+rehab-focus clinicians). Tests: `__tests__/aclRts.test.js` (22).
+
+**Carried forward (v2):** conservative arm (coper screening — Delaware/Fitzgerald;
+Cross Bracing Protocol, evidence-graded); sport-aware tiering; persist effusion/
+extension and per-phase notes; mobile parity; once ACL-RSI/IKDC licences clear,
+build those forms + follow-up eligibility (the battery already wires them in).
+
+---
+
 ## Tier 1 — Licence-gated measures already fully researched (build first once licences are signed)
 
 Full clinical profiles (structure, scoring, missing-item rules, bands, MCID/MDC by condition) are in `docs/msk-expansion-plan.md` §4 "Deferred profiles". These are plug-in builds.

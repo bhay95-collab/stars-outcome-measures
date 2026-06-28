@@ -28,6 +28,7 @@ RLS is enabled on all tables containing clinical or user data.
 | `subscriptions` | Yes | `auth.uid() = user_id` |
 | `deleted_accounts` | Yes | No client SELECT — admin client only |
 | `followup_requests` / `followup_responses` | Yes | Enabled in `20260529030000_add_patient_reported_followups.sql`; public submission goes through the token-gated API route, not direct client access |
+| `acl_pathways` | Yes | Enabled in `20260628000000_add_acl_pathways.sql`; `auth.uid() = user_id` + `user_has_active_access()` (SELECT/INSERT/UPDATE/DELETE), INSERT validates patient ownership. Client mutations also carry an explicit `.eq('user_id', …)`. |
 | `app_store_subscriptions` / `revenuecat_webhook_events` | Yes | Enabled in `20260610090000_add_app_store_subscriptions.sql`; written server-side |
 | `leads` | Yes | Enabled in `20260602011134_add_leads_table.sql`; written via rate-limited API routes |
 
@@ -165,6 +166,7 @@ Affected operations:
 - `assessments` DELETE by `id`
 - `assessments` DELETE cascade by `patient_id` (on patient deletion)
 - `patients` DELETE by `id`
+- `acl_pathways` UPDATE by `id` (phase advance, in `components/ACLPathwayPanel.js`)
 
 ---
 
