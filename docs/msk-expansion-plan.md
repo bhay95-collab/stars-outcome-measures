@@ -229,7 +229,7 @@ New `CONDITION_OPTIONS` (appended — existing keys preserved verbatim; they exi
 |---|---|---|
 | Low Back Pain | BPFS, NPRS, PSFS, FTSTS | ODI |
 | Neck Pain / Whiplash | NPRS, PSFS | NDI |
-| Knee — ACL Reconstruction | KOOS, NPRS, PSFS | IKDC (handoff) |
+| Knee — ACL Reconstruction | KOOS, NPRS, PSFS, QuadLSI, HopBattery, LESS | IKDC, ACL-RSI (handoff — licence-pending) |
 | Knee — OA / Replacement | KOOS, NPRS, 30STS, FTSTS, TUG, 10MWT, 6MWT | — |
 | Hip — OA / Replacement | HOOS, NPRS, 30STS, TUG, 10MWT, 6MWT | — |
 | Shoulder Pain / Rotator Cuff | CMS, NPRS, PSFS | OSS or QuickDASH |

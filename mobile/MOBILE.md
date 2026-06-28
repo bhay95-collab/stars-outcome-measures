@@ -45,7 +45,7 @@ Scoring, registry, and MCID logic are **not duplicated** — they are imported f
 |---|---|
 | ISNCSCI | Not on mobile (dropped from mobile scope; web only) |
 | Patient-reported follow-ups | Web only (patient links open fine in mobile browsers) |
-| Forms | 26 native forms vs 37 web measures — Wave 1 MSK parity is a queued phase (`../docs/outcome-measures-handoff.md`) |
+| Forms | 26 native forms vs 42 web measures — Wave 1 MSK parity (plus the ACL return-to-sport field tests) is a queued phase (`../docs/outcome-measures-handoff.md`) |
 | Billing | RevenueCat + Apple IAP instead of Stripe; never link to external payment from the subscription screen (guideline 3.1.1) |
 | Auth | Adds native Sign in with Apple (hashed-nonce `signInWithIdToken`); OAuth redirect `rehabmetricsiq://auth/callback` |
 | Account deletion | Three-stage `AccountSettingsSheet`; Apple-login users re-authenticate so the server can revoke the Apple authorization |

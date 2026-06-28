@@ -10,9 +10,9 @@ Jest via `next/jest` with a jsdom environment and Testing Library (`jest.config.
 npm test            # runs the full web suite in __tests__/
 ```
 
-`__tests__/` currently contains 36 suites covering:
+`__tests__/` currently contains 38 suites covering:
 
-- **Clinical engine:** `mskMeasures`, `wave2Measures`, `conditionAwareMcid`, `clinicalDomains`, `pathways`, `outcomesIntelligence`, `referenceCard`, `followupQuestionnaires`.
+- **Clinical engine:** `mskMeasures`, `wave2Measures`, `wave3Measures`, `aclRts`, `conditionAwareMcid`, `clinicalDomains`, `pathways`, `outcomesIntelligence`, `referenceCard`, `followupQuestionnaires`.
 - **API routes:** `SignupApi`, `DeleteAccountApi`, `FollowUpApi`, `RevenueCatApi`, `pilotApi`, `SupabaseAdminAuth`, `AppleServer`, `AppleDeletionStart/Callback/State`, `AccountProvisioning`.
 - **Components/pages:** `SubscriptionWall`, `NewPatientModal`, `EditPatientModal`, `PatientEditEntryPoints`, `PatientFirstNavigation`, `PublicFollowUpPage`, `SignupPage`, `LandingAuthGateway`, `WheelchairPrescriptionTool`, `AppBootState`, `auth-routing`, and utility suites.
 

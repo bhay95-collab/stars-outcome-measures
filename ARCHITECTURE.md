@@ -88,7 +88,7 @@ Every calculation function returns:
 }
 ```
 
-There are currently **37 measures in the registry** (neuro/rehab, patient-reported questionnaires, and the Wave 1 + Wave 2 MSK set; ISNCSCI is web-only). See [PRODUCT.md](PRODUCT.md) for the clinical scope and [DESIGN.md](DESIGN.md) for chart/colour rules.
+There are currently **42 measures in the registry** (neuro/rehab, patient-reported questionnaires, the Wave 1–3 MSK set, and the ACL return-to-sport field tests; ISNCSCI is web-only). See [PRODUCT.md](PRODUCT.md) for the clinical scope and [DESIGN.md](DESIGN.md) for chart/colour rules.
 
 ---
 
@@ -117,7 +117,7 @@ Mobile client
 | `subscriptions` | Stripe subscription state. |
 | `app_store_subscriptions` | RevenueCat/App Store entitlement state. Either source can grant access. |
 | `followup_requests` / `followup_responses` | Tokenised patient-reported questionnaire links and responses. |
-| `acl_pathways` | Per-patient ACL rehab Phase Tracker state (the only stateful per-patient table — outcome data otherwise lives in `assessments`). One row per patient: `pathway_type`, `index_date`, `current_phase` (1–6), `phase_history` JSONB. Gate tests are read from `assessments`, not duplicated. RLS like `followup_requests`; INSERT validates patient ownership. |
+| `acl_pathways` | Per-patient ACL rehab Phase Tracker state (the only stateful per-patient table — outcome data otherwise lives in `assessments`). One row per patient: `pathway_type`, `index_date`, `current_phase` (1–6), `phase_history` JSONB, `updated_at` (maintained by a `BEFORE UPDATE` trigger). Gate tests are read from `assessments`, not duplicated. RLS like `followup_requests`; INSERT/UPDATE validate patient ownership. |
 | `leads` | Landing/pilot lead capture. |
 | `deleted_accounts` | Hashed-email tombstones; admin-client only. |
 

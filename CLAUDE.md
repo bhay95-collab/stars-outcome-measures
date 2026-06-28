@@ -21,7 +21,7 @@ Core documents (repo root unless noted):
 | [README.md](README.md) | Project overview, setup, env vars, deployment | Setting up, deploying, or orienting a newcomer |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Tech stack, monorepo structure, API routes, clinical engine, data model, data flow, web-vs-mobile | Any structural work, new routes, Supabase/schema changes, anything in `lib/` |
 | [DESIGN.md](DESIGN.md) | Visual language, design tokens (both platforms), brand, typography, class naming, forms, charts, accessibility | Any UI/visual change, new components, theming |
-| [PRODUCT.md](PRODUCT.md) | What the tool is, users, the 37 measures, clinical integrity rules, measure licensing constraints, commercial model, roadmap pointers | New features, new measures, copy/positioning work |
+| [PRODUCT.md](PRODUCT.md) | What the tool is, users, the 42 measures, clinical integrity rules, measure licensing constraints, commercial model, roadmap pointers | New features, new measures, copy/positioning work |
 | [SECURITY.md](SECURITY.md) | Data handling model, RLS, API auth, rate limiting, Sentry PHI scrubbing, deferred items, reporting | Auth, billing, deletion, RLS, PHI, or any sensitive-data change — read **before** coding |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Workflow, branching, commit format, coding standards, verification checklists, failure conditions | Before committing; when verifying changes |
 | [TESTING.md](TESTING.md) | Test commands, suite layout, expectations on both platforms | Writing or running tests; before any release |

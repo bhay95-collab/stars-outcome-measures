@@ -14,6 +14,21 @@ Deferred from this phase:
 - Date-range and discharge-episode filtering (v1 reports across all recorded data).
 - Multi-clinician clinic rollups (v1 reports per signed-in clinician account, matching the data-access model).
 
+## Delivered: ACL Rehab & Return-to-Sport tool (2026-06-28)
+
+A composite ACL pathway tool (surgical pathway, generic sport — v1). Two linked modules on one patient timeline:
+
+- **RTS readiness battery** — grades published return-to-sport cut-offs (≥9 months, quadriceps LSI ≥90%, hop battery each LSI ≥90%, effusion trace-to-zero, LESS <5) and renders a continuum dashboard with the predictive-validity caveat. It never issues a clearance. ACL-RSI and IKDC/KOS-ADLS are stubbed as licence-pending (not graded; no substitute cut-off invented).
+- **Phase Tracker** — 6 criterion-gated rehab phases (pre-op → secondary prevention); the tool shows gate readiness, the clinician advances the phase. First stateful per-patient table (`acl_pathways`, RLS like `followup_requests`).
+- **3 new licence-clear field-test measures:** Quadriceps Strength LSI, Single-Leg Hop Battery, LESS — with trend charts, entry forms, and ACL pathway recommendations. Surfaced as the "ACL Pathway & RTS" workspace section (hidden for rehab-focus clinicians).
+
+Reviewed (security/healthcare/code) before merge. Build record + carried-forward v2 items (conservative arm, sport tiering, mobile parity, ACL-RSI/IKDC once licensed) in `docs/outcome-measures-handoff.md`.
+
+Deferred from this phase:
+- Conservative (non-operative) pathway — coper screening (Delaware/Fitzgerald) + Cross Bracing Protocol, evidence-graded.
+- Sport-aware battery tiering (pivoting vs linear sports).
+- Persisting effusion/full-extension signs and per-phase notes (session-local in v1); mobile parity.
+
 ## Delivered: Overview Redesign & Clinical Visualisations (2026-06-26)
 
 A web-only visual overhaul of the authenticated app shell and patient overview:
