@@ -103,9 +103,10 @@ toggles (not persisted in v1).
 
 **New licence-clear field-test measures** (registry + forms + trend charts +
 ACL pathway DIAG_RECS): **QuadLSI** (involved/uninvolved ×100), **HopBattery**
-(4 hops, limiting LSI, timed hop inverts), **LESS** (errors /17, lower better).
+(4 hops, limiting LSI, timed hop inverts), **LESS** (errors /19 — 17 items, two
+score 0–2; lower better; cut-point <5 from Padua 2015, J Athl Train 50:589).
 Surfaced as a new patient workspace section ("ACL Pathway & RTS", hidden for
-rehab-focus clinicians). Tests: `__tests__/aclRts.test.js` (22).
+rehab-focus clinicians). Tests: `__tests__/aclRts.test.js` (24).
 
 **Carried forward (v2):** conservative arm (coper screening — Delaware/Fitzgerald;
 Cross Bracing Protocol, evidence-graded); sport-aware tiering; persist effusion/

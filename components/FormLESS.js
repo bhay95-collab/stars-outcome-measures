@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { calcLESS, LESS_MAX_ERRORS } from '../lib/clinical'
 
 // Landing Error Scoring System — clinician-rated jump-landing screen.
-// Enter the total error count (0–17) from the drop-vertical-jump rating.
+// Enter the total error count (0–19) from the drop-vertical-jump rating.
 export default function FormLESS({ onSubmit, loading }) {
   const [errors, setErrors] = useState('')
 
@@ -31,16 +31,17 @@ export default function FormLESS({ onSubmit, loading }) {
           </tr>
           <tr>
             <td><strong>LESS score</strong></td>
-            <td><strong>{preview ? `${preview.primaryValue}/17` : '—'}</strong></td>
+            <td><strong>{preview ? `${preview.primaryValue}/${LESS_MAX_ERRORS}` : '—'}</strong></td>
           </tr>
         </tbody>
       </table>
 
       <div className="info-panel">
         <strong>LESS (Padua 2009):</strong> a clinician scores a drop-vertical-jump
-        landing for movement errors across 17 items — higher = worse mechanics.
-        LESS &lt; 5 = good landing mechanics in the return-to-sport screen
-        (Grindem 2016). A supportive criterion, not a stand-alone clearance.
+        landing for movement errors across 17 items (two items score 0–2, so totals
+        range 0–{LESS_MAX_ERRORS}) — higher = worse mechanics. LESS &lt; 5 = good
+        landing mechanics (Padua 2009; Padua 2015). A supportive criterion, not a
+        stand-alone clearance.
       </div>
 
       <div className="result-box">
@@ -48,12 +49,12 @@ export default function FormLESS({ onSubmit, loading }) {
           <div className="result-row">
             <div>
               <span className="result-label">Landing Error Scoring System</span>
-              <div><strong>{preview.primaryValue}/17</strong> errors</div>
+              <div><strong>{preview.primaryValue}/{LESS_MAX_ERRORS}</strong> errors</div>
             </div>
             <span className={`interp-chip chip-${preview.meta.classColor}`}>{preview.interpretation}</span>
           </div>
         ) : (
-          <em>Enter the total error count (whole number 0–17).</em>
+          <em>Enter the total error count (whole number 0–{LESS_MAX_ERRORS}).</em>
         )}
         <button type="submit" disabled={!preview || loading} style={{ width: 'auto', padding: '8px 20px', alignSelf: 'center' }}>
           {loading ? 'Saving…' : 'Save assessment'}

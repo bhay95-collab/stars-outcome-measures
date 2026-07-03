@@ -104,7 +104,8 @@ export default function ACLPathwayPanel({ patient, userId, assessments }) {
     hopMinLSI: latest.hop?.primaryValue ?? null,
     effusionTraceToZero,
     less: latest.less?.primaryValue ?? null,
-  }), [latest, monthsSinceIndex, effusionTraceToZero])
+    pathwayType: pathway?.pathway_type ?? 'surgical',
+  }), [latest, monthsSinceIndex, effusionTraceToZero, pathway?.pathway_type])
 
   const currentGate = pathway
     ? evaluatePhaseGate(pathway.current_phase, {
@@ -162,47 +163,43 @@ export default function ACLPathwayPanel({ patient, userId, assessments }) {
   }
 
   if (pathway === undefined) {
-    return <div className="info-panel">Loading ACL pathway…</div>
+    return <p className="empty-hint">Loading ACL pathway…</p>
   }
 
   // ─── No pathway yet → offer to start one ──────────────────────────────────
   if (pathway === null) {
     return (
-      <section data-acl-pathway="">
-        <div className="info-panel">
-          <strong>ACL rehabilitation pathway</strong> — start a criterion-based
-          pathway to track this patient through the rehab phases and the
-          return-to-sport battery. Surgical pathway is supported in this version;
-          the conservative (non-operative) pathway is in development.
+      <div className="acl-panel" data-acl-pathway="">
+        <div className="summary-card">
+          <span className="section-label">Start an ACL pathway</span>
+          <p className="acl-intro">
+            Track this patient through criterion-based rehab phases and the
+            return-to-sport readiness battery. Surgical pathway is supported in
+            this version; the conservative (non-operative) pathway is in development.
+          </p>
+          {error && <p className="error">{error}</p>}
+          <form className="acl-form" onSubmit={createPathway}>
+            <div className="field-group">
+              <label htmlFor="acl-pathway-type" className="field-label">Pathway type</label>
+              <select id="acl-pathway-type" className="field-input" value={pathwayType} onChange={e => setPathwayType(e.target.value)}>
+                <option value="surgical">Surgical (ACL reconstruction)</option>
+                <option value="conservative">Conservative (non-operative) — limited support</option>
+              </select>
+            </div>
+            <div className="field-group">
+              <label htmlFor="acl-index-date" className="field-label">{pathwayType === 'surgical' ? 'Surgery date' : 'Injury date'}</label>
+              <input id="acl-index-date" className="field-input" type="date" value={indexDate} onChange={e => setIndexDate(e.target.value)} />
+            </div>
+            <div className="field-group">
+              <label htmlFor="acl-graft-type" className="field-label">Graft type (optional)</label>
+              <input id="acl-graft-type" className="field-input" type="text" maxLength={GRAFT_TYPE_MAX} placeholder="e.g. BPTB, hamstring, quad tendon" value={graftType} onChange={e => setGraftType(e.target.value)} />
+            </div>
+            <button type="submit" className="acl-btn" disabled={busy}>
+              {busy ? 'Starting…' : 'Start ACL pathway'}
+            </button>
+          </form>
         </div>
-        {error && <p className="error">{error}</p>}
-        <form onSubmit={createPathway}>
-          <table className="data-table">
-            <tbody>
-              <tr>
-                <td>Pathway type</td>
-                <td>
-                  <select className="field-input" value={pathwayType} onChange={e => setPathwayType(e.target.value)}>
-                    <option value="surgical">Surgical (ACL reconstruction)</option>
-                    <option value="conservative">Conservative (non-operative) — limited support</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <td>{pathwayType === 'surgical' ? 'Surgery date' : 'Injury date'}</td>
-                <td><input className="field-input" type="date" value={indexDate} onChange={e => setIndexDate(e.target.value)} /></td>
-              </tr>
-              <tr>
-                <td>Graft type <span className="na-text">(optional)</span></td>
-                <td><input className="field-input" type="text" maxLength={GRAFT_TYPE_MAX} placeholder="e.g. BPTB, hamstring, quad tendon" value={graftType} onChange={e => setGraftType(e.target.value)} /></td>
-              </tr>
-            </tbody>
-          </table>
-          <button type="submit" disabled={busy} style={{ width: 'auto', padding: '8px 20px' }}>
-            {busy ? 'Starting…' : 'Start ACL pathway'}
-          </button>
-        </form>
-      </section>
+      </div>
     )
   }
 
@@ -210,56 +207,71 @@ export default function ACLPathwayPanel({ patient, userId, assessments }) {
   const phase = getACLPhase(pathway.current_phase)
 
   return (
-    <section data-acl-pathway="">
-      <div className="result-box">
-        <div className="result-row">
-          <div>
-            <span className="result-label">ACL pathway — {pathway.pathway_type}</span>
-            <div>
-              Phase {pathway.current_phase} of {ACL_PHASES.length}: <strong>{phase?.name}</strong>
-              {monthsSinceIndex !== null && <> · {monthsSinceIndex} months since {pathway.pathway_type === 'surgical' ? 'surgery' : 'injury'}</>}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button type="button" disabled={busy || pathway.current_phase <= 1} onClick={() => changePhase(-1)} style={{ width: 'auto', padding: '6px 14px' }}>‹ Back</button>
-            <button type="button" disabled={busy || pathway.current_phase >= ACL_PHASES.length} onClick={() => changePhase(1)} style={{ width: 'auto', padding: '6px 14px' }}>Advance ›</button>
-          </div>
-        </div>
-      </div>
-
+    <div className="acl-panel" data-acl-pathway="">
       {error && <p className="error">{error}</p>}
 
-      {/* Phase ladder */}
-      <table className="data-table">
-        <thead>
-          <tr><th>#</th><th>Phase</th><th>Focus</th></tr>
-        </thead>
-        <tbody>
-          {ACL_PHASES.map(p => (
-            <tr key={p.id} data-active={p.id === pathway.current_phase ? '' : undefined}>
-              <td className="na-text">{p.id}</td>
-              <td>{p.id === pathway.current_phase ? <strong>{p.name}</strong> : p.name}</td>
-              <td className="na-text">{p.focus}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Phase status + ladder */}
+      <div className="summary-card">
+        <div className="summary-card__head">
+          <div>
+            <span className="section-label">ACL pathway — {pathway.pathway_type}</span>
+            <h3>Phase {pathway.current_phase} of {ACL_PHASES.length}: {phase?.name}</h3>
+            {monthsSinceIndex !== null && (
+              <p className="acl-meta">{monthsSinceIndex} months since {pathway.pathway_type === 'surgical' ? 'surgery' : 'injury'}</p>
+            )}
+          </div>
+          <div className="acl-phase-controls">
+            <button type="button" disabled={busy || pathway.current_phase <= 1} onClick={() => changePhase(-1)}>Back</button>
+            <button type="button" disabled={busy || pathway.current_phase >= ACL_PHASES.length} onClick={() => changePhase(1)}>Advance phase</button>
+          </div>
+        </div>
+        <table className="data-table">
+          <thead>
+            <tr><th>#</th><th>Phase</th><th>Focus</th></tr>
+          </thead>
+          <tbody>
+            {ACL_PHASES.map(p => (
+              <tr key={p.id} data-active={p.id === pathway.current_phase ? '' : undefined}>
+                <td className="na-text">{p.id}</td>
+                <td>{p.id === pathway.current_phase ? <strong>{p.name}</strong> : p.name}</td>
+                <td className="na-text">{p.focus}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Clinical-sign toggles feeding the gates (not persisted in v1) */}
-      <div className="info-panel">
-        <strong>Clinical signs (this session):</strong>
-        <label style={{ marginLeft: 12 }}>
-          <input type="checkbox" checked={fullExtension === true} onChange={e => setFullExtension(e.target.checked ? true : null)} /> Full active knee extension
-        </label>
-        <label style={{ marginLeft: 12 }}>
-          <input type="checkbox" checked={effusionTraceToZero === true} onChange={e => setEffusionTraceToZero(e.target.checked ? true : null)} /> Effusion trace-to-zero
-        </label>
+      <div className="summary-card">
+        <span className="section-label">Clinical signs (this session)</span>
+        <div className="acl-signs">
+          <label>
+            <input type="checkbox" checked={fullExtension === true} onChange={e => setFullExtension(e.target.checked ? true : null)} />
+            Full active knee extension
+          </label>
+          <label>
+            <input type="checkbox" checked={effusionTraceToZero === true} onChange={e => setEffusionTraceToZero(e.target.checked ? true : null)} />
+            Effusion trace-to-zero
+          </label>
+        </div>
+        <p className="acl-hint">
+          Confirmed by the clinician for this session only — these feed the phase
+          gate and the readiness battery below and are not saved as assessments.
+        </p>
       </div>
 
       {/* Current-phase gate */}
       {currentGate && !currentGate.terminal && (
-        <div>
-          <p><strong>Gate to next phase:</strong> {phase?.gate?.summary}</p>
+        <div className="summary-card">
+          <div className="summary-card__head">
+            <div>
+              <span className="section-label">Gate to next phase</span>
+              <p className="acl-meta">{phase?.gate?.summary}</p>
+            </div>
+            {currentGate.allMet
+              ? <span className="interp-chip chip-green">Criteria met</span>
+              : <span className="interp-chip chip-grey">Outstanding</span>}
+          </div>
           <table className="data-table">
             <thead>
               <tr><th>Check</th><th>Threshold</th><th>Status</th></tr>
@@ -274,7 +286,7 @@ export default function ACLPathwayPanel({ patient, userId, assessments }) {
               ))}
             </tbody>
           </table>
-          <p className="na-text">
+          <p className="acl-hint">
             {currentGate.allMet
               ? 'Gate criteria met — clinician may advance the phase.'
               : 'Gate criteria not all recorded/met. Advancing remains a clinician decision.'}
@@ -289,8 +301,15 @@ export default function ACLPathwayPanel({ patient, userId, assessments }) {
       )}
 
       {/* Return-to-sport battery (Module B) */}
-      <h4>Return-to-sport readiness</h4>
+      {pathway.pathway_type === 'conservative' && (
+        <div className="info-panel">
+          <strong>Conservative pathway:</strong> the time criterion counts months
+          since injury, and the battery&apos;s evidence (9-month gate, LSI cut-offs)
+          comes from post-ACL-reconstruction cohorts — interpret it as an
+          extrapolation for non-operative management.
+        </div>
+      )}
       <RTSBatteryDashboard battery={battery} />
-    </section>
+    </div>
   )
 }

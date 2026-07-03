@@ -917,19 +917,20 @@ export default function App() {
                 onDirtyChange={setAssessmentDirty}
               />
             ) : activeSection === 'acl' ? (
-              <div className="workspace-shell">
+              <section className="workspace-shell acl-workspace">
                 <div className="workspace-head">
                   <div>
-                    <h2>ACL Pathway &amp; Return to Sport</h2>
-                    <p>Criterion-based rehab phases and the return-to-sport readiness battery.</p>
+                    <h2>{patientLabel(selectedPatient)}</h2>
+                    <p>ACL pathway — criterion-based rehab phases and the return-to-sport readiness battery.</p>
                   </div>
+                  <button type="button" className="secondary-action" onClick={() => setEditingPatient(selectedPatient)}>Edit details</button>
                 </div>
                 <ACLPathwayPanel
                   patient={selectedPatient}
                   userId={user.id}
                   assessments={assessments}
                 />
-              </div>
+              </section>
             ) : activeSection === 'reports' ? (
               <ReportsWorkspace
                 patient={selectedPatient}
@@ -5167,7 +5168,8 @@ const globalStyles = `
   .next-action-panel button,
   .directory-quick-actions button,
   .summary-card__head button,
-  .pathway-action-grid button {
+  .pathway-action-grid button,
+  .acl-workspace button.acl-btn {
     min-height: 38px;
     padding: 0 16px;
     border: 0;
@@ -5199,6 +5201,25 @@ const globalStyles = `
     font-size: 12px;
     font-weight: 600;
   }
+
+  /* ── ACL Pathway & RTS workspace ── */
+  .acl-panel { display: grid; gap: 20px; }
+  .acl-panel .summary-card { display: grid; gap: 16px; }
+  .acl-panel .summary-card .section-label { margin-bottom: 0; }
+  .acl-panel .info-panel { margin: 0; }
+  .acl-panel .error { margin: 0; }
+  .acl-workspace .acl-form { display: grid; gap: 14px; max-width: 420px; }
+  .acl-workspace .acl-form button.acl-btn { justify-self: start; margin-top: 4px; }
+  .acl-panel .acl-intro { font-size: 13px; color: var(--color-muted); line-height: 1.6; }
+  .acl-panel .acl-meta { font-size: 13px; color: var(--color-muted); margin-top: 4px; }
+  .acl-panel .acl-hint { font-size: 12px; color: var(--color-subtle); line-height: 1.5; }
+  .acl-panel .acl-phase-controls { display: flex; gap: 8px; flex-shrink: 0; }
+  .acl-panel .data-table tr[data-active] td { background: var(--color-primary-soft); }
+  .acl-panel .data-table tr[data-active] td:first-child { box-shadow: inset 3px 0 0 var(--color-primary); }
+  .acl-panel .acl-signs { display: flex; flex-wrap: wrap; gap: 10px 28px; }
+  .acl-panel .acl-signs label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-ink); cursor: pointer; }
+  .acl-panel .acl-signs input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer; }
+  .acl-panel button:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .workspace-stat-grid {
     display: grid;

@@ -63,16 +63,22 @@ describe('calcHopBattery', () => {
 })
 
 describe('calcLESS', () => {
-  it('scores errors /17, lower is better, <5 = good mechanics', () => {
+  it('scores errors /19, lower is better, <5 = good mechanics', () => {
     expect(calcLESS({ errors: 3 }).meta.meetsRTS).toBe(true)
     expect(calcLESS({ errors: 3 }).meta.classColor).toBe('green')
     expect(calcLESS({ errors: 5 }).meta.meetsRTS).toBe(false)
     expect(calcLESS({ errors: 5 }).meta.classColor).toBe('amber')
     expect(calcLESS({ errors: 9 }).meta.classColor).toBe('red')
+    expect(calcLESS({ errors: 3 }).primaryUnit).toBe('/19')
+  })
+
+  it('accepts the full published 0–19 range (items 16–17 score up to 2 each)', () => {
+    expect(calcLESS({ errors: 19 }).primaryValue).toBe(19)
+    expect(calcLESS({ errors: 18 }).meta.classColor).toBe('red')
   })
 
   it('rejects out-of-range or non-integer error counts', () => {
-    expect(calcLESS({ errors: 18 })).toBeNull()
+    expect(calcLESS({ errors: 20 })).toBeNull()
     expect(calcLESS({ errors: -1 })).toBeNull()
     expect(calcLESS({ errors: 2.5 })).toBeNull()
   })
@@ -125,6 +131,13 @@ describe('evaluateRTSBattery', () => {
     expect(RTS_THRESHOLDS.quadLSI).toBe(90)
     expect(RTS_THRESHOLDS.hopLSI).toBe(90)
     expect(RTS_THRESHOLDS.aclRsiLow).toBe(56)
+  })
+
+  it('labels the time criterion by pathway type (surgery vs injury)', () => {
+    const surgical = evaluateRTSBattery(PASSING)
+    expect(surgical.criteria.find(c => c.key === 'time').label).toBe('Time since surgery')
+    const conservative = evaluateRTSBattery({ ...PASSING, pathwayType: 'conservative' })
+    expect(conservative.criteria.find(c => c.key === 'time').label).toBe('Time since injury')
   })
 })
 

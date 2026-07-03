@@ -110,6 +110,8 @@ Use existing systems: `app-*`, `patient-*`, `summary-*`, `domain-*`, `measure-*`
 
 **PatientOverview two-column layout (2026-06):** the overview uses `.overview-layout` — a CSS grid with `420px minmax(0,1fr)` columns. Left column (`.overview-left`) holds the summary cards; right column (`.overview-charts-panel`) is sticky and contains the `PathwayCoverageDonut` at the top followed by `MeasureTrendChart` instances. This layout is the established pattern for the overview workspace — do not revert to a centred single-column view.
 
+**ACL Pathway & RTS workspace (2026-07):** the `acl` section wraps `ACLPathwayPanel` in the standard `.workspace-shell` + `.workspace-head` header (patient name + Edit details), matching the other patient workspaces. `ACLPathwayPanel` and `RTSBatteryDashboard` render each block as a `.summary-card` (with `.summary-card__head` for the title-plus-action/chip row) rather than the older stacked `.result-box`/`<h4>` layout. The `.acl-*` class family (`.acl-panel`, `.acl-form`, `.acl-signs`, `.acl-meta`, `.acl-intro`, `.acl-hint`, `.acl-phase-controls`) lives in `pages/app.js` `globalStyles`; forms use the shared `.field-group`/`.field-label`/`.field-input` inputs and `interp-chip` status chips. The primary action (`.acl-btn`) is folded into the shared workspace-button selector list — do not reintroduce inline `style={{…}}` blocks on these components.
+
 ## Forms and inputs
 
 - All inputs must look styled — no browser-default appearance. Use `.field-group`, `.field-label`, `.field-input`, `.input-narrow`, styled selects, and table inputs where clinically useful.

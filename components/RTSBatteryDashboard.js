@@ -32,15 +32,13 @@ export default function RTSBatteryDashboard({ battery }) {
   const overallLabel = battery.hardCriteriaMet ? 'Objective core criteria met' : 'Criteria outstanding'
 
   return (
-    <section data-rts-battery="">
-      <div className="result-box">
-        <div className="result-row">
-          <div>
-            <span className="result-label">Return-to-sport readiness battery</span>
-            <div>{battery.summary}</div>
-          </div>
-          <span className={`interp-chip chip-${overallClass}`}>{overallLabel}</span>
+    <section className="summary-card" data-rts-battery="">
+      <div className="summary-card__head">
+        <div>
+          <span className="section-label">Return-to-sport readiness battery</span>
+          <p className="acl-meta">{battery.summary}</p>
         </div>
+        <span className={`interp-chip chip-${overallClass}`}>{overallLabel}</span>
       </div>
 
       <table className="data-table">
