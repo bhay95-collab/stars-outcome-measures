@@ -230,6 +230,11 @@ export default function Signup() {
               </form>
 
               <p className="footer">
+                By creating an account, you agree to the <a href="/terms">Terms of Service</a> and{' '}
+                <a href="/privacy">Privacy Policy</a>, and confirm you are a qualified health professional.
+              </p>
+
+              <p className="footer">
                 Already have an account? <a href="/login">Log in</a>
               </p>
               <p className="footer">

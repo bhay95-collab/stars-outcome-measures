@@ -23,6 +23,7 @@ Core documents (repo root unless noted):
 | [DESIGN.md](DESIGN.md) | Visual language, design tokens (both platforms), brand, typography, class naming, forms, charts, accessibility | Any UI/visual change, new components, theming |
 | [PRODUCT.md](PRODUCT.md) | What the tool is, users, the 42 measures, clinical integrity rules, measure licensing constraints, commercial model, roadmap pointers | New features, new measures, copy/positioning work |
 | [SECURITY.md](SECURITY.md) | Data handling model, RLS, API auth, rate limiting, Sentry PHI scrubbing, deferred items, reporting | Auth, billing, deletion, RLS, PHI, or any sensitive-data change — read **before** coding |
+| [LEGAL.md](LEGAL.md) | Legal posture, Terms/Privacy update triggers, disclaimer rules, known legal gaps | Any new feature, patient-facing content, sub-processor, measure, or copy change — check the trigger table **before** shipping |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Workflow, branching, commit format, coding standards, verification checklists, failure conditions | Before committing; when verifying changes |
 | [TESTING.md](TESTING.md) | Test commands, suite layout, expectations on both platforms | Writing or running tests; before any release |
 | [mobile/MOBILE.md](mobile/MOBILE.md) | Mobile architecture, `@clinical` sharing, platform deviations, established mobile patterns, EAS build/release | Any work under `mobile/` |

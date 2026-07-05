@@ -163,7 +163,7 @@ export default function SignUpScreen() {
             >
               Privacy Policy
             </Text>
-            .
+            , and confirm you are a qualified health professional.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
