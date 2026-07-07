@@ -39,9 +39,6 @@ export default function ForgotPassword() {
         <title>Reset your password | RehabMetrics IQ</title>
         <meta name="robots" content="noindex,nofollow" />
         <link rel="icon" href="/SquareLogo.png" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet" />
       </Head>
       <style jsx>{pageStyles}</style>
       <main className="page">
@@ -125,7 +122,7 @@ const pageStyles = `
     --shadow-md:          0 18px 42px rgba(21,34,56,0.12);
   }
 
-  body { font-family: 'Inter', sans-serif; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
 
   .page {
     min-height: 100vh;
@@ -149,7 +146,7 @@ const pageStyles = `
   }
 
   .heading {
-    font-family: 'Source Serif 4', serif;
+    font-family: Georgia, 'Times New Roman', serif;
     font-size: 26px;
     font-weight: 700;
     color: var(--color-ink);
@@ -178,7 +175,7 @@ const pageStyles = `
   }
 
   input {
-    font-family: 'Inter', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     font-size: 15px;
     color: var(--color-ink);
     background: var(--color-surface-soft);
@@ -207,7 +204,7 @@ const pageStyles = `
     border: none;
     border-radius: 10px;
     padding: 12px 24px;
-    font-family: 'Inter', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
@@ -257,7 +254,7 @@ const pageStyles = `
     background: none;
     border: none;
     padding: 0;
-    font-family: 'Inter', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     font-size: 14px;
     color: var(--color-primary);
     font-weight: 500;
