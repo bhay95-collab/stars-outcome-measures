@@ -21,6 +21,9 @@ function SignupHead() {
       <meta property="og:site_name" content="RehabMetrics IQ" />
       <meta property="og:image" content="https://www.rehabmetricsiq.com/SquareLogo.png" />
       <link rel="icon" href="/SquareLogo.png" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet" />
     </Head>
   )
 }
@@ -28,6 +31,18 @@ function SignupHead() {
 function SignupVisual() {
   return (
     <div className="login-visual">
+      <video
+        className="login-visual__video"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        poster="/assets/videos/login-poster.jpg"
+        aria-hidden="true"
+      >
+        <source src="/assets/videos/login-loop.mp4" type="video/mp4" />
+      </video>
       <div className="login-visual__content">
         <LogoWordmark size="lg" showMark={false} />
         <p className="eyebrow">CLINICAL OUTCOMES PLATFORM</p>
@@ -270,7 +285,7 @@ const pageStyles = `
     --shadow-md:          0 18px 42px rgba(21,34,56,0.12);
   }
 
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+  body { font-family: 'Inter', sans-serif; }
 
   @keyframes shell-appear {
     from { opacity: 0; transform: translateY(16px) scale(0.99); }
@@ -315,6 +330,17 @@ const pageStyles = `
     background: #17496F;
   }
 
+  .login-visual__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transform: scale(1.12);
+    z-index: 0;
+  }
+
   .login-visual::before {
     content: '';
     position: absolute;
@@ -324,6 +350,10 @@ const pageStyles = `
     background:
       linear-gradient(90deg, rgba(9, 19, 32, 0.68), rgba(9, 19, 32, 0.26) 56%, rgba(9, 19, 32, 0.08)),
       linear-gradient(180deg, rgba(9, 19, 32, 0.18), rgba(9, 19, 32, 0.1) 42%, rgba(9, 19, 32, 0.54));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .login-visual__video { display: none; }
   }
 
   .login-visual__content {
@@ -358,7 +388,7 @@ const pageStyles = `
 
   .login-visual h1 {
     max-width: 520px;
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: 'Source Serif 4', Georgia, serif;
     font-size: clamp(34px, 4vw, 54px);
     font-weight: 700;
     line-height: 1.04;
@@ -430,7 +460,7 @@ const pageStyles = `
   }
 
   .heading {
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: 'Source Serif 4', serif;
     font-size: 26px;
     font-weight: 700;
     color: var(--color-ink);
@@ -459,7 +489,7 @@ const pageStyles = `
   }
 
   input {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 15px;
     color: var(--color-ink);
     background: var(--color-surface-soft);
@@ -489,7 +519,7 @@ const pageStyles = `
     border: none;
     border-radius: 10px;
     padding: 12px 24px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
@@ -536,7 +566,7 @@ const pageStyles = `
     width: 100%;
     border-radius: 10px;
     padding: 12px 24px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 15px;
     font-weight: 500;
     cursor: pointer;
