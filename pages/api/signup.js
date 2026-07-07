@@ -11,17 +11,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const isRateLimited = createRateLimiter({ windowMs: 60_000, max: 5 })
 
-function getEmailRedirectUrl(req, source) {
+function getEmailRedirectUrl(source) {
   if (source === 'mobile') return 'rehabmetricsiq://sign-in?verified=1'
 
-  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL
-  if (configuredUrl) return `${configuredUrl.replace(/\/$/, '')}/app`
-
-  const forwardedProto = req.headers['x-forwarded-proto']
-  const proto = Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto
-  const protocol = proto || 'http'
-  const host = req.headers.host || 'localhost:3000'
-  return `${protocol}://${host}/app`
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'https://www.rehabmetricsiq.com'
+  return `${configuredUrl.replace(/\/$/, '')}/app`
 }
 
 function isAlreadyRegistered(error) {
@@ -148,7 +145,7 @@ export default async function handler(req, res) {
     email,
     password,
     options: {
-      emailRedirectTo: getEmailRedirectUrl(req, source),
+      emailRedirectTo: getEmailRedirectUrl(source),
       data: { signup_source: source },
     },
   })

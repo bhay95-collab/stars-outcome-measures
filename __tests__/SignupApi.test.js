@@ -118,8 +118,8 @@ describe('/api/signup', () => {
   it('creates an unconfirmed auth user, provisions a trial profile, and sends verification', async () => {
     const { admin, state } = mockAdmin()
     const req = makeReq({ email: 'New.User@Example.com', password: 'TestPassword123!' }, '1.1.1.1')
-    req.headers.host = 'localhost:3000'
-    req.headers['x-forwarded-proto'] = 'http'
+    // Host/proto headers must never influence the redirect (see next test) — left unset here
+    // deliberately so this case covers the plain, header-free request path.
     const res = makeRes()
 
     await signupHandler(req, res)
@@ -136,7 +136,7 @@ describe('/api/signup', () => {
       email: 'new.user@example.com',
       password: 'TestPassword123!',
       options: {
-        emailRedirectTo: 'http://localhost:3000/app',
+        emailRedirectTo: 'https://www.rehabmetricsiq.com/app',
         data: { signup_source: 'web' },
       },
     })
@@ -145,6 +145,27 @@ describe('/api/signup', () => {
       email: 'new.user@example.com',
       trial_end_date: expect.any(String),
     }))
+  })
+
+  it('never derives the verification redirect from host/x-forwarded-proto headers', async () => {
+    mockAdmin()
+    const req = makeReq({ email: 'Untrusted.Header@Example.com', password: 'TestPassword123!' }, '1.1.1.1')
+    req.headers.host = 'localhost:3000'
+    req.headers['x-forwarded-proto'] = 'http'
+    const res = makeRes()
+
+    await signupHandler(req, res)
+
+    expect(res.statusCode).toBe(201)
+    const signupClient = createClient.mock.results[0].value
+    expect(signupClient.auth.signUp).toHaveBeenCalledWith({
+      email: 'untrusted.header@example.com',
+      password: 'TestPassword123!',
+      options: {
+        emailRedirectTo: 'https://www.rehabmetricsiq.com/app',
+        data: { signup_source: 'web' },
+      },
+    })
   })
 
   it('uses the mobile deep link for native account creation', async () => {

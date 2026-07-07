@@ -6,7 +6,10 @@ const PRICE_IDS = {
   annual: process.env.STRIPE_ANNUAL_PRICE_ID,
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  'https://www.rehabmetricsiq.com'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()

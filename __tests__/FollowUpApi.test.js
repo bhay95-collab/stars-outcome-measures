@@ -207,7 +207,7 @@ describe('follow-up API routes', () => {
     await followupsHandler(req, res)
 
     expect(res.statusCode).toBe(201)
-    expect(res.body.publicUrl).toBe('http://localhost:3000/followup/raw-public-token-with-length')
+    expect(res.body.publicUrl).toBe('https://www.rehabmetricsiq.com/followup/raw-public-token-with-length')
     expect(res.body.followup.token_hash).toBeUndefined()
     expect(state.inserts[0]).toEqual(expect.objectContaining({
       table: 'followup_requests',
@@ -250,7 +250,7 @@ describe('follow-up API routes', () => {
     await followupsHandler(req, res)
 
     expect(res.statusCode).toBe(201)
-    expect(res.body.publicUrl).toBe('http://localhost:3000/followup/raw-public-token-with-length')
+    expect(res.body.publicUrl).toBe('https://www.rehabmetricsiq.com/followup/raw-public-token-with-length')
     expect(res.body.email).toEqual({
       status: 'sent',
       error: null,
@@ -287,7 +287,7 @@ describe('follow-up API routes', () => {
       to: [patientEmail],
       subject: expect.stringMatching(/follow-up questionnaire/i),
     }))
-    expect(resendBody.text).toContain('http://localhost:3000/followup/raw-public-token-with-length')
+    expect(resendBody.text).toContain('https://www.rehabmetricsiq.com/followup/raw-public-token-with-length')
     expect(resendBody.text).toMatch(/Activities-specific Balance Confidence/i)
     expect(resendBody.text).not.toContain(patientId)
     expect(resendBody.html).not.toContain(sourceAssessmentId)
@@ -318,7 +318,7 @@ describe('follow-up API routes', () => {
     await followupsHandler(req, res)
 
     expect(res.statusCode).toBe(201)
-    expect(res.body.publicUrl).toBe('http://localhost:3000/followup/raw-public-token-with-length')
+    expect(res.body.publicUrl).toBe('https://www.rehabmetricsiq.com/followup/raw-public-token-with-length')
     expect(res.body.email).toEqual({
       status: 'failed',
       error: 'Follow-up email could not be sent.',
@@ -418,7 +418,7 @@ describe('follow-up API routes', () => {
     await sendFollowupHandler(req, res)
 
     expect(res.statusCode).toBe(200)
-    expect(res.body.publicUrl).toBe('http://localhost:3000/followup/rotated-public-token-with-length')
+    expect(res.body.publicUrl).toBe('https://www.rehabmetricsiq.com/followup/rotated-public-token-with-length')
     expect(res.body.email).toEqual({
       status: 'sent',
       error: null,
@@ -457,7 +457,7 @@ describe('follow-up API routes', () => {
     await sendFollowupHandler(req, res)
 
     expect(res.statusCode).toBe(502)
-    expect(res.body.publicUrl).toBe('http://localhost:3000/followup/rotated-public-token-with-length')
+    expect(res.body.publicUrl).toBe('https://www.rehabmetricsiq.com/followup/rotated-public-token-with-length')
     expect(res.body.email).toEqual({
       status: 'failed',
       error: 'Follow-up email could not be sent.',

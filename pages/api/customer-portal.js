@@ -1,7 +1,10 @@
 import { getAdminClient, getUserFromRequest } from '../../lib/supabase-admin'
 import { getStripeServer } from '../../lib/stripe-server'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  'https://www.rehabmetricsiq.com'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
