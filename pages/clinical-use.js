@@ -24,6 +24,7 @@ const MEASURE_REFERENCES = [
   ['PDQ-8',   "Parkinson's Disease Questionnaire (8-item)",                 'Jenkinson C et al. Psychol Health. 1997;12(6):805-14.'],
   ['RPQ',     'Rivermead Post Concussion Symptoms Questionnaire',           'King NS et al. J Neurol. 1995;242(9):587-92.'],
   ['ISNCSCI', 'International Standards for Neurological Classification of SCI', 'American Spinal Injury Association. ASIA International Standards Worksheet, 2019 revision.'],
+  ['ACLSigns', 'ACL Clinical Signs (Extension & Effusion)',                  'Effusion grading (modified stroke test): Sturgill LP et al. J Orthop Sports Phys Ther. 2009;39(12):845-9. Gate criteria: van Melick N et al. Br J Sports Med. 2016;50(24):1506-15.'],
 ]
 
 export default function ClinicalUse() {
@@ -37,7 +38,7 @@ export default function ClinicalUse() {
           </div>
 
           <h1 className="title">Clinical Use &amp; Limitations</h1>
-          <p className="meta">Last updated: June 2026</p>
+          <p className="meta">Last updated: July 2026</p>
 
           <p className="intro">
             This page describes what RehabMetrics IQ is, what it is not,

@@ -93,6 +93,9 @@ describe('evaluateRTSBattery', () => {
     const r = evaluateRTSBattery(PASSING)
     expect(r.hardCriteriaMet).toBe(true)
     expect(r.summary).toMatch(/objective core criteria met/i)
+    // Licence-pending instruments (IKDC, ACL-RSI) are hidden from the UI until
+    // licensed — the summary must not tell users to confirm them.
+    expect(r.summary).not.toMatch(/licen|IKDC|ACL-RSI/i)
   })
 
   it('keeps ACL-RSI and function as pending (not graded) until licensed', () => {

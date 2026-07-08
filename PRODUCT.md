@@ -18,14 +18,14 @@ A `clinical_focus` profile setting (`rehab` / `msk` / `both`, default `both`) fi
 
 ## Clinical scope
 
-The measure registry (`lib/clinical/measures.js`) currently holds **42 measures**:
+The measure registry (`lib/clinical/measures.js`) currently holds **43 measures**:
 
 - **Performance / neuro-rehab:** 10MWT, TUG, FAC, 6MWT, BBS, PASS, TIS, MAS, COVS, FGA, HiMAT, SARA, Step Test, AMP, BOOMER, Barthel, SCIM, 30s Sit-to-Stand, FTSTS, Constant–Murley (CMS), ISNCSCI (web only — complex; modify carefully and separately, never batched with unrelated work).
 - **Patient-reported questionnaires:** FSS, RPQ, PDQ-8, ABC, BIVI-IQ, HADS.
 - **MSK (Wave 1, 2026-06-11):** NPRS, PSFS, LEFS, BPFS, KOOS, FAAM, HOOS.
 - **MSK (Wave 2):** CAIT, ATRS, FABQ.
 - **MSK (Wave 3):** HAGOS, OMAS.
-- **ACL return-to-sport field tests (2026-06-28):** Quadriceps Strength LSI, Single-Leg Hop Battery, LESS — clinician-measured, feeding the **ACL Pathway & RTS** workspace (criterion-based rehab phases + a return-to-sport readiness battery). The battery reports criteria met against published cut-offs and never issues a clearance; ACL-RSI and IKDC are stubbed pending licensing. See `docs/outcome-measures-handoff.md` (ACL Rehab & Return-to-Sport tool).
+- **ACL return-to-sport field tests (2026-06-28):** Quadriceps Strength LSI, Single-Leg Hop Battery, LESS — clinician-measured, feeding the **ACL Pathway & RTS** workspace (criterion-based rehab phases + a return-to-sport readiness battery). **ACL Clinical Signs (2026-07-09):** full active knee extension + effusion graded on the modified stroke test (Sturgill 2009), persisted as normal assessments so the phase gates and battery read the latest recorded signs; every outstanding gate/battery criterion links to its entry form. The battery reports criteria met against published cut-offs and never issues a clearance; ACL-RSI and IKDC remain pending in the engine but are hidden from the UI until licensed. See `docs/outcome-measures-handoff.md` (ACL Rehab & Return-to-Sport tool).
 
 MCID/MDC logic is **condition-aware**: thresholds move with patient diagnosis via `byCondition` overrides, with a `thresholdType: 'mdc'` honesty label where the published value is an MDC, not an MCID.
 

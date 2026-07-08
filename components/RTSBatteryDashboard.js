@@ -6,6 +6,10 @@ import { RTS_CONTINUUM } from '../lib/clinical'
 // and the predictive-validity caveat. It NEVER renders a "cleared" stamp — the
 // decision is the clinician's.
 
+// Criteria the clinician can act on from here (time derives from the index
+// date; licence-pending rows are hidden until the instruments are licensed).
+const RECORDABLE_KEYS = new Set(['quad', 'hops', 'landing', 'effusion'])
+
 function statusChip(criterion) {
   if (criterion.pending) {
     return <span className="interp-chip chip-grey">Pending licence</span>
@@ -25,8 +29,12 @@ function formatValue(criterion) {
   return String(criterion.value)
 }
 
-export default function RTSBatteryDashboard({ battery }) {
+export default function RTSBatteryDashboard({ battery, onRecord }) {
   if (!battery) return null
+
+  // Licence-pending instruments (IKDC, ACL-RSI) are hidden until licensed — no
+  // substitute cut-off exists, so an ungradable row only adds noise.
+  const visibleCriteria = battery.criteria.filter(c => !c.pending)
 
   const overallClass = battery.hardCriteriaMet ? 'green' : 'amber'
   const overallLabel = battery.hardCriteriaMet ? 'Objective core criteria met' : 'Criteria outstanding'
@@ -46,12 +54,19 @@ export default function RTSBatteryDashboard({ battery }) {
           <tr><th>Criterion</th><th>Value</th><th>Threshold</th><th>Status</th></tr>
         </thead>
         <tbody>
-          {battery.criteria.map(c => (
+          {visibleCriteria.map(c => (
             <tr key={c.key}>
               <td>{c.label}</td>
               <td>{formatValue(c)}</td>
               <td className="na-text">{c.threshold}</td>
-              <td>{statusChip(c)}</td>
+              <td>
+                {statusChip(c)}
+                {onRecord && RECORDABLE_KEYS.has(c.key) && c.met !== true && (
+                  <button type="button" className="acl-record-btn" onClick={() => onRecord(c.key)}>
+                    {c.assessed ? 'Update' : 'Record'}
+                  </button>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
