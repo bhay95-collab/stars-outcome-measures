@@ -88,7 +88,7 @@ Every calculation function returns:
 }
 ```
 
-There are currently **43 measures in the registry** (neuro/rehab, patient-reported questionnaires, the Wave 1–3 MSK set, and the ACL return-to-sport field tests + clinical signs; ISNCSCI is web-only). See [PRODUCT.md](PRODUCT.md) for the clinical scope and [DESIGN.md](DESIGN.md) for chart/colour rules.
+There are currently **44 measures in the registry** (neuro/rehab, patient-reported questionnaires, the Wave 1–4 MSK set, and the ACL return-to-sport field tests + clinical signs; ISNCSCI is web-only). See [PRODUCT.md](PRODUCT.md) for the clinical scope and [DESIGN.md](DESIGN.md) for chart/colour rules.
 
 ---
 

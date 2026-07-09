@@ -28,8 +28,14 @@ Remaining licence-clear queue (deferred — each needs its own verification/buil
   The blocker (unverified per-item weights) is resolved: weights confirmed
   against the Turkish (Turhan 2017) and Brazilian (Castilho 2021) validations.
   See the Wave 3 section below.
-- **Harris Hip Score** — clinician composite (pain 44 / function 47 / deformity 4
-  / ROM 5); larger multi-part form, build separately.
+- ✅ **Harris Hip Score** — **built in Wave 4** (2026-07-09). Clinician composite
+  (pain 44 / function 47 = gait 33 + activities 14 / deformity 4 all-or-nothing /
+  ROM 5 by total-arc bands 211–300°=5 … 0–30°=0). Bands <70 poor / 70–79 fair /
+  80–89 good / 90–100 excellent (Harris 1969; validation Söderman & Malchau 2001).
+  MCID post-THA 16 pts (MCII 15.9–18, Singh 2016) — `mcid.js` key `hhs`. Added to
+  the Hip — OA / Replacement DIAG_RECS. **Not follow-up eligible** (includes a
+  physical exam — deformity criteria + ROM). No migration needed. Tests:
+  `__tests__/harrisHip.test.js`.
 - **Mayo Elbow Performance Index** — clinician composite (pain 45 / motion 20 /
   stability 10 / function 25); needs a new "Elbow" condition + form. Deferred by
   Ben (2026-06-27) — opening the Elbow region is its own focused task.
