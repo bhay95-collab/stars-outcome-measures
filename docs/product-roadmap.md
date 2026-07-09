@@ -27,7 +27,7 @@ Reviewed (security/healthcare/code) before merge. Build record + carried-forward
 Deferred from this phase:
 - Conservative (non-operative) pathway — coper screening (Delaware/Fitzgerald) + Cross Bracing Protocol, evidence-graded.
 - Sport-aware battery tiering (pivoting vs linear sports).
-- Persisting effusion/full-extension signs and per-phase notes (session-local in v1); mobile parity.
+- Per-phase notes; mobile parity. (Effusion/full-extension signs were persisted on 2026-07-09 as the ACLSigns measure — two checkbox judgements saved as normal assessments; licence-pending RTS rows now hidden in the UI.)
 
 ## Delivered: Overview Redesign & Clinical Visualisations (2026-06-26)
 

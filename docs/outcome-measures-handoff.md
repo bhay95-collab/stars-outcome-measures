@@ -108,10 +108,18 @@ score 0–2; lower better; cut-point <5 from Padua 2015, J Athl Train 50:589).
 Surfaced as a new patient workspace section ("ACL Pathway & RTS", hidden for
 rehab-focus clinicians). Tests: `__tests__/aclRts.test.js` (24).
 
+**Delivered 2026-07-09:** effusion/extension signs persisted as the **ACLSigns**
+measure (43rd registry entry, added to the ACL DIAG_RECS) — two checkbox
+judgements (full active extension; effusion trace–zero, modified stroke test,
+Sturgill 2009) saved as normal assessments; the phase gates and battery read the
+latest entry. Licence-pending battery rows (ACL-RSI, IKDC) are hidden in the UI
+(`RTSBatteryDashboard` filters `pending`); the engine still evaluates them.
+Tests: `__tests__/aclSigns.test.js`, `__tests__/RTSBatteryDashboard.test.js`.
+
 **Carried forward (v2):** conservative arm (coper screening — Delaware/Fitzgerald;
-Cross Bracing Protocol, evidence-graded); sport-aware tiering; persist effusion/
-extension and per-phase notes; mobile parity; once ACL-RSI/IKDC licences clear,
-build those forms + follow-up eligibility (the battery already wires them in).
+Cross Bracing Protocol, evidence-graded); sport-aware tiering; per-phase notes;
+mobile parity; once ACL-RSI/IKDC licences clear, build those forms + follow-up
+eligibility and un-hide their battery rows (the engine already wires them in).
 
 ---
 

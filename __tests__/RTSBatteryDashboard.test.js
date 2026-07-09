@@ -7,6 +7,8 @@ const PASSING = {
   monthsSinceSurgery: 10, quadLSI: 92, hopMinLSI: 91, effusionTraceToZero: true, less: 3,
 }
 
+const RECORD_TARGETS = { quad: 'QuadLSI', hops: 'HopBattery', landing: 'LESS' }
+
 describe('RTSBatteryDashboard', () => {
   it('hides licence-pending criteria (IKDC, ACL-RSI) from the table', () => {
     render(<RTSBatteryDashboard battery={evaluateRTSBattery(PASSING)} />)
@@ -24,17 +26,20 @@ describe('RTSBatteryDashboard', () => {
       <RTSBatteryDashboard
         battery={evaluateRTSBattery({ monthsSinceSurgery: 10 })}
         onRecord={onRecord}
+        recordTargets={RECORD_TARGETS}
       />
     )
     const recordButtons = screen.getAllByRole('button', { name: 'Record' })
-    expect(recordButtons.length).toBeGreaterThan(0)
+    // Quad, hops and LESS link to their entry forms; effusion and time do not
+    // (effusion is ticked in the clinical-signs card, time comes from the date).
+    expect(recordButtons).toHaveLength(3)
     fireEvent.click(recordButtons[0])
-    expect(onRecord).toHaveBeenCalledWith('quad')
+    expect(onRecord).toHaveBeenCalledWith('QuadLSI')
   })
 
   it('offers no Record action for met criteria and none without a handler', () => {
     const { rerender } = render(
-      <RTSBatteryDashboard battery={evaluateRTSBattery(PASSING)} onRecord={jest.fn()} />
+      <RTSBatteryDashboard battery={evaluateRTSBattery(PASSING)} onRecord={jest.fn()} recordTargets={RECORD_TARGETS} />
     )
     // All hard criteria met and LESS good — nothing actionable remains.
     expect(screen.queryByRole('button', { name: /record|update/i })).toBeNull()
@@ -49,9 +54,10 @@ describe('RTSBatteryDashboard', () => {
       <RTSBatteryDashboard
         battery={evaluateRTSBattery({ ...PASSING, quadLSI: 82 })}
         onRecord={onRecord}
+        recordTargets={RECORD_TARGETS}
       />
     )
     fireEvent.click(screen.getByRole('button', { name: 'Update' }))
-    expect(onRecord).toHaveBeenCalledWith('quad')
+    expect(onRecord).toHaveBeenCalledWith('QuadLSI')
   })
 })

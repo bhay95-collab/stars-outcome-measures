@@ -17,26 +17,27 @@ import RTSBatteryDashboard from './RTSBatteryDashboard'
 const DAYS_PER_MONTH = 30.44
 
 function latestRow(assessments, measureId) {
-  const rows = (assessments || [])
-    .filter(a => a.measure === measureId && a.results)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-  return rows[0] ?? null
+  let best = null
+  let bestTime = -Infinity
+  for (const row of assessments || []) {
+    if (row.measure !== measureId || !row.results) continue
+    const time = new Date(row.created_at).getTime()
+    if (time > bestTime) {
+      bestTime = time
+      best = row
+    }
+  }
+  return best
 }
 
 function latestResult(assessments, measureId) {
   return latestRow(assessments, measureId)?.results ?? null
 }
 
-function scrollToCard(id) {
-  if (typeof document === 'undefined') return
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-}
-
-// Where each unmet gate check gets recorded: 'signs' = the clinical-signs card
-// in this panel; a measure id = that measure's entry form.
-const GATE_RECORD_ACTIONS = {
-  fullExtension: 'signs',
-  effusion: 'signs',
+// Gate checks that are recorded via a measure entry form. The clinical signs
+// (extension/effusion) are ticked directly in this panel's signs card, so they
+// carry no Record link.
+const GATE_RECORD_MEASURES = {
   quad80: 'QuadLSI',
   hop80: 'HopBattery',
 }
@@ -111,23 +112,27 @@ export default function ACLPathwayPanel({ patient, userId, assessments, onMeasur
 
   // Memoise the latest result per measure so the battery memo has stable deps
   // (latestResult builds new array/object refs each call).
-  const latest = useMemo(() => ({
-    quad: latestResult(assessments, 'QuadLSI'),
-    hop: latestResult(assessments, 'HopBattery'),
-    less: latestResult(assessments, 'LESS'),
-    signsRow: latestRow(assessments, 'ACLSigns'),
-  }), [assessments])
+  const latest = useMemo(() => {
+    const signsRow = latestRow(assessments, 'ACLSigns')
+    return {
+      quad: latestResult(assessments, 'QuadLSI'),
+      hop: latestResult(assessments, 'HopBattery'),
+      less: latestResult(assessments, 'LESS'),
+      signsRow,
+      signs: signsFromResults(signsRow?.results),
+    }
+  }, [assessments])
   const quad = latest.quad
   const hop = latest.hop
   const signsRow = latest.signsRow
-  const signs = signsFromResults(signsRow?.results)
+  const signs = latest.signs
   const monthsSinceIndex = monthsSince(pathway?.index_date)
 
   const battery = useMemo(() => evaluateRTSBattery({
     monthsSinceSurgery: monthsSinceIndex,
     quadLSI: latest.quad?.primaryValue ?? null,
     hopMinLSI: latest.hop?.primaryValue ?? null,
-    effusionTraceToZero: signsFromResults(latest.signsRow?.results).effusionTraceToZero,
+    effusionTraceToZero: latest.signs.effusionTraceToZero,
     less: latest.less?.primaryValue ?? null,
     pathwayType: pathway?.pathway_type ?? 'surgical',
   }), [latest, monthsSinceIndex, pathway?.pathway_type])
@@ -225,18 +230,6 @@ export default function ACLPathwayPanel({ patient, userId, assessments, onMeasur
     setPathway(data)
   }
 
-  function handleGateRecord(key) {
-    const action = GATE_RECORD_ACTIONS[key]
-    if (action === 'signs') return scrollToCard('acl-signs-card')
-    if (action) onMeasure?.(action)
-  }
-
-  function handleBatteryRecord(key) {
-    if (key === 'effusion') return scrollToCard('acl-signs-card')
-    const measureId = BATTERY_RECORD_MEASURES[key]
-    if (measureId) onMeasure?.(measureId)
-  }
-
   if (pathway === undefined) {
     return <p className="empty-hint">Loading ACL pathway…</p>
   }
@@ -294,7 +287,7 @@ export default function ACLPathwayPanel({ patient, userId, assessments, onMeasur
             {monthsSinceIndex !== null ? (
               <p className="acl-meta">{monthsSinceIndex} months since {pathway.pathway_type === 'surgical' ? 'surgery' : 'injury'}</p>
             ) : (
-              <form className="acl-form" id="acl-late-index-date" onSubmit={saveIndexDate}>
+              <form className="acl-form" onSubmit={saveIndexDate}>
                 <div className="field-group">
                   <label htmlFor="acl-late-date" className="field-label">
                     {pathway.pathway_type === 'surgical' ? 'Surgery date' : 'Injury date'} — needed for the 9-month time gate
@@ -327,7 +320,7 @@ export default function ACLPathwayPanel({ patient, userId, assessments, onMeasur
       </div>
 
       {/* Clinical signs — persisted as ACLSigns assessments */}
-      <div className="summary-card" id="acl-signs-card">
+      <div className="summary-card">
         <div className="summary-card__head">
           <div>
             <span className="section-label">Clinical signs — extension &amp; effusion</span>
@@ -343,11 +336,7 @@ export default function ACLPathwayPanel({ patient, userId, assessments, onMeasur
               : <span className="interp-chip chip-amber">Outstanding</span>
           )}
         </div>
-        <FormACLSigns key={signsRow?.id ?? 'first'} onSubmit={saveSigns} loading={signsBusy} />
-        <p className="acl-hint">
-          Saved to this patient&apos;s record as an ACL Clinical Signs assessment —
-          the phase gate and readiness battery always use the most recent entry.
-        </p>
+        <FormACLSigns key={signsRow?.id ?? 'first'} initialSigns={signs} onSubmit={saveSigns} loading={signsBusy} />
       </div>
 
       {/* Current-phase gate */}
@@ -373,14 +362,9 @@ export default function ACLPathwayPanel({ patient, userId, assessments, onMeasur
                   <td className="na-text">{c.threshold}</td>
                   <td>
                     {gateChip(c.met)}
-                    {c.met !== true && GATE_RECORD_ACTIONS[c.key] && (
-                      <button type="button" className="acl-record-btn" onClick={() => handleGateRecord(c.key)}>
+                    {c.met !== true && GATE_RECORD_MEASURES[c.key] && (
+                      <button type="button" className="acl-record-btn" onClick={() => onMeasure?.(GATE_RECORD_MEASURES[c.key])}>
                         Record
-                      </button>
-                    )}
-                    {c.key === 'time9' && !pathway.index_date && (
-                      <button type="button" className="acl-record-btn" onClick={() => scrollToCard('acl-late-index-date')}>
-                        Add date
                       </button>
                     )}
                   </td>
@@ -411,7 +395,7 @@ export default function ACLPathwayPanel({ patient, userId, assessments, onMeasur
           extrapolation for non-operative management.
         </div>
       )}
-      <RTSBatteryDashboard battery={battery} onRecord={handleBatteryRecord} />
+      <RTSBatteryDashboard battery={battery} onRecord={onMeasure} recordTargets={BATTERY_RECORD_MEASURES} />
     </div>
   )
 }

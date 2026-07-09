@@ -6,14 +6,7 @@ import { RTS_CONTINUUM } from '../lib/clinical'
 // and the predictive-validity caveat. It NEVER renders a "cleared" stamp — the
 // decision is the clinician's.
 
-// Criteria the clinician can act on from here (time derives from the index
-// date; licence-pending rows are hidden until the instruments are licensed).
-const RECORDABLE_KEYS = new Set(['quad', 'hops', 'landing', 'effusion'])
-
 function statusChip(criterion) {
-  if (criterion.pending) {
-    return <span className="interp-chip chip-grey">Pending licence</span>
-  }
   if (!criterion.assessed) {
     return <span className="interp-chip chip-grey">Not assessed</span>
   }
@@ -29,7 +22,10 @@ function formatValue(criterion) {
   return String(criterion.value)
 }
 
-export default function RTSBatteryDashboard({ battery, onRecord }) {
+// recordTargets maps a criterion key to the measure id that records it (owned
+// by the parent, e.g. { quad: 'QuadLSI' }); time derives from the index date
+// and effusion is ticked in the clinical-signs card, so they carry no target.
+export default function RTSBatteryDashboard({ battery, onRecord, recordTargets = {} }) {
   if (!battery) return null
 
   // Licence-pending instruments (IKDC, ACL-RSI) are hidden until licensed — no
@@ -61,8 +57,8 @@ export default function RTSBatteryDashboard({ battery, onRecord }) {
               <td className="na-text">{c.threshold}</td>
               <td>
                 {statusChip(c)}
-                {onRecord && RECORDABLE_KEYS.has(c.key) && c.met !== true && (
-                  <button type="button" className="acl-record-btn" onClick={() => onRecord(c.key)}>
+                {onRecord && recordTargets[c.key] && c.met !== true && (
+                  <button type="button" className="acl-record-btn" onClick={() => onRecord(recordTargets[c.key])}>
                     {c.assessed ? 'Update' : 'Record'}
                   </button>
                 )}

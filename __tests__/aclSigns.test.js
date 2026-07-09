@@ -1,62 +1,60 @@
 // ACL clinical signs (gate criteria) — full active knee extension and effusion
-// graded on the modified stroke test (Sturgill 2009). These are the persisted
-// source for the phase-1/2 gate checks and the RTS battery effusion criterion.
+// trace–zero on the modified stroke test (Sturgill 2009). Two clinician-judged
+// booleans, persisted as assessments so the phase gates and RTS battery read
+// the latest recorded signs.
 
-const { calcACLSigns, signsFromResults, EFFUSION_GRADES } = require('../lib/clinical/aclSigns')
+const { calcACLSigns, signsFromResults } = require('../lib/clinical/aclSigns')
 const { MEASURES } = require('../lib/clinical/measures')
 const { DIAG_RECS } = require('../lib/clinical/constants')
 
 describe('calcACLSigns', () => {
-  it('passes the effusion gate at zero and trace grades (modified stroke test)', () => {
-    for (const grade of ['zero', 'trace']) {
-      const r = calcACLSigns({ fullExtension: true, effusionGrade: grade })
-      expect(r.meta.effusionTraceToZero).toBe(true)
-      expect(r.meta.gateMet).toBe(true)
-      expect(r.meta.classColor).toBe('green')
-    }
+  it('meets the gate when both signs are settled', () => {
+    const r = calcACLSigns({ fullExtension: true, effusionTraceToZero: true })
+    expect(r.meta.gateMet).toBe(true)
+    expect(r.meta.classColor).toBe('green')
+    expect(r.primaryValue).toBe(2)
   })
 
-  it('fails the effusion gate at 1+, 2+ and 3+', () => {
-    for (const grade of ['1+', '2+', '3+']) {
-      const r = calcACLSigns({ fullExtension: true, effusionGrade: grade })
-      expect(r.meta.effusionTraceToZero).toBe(false)
-      expect(r.meta.gateMet).toBe(false)
-    }
+  it('does not meet the gate when either sign is outstanding', () => {
+    const noExtension = calcACLSigns({ fullExtension: false, effusionTraceToZero: true })
+    expect(noExtension.meta.gateMet).toBe(false)
+    expect(noExtension.meta.classColor).toBe('amber')
+    expect(noExtension.primaryValue).toBe(1)
+
+    const effused = calcACLSigns({ fullExtension: true, effusionTraceToZero: false })
+    expect(effused.meta.gateMet).toBe(false)
+    expect(effused.primaryValue).toBe(1)
+
+    const neither = calcACLSigns({ fullExtension: false, effusionTraceToZero: false })
+    expect(neither.meta.classColor).toBe('red')
+    expect(neither.primaryValue).toBe(0)
   })
 
-  it('requires full active extension for the combined gate', () => {
-    const r = calcACLSigns({ fullExtension: false, effusionGrade: 'zero' })
-    expect(r.meta.gateMet).toBe(false)
-    expect(r.meta.fullExtension).toBe(false)
-  })
-
-  it('scores the effusion grade ordinally (zero=0 … 3+=4, lower is better)', () => {
-    expect(calcACLSigns({ fullExtension: true, effusionGrade: 'zero' }).primaryValue).toBe(0)
-    expect(calcACLSigns({ fullExtension: true, effusionGrade: 'trace' }).primaryValue).toBe(1)
-    expect(calcACLSigns({ fullExtension: true, effusionGrade: '3+' }).primaryValue).toBe(4)
-  })
-
-  it('rejects missing or unknown inputs', () => {
-    expect(calcACLSigns({ fullExtension: true, effusionGrade: 'huge' })).toBeNull()
-    expect(calcACLSigns({ fullExtension: null, effusionGrade: 'zero' })).toBeNull()
+  it('rejects non-boolean inputs', () => {
+    expect(calcACLSigns({ fullExtension: null, effusionTraceToZero: true })).toBeNull()
+    expect(calcACLSigns({ fullExtension: true })).toBeNull()
     expect(calcACLSigns({})).toBeNull()
   })
 
   it('describes both signs in the interpretation', () => {
-    const r = calcACLSigns({ fullExtension: true, effusionGrade: 'trace' })
+    const r = calcACLSigns({ fullExtension: true, effusionTraceToZero: false })
     expect(r.interpretation).toMatch(/extension/i)
     expect(r.interpretation).toMatch(/effusion/i)
-  })
-
-  it('exposes the five published modified stroke test grades', () => {
-    expect(EFFUSION_GRADES.map(g => g.value)).toEqual(['zero', 'trace', '1+', '2+', '3+'])
   })
 })
 
 describe('signsFromResults', () => {
   it('derives gate inputs from a stored assessment results object', () => {
-    const stored = calcACLSigns({ fullExtension: true, effusionGrade: 'trace' })
+    const stored = calcACLSigns({ fullExtension: true, effusionTraceToZero: true })
     expect(signsFromResults(stored)).toEqual({ fullExtension: true, effusionTraceToZero: true })
+  })
+
+  it('still reads rows saved by the earlier graded-effusion version', () => {
+    const legacy = {
+      primaryValue: 1,
+      meta: { fullExtension: true, effusionGrade: 'trace', effusionTraceToZero: true, gateMet: true },
+    }
+    expect(signsFromResults(legacy)).toEqual({ fullExtension: true, effusionTraceToZero: true })
   })
 
   it('returns unknown (nulls) when nothing is recorded', () => {
@@ -66,12 +64,12 @@ describe('signsFromResults', () => {
 })
 
 describe('ACLSigns registry + pathway wiring', () => {
-  it('registers ACLSigns as an MSK measure with a 0–4 effusion chart', () => {
+  it('registers ACLSigns as an MSK measure charting signs met out of 2', () => {
     const m = MEASURES.ACLSigns
     expect(m).toBeDefined()
     expect(m.domains).toEqual(['msk'])
-    expect(m.higherIsBetter).toBe(false)
-    expect(m.chart.yMax).toBe(4)
+    expect(m.higherIsBetter).toBe(true)
+    expect(m.chart.yMax).toBe(2)
   })
 
   it('adds ACLSigns to the ACL reconstruction pathway recommendations', () => {
