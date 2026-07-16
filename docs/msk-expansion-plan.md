@@ -298,7 +298,7 @@ Domain cards already render only when data exists, so neuro patients see no chan
 
 - **ISNCSCI** (explicitly out of scope per project rules — never batch with other work).
 - WheelchairPrescriptionTool internals (only its sidebar visibility).
-- Stripe/payment code. Landing page (`pages/index.js`) — repositioning marketing copy for the broader scope is a separate, later task.
+- Stripe/payment code. Landing page (`pages/index.js`) — repositioning marketing copy for the broader scope was a separate, later task (done 2026-07-17, see `docs/outcome-measures-handoff.md` item 3).
 - Mobile forms (`mobile/`) — next phase per decision.
 - Existing measure calc modules (except the HADS rendering-path generalisation, which does not alter stored data or scores).
 
@@ -332,4 +332,4 @@ Each measure follows the 10-step Outcome Measure Workflow in CLAUDE.md (inputs �
 | `clinical_focus` hiding patient data | Focus filters *pickers and tools only*; recorded data always renders. |
 | MeasureEntry dispatch bloat (34 forms) | Acceptable for Wave 1; refactor to a registry-driven form map noted for `/simplify`. |
 | Reassessment interval wrong for MSK | 28-day default retained; per-pathway intervals in handoff. |
-| Marketing/landing still says "rehabilitation teams" | Deliberate deferral; separate task in handoff. |
+| Marketing/landing still says "rehabilitation teams" | Deliberate deferral; separate task in handoff. Resolved 2026-07-17. |

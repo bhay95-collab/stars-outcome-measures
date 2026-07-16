@@ -2,7 +2,7 @@ import Head from 'next/head'
 import localFont from 'next/font/local'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { Accessibility, ArrowRight, Check, ChevronDown, ClipboardCheck, FileText, LineChart, Route, Smartphone } from 'lucide-react'
+import { Accessibility, Activity, ArrowRight, Check, ChevronDown, ClipboardCheck, FileText, LineChart, Route, Smartphone } from 'lucide-react'
 import { hasSupabaseAuthErrorUrl, isSupabaseAuthCallbackUrl } from '../lib/auth-routing'
 import { initializeScrollReveal } from '../lib/scrollReveal'
 import AdaptiveVideo from '../components/AdaptiveVideo'
@@ -38,6 +38,11 @@ const MEASURES = [
   'Motor Assessment Scale',
   'Barthel Index',
   'SCIM-III',
+  'Knee Injury and Osteoarthritis Outcome Score',
+  'Hip Disability and Osteoarthritis Outcome Score',
+  'Lower Extremity Functional Scale',
+  'Harris Hip Score',
+  'Single-Leg Hop Battery',
 ]
 
 const WORKFLOW = [
@@ -79,10 +84,15 @@ const CAPABILITIES = [
     title: 'Reports patients can understand',
     text: 'Plain-language summaries, clinical interpretation, trend views, and PDF reporting help turn scores into useful communication.',
   },
+  {
+    Icon: Activity,
+    title: 'ACL pathway & return-to-sport',
+    text: 'A criterion-based phase tracker for ACL rehabilitation, plus a return-to-sport readiness battery that reports field-test criteria against published cut-offs — never an automatic clearance.',
+  },
 ]
 
 const FAQS = [
-  ['Will this fit the patients I see every week?', 'RehabMetrics IQ is built for physiotherapists and physiotherapy-led rehabilitation teams working across neurological, amputee, reconditioning, cardiorespiratory, community, inpatient, outpatient, and private practice caseloads. The measure library is focused on gait, balance, endurance, mobility, independence, fatigue, symptoms, and neurological recovery.'],
+  ['Will this fit the patients I see every week?', 'RehabMetrics IQ is built for physiotherapists and physiotherapy-led teams working across neurological, musculoskeletal, sports, amputee, reconditioning, cardiorespiratory, community, inpatient, outpatient, and private practice caseloads. The measure library spans gait, balance, endurance, mobility, independence, fatigue, symptoms, neurological recovery, and joint-specific MSK function, with dedicated pathway support for ACL rehabilitation and return-to-sport readiness.'],
   ['What do I get from the first assessment?', 'You get automated scoring, interpretation, a clean baseline, and a patient dashboard that starts tracking change over time. When a diagnosis is recorded, the pathway guidance also shows which recommended baseline measures are still missing.'],
   ['How does this help beyond calculating a score?', 'The value is in the clinical layer around the score: trend views, Minimally Clinically Important Difference context, pathway coverage, reassessment prompts, plain-language summaries, and reports that make progress easier to explain.'],
   ['Will it make documentation faster?', 'Yes. The aim is to remove spreadsheet work, duplicated calculations, and manually rewritten outcome summaries. You can move from recorded measures to patient-friendly summaries, clinical interpretation, and report exports with much less admin.'],
@@ -280,10 +290,10 @@ export default function Landing() {
             <div className="hero__scrim" />
             <div className="hero__inner">
               <div className="hero__copy">
-                <p className="eyebrow">FOR REHABILITATION PHYSIOTHERAPISTS</p>
+                <p className="eyebrow">BUILT FOR PHYSIOTHERAPY PRACTICE</p>
                 <h1>You scored the test. <span>Now what does it mean?</span></h1>
                 <p className="hero__sub">
-                  RehabMetrics IQ turns rehabilitation outcome measures into clinical interpretation, MCID-aware progress, and reports your team, GP, and funder can actually use.
+                  RehabMetrics IQ turns rehabilitation and MSK outcome measures into clinical interpretation, MCID-aware progress, and reports your team, GP, and funder can actually use.
                 </p>
                 <div className="hero__actions">
                   <a className="primary-btn" href="/signup">Start 14-day free trial</a>
@@ -355,7 +365,7 @@ export default function Landing() {
           <div className="clinical-band__inner">
             <figure className="image-panel image-panel--wide reveal">
               <DeferredImage
-                src="https://images.pexels.com/photos/6111595/pexels-photo-6111595.jpeg?auto=compress&cs=tinysrgb&w=1400"
+                src="/assets/landing/v2/clinical-band.jpg"
                 alt="Amputee patient using a prosthetic leg during rehabilitation therapy"
                 width={1400}
                 height={933}
@@ -434,7 +444,7 @@ export default function Landing() {
           <div className="pricing-layout">
             <figure className="image-panel image-panel--pricing reveal">
               <DeferredImage
-                src="https://images.pexels.com/photos/20860624/pexels-photo-20860624.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                src="/assets/landing/v2/pricing.jpg"
                 alt="Physiotherapist guiding a patient through a rehabilitation exercise"
                 width={1000}
                 height={667}
@@ -478,8 +488,8 @@ export default function Landing() {
             <h2>Clear answers before you start.</h2>
             <figure className="image-panel image-panel--faq">
               <DeferredImage
-                src="https://images.pexels.com/photos/6111593/pexels-photo-6111593.jpeg?auto=compress&cs=tinysrgb&w=900"
-                alt="Therapist assisting a prosthetic leg rehabilitation session"
+                src="/assets/landing/v2/faq-balance.jpg"
+                alt="Patient performing single-leg balance training on a wobble board during rehabilitation"
                 width={900}
                 height={600}
               />
@@ -681,7 +691,7 @@ function ProductPreview() {
     ['TUG', 'Timed Up and Go', '11.2 sec', 'Mild risk', 'amber'],
     ['BBS', 'Berg Balance Scale', '42/56', 'Minimally Clinically Important Difference met', 'blue'],
     ['6MWT', '6 Minute Walk Test', '387 m', 'Community', 'green'],
-    ['FGA', 'Functional Gait Assessment', '21/30', 'Low risk', 'green'],
+    ['HHS', 'Harris Hip Score', '86/100', 'Good (80–89)', 'green'],
   ]
 
   return (
@@ -1280,7 +1290,7 @@ const styles = `
 
   .capability-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 18px;
   }
 

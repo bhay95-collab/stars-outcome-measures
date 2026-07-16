@@ -180,7 +180,7 @@ Substitution guidance: if a 🟡/⚠️ measure stalls, prefer the next free mea
 
 1. **Mobile parity phase:** native forms for all Wave 1 measures (`mobile/src/components/forms/`, follow `TUGForm.tsx` SaveState pattern). Registry/scoring already shared via `@clinical`. PSFS needs activity pre-load; KOOS/HOOS need subscale result screens.
 2. **Licence admin:** Mapi (ODI, NDI, PCS), IWH (QuickDASH), OUI (OSS, MSK-HQ shares Oxford channel). Courtesy permissions: APTA (LEFS), RobRoy Martin (FAAM).
-3. **Landing page repositioning:** marketing copy still targets "rehabilitation teams"; broaden to whole-of-physio once Wave 1 ships.
+3. ~~**Landing page repositioning:** marketing copy still targets "rehabilitation teams"; broaden to whole-of-physio once Wave 1 ships.~~ Done 2026-07-17 — hero eyebrow/subhead, FAQ #1, the measures strip, `ProductPreview`, and a new "ACL pathway & return-to-sport" capability card now cover MSK/ACL/RTS; the three stock photos were also self-hosted (removing an external `images.pexels.com` dependency that left slow connections with no imagery) with one swapped for an MSK-relevant balance-training photo.
 4. **Per-pathway reassessment intervals:** MSK episodes often review at 2–4 weeks; pathway engine currently fixed at 28 days.
 5. **MeasureEntry form dispatch refactor:** at ~34 forms, replace the if-chain with a registry-driven component map (`/simplify` candidate).
 6. **MDC vs MCID three-state labels** roll-out to existing rehab measures (engine support lands in Wave 1).
