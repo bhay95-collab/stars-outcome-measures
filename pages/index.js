@@ -91,6 +91,39 @@ const CAPABILITIES = [
   },
 ]
 
+const PREVIEW_TABS = [
+  {
+    id: 'performance',
+    label: 'Performance',
+    rows: [
+      ['10MWT', '10 Metre Walk Test', '0.94 m/s', 'Community', 'green'],
+      ['TUG', 'Timed Up and Go', '11.2 sec', 'Mild risk', 'amber'],
+      ['BBS', 'Berg Balance Scale', '42/56', 'Minimally Clinically Important Difference met', 'blue'],
+      ['6MWT', '6 Minute Walk Test', '387 m', 'Community', 'green'],
+      ['HHS', 'Harris Hip Score', '86/100', 'Good (80–89)', 'green'],
+    ],
+  },
+  {
+    id: 'questionnaires',
+    label: 'Questionnaires',
+    rows: [
+      ['FSS', 'Fatigue Severity Scale', '28/63', 'Below fatigue threshold (<36)', 'green'],
+      ['ABC', 'Activities-Specific Balance Confidence Scale', '84%', 'High confidence (>80%)', 'green'],
+      ['HADS', 'Hospital Anxiety and Depression Scale — Depression', '6/21', 'Normal (≤7)', 'green'],
+      ['PDQ8', "Parkinson's Disease Questionnaire — 8", '14%', 'Mild impact (≤20)', 'green'],
+    ],
+  },
+  {
+    id: 'summary',
+    label: 'Summary',
+    rows: [
+      ['COVERAGE', 'Smart Pathway Coverage', '82%', 'On track', 'green'],
+      ['MCID', 'Minimally Clinically Important Difference achieved', '3 of 4', 'Meeting goals', 'blue'],
+      ['DUE', 'Reassessment due', 'Berg Balance Scale', 'In 6 days', 'amber'],
+    ],
+  },
+]
+
 const FAQS = [
   ['Will this fit the patients I see every week?', 'RehabMetrics IQ is built for physiotherapists and physiotherapy-led teams working across neurological, musculoskeletal, sports, amputee, reconditioning, cardiorespiratory, community, inpatient, outpatient, and private practice caseloads. The measure library spans gait, balance, endurance, mobility, independence, fatigue, symptoms, neurological recovery, and joint-specific MSK function, with dedicated pathway support for ACL rehabilitation and return-to-sport readiness.'],
   ['What do I get from the first assessment?', 'You get automated scoring, interpretation, a clean baseline, and a patient dashboard that starts tracking change over time. When a diagnosis is recorded, the pathway guidance also shows which recommended baseline measures are still missing.'],
@@ -284,7 +317,7 @@ export default function Landing() {
               posterLoading="eager"
               fetchPriority="high"
               width={1920}
-              height={1280}
+              height={1080}
             />
             <div className="hero__focus-blur" />
             <div className="hero__scrim" />
@@ -686,13 +719,8 @@ function MiniBars() {
 }
 
 function ProductPreview() {
-  const rows = [
-    ['10MWT', '10 Metre Walk Test', '0.94 m/s', 'Community', 'green'],
-    ['TUG', 'Timed Up and Go', '11.2 sec', 'Mild risk', 'amber'],
-    ['BBS', 'Berg Balance Scale', '42/56', 'Minimally Clinically Important Difference met', 'blue'],
-    ['6MWT', '6 Minute Walk Test', '387 m', 'Community', 'green'],
-    ['HHS', 'Harris Hip Score', '86/100', 'Good (80–89)', 'green'],
-  ]
+  const [activeTab, setActiveTab] = useState(PREVIEW_TABS[0].id)
+  const tab = PREVIEW_TABS.find(t => t.id === activeTab) ?? PREVIEW_TABS[0]
 
   return (
     <div className="preview-card" aria-label="RehabMetrics dashboard preview">
@@ -700,13 +728,22 @@ function ProductPreview() {
         <strong>RehabMetrics</strong>
         <span>LIVE SCORING</span>
       </div>
-      <div className="preview-tabs">
-        <span data-active="">Performance</span>
-        <span>Questionnaires</span>
-        <span>Summary</span>
+      <div className="preview-tabs" role="tablist" aria-label="Preview category">
+        {PREVIEW_TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === id}
+            data-active={activeTab === id ? '' : undefined}
+            onClick={() => setActiveTab(id)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
-      <div className="preview-list">
-        {rows.map(([abbr, name, score, chip, tone]) => (
+      <div className="preview-list" role="tabpanel">
+        {tab.rows.map(([abbr, name, score, chip, tone]) => (
           <div className="preview-row" key={abbr}>
             <div>
               <strong>{abbr}</strong>
@@ -1053,14 +1090,21 @@ const styles = `
     gap: 8px;
     margin-bottom: 14px;
   }
-  .preview-tabs span {
+  .preview-tabs button {
+    border: 0;
     padding: 8px 12px;
     border-radius: 6px;
+    background: transparent;
     color: #445064;
     font-size: 13px;
     font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
   }
-  .preview-tabs span[data-active] {
+  .preview-tabs button:hover {
+    background: rgba(221,234,246,0.55);
+  }
+  .preview-tabs button[data-active] {
     background: #ddeaf6;
     color: var(--navy-dark);
     font-weight: 600;
