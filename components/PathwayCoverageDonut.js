@@ -63,7 +63,12 @@ export default function PathwayCoverageDonut({ pathway, onMeasure }) {
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip content={<DonutTooltip />} />
+              <Tooltip
+                content={<DonutTooltip />}
+                position={{ x: 0, y: 168 }}
+                allowEscapeViewBox={{ x: true, y: true }}
+                wrapperStyle={{ zIndex: 5 }}
+              />
             </PieChart>
           </ResponsiveContainer>
           <div className="pcd-centre-label">
