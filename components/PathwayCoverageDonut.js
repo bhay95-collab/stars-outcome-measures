@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 const RECORDED_COLOR = '#094b8a'
@@ -21,6 +22,8 @@ function DonutTooltip({ active, payload }) {
 }
 
 export default function PathwayCoverageDonut({ pathway, onMeasure }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
   if (!pathway) return null
 
   const recorded = pathway.recordedMeasures ?? []
@@ -36,88 +39,118 @@ export default function PathwayCoverageDonut({ pathway, onMeasure }) {
   ]
 
   const pct = pathway.coveragePercent ?? 0
+  const remaining = missing.length
+  const remainingLabel = `${remaining} outcome measure${remaining === 1 ? '' : 's'} remaining`
 
   return (
-    <div className="pathway-coverage-donut">
+    <div className="pathway-coverage-donut" data-collapsed={isExpanded ? undefined : ''}>
       <div className="pcd-header">
-        <h3>Smart Pathway Coverage</h3>
-        <p>Tap a missing measure to record it</p>
+        <div>
+          <h3>Smart Pathway Coverage</h3>
+          <p>{isExpanded ? 'Tap a missing measure to record it' : remainingLabel}</p>
+        </div>
+        <div className="pcd-header-actions">
+          {!isExpanded && (
+            <div className="pcd-coverage">
+              <strong>{pct}%</strong>
+              <span>covered</span>
+            </div>
+          )}
+          <button
+            type="button"
+            className="pcd-toggle"
+            onClick={() => setIsExpanded(value => !value)}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? 'Minimise Smart Pathway Coverage' : 'Show Smart Pathway Coverage details'}
+            title={isExpanded ? 'Minimise' : 'Show details'}
+          >
+            <span aria-hidden="true">{isExpanded ? '⌃' : '⌄'}</span>
+          </button>
+        </div>
       </div>
 
-      <div className="pcd-body">
-        <div className="pcd-chart-wrap">
-          <ResponsiveContainer width={160} height={160}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                innerRadius={52}
-                outerRadius={72}
-                startAngle={90}
-                endAngle={-270}
-                dataKey="value"
-                strokeWidth={0}
-              >
-                {pieData.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                content={<DonutTooltip />}
-                position={{ x: 0, y: 168 }}
-                allowEscapeViewBox={{ x: true, y: true }}
-                wrapperStyle={{ zIndex: 5 }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="pcd-centre-label">
-            <strong>{pct}%</strong>
-            <span>complete</span>
+      {!isExpanded ? (
+        <div className="pcd-compact">
+          <div className="pcd-progress" aria-hidden="true">
+            <i style={{ width: `${pct}%` }} />
           </div>
         </div>
-
-        <div className="pcd-lists">
-          {recorded.length > 0 && (
-            <div className="pcd-list pcd-list--recorded">
-              <span className="pcd-list-label">Recorded</span>
-              {recorded.map(item => (
-                <button key={item.id} type="button" className="pcd-item pcd-item--recorded" onClick={() => onMeasure(item.id)}>
-                  <span className="pcd-dot pcd-dot--recorded" />
-                  <span className="pcd-item-name">{item.name}</span>
-                  {item.lastRecordedLabel && <em>{item.lastRecordedLabel}</em>}
-                </button>
-              ))}
+      ) : (
+        <div className="pcd-body">
+          <div className="pcd-chart-wrap">
+            <ResponsiveContainer width={160} height={160}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={52}
+                  outerRadius={72}
+                  startAngle={90}
+                  endAngle={-270}
+                  dataKey="value"
+                  strokeWidth={0}
+                >
+                  {pieData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={<DonutTooltip />}
+                  position={{ x: 0, y: 168 }}
+                  allowEscapeViewBox={{ x: true, y: true }}
+                  wrapperStyle={{ zIndex: 5 }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pcd-centre-label">
+              <strong>{pct}%</strong>
+              <span>complete</span>
             </div>
-          )}
+          </div>
 
-          {due.length > 0 && (
-            <div className="pcd-list pcd-list--due">
-              <span className="pcd-list-label">Due for reassessment</span>
-              {due.map(item => (
-                <button key={item.id} type="button" className="pcd-item pcd-item--due" onClick={() => onMeasure(item.id)}>
-                  <span className="pcd-dot pcd-dot--due" />
-                  <span className="pcd-item-name">{item.name}</span>
-                  <em>+ Record</em>
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="pcd-lists">
+            {recorded.length > 0 && (
+              <div className="pcd-list pcd-list--recorded">
+                <span className="pcd-list-label">Recorded</span>
+                {recorded.map(item => (
+                  <button key={item.id} type="button" className="pcd-item pcd-item--recorded" onClick={() => onMeasure(item.id)}>
+                    <span className="pcd-dot pcd-dot--recorded" />
+                    <span className="pcd-item-name">{item.name}</span>
+                    {item.lastRecordedLabel && <em>{item.lastRecordedLabel}</em>}
+                  </button>
+                ))}
+              </div>
+            )}
 
-          {missing.length > 0 && (
-            <div className="pcd-list pcd-list--missing">
-              <span className="pcd-list-label">Not yet recorded</span>
-              {missing.map(item => (
-                <button key={item.id} type="button" className="pcd-item pcd-item--missing" onClick={() => onMeasure(item.id)}>
-                  <span className="pcd-dot pcd-dot--missing" />
-                  <span className="pcd-item-name">{item.name}</span>
-                  <em>+ Record</em>
-                </button>
-              ))}
-            </div>
-          )}
+            {due.length > 0 && (
+              <div className="pcd-list pcd-list--due">
+                <span className="pcd-list-label">Due for reassessment</span>
+                {due.map(item => (
+                  <button key={item.id} type="button" className="pcd-item pcd-item--due" onClick={() => onMeasure(item.id)}>
+                    <span className="pcd-dot pcd-dot--due" />
+                    <span className="pcd-item-name">{item.name}</span>
+                    <em>+ Record</em>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {missing.length > 0 && (
+              <div className="pcd-list pcd-list--missing">
+                <span className="pcd-list-label">Not yet recorded</span>
+                {missing.map(item => (
+                  <button key={item.id} type="button" className="pcd-item pcd-item--missing" onClick={() => onMeasure(item.id)}>
+                    <span className="pcd-dot pcd-dot--missing" />
+                    <span className="pcd-item-name">{item.name}</span>
+                    <em>+ Record</em>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

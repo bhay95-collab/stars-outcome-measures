@@ -197,6 +197,7 @@ export default function PatientSummaryScreen() {
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [editSheetVisible, setEditSheetVisible] = useState(false);
+  const [pathwayExpanded, setPathwayExpanded] = useState(false);
   const hasLoadedPatientData = useRef(false);
 
   function handlePatientUpdated(updated: Patient) {
@@ -352,31 +353,73 @@ export default function PatientSummaryScreen() {
           </View>
         </Card>
 
+        <View style={styles.actions}>
+          <Button
+            label="New Assessment"
+            onPress={() => router.push(`/(app)/patients/${patientId}/measures`)}
+          />
+        </View>
+
         <Card style={styles.pathwayCard}>
           <View style={styles.pathwayHeader}>
-            <View>
+            <View style={styles.pathwayHeaderCopy}>
               <Text style={styles.pathwayKicker}>SMART REHAB PATHWAY</Text>
               <Text style={styles.pathwayStatus}>{pathway.statusLabel}</Text>
             </View>
-            <View style={styles.pathwayScore}>
-              <Text style={styles.pathwayScoreValue}>{pathway.coveragePercent}%</Text>
-              <Text style={styles.pathwayScoreLabel}>covered</Text>
+            <View style={styles.pathwayHeaderRight}>
+              <View style={styles.pathwayCoverageBlock}>
+                <Text style={styles.pathwayCoverageValue}>{pathway.coveragePercent}%</Text>
+                <Text style={styles.pathwayCoverageLabel}>covered</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setPathwayExpanded(value => !value)}
+                style={styles.pathwayToggle}
+                accessibilityRole="button"
+                accessibilityLabel={pathwayExpanded ? 'Minimise Smart Rehab Pathway' : 'Show Smart Rehab Pathway details'}
+                accessibilityState={{ expanded: pathwayExpanded }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <View style={styles.pathwayChevron} pointerEvents="none">
+                  <View
+                    style={[
+                      styles.pathwayChevronLine,
+                      styles.pathwayChevronLineLeft,
+                      pathwayExpanded
+                        ? styles.pathwayChevronLineLeftUp
+                        : styles.pathwayChevronLineLeftDown,
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.pathwayChevronLine,
+                      styles.pathwayChevronLineRight,
+                      pathwayExpanded
+                        ? styles.pathwayChevronLineRightUp
+                        : styles.pathwayChevronLineRightDown,
+                    ]}
+                  />
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
           <View style={styles.pathwayProgress} accessibilityElementsHidden>
             <View style={[styles.pathwayProgressFill, { width: `${pathway.coveragePercent}%` }]} />
           </View>
-          <View style={styles.pathwayExplanation}>
-            <Text style={styles.pathwayExplanationTitle}>What this means</Text>
-            <Text style={styles.pathwayExplanationText}>{pathway.explanation.detail}</Text>
-            <Text style={styles.pathwayCaution}>{pathway.explanation.caution}</Text>
-          </View>
-          {pathwayActions.map(action => (
-            <View key={`${action.type}-${action.measureId ?? action.label}`} style={styles.pathwayAction}>
-              <Text style={styles.pathwayActionTitle}>{action.label}</Text>
-              <Text style={styles.pathwayActionText}>{action.detail}</Text>
+          {pathwayExpanded ? (
+            <View style={styles.pathwayDetails}>
+              <View style={styles.pathwayExplanation}>
+                <Text style={styles.pathwayExplanationTitle}>What this means</Text>
+                <Text style={styles.pathwayExplanationText}>{pathway.explanation.detail}</Text>
+                <Text style={styles.pathwayCaution}>{pathway.explanation.caution}</Text>
+              </View>
+              {pathwayActions.map(action => (
+                <View key={`${action.type}-${action.measureId ?? action.label}`} style={styles.pathwayAction}>
+                  <Text style={styles.pathwayActionTitle}>{action.label}</Text>
+                  <Text style={styles.pathwayActionText}>{action.detail}</Text>
+                </View>
+              ))}
             </View>
-          ))}
+          ) : null}
         </Card>
 
         <SectionLabel>Recent Assessment History</SectionLabel>
@@ -399,13 +442,6 @@ export default function PatientSummaryScreen() {
             })}
           </View>
         )}
-
-        <View style={styles.actions}>
-          <Button
-            label="New Assessment"
-            onPress={() => router.push(`/(app)/patients/${patientId}/measures`)}
-          />
-        </View>
       </ScrollView>
 
       <PatientEditSheet
@@ -509,8 +545,19 @@ const styles = StyleSheet.create({
   pathwayHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: spacing.md,
+  },
+  pathwayHeaderCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pathwayHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    flexShrink: 0,
+    paddingTop: 1,
   },
   pathwayKicker: {
     fontSize: typography.sizeXs,
@@ -524,17 +571,68 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginTop: spacing.xs,
   },
-  pathwayScore: {
-    alignItems: 'flex-end',
+  pathwayToggle: {
+    width: 28,
+    height: 28,
+    minHeight: 28,
+    minWidth: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    marginTop: 2,
   },
-  pathwayScoreValue: {
-    fontSize: typography.sizeLg,
+  pathwayChevron: {
+    width: 12,
+    height: 8,
+    position: 'relative',
+  },
+  pathwayChevronLine: {
+    position: 'absolute',
+    top: 3,
+    width: 7,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.primary,
+  },
+  pathwayChevronLineLeft: {
+    left: 0,
+  },
+  pathwayChevronLineRight: {
+    right: 0,
+  },
+  pathwayChevronLineLeftDown: {
+    transform: [{ rotate: '45deg' }],
+  },
+  pathwayChevronLineRightDown: {
+    transform: [{ rotate: '-45deg' }],
+  },
+  pathwayChevronLineLeftUp: {
+    transform: [{ rotate: '-45deg' }],
+  },
+  pathwayChevronLineRightUp: {
+    transform: [{ rotate: '45deg' }],
+  },
+  pathwayCoverageBlock: {
+    alignItems: 'center',
+    flexShrink: 0,
+    minWidth: 48,
+  },
+  pathwayCoverageValue: {
+    fontSize: typography.size2xl,
     fontWeight: typography.weightBold,
     color: colors.primary,
+    lineHeight: 30,
+    includeFontPadding: false,
   },
-  pathwayScoreLabel: {
+  pathwayCoverageLabel: {
     fontSize: typography.sizeXs,
     color: colors.muted,
+    lineHeight: 14,
+    marginTop: 1,
+    textAlign: 'center',
   },
   pathwayProgress: {
     height: 6,
@@ -546,6 +644,9 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: colors.secondary,
     borderRadius: radii.sm,
+  },
+  pathwayDetails: {
+    gap: spacing.sm,
   },
   pathwayExplanation: {
     borderWidth: 1,
@@ -738,7 +839,5 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold,
     color: colors.coral,
   },
-  actions: {
-    marginTop: spacing.sm,
-  },
+  actions: {},
 });

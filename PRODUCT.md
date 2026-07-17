@@ -44,7 +44,7 @@ MCID/MDC logic is **condition-aware**: thresholds move with patient diagnosis vi
 - **Outcomes Intelligence** — caseload-wide improvement rates, MCID achievement, diagnosis cohort summaries, and an aggregate-only proof-of-value PDF service report (no patient identifiers).
 - **Wheelchair Prescription tool** (web; hidden when `clinical_focus = 'msk'`).
 - **PDF patient report export**; **reference card**.
-- **Mobile app** — patient directory/workspace, 26 native measure forms, MCID trend context on history cards, native Sign in with Apple, App Store subscriptions, in-app account deletion. Follow-ups and ISNCSCI are web-only.
+- **Mobile app** — patient directory/workspace, 40 native measure forms, MCID trend context on history cards, native Sign in with Apple, App Store subscriptions, in-app account deletion. Follow-ups and ISNCSCI are web-only.
 
 ## Commercial model
 

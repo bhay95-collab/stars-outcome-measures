@@ -17,6 +17,22 @@ interface NavyHeaderProps {
   rightElement?: React.ReactNode;
 }
 
+function HeaderLogo({ title }: { title?: string }) {
+  return (
+    <View style={styles.headerLogo} pointerEvents="none">
+      <View style={styles.headerLogoRow}>
+        <Image source={squareLogo} style={styles.logo} resizeMode="contain" />
+        <LogoWordmark size="sm" tone="light" />
+      </View>
+      {title ? (
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {title}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
 function BrandHeader({
   rightLabel,
   onRight,
@@ -24,11 +40,9 @@ function BrandHeader({
 }: Pick<NavyHeaderProps, 'rightLabel' | 'onRight' | 'rightElement'>) {
   return (
     <View style={styles.container}>
-      <View style={styles.brandLeft}>
-        <Image source={squareLogo} style={styles.logo} resizeMode="contain" />
-        <LogoWordmark size="sm" tone="light" />
-      </View>
-      <View style={styles.brandRight}>
+      <View style={styles.side} />
+      <HeaderLogo />
+      <View style={[styles.side, styles.sideRight]}>
         {rightElement ?? (rightLabel && onRight ? (
           <Pressable
             onPress={onRight}
@@ -72,13 +86,7 @@ function NavHeader({
         ) : null}
       </View>
 
-      {title ? (
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
-      ) : (
-        <View style={styles.titleSpacer} />
-      )}
+      <HeaderLogo title={title} />
 
       <View style={[styles.side, styles.sideRight]}>
         {resolvedRightElement ?? (rightLabel && onRight ? (
@@ -125,27 +133,37 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryDark,
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 56,
+    minHeight: 64,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
-  // Brand mode
-  brandLeft: {
+  headerLogo: {
     flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerLogoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    justifyContent: 'center',
+    gap: spacing.xs,
   },
   logo: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 6,
   },
-  brandRight: {
-    alignItems: 'flex-end',
+  headerTitle: {
+    width: '100%',
+    marginTop: 2,
+    textAlign: 'center',
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightMedium,
+    color: 'rgba(255,255,255,0.72)',
   },
-  // Nav mode
   side: {
-    width: 80,
+    width: 88,
     justifyContent: 'center',
   },
   sideRight: {
@@ -161,15 +179,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: typography.weightRegular,
     opacity: 0.9,
-  },
-  title: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: typography.sizeMd,
-    fontWeight: typography.weightSemibold,
-    color: '#FFFFFF',
-  },
-  titleSpacer: {
-    flex: 1,
   },
 });

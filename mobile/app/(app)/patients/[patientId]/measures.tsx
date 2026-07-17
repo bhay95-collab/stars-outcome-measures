@@ -5,6 +5,15 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { MEASURES, buildPatientPathway } from '../../../../src/clinical/adapter';
 import type { MeasureDefinition, PatientPathway } from '../../../../src/clinical/adapter';
+import { isMobileMeasureSupported, isMobileMeasureWebOnly } from '../../../../src/clinical/mobileMeasures';
+import {
+  MEASURE_SELECTOR_FILTERS,
+  getMeasureFilterCounts,
+  getMeasuresByCategory,
+  getVisibleMeasureGroups,
+  resolveMeasureFilter,
+} from '../../../../src/clinical/measureSelector';
+import type { MeasureFilter } from '../../../../src/clinical/measureSelector';
 import { getPatient } from '../../../../src/supabase/patients';
 import { getAssessmentsForPatient } from '../../../../src/supabase/assessments';
 import { withTimeout, AUTH_TIMEOUT_MS } from '../../../../src/utils/withTimeout';
@@ -14,39 +23,46 @@ import { NavyHeader } from '../../../../src/components/ui/NavyHeader';
 import { getValidPatientId } from '../../../../src/utils/routing';
 import { colors, spacing, typography, radii } from '../../../../src/theme/tokens';
 
-type Category = 'performance' | 'independence' | 'questionnaire';
-
-const GROUPS: { label: string; category: Category }[] = [
-  { label: 'Performance', category: 'performance' },
-  { label: 'Independence', category: 'independence' },
-  { label: 'Questionnaire', category: 'questionnaire' },
-];
-
 function MeasureRow({
   measure,
   patientId,
   hasBorder,
   pathwayStatus,
+  supported,
 }: {
   measure: MeasureDefinition;
   patientId: string;
   hasBorder: boolean;
   pathwayStatus: { state: string; label: string } | null;
+  supported: boolean;
 }) {
   const shortName = measure.id;
+  const accessibilityLabel = supported
+    ? `${shortName}, ${measure.name}`
+    : `${shortName}, ${measure.name}, coming soon`;
   return (
     <TouchableOpacity
-      onPress={() => router.push(`/(app)/patients/${patientId}/assess/${measure.id}`)}
-      style={[styles.measureRow, hasBorder && styles.measureRowBorder]}
+      onPress={supported ? () => router.push(`/(app)/patients/${patientId}/assess/${measure.id}`) : undefined}
+      disabled={!supported}
+      style={[
+        styles.measureRow,
+        hasBorder && styles.measureRowBorder,
+        !supported && styles.measureRowDisabled,
+      ]}
       accessibilityRole="button"
-      accessibilityLabel={`${shortName}, ${measure.name}`}
-      activeOpacity={0.6}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled: !supported }}
+      activeOpacity={supported ? 0.6 : 1}
     >
       <View style={styles.measureText}>
-        <Text style={styles.measureName}>{shortName}</Text>
-        <Text style={styles.measureFullName}>{measure.name}</Text>
+        <Text style={[styles.measureName, !supported && styles.measureNameDisabled]}>{shortName}</Text>
+        <Text style={[styles.measureFullName, !supported && styles.measureFullNameDisabled]}>{measure.name}</Text>
       </View>
-      {pathwayStatus ? (
+      {!supported ? (
+        <View style={styles.comingSoonBadge}>
+          <Text style={styles.comingSoonText}>Coming soon</Text>
+        </View>
+      ) : pathwayStatus ? (
         <View style={[
           styles.pathwayBadge,
           pathwayStatus.state === 'due'
@@ -85,6 +101,7 @@ export default function MeasureSelectorScreen() {
   const [isNetworkError, setIsNetworkError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<MeasureFilter>('recommended');
 
   function handleRetry() {
     setIsFetching(true);
@@ -92,15 +109,28 @@ export default function MeasureSelectorScreen() {
   }
 
   const measuresByCategory = useMemo(() => {
-    const map = new Map<Category, MeasureDefinition[]>();
-    for (const { category } of GROUPS) {
-      map.set(
-        category,
-        Object.values(MEASURES).filter(m => m.category === category && m.id !== 'ISNCSCI'),
-      );
-    }
-    return map;
+    return getMeasuresByCategory(MEASURES);
   }, []);
+
+  const recommendedMeasureIds = useMemo(
+    () => pathway?.recommendedMeasures
+      .filter(item => !isMobileMeasureWebOnly(item.id))
+      .map(item => item.id) ?? [],
+    [pathway],
+  );
+
+  const filterCounts = useMemo(() => getMeasureFilterCounts({
+    measuresByCategory,
+    recommendedMeasureIds,
+  }), [measuresByCategory, recommendedMeasureIds]);
+
+  const resolvedFilter = resolveMeasureFilter(activeFilter, filterCounts.recommended);
+
+  const visibleGroups = useMemo(() => getVisibleMeasureGroups({
+    measuresByCategory,
+    filter: resolvedFilter,
+    recommendedMeasureIds,
+  }), [measuresByCategory, recommendedMeasureIds, resolvedFilter]);
 
   useEffect(() => {
     if (!patientId) {
@@ -186,8 +216,59 @@ export default function MeasureSelectorScreen() {
           </Text>
         </View>
 
-        {GROUPS.map(group => {
-          const measures = measuresByCategory.get(group.category) ?? [];
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterViewport}
+          contentContainerStyle={styles.filterStrip}
+        >
+          {MEASURE_SELECTOR_FILTERS.map(filter => {
+            const selected = resolvedFilter === filter.id;
+            const disabled = filter.id === 'recommended' && filterCounts.recommended === 0;
+            return (
+              <TouchableOpacity
+                key={filter.id}
+                onPress={() => setActiveFilter(filter.id)}
+                disabled={disabled}
+                style={[
+                  styles.filterChip,
+                  selected && styles.filterChipSelected,
+                  disabled && styles.filterChipDisabled,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`${filter.label}, ${filterCounts[filter.id]} measures`}
+                accessibilityState={{ selected, disabled }}
+                activeOpacity={0.72}
+              >
+                <Text style={[
+                  styles.filterChipText,
+                  selected && styles.filterChipTextSelected,
+                  disabled && styles.filterChipTextDisabled,
+                ]}>{filter.label}</Text>
+                <View style={[
+                  styles.filterChipCount,
+                  selected && styles.filterChipCountSelected,
+                  disabled && styles.filterChipCountDisabled,
+                ]}>
+                  <Text style={[
+                    styles.filterChipCountText,
+                    selected && styles.filterChipCountTextSelected,
+                    disabled && styles.filterChipCountTextDisabled,
+                  ]}>{filterCounts[filter.id]}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {visibleGroups.length === 0 ? (
+          <Card style={styles.emptyCard}>
+            <Text style={styles.emptyText}>No measures match this view.</Text>
+          </Card>
+        ) : null}
+
+        {visibleGroups.map(group => {
+          const measures = group.measures;
           return (
             <View key={group.category} style={styles.group}>
               <View style={styles.groupHeader}>
@@ -204,6 +285,7 @@ export default function MeasureSelectorScreen() {
                     patientId={patientId}
                     hasBorder={idx < measures.length - 1}
                     pathwayStatus={getPathwayStatus(pathway, m.id)}
+                    supported={isMobileMeasureSupported(m.id)}
                   />
                 ))}
               </Card>
@@ -247,6 +329,74 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: spacing.xs,
   },
+  filterViewport: {
+    marginHorizontal: -spacing.md,
+  },
+  filterStrip: {
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  filterChip: {
+    minHeight: 44,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  filterChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  filterChipDisabled: {
+    backgroundColor: colors.surfaceMuted,
+    borderColor: colors.border,
+    opacity: 0.72,
+  },
+  filterChipText: {
+    fontSize: typography.sizeSm,
+    fontWeight: typography.weightSemibold,
+    color: colors.muted,
+  },
+  filterChipTextSelected: {
+    color: colors.surface,
+  },
+  filterChipTextDisabled: {
+    color: colors.subtle,
+  },
+  filterChipCount: {
+    minWidth: 24,
+    minHeight: 22,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceSoft,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  filterChipCountSelected: {
+    backgroundColor: colors.primaryDark,
+    borderColor: colors.primaryDark,
+  },
+  filterChipCountDisabled: {
+    backgroundColor: colors.surfaceSoft,
+  },
+  filterChipCountText: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightBold,
+    color: colors.subtle,
+  },
+  filterChipCountTextSelected: {
+    color: colors.surface,
+  },
+  filterChipCountTextDisabled: {
+    color: colors.subtle,
+  },
   group: {
     gap: spacing.xs,
   },
@@ -280,6 +430,13 @@ const styles = StyleSheet.create({
     padding: 0,
     overflow: 'hidden',
   },
+  emptyCard: {
+    padding: spacing.md,
+  },
+  emptyText: {
+    fontSize: typography.sizeSm,
+    color: colors.muted,
+  },
   measureRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -291,6 +448,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  measureRowDisabled: {
+    opacity: 0.72,
+  },
   measureText: {
     flex: 1,
     gap: spacing.xs,
@@ -300,10 +460,16 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontWeight: typography.weightMedium,
   },
+  measureNameDisabled: {
+    color: colors.muted,
+  },
   measureFullName: {
     fontSize: typography.sizeSm,
     color: colors.muted,
     fontWeight: typography.weightMedium,
+  },
+  measureFullNameDisabled: {
+    color: colors.subtle,
   },
   pathwayBadge: {
     minHeight: 24,
@@ -341,6 +507,21 @@ const styles = StyleSheet.create({
     fontSize: typography.sizeXs,
     fontWeight: typography.weightSemibold,
     color: colors.success,
+  },
+  comingSoonBadge: {
+    minHeight: 24,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    backgroundColor: colors.surfaceSoft,
+    borderColor: colors.border,
+  },
+  comingSoonText: {
+    fontSize: typography.sizeXs,
+    fontWeight: typography.weightMedium,
+    color: colors.subtle,
   },
   chevron: {
     fontSize: typography.sizeLg,

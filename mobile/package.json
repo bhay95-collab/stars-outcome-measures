@@ -8,7 +8,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test:app": "jest --runInBand --runTestsByPath __tests__/access.test.ts __tests__/apple-auth.test.ts __tests__/revenuecat.test.ts",
+    "test:app": "jest --runInBand --runTestsByPath __tests__/access.test.ts __tests__/apple-auth.test.ts __tests__/revenuecat.test.ts __tests__/mobileMeasures.test.ts",
     "test:clinical": "jest --config jest.clinical.config.js --runInBand",
     "expo:config": "expo config --type public",
     "postinstall": "patch-package"
@@ -54,6 +54,7 @@
     "jest": "29.7.0",
     "jest-expo": "~54.0.17",
     "patch-package": "^8.0.1",
+    "react-refresh": "^0.14.2",
     "typescript": "~5.9.2"
   },
   "private": true,

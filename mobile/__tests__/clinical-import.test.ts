@@ -29,6 +29,23 @@ import { calcPDQ8 } from '@clinical/pdq8';
 import { calcABC } from '@clinical/abc';
 import { calcBIVI } from '@clinical/bivi';
 import { calcHADS } from '@clinical/hads';
+import { calcNPRS } from '@clinical/nprs';
+import { calcPSFS } from '@clinical/psfs';
+import { calcLEFS } from '@clinical/lefs';
+import { calcBPFS } from '@clinical/bpfs';
+import { calcFAAM } from '@clinical/faam';
+import { calcCAIT, CAIT_ITEMS } from '@clinical/cait';
+import { calcATRS } from '@clinical/atrs';
+import { calcFABQ } from '@clinical/fabq';
+import { calcOMAS, OMAS_ITEMS } from '@clinical/omas';
+import { calc30STS } from '@clinical/sts30';
+import { calcACLSigns } from '@clinical/aclSigns';
+import { calcQuadLSI } from '@clinical/quadLSI';
+import { calcHopBattery } from '@clinical/hopBattery';
+import { calcLESS } from '@clinical/less';
+import { calcFTSTS } from '@clinical/ftsts';
+import { calcCMS } from '@clinical/cms';
+import { calcHHS } from '@clinical/harrisHip';
 
 interface CalcResult {
   primaryValue: number;
@@ -50,7 +67,7 @@ function arr(count: number, value: number): number[] {
   return Array(count).fill(value);
 }
 
-describe('Phase 0 — clinical calc smoke tests (23 active measures)', () => {
+describe('Phase 0 — clinical calc smoke tests (40 active mobile measures)', () => {
   test('10MWT', () => {
     assertCalcResult(calc10mwt({ comfortTime: 10, fastTime: 8, age: 60, gender: 'M' }), '10MWT');
   });
@@ -176,5 +193,136 @@ describe('Phase 0 — clinical calc smoke tests (23 active measures)', () => {
   // HADS: 14 items, 0–3
   test('HADS', () => {
     assertCalcResult(calcHADS({ items: arr(14, 1) }), 'HADS');
+  });
+
+  test('NPRS', () => {
+    assertCalcResult(calcNPRS({ score: 4, context: 'current' }), 'NPRS');
+  });
+
+  test('PSFS', () => {
+    assertCalcResult(
+      calcPSFS({ activities: [{ name: 'Walking the dog', score: 6 }, { name: 'Stairs', score: 5 }] }),
+      'PSFS'
+    );
+  });
+
+  test('LEFS', () => {
+    assertCalcResult(calcLEFS({ items: arr(20, 3) }), 'LEFS');
+  });
+
+  test('BPFS', () => {
+    assertCalcResult(calcBPFS({ items: arr(12, 4) }), 'BPFS');
+  });
+
+  test('FAAM', () => {
+    assertCalcResult(
+      calcFAAM({ adl: arr(21, 4), sport: ['na', 4, 4, 3, 3, 4, 4, 4] }),
+      'FAAM'
+    );
+  });
+
+  test('CAIT', () => {
+    assertCalcResult(
+      calcCAIT({ items: CAIT_ITEMS.map(item => item.options[0].value) }),
+      'CAIT'
+    );
+  });
+
+  test('ATRS', () => {
+    assertCalcResult(calcATRS({ items: arr(10, 8) }), 'ATRS');
+  });
+
+  test('FABQ', () => {
+    assertCalcResult(calcFABQ({ items: arr(16, 3) }), 'FABQ');
+  });
+
+  test('OMAS', () => {
+    assertCalcResult(
+      calcOMAS({ items: OMAS_ITEMS.map(item => item.options[0].value) }),
+      'OMAS'
+    );
+  });
+
+  test('30STS', () => {
+    assertCalcResult(calc30STS({ stands: 12, age: 70, gender: 'F' }), '30STS');
+  });
+
+  test('ACLSigns', () => {
+    assertCalcResult(calcACLSigns({ fullExtension: true, effusionTraceToZero: true }), 'ACLSigns');
+  });
+
+  test('QuadLSI', () => {
+    assertCalcResult(calcQuadLSI({ involved: 90, uninvolved: 100 }), 'QuadLSI');
+  });
+
+  test('HopBattery', () => {
+    assertCalcResult(
+      calcHopBattery({
+        singleInv: 92,
+        singleUninv: 100,
+        tripleInv: 93,
+        tripleUninv: 100,
+        crossInv: 91,
+        crossUninv: 100,
+        timedInv: 5.2,
+        timedUninv: 4.8,
+      }),
+      'HopBattery'
+    );
+  });
+
+  test('LESS', () => {
+    assertCalcResult(calcLESS({ errors: 4 }), 'LESS');
+  });
+
+  test('FTSTS', () => {
+    assertCalcResult(calcFTSTS({ time: 11.8 }), 'FTSTS');
+  });
+
+  test('CMS', () => {
+    assertCalcResult(
+      calcCMS({
+        pain: 12,
+        adlWork: 4,
+        adlRecreation: 3,
+        adlSleep: 2,
+        adlPositioning: 8,
+        romFlexion: 8,
+        romAbduction: 8,
+        romER: 6,
+        romIR: 6,
+        strengthKg: 10,
+      }),
+      'CMS'
+    );
+  });
+
+  test('HHS', () => {
+    assertCalcResult(
+      calcHHS({
+        pain: 40,
+        limp: 8,
+        support: 7,
+        distance: 8,
+        stairs: 2,
+        shoesSocks: 2,
+        sitting: 5,
+        transport: 1,
+        deformity: {
+          flexionContracture: true,
+          adduction: true,
+          internalRotation: true,
+          legLength: true,
+        },
+        rom: {
+          flexion: 100,
+          abduction: 30,
+          adduction: 20,
+          externalRotation: 25,
+          internalRotation: 25,
+        },
+      }),
+      'HHS'
+    );
   });
 });

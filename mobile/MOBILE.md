@@ -21,8 +21,9 @@ src/
   auth/                   AuthProvider, useSession, googleAuth, appleAuth, oauthProvisioning
   billing/revenuecat.ts   StoreKit/RevenueCat wrapper (entitlement 'pro')
   clinical/               adapter.ts (typed re-exports from @clinical), comparisons.ts,
+                          mobileMeasures.ts (native/web-only/coming-soon availability),
                           measureInstructions.ts — thin layer only; scoring lives in ../lib/clinical
-  components/             account/ (AccountSettingsSheet…), forms/ (26 measure forms +
+  components/             account/ (AccountSettingsSheet…), forms/ (40 measure forms +
                           shared fields/), ui/
   hooks/                  useMountedRef — shared ref that goes false on unmount; used by all form
                           components to guard setState calls after save completes
@@ -45,7 +46,7 @@ Scoring, registry, and MCID logic are **not duplicated** — they are imported f
 |---|---|
 | ISNCSCI | Not on mobile (dropped from mobile scope; web only) |
 | Patient-reported follow-ups | Web only (patient links open fine in mobile browsers) |
-| Forms | 26 native forms vs 42 web measures — Wave 1 MSK parity (plus the ACL return-to-sport field tests) is a queued phase (`../docs/outcome-measures-handoff.md`) |
+| Forms | 40 native forms vs 45 registry/web measures. Native support now includes NPRS, PSFS, LEFS, BPFS, FAAM, CAIT, ATRS, FABQ, OMAS, 30STS, ACLSigns, QuadLSI, HopBattery, LESS, FTSTS, CMS, and HHS from the MSK parity batches; CSI, KOOS, HOOS, and HAGOS stay marked coming soon via release gates in `src/clinical/mobileMeasures.ts`. |
 | Billing | RevenueCat + Apple IAP instead of Stripe; never link to external payment from the subscription screen (guideline 3.1.1) |
 | Auth | Adds native Sign in with Apple (hashed-nonce `signInWithIdToken`); OAuth redirect `rehabmetricsiq://auth/callback` |
 | Account deletion | Three-stage `AccountSettingsSheet`; Apple-login users re-authenticate so the server can revoke the Apple authorization |
@@ -59,7 +60,7 @@ Scoring, registry, and MCID logic are **not duplicated** — they are imported f
 - **Mounted guard:** all form `setState` calls after an async save are guarded with `useMountedRef` (`src/hooks/useMountedRef.ts`). The hook exposes a ref that is `true` on mount and `false` on unmount. Check `mountedRef.current` before every post-save `setState` to prevent OOM kills from setState on unmounted components.
 - **Session handling:** a `getSession()` network failure sets `isSessionCheckFailed` (with a retry path) — it must **not** clear the session. Session becomes `null` only when the server confirms no session exists.
 - **Defence in depth:** all Supabase reads/writes are scoped `.eq('user_id', session.user.id)` in addition to RLS; route params are UUID-validated before use.
-- **Questionnaire forms** share `ScoreChipRow`, `ScaleKey`, `QuestionnaireItem`, `QuestionnaireProgress` from `src/components/forms/fields/`.
+- **Questionnaire forms** share `ScoreChipRow`, `ChoiceChipRow`, `ScaleKey`, `QuestionnaireItem`, and `QuestionnaireProgress` from `src/components/forms/fields/`.
 - StyleSheet access uses explicit variant maps, never template-literal/computed keys.
 - **Subscription pricing:** `subscribe.tsx` fetches prices live from StoreKit via RevenueCat; no hardcoded prices. The price field is `null` until StoreKit responds — plan cards suppress the price line when `null`.
 

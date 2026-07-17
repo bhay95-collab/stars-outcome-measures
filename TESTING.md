@@ -23,9 +23,9 @@ Three checks, all expected green before any release candidate (see `mobile/RELEA
 ```bash
 cd mobile
 npm run typecheck       # tsc --noEmit
-npm run test:app        # access, apple-auth, revenuecat suites (expo jest preset)
+npm run test:app        # access, apple-auth, revenuecat, mobile measure-map suites (expo jest preset)
 npm run test:clinical   # jest.clinical.config.js — clinical-import smoke tests that load
-                        # every measure from ../lib/clinical through the @clinical alias
+                        # every native mobile measure from ../lib/clinical through the @clinical alias
                         # using plain babel-jest (no Expo preset)
 ```
 
