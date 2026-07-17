@@ -129,9 +129,9 @@ describe('HAGOS — registry + MDC wiring', () => {
 })
 
 describe('HAGOS — Hip / Groin Pain pathway', () => {
-  it('adds the Hip / Groin Pain condition recommending HAGOS, NPRS, PSFS', () => {
+  it('adds the Hip / Groin Pain condition recommending HAGOS, NPRS, PSFS, CSI', () => {
     expect(CONDITION_OPTIONS).toContain('Hip / Groin Pain')
-    expect(DIAG_RECS['Hip / Groin Pain']).toEqual(['HAGOS', 'NPRS', 'PSFS'])
+    expect(DIAG_RECS['Hip / Groin Pain']).toEqual(['HAGOS', 'NPRS', 'PSFS', 'CSI'])
   })
 })
 

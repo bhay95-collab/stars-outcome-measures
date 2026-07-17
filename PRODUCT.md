@@ -18,7 +18,7 @@ A `clinical_focus` profile setting (`rehab` / `msk` / `both`, default `both`) fi
 
 ## Clinical scope
 
-The measure registry (`lib/clinical/measures.js`) currently holds **44 measures**:
+The measure registry (`lib/clinical/measures.js`) currently holds **45 measures**:
 
 - **Performance / neuro-rehab:** 10MWT, TUG, FAC, 6MWT, BBS, PASS, TIS, MAS, COVS, FGA, HiMAT, SARA, Step Test, AMP, BOOMER, Barthel, SCIM, 30s Sit-to-Stand, FTSTS, Constant–Murley (CMS), ISNCSCI (web only — complex; modify carefully and separately, never batched with unrelated work).
 - **Patient-reported questionnaires:** FSS, RPQ, PDQ-8, ABC, BIVI-IQ, HADS.
@@ -27,6 +27,7 @@ The measure registry (`lib/clinical/measures.js`) currently holds **44 measures*
 - **MSK (Wave 3):** HAGOS, OMAS.
 - **MSK (Wave 4, 2026-07-09):** Harris Hip Score (HHS) — clinician-administered hip composite (Harris 1969; pain/function/deformity/ROM, 0–100) on the Hip — OA / Replacement pathway. Clinician-only: includes a physical exam, so it is **not** follow-up eligible.
 - **ACL return-to-sport field tests (2026-06-28):** Quadriceps Strength LSI, Single-Leg Hop Battery, LESS — clinician-measured, feeding the **ACL Pathway & RTS** workspace (criterion-based rehab phases + a return-to-sport readiness battery). **ACL Clinical Signs (2026-07-09):** full active knee extension + effusion trace–zero (modified stroke test, Sturgill 2009) — two checkbox judgements persisted as normal assessments so the phase gates and battery read the latest recorded signs; gate/battery criteria with an entry form (Quad LSI, hop battery, LESS) carry Record links. The battery reports criteria met against published cut-offs and never issues a clearance; ACL-RSI and IKDC remain pending in the engine but are hidden from the UI until licensed. See `docs/outcome-measures-handoff.md` (ACL Rehab & Return-to-Sport tool).
+- **Central Sensitization Inventory (CSI, 2026-07-17):** 25-item pain-phenotyping screen (Mayer 2012), 0–100, severity bands subclinical→extreme (Neblett 2013), ≥40 clinical cutoff. No MCID/MDC exists in the literature — `mcidKey: null`, change reported as raw point difference only. Part B (10-item diagnosis history) is informational, never scored. Recommended for Low Back Pain, Neck Pain/Whiplash, Hip/Groin Pain, and MSK — Other. **Not yet follow-up eligible** — the public worksheet reproduction of the item text carries a third-party reprint notice, so commercial/patient-facing exposure is held pending a courtesy-permission confirmation from PRIDE Research Foundation (the instrument's steward), same as the FAAM/LEFS precedent.
 
 MCID/MDC logic is **condition-aware**: thresholds move with patient diagnosis via `byCondition` overrides, with a `thresholdType: 'mdc'` honesty label where the published value is an MDC, not an MCID.
 

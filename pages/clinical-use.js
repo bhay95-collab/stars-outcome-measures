@@ -26,6 +26,7 @@ const MEASURE_REFERENCES = [
   ['ISNCSCI', 'International Standards for Neurological Classification of SCI', 'American Spinal Injury Association. ASIA International Standards Worksheet, 2019 revision.'],
   ['ACLSigns', 'ACL Clinical Signs (Extension & Effusion)',                  'Effusion (modified stroke test): Sturgill LP et al. J Orthop Sports Phys Ther. 2009;39(12):845-9. Gate criteria: van Melick N et al. Br J Sports Med. 2016;50(24):1506-15.'],
   ['HHS',     'Harris Hip Score',                                            'Harris WH. J Bone Joint Surg Am. 1969;51(4):737-55. Validation: Söderman P, Malchau H. Acta Orthop Scand. 2001;72(6):621-6. MCID: Singh JA et al. BMC Musculoskelet Disord. 2016;17:256.'],
+  ['CSI',     'Central Sensitization Inventory',                             'Mayer TG et al. Pain Pract. 2012;12(4):276-85. Severity levels: Neblett R et al. Pain Pract. 2013;13(5):359-69. User’s manual: Neblett R. J Appl Biobehav Res. 2018;23:e12123.'],
 ]
 
 export default function ClinicalUse() {

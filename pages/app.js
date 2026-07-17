@@ -5224,6 +5224,9 @@ const globalStyles = `
   .acl-signs { display: flex; flex-direction: column; gap: 10px; }
   .acl-signs label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-ink); cursor: pointer; }
   .acl-signs input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer; }
+  .csi-part-b { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; }
+  .csi-part-b label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-ink); cursor: pointer; }
+  .csi-part-b input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer; }
   .acl-panel button:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .workspace-stat-grid {

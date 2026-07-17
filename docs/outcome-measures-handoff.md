@@ -163,7 +163,7 @@ Full clinical profiles (structure, scoring, missing-item rules, bands, MCID/MDC 
 | 16 | Pain Catastrophizing Scale (PCS) | Yellow flags | ⚠️ now administered via Mapi — check before build |
 | 17 | Pain Self-Efficacy Questionnaire (PSEQ) | Self-efficacy | 🟡 contact author (M. Nicholas) for commercial permission |
 | 18 | Tampa Scale of Kinesiophobia (TSK) | Movement fear | 🟡 verify (no central administrator) |
-| 19 | Central Sensitisation Inventory (CSI) | Pain phenotyping | ✅ stated free for clinical use; verify commercial |
+| 19 | Central Sensitisation Inventory (CSI) | Pain phenotyping | ✅ **built 2026-07-17 (Wave 5)** — 25 items /100, severity bands + ≥40 cutoff (Neblett 2013), no MCID/MDC exists. Recommended for Low Back Pain, Neck Pain/Whiplash, Hip/Groin Pain, MSK — Other. Not follow-up eligible yet — item-wording provenance (PRIDE Research Foundation stewardship, third-party worksheet reprint notice) means commercial/patient-facing exposure is held pending a courtesy-permission email, same as FAAM/LEFS. Tests: `__tests__/csi.test.js`. |
 | 20 | Musculoskeletal Health Questionnaire (MSK-HQ) | Generic MSK health | ⚠️ Oxford/Versus Arthritis — free for clinical use with registration, commercial licence likely required |
 
 Substitution guidance: if a 🟡/⚠️ measure stalls, prefer the next free measure in the same region rather than waiting — keeping region coverage matters more than the specific instrument.
