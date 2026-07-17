@@ -1333,8 +1333,9 @@ const styles = `
   }
 
   .capability-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 18px;
   }
 
@@ -1389,6 +1390,8 @@ const styles = `
   }
 
   .capability-card {
+    flex: 1 1 220px;
+    max-width: 246px;
     min-height: 236px;
     padding: 24px;
     background: var(--surface);
@@ -2184,8 +2187,8 @@ const styles = `
     .pricing-layout,
     .faq-section { grid-template-columns: 1fr; }
     .preview-card { justify-self: start; }
-    .workflow-grid,
-    .capability-grid { grid-template-columns: 1fr; }
+    .workflow-grid { grid-template-columns: 1fr; }
+    .capability-card { max-width: 100%; }
     .founder-layout { grid-template-columns: 1fr; gap: 28px; }
     .founder-portrait { max-width: 280px; margin: 0 auto; }
     .founder-copy h2 { font-size: 26px; }
