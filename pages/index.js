@@ -2,7 +2,7 @@ import Head from 'next/head'
 import localFont from 'next/font/local'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { Accessibility, Activity, ArrowRight, Check, ChevronDown, ClipboardCheck, FileText, LineChart, Route, Smartphone } from 'lucide-react'
+import { Accessibility, Activity, ArrowRight, Check, ChevronDown, ClipboardCheck, FileText, LineChart, Route } from 'lucide-react'
 import { hasSupabaseAuthErrorUrl, isSupabaseAuthCallbackUrl } from '../lib/auth-routing'
 import { initializeScrollReveal } from '../lib/scrollReveal'
 import AdaptiveVideo from '../components/AdaptiveVideo'
@@ -73,11 +73,6 @@ const CAPABILITIES = [
     Icon: Accessibility,
     title: 'Wheelchair prescription support',
     text: 'A structured workspace for seating and mobility reasoning, measurements, posture and function notes, environmental constraints, trial planning, and supplier briefs.',
-  },
-  {
-    Icon: Smartphone,
-    title: 'Phone app coming soon',
-    text: 'A mobile companion is in development for faster bedside, gym, ward, and community assessment capture while the full web app remains available now.',
   },
   {
     Icon: FileText,
