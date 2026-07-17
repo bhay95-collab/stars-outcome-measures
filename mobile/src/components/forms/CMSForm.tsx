@@ -49,12 +49,15 @@ interface CMSResult {
   meta: Record<string, unknown>;
 }
 
+// Constant–Murley scores higher = better on every subscale, including pain —
+// the inverse of the NPRS/VAS convention. Each field carries a direction anchor
+// so a clinician cannot enter an inverted value (e.g. 0 for a pain-free shoulder).
 const NUMERIC_FIELDS = [
-  { key: 'pain', label: 'PAIN', min: 0, max: 15, integer: true, unit: '/15' },
-  { key: 'adlWork', label: 'WORK', min: 0, max: 4, integer: true, unit: '/4' },
-  { key: 'adlRecreation', label: 'RECREATION', min: 0, max: 4, integer: true, unit: '/4' },
-  { key: 'adlSleep', label: 'SLEEP', min: 0, max: 2, integer: true, unit: '/2' },
-  { key: 'strengthKg', label: 'ABDUCTION STRENGTH', min: 0, max: 50, integer: false, unit: 'kg' },
+  { key: 'pain', label: 'PAIN', min: 0, max: 15, integer: true, unit: '/15', anchor: '15 = no pain · 0 = severe pain' },
+  { key: 'adlWork', label: 'WORK', min: 0, max: 4, integer: true, unit: '/4', anchor: '4 = full work activity · 0 = unable' },
+  { key: 'adlRecreation', label: 'RECREATION', min: 0, max: 4, integer: true, unit: '/4', anchor: '4 = full recreation/sport · 0 = unable' },
+  { key: 'adlSleep', label: 'SLEEP', min: 0, max: 2, integer: true, unit: '/2', anchor: '2 = undisturbed · 0 = sleep disturbed by pain' },
+  { key: 'strengthKg', label: 'ABDUCTION STRENGTH', min: 0, max: 50, integer: false, unit: 'kg', anchor: '' },
 ] as const;
 
 type CMSNumericKey = typeof NUMERIC_FIELDS[number]['key'];
@@ -312,6 +315,7 @@ export function CMSForm({ patientId }: { patientId: string }) {
                 unit={field.unit}
                 error={numericErrors[field.key]}
               />
+              {field.anchor ? <Text style={styles.fieldHelper}>{field.anchor}</Text> : null}
             </View>
           ))}
           <ChoiceField

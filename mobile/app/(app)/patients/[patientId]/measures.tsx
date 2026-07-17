@@ -37,9 +37,9 @@ function MeasureRow({
   supported: boolean;
 }) {
   const shortName = measure.id;
-  const accessibilityLabel = supported
-    ? `${shortName}, ${measure.name}`
-    : `${shortName}, ${measure.name}, coming soon`;
+  const statusText = pathwayStatus ? `, ${pathwayStatus.label.toLowerCase()}` : '';
+  const availabilityText = supported ? '' : ', coming soon';
+  const accessibilityLabel = `${shortName}, ${measure.name}${statusText}${availabilityText}`;
   return (
     <TouchableOpacity
       onPress={supported ? () => router.push(`/(app)/patients/${patientId}/assess/${measure.id}`) : undefined}
@@ -58,29 +58,32 @@ function MeasureRow({
         <Text style={[styles.measureName, !supported && styles.measureNameDisabled]}>{shortName}</Text>
         <Text style={[styles.measureFullName, !supported && styles.measureFullNameDisabled]}>{measure.name}</Text>
       </View>
-      {!supported ? (
-        <View style={styles.comingSoonBadge}>
-          <Text style={styles.comingSoonText}>Coming soon</Text>
-        </View>
-      ) : pathwayStatus ? (
-        <View style={[
-          styles.pathwayBadge,
-          pathwayStatus.state === 'due'
-            ? styles.pathwayBadge_due
-            : pathwayStatus.state === 'recorded'
-              ? styles.pathwayBadge_recorded
-              : styles.pathwayBadge_missing,
-        ]}>
-          <Text style={[
-            styles.pathwayBadgeText,
+      <View style={styles.badgeGroup}>
+        {pathwayStatus ? (
+          <View style={[
+            styles.pathwayBadge,
             pathwayStatus.state === 'due'
-              ? styles.pathwayBadgeText_due
+              ? styles.pathwayBadge_due
               : pathwayStatus.state === 'recorded'
-                ? styles.pathwayBadgeText_recorded
-                : null,
-          ]}>{pathwayStatus.label}</Text>
-        </View>
-      ) : null}
+                ? styles.pathwayBadge_recorded
+                : styles.pathwayBadge_missing,
+          ]}>
+            <Text style={[
+              styles.pathwayBadgeText,
+              pathwayStatus.state === 'due'
+                ? styles.pathwayBadgeText_due
+                : pathwayStatus.state === 'recorded'
+                  ? styles.pathwayBadgeText_recorded
+                  : null,
+            ]}>{pathwayStatus.label}</Text>
+          </View>
+        ) : null}
+        {!supported ? (
+          <View style={styles.comingSoonBadge}>
+            <Text style={styles.comingSoonText}>Coming soon</Text>
+          </View>
+        ) : null}
+      </View>
       <Text style={styles.chevron}>›</Text>
     </TouchableOpacity>
   );
@@ -470,6 +473,11 @@ const styles = StyleSheet.create({
   },
   measureFullNameDisabled: {
     color: colors.subtle,
+  },
+  badgeGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   pathwayBadge: {
     minHeight: 24,

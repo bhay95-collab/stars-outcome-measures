@@ -5,6 +5,18 @@ const RECORDED_COLOR = '#094b8a'
 const MISSING_COLOR = '#e2e8f0'
 const DUE_COLOR = '#f59e0b'
 
+// Collapsed-summary label. Includes measures due for reassessment, not just
+// never-recorded ones — otherwise a fully-recorded patient with overdue
+// reassessments reads as "0 remaining" and the clinician gets no cue to expand.
+function buildOutstandingLabel(missingCount, dueCount) {
+  const total = missingCount + dueCount
+  if (total === 0) return 'All pathway measures up to date'
+  const noun = `outcome measure${total === 1 ? '' : 's'}`
+  if (dueCount === 0) return `${total} ${noun} to record`
+  if (missingCount === 0) return `${total} ${noun} due for reassessment`
+  return `${total} ${noun} to record or reassess`
+}
+
 function DonutTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
   return (
@@ -39,8 +51,7 @@ export default function PathwayCoverageDonut({ pathway, onMeasure }) {
   ]
 
   const pct = pathway.coveragePercent ?? 0
-  const remaining = missing.length
-  const remainingLabel = `${remaining} outcome measure${remaining === 1 ? '' : 's'} remaining`
+  const remainingLabel = buildOutstandingLabel(missing.length, due.length)
 
   return (
     <div className="pathway-coverage-donut" data-collapsed={isExpanded ? undefined : ''}>

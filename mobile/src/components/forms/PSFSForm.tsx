@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,6 +57,10 @@ export function PSFSForm({ patientId }: { patientId: string }) {
   const insets = useSafeAreaInsets();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [rows, setRows] = useState<PSFSRow[]>(() => buildInitialRows([]));
+  const [previousLoadFailed, setPreviousLoadFailed] = useState(false);
+  // Tracks whether the clinician has started editing before the prefill fetch
+  // resolves — so a slow-connection load can never overwrite in-progress input.
+  const userTouchedRef = useRef(false);
 
   useEffect(() => {
     let isActive = true;
@@ -64,10 +68,16 @@ export function PSFSForm({ patientId }: { patientId: string }) {
       .then(([nextPatient, assessments]) => {
         if (!isActive) return;
         setPatient(nextPatient);
-        setRows(buildInitialRows(assessments));
+        if (!userTouchedRef.current) {
+          setRows(buildInitialRows(assessments));
+        }
       })
       .catch(() => {
         if (!isActive) return;
+        // Previous activities couldn't load. On a reassessment the clinician must
+        // be warned, or they may enter freshly-worded activities and break the
+        // like-for-like comparison PSFS depends on.
+        setPreviousLoadFailed(true);
         getPatient(patientId).then(p => {
           if (isActive) setPatient(p);
         }).catch(() => null);
@@ -107,11 +117,13 @@ export function PSFSForm({ patientId }: { patientId: string }) {
   } = useAssessmentSave({ patientId, measure: 'PSFS', buildPayload });
 
   function updateRow(index: number, patch: Partial<PSFSRow>) {
+    userTouchedRef.current = true;
     resetSaveState();
     setRows(prev => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
 
   function addRow() {
+    userTouchedRef.current = true;
     resetSaveState();
     setRows(prev => (
       prev.length < PSFS_MAX_ACTIVITIES
@@ -121,6 +133,7 @@ export function PSFSForm({ patientId }: { patientId: string }) {
   }
 
   function removeRow(index: number) {
+    userTouchedRef.current = true;
     resetSaveState();
     setRows(prev => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
   }
@@ -148,6 +161,14 @@ export function PSFSForm({ patientId }: { patientId: string }) {
             Name the activities that matter to this patient, then rate each from unable to pre-injury level.
           </Text>
         </View>
+
+        {previousLoadFailed ? (
+          <View style={styles.warningPanel}>
+            <Text style={styles.warningText}>
+              Couldn&apos;t load this patient&apos;s previous activities. If this is a reassessment, check your connection and reopen the form so you re-rate the same activities — otherwise scores won&apos;t be comparable.
+            </Text>
+          </View>
+        ) : null}
 
         {isFollowUp ? (
           <View style={styles.infoPanel}>
@@ -310,6 +331,14 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   infoText: { fontSize: typography.sizeSm, color: colors.muted, lineHeight: 19 },
+  warningPanel: {
+    backgroundColor: colors.panel,
+    borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colors.coral,
+    padding: spacing.md,
+  },
+  warningText: { fontSize: typography.sizeSm, color: colors.ink, lineHeight: 19 },
   savedBanner: {
     backgroundColor: colors.secondarySoft,
     borderRadius: radii.card,
