@@ -28,14 +28,13 @@ Already completed:
 - [x] Guideline 1.4.1 citations — all 40 mobile-supported measures cite a source (`mobile/src/clinical/measureInstructions.ts`, commit `ce3420c`); `/clinical-use` web page brought to matching coverage (44 of 45 registry measures — BIVI intentionally omitted pending a verified peer-reviewed source, see commit 13fe37a)
 - [x] Production build 21 created and uploaded to App Store Connect (commit `10d0306`, includes the citations fix)
 - [x] Production build 22 created and uploaded to App Store Connect (commit `332f52a`, includes the `/clinical-use` web citation fix; Apple Team confirmed as "Benjamin Robert Hay (Company/Organization)" in the build credentials output, corroborating the org account conversion)
+- [x] Build 22 submitted for App Review on July 18, 2026, addressing Guideline 1.4.1, 5.1.1(ix), and 3.1.2(c) from rejection `a2cda48f-32c3-4135-b255-b087f9e63617`. Reply text used is recorded in `APP_STORE_RESUBMISSION.md`.
 
 Still required:
 
-- [ ] Wait for Apple processing to finish on build 22, then resolve export compliance if prompted (Phase 12)
-- [ ] Complete physical-device and TestFlight QA (Phase 13)
-- [ ] Prepare screenshots, review accounts, and deletion recording (Phase 14)
-- [ ] Attach both subscriptions to version 1.0 (Phase 16)
-- [ ] Final acceptance gate then submit (Phase 17–18)
+- [ ] Await Apple's review decision on the build 22 submission.
+- [ ] If accepted: complete any outstanding physical-device/TestFlight QA (Phase 13), screenshots (Phase 14), and subscription attachment (Phase 16) that weren't finished before this submission.
+- [ ] If rejected again: address the new findings and repeat the build → submit cycle.
 
 ## Permanent Identifiers
 
