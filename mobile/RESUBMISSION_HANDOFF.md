@@ -27,10 +27,11 @@ Already completed:
 - [x] Apple org account conversion (Guideline 5.1.1(ix)) — confirmed by Ben, account now enrolled as an organization
 - [x] Guideline 1.4.1 citations — all 40 mobile-supported measures cite a source (`mobile/src/clinical/measureInstructions.ts`, commit `ce3420c`); `/clinical-use` web page brought to matching coverage (44 of 45 registry measures — BIVI intentionally omitted pending a verified peer-reviewed source, see commit 13fe37a)
 - [x] Production build 21 created and uploaded to App Store Connect (commit `10d0306`, includes the citations fix)
+- [x] Production build 22 created and uploaded to App Store Connect (commit `332f52a`, includes the `/clinical-use` web citation fix; Apple Team confirmed as "Benjamin Robert Hay (Company/Organization)" in the build credentials output, corroborating the org account conversion)
 
 Still required:
 
-- [ ] Fresh production build after the July 18 `/clinical-use` fix, per Ben's request to rebuild before resubmitting (note: build 21 already contains the mobile citations Apple reviews — the web page isn't part of the app bundle — but rebuilding is harmless and keeps the two in lockstep)
+- [ ] Wait for Apple processing to finish on build 22, then resolve export compliance if prompted (Phase 12)
 - [ ] Complete physical-device and TestFlight QA (Phase 13)
 - [ ] Prepare screenshots, review accounts, and deletion recording (Phase 14)
 - [ ] Attach both subscriptions to version 1.0 (Phase 16)
