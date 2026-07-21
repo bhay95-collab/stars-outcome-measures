@@ -1,6 +1,6 @@
 # RehabMetrics IQ App Store Resubmission Handoff
 
-Updated: July 18, 2026
+Updated: July 21, 2026
 
 This is the step-by-step runbook for completing the Apple resubmission work. Follow it in order. Do not create the final App Store build until the Apple, RevenueCat, Supabase, Vercel, and EAS configuration sections are complete.
 
@@ -29,11 +29,13 @@ Already completed:
 - [x] Production build 21 created and uploaded to App Store Connect (commit `10d0306`, includes the citations fix)
 - [x] Production build 22 created and uploaded to App Store Connect (commit `332f52a`, includes the `/clinical-use` web citation fix; Apple Team confirmed as "Benjamin Robert Hay (Company/Organization)" in the build credentials output, corroborating the org account conversion)
 - [x] Build 22 submitted for App Review on July 18, 2026, addressing Guideline 1.4.1, 5.1.1(ix), and 3.1.2(c) from rejection `a2cda48f-32c3-4135-b255-b087f9e63617`. Reply text used is recorded in `APP_STORE_RESUBMISSION.md`.
+- [x] July 20, 2026 — same submission ID reviewed and rejected again, this time on Guideline 2.1(b): build 22 was submitted without the two subscriptions attached, so Apple couldn't complete the review. Root cause: the original July 18 submission was a single-item review request (app version only) — subscriptions were never added to it.
+- [x] July 21, 2026 — resolved and resubmitted without a new build. The subscriptions had settled into **Developer Rejected** status (orphaned from the incomplete July 18 submission) and could not be added to that submission after the fact. Fix: cancelled the July 18 submission (`App Review` sidebar page → open the submission → **Cancel Submission** — this only withdraws the review request, it does not clear version metadata, screenshots, or build 22 itself), then built a fresh **Draft Submission** from `Subscriptions → RehabMetrics IQ Pro → Add for Review`, added the `iOS App 1.0` version to the same draft, and individually added both the Monthly and Annual subscriptions (the subscription **group** alone is not sufficient — Apple requires at least one actual auto-renewable subscription product from inside the group as its own item in the draft). Submitted for review with all 4 items (app version, subscription group, monthly, annual) in one draft.
 
 Still required:
 
-- [ ] Await Apple's review decision on the build 22 submission.
-- [ ] If accepted: complete any outstanding physical-device/TestFlight QA (Phase 13), screenshots (Phase 14), and subscription attachment (Phase 16) that weren't finished before this submission.
+- [ ] Await Apple's review decision on the July 21, 2026 combined submission (build 22 + both subscriptions).
+- [ ] If accepted: complete any outstanding physical-device/TestFlight QA (Phase 13) and screenshots (Phase 14) not already covered.
 - [ ] If rejected again: address the new findings and repeat the build → submit cycle.
 
 ## Permanent Identifiers
@@ -1159,25 +1161,18 @@ Test both credentials immediately before submission.
 
 ## Phase 16: Attach the Subscriptions to Version 1.0
 
-These are the app's first App Store subscriptions, so Apple requires them to be submitted with the new app version.
+These are the app's first App Store subscriptions, so Apple requires them to be submitted together with the app version, in one review submission. The version metadata page no longer has an "In-App Purchases and Subscriptions" picker (that classic-UI section is gone) — this is done entirely through the **Draft Submission** flow. As confirmed doing this on July 21, 2026:
 
-1. Open **My Apps**, **RehabMetrics IQ**.
-2. Open iOS version `1.0`.
-3. Select the uploaded build `11` or later.
-4. Select build `19` (or the latest uploaded build).
-5. Scroll to **In-App Purchases and Subscriptions**.
-6. Click **Select In-App Purchases or Subscriptions**.
-7. Select both:
+1. Open **Subscriptions → RehabMetrics IQ Pro** (the subscription group).
+2. Click **Add for Review**. This opens a **Draft Submission** tray.
+3. In the tray, add the `iOS App 1.0` version as an item alongside the subscription group (if it isn't already there, go to the version page and click **Update Review**, which folds it into the same draft).
+4. The group container alone is **not enough** — open each individual subscription (Monthly, then Annual) and add each one to the same draft as its own item. Apple requires at least one actual auto-renewable subscription product present, not just the group.
+5. Confirm the tray shows all items with no "Unable to Submit for Review" warning (expect 4 items: app version, subscription group, monthly, annual).
+6. Click **Submit for Review**.
 
-```text
-com.rehabmetricsiq.app.subscription.pro.monthly
-com.rehabmetricsiq.app.subscription.pro.annual
-```
+**If the subscriptions are stuck in "Developer Rejected" status** and won't join the draft: this happens when an earlier app-version submission went out *without* the subscriptions attached (e.g. it was a single-item, version-only review request). That old submission can't accept new items retroactively. Fix: open **App Review** (sidebar) → the stuck submission → **Cancel Submission**. This only withdraws that review request — it does not clear build, version metadata, or screenshots. Then repeat steps 1–6 above; the version becomes free to join the new combined draft.
 
-8. Click **Done**.
-9. Confirm both products are visibly attached to version `1.0`.
-
-Do not submit either first subscription separately from the app version.
+Do not submit the first subscriptions separately from the app version — they must be items in the same draft submission.
 
 Official reference: [Submit an In-App Purchase](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase/)
 
