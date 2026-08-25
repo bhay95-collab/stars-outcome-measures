@@ -333,7 +333,7 @@ export default function Landing() {
                   <span>Physiotherapy-focused measures</span>
                   <span>Smart Rehab Pathways</span>
                   <span>Wheelchair prescription support</span>
-                  <span>Phone app coming soon</span>
+                  <span>iPhone &amp; iPad app on the App Store</span>
                 </div>
               </div>
 
@@ -498,7 +498,7 @@ export default function Landing() {
                     'Wheelchair prescription workspace',
                     'Minimally Clinically Important Difference tracking',
                     'Clinical report and PDF export',
-                    'Phone app companion coming soon',
+                    'iPhone & iPad companion app on the App Store',
                     'Secure account access',
                   ].map(item => (
                     <li key={item}><Check size={16} /> {item}</li>
@@ -591,23 +591,57 @@ function FaqItem({ question, answer, revealDelay }) {
   )
 }
 
+const APP_STORE_URL = 'https://apps.apple.com/au/app/rehabmetrics-iq/id6774467740'
+
+function AppleGlyph() {
+  return (
+    <svg viewBox="0 0 384 512" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
+    </svg>
+  )
+}
+
 function MobileAppShowcase() {
   return (
-    <section className="mobile-showcase deferred-section" aria-label="Mobile app coming soon">
+    <section className="mobile-showcase deferred-section" aria-label="RehabMetrics IQ iPhone and iPad app on the App Store">
       <div className="mobile-showcase__inner">
         <div className="mobile-showcase__copy reveal">
-          <p className="eyebrow">MOBILE APP COMING SOON</p>
+          <p className="eyebrow">NOW ON THE APP STORE</p>
           <h2>Your measures should be with you, not back at the desk.</h2>
           <p>
-            The phone app is being built for the way rehab clinicians actually work: moving between the gym, ward, clinic room, and community visit. Find the patient, open the right measure, follow the guide, and record the result while the assessment is still fresh.
+            The RehabMetrics IQ app is built for the way rehab clinicians actually work: moving between the gym, ward, clinic room, and community visit. Find the patient, open the right measure, follow the guide, and record the result while the assessment is still fresh — on iPhone and iPad.
           </p>
           <p>
-            The web app remains the main reporting workspace. Mobile is the fast capture layer that keeps assessments, pathway prompts, timers, and patient records close to hand.
+            The web app remains the main reporting workspace. Mobile is the fast capture layer that keeps assessments, pathway prompts, timers, and patient records close to hand — signed in to the same account, saving to the same records.
           </p>
           <div className="mobile-showcase__points">
             <span><Check size={15} /> Search patients and start an assessment quickly</span>
             <span><Check size={15} /> See missing baseline and repeat measures from the Smart Rehab Pathway</span>
-            <span><Check size={15} /> Use built-in measure guides, timers, and score entry screens</span>
+            <span><Check size={15} /> Native measure forms with built-in guides, timers, and score entry</span>
+          </div>
+
+          <div className="mobile-showcase__download">
+            <a
+              className="appstore-btn"
+              href={APP_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <AppleGlyph />
+              <span>
+                <small>Download on the</small>
+                <strong>App Store</strong>
+              </span>
+            </a>
+            <div className="appstore-qr">
+              <DeferredImage
+                src="/assets/landing/v2/app-store-qr.png"
+                alt="QR code linking to RehabMetrics IQ on the Apple App Store"
+                width={120}
+                height={120}
+              />
+              <p>Scan to download<br />on iPhone or iPad</p>
+            </div>
           </div>
         </div>
 
@@ -1465,6 +1499,75 @@ const styles = `
 
   .mobile-showcase__points svg {
     color: var(--mint);
+  }
+
+  .mobile-showcase__download {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+  }
+
+  .appstore-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 22px;
+    border-radius: 14px;
+    background: #000;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.18);
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .appstore-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.4);
+  }
+
+  .appstore-btn svg { flex-shrink: 0; }
+
+  .appstore-btn span {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+    text-align: left;
+  }
+
+  .appstore-btn small {
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: rgba(255,255,255,0.82);
+  }
+
+  .appstore-btn strong {
+    font-size: 19px;
+    font-weight: 700;
+  }
+
+  .appstore-qr {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .appstore-qr img {
+    width: 92px;
+    height: 92px;
+    border-radius: 12px;
+    background: #fff;
+    padding: 7px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+  }
+
+  .appstore-qr p {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: rgba(234,243,251,0.9);
   }
 
   .phone-gallery {
