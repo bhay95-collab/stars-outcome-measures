@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { Accessibility, Activity, BarChart3, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, Mail, MessageSquare, RefreshCw, Route, Search, Users, XCircle } from 'lucide-react'
+import { Accessibility, Activity, BarChart3, Bell, ChevronDown, ClipboardList, Copy, FileText, LayoutDashboard, Link2, Mail, MessageSquare, RefreshCw, Route, Search, Smartphone, Users, XCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PatientList from '../components/PatientList'
 import NewPatientModal from '../components/NewPatientModal'
@@ -164,6 +164,7 @@ export default function App() {
   const [showNewPatient, setShowNewPatient] = useState(false)
   const [editingPatient, setEditingPatient] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
+  const [showGetApp, setShowGetApp] = useState(false)
   const [profileData, setProfileData] = useState({ firstName: '', lastName: '', avatarUrl: null, clinicalFocus: 'both' })
   const [activeSection, setActiveSection] = useState('directory')
   const [requestedMeasureId, setRequestedMeasureId] = useState(null)
@@ -816,6 +817,7 @@ export default function App() {
           onCancel={handleConfirmClose}
         />
       )}
+      {showGetApp && <GetAppModal onClose={() => setShowGetApp(false)} />}
       <div className="app-shell">
         <AppSidebar
           activeSection={activeSection}
@@ -829,6 +831,7 @@ export default function App() {
           onPatientSelect={(patient) => goToSection(DEFAULT_PATIENT_SECTION, { patient })}
           onNewPatient={() => setShowNewPatient(true)}
           onProfile={() => setShowProfile(true)}
+          onGetApp={() => setShowGetApp(true)}
           onSignOut={handleSignOut}
         />
         <main className="app-main">
@@ -978,6 +981,7 @@ function AppSidebar({
   onPatientSelect,
   onNewPatient,
   onProfile,
+  onGetApp,
   onSignOut,
 }) {
   const profileName = `${profileData.firstName ?? ''} ${profileData.lastName ?? ''}`.trim()
@@ -1130,6 +1134,13 @@ function AppSidebar({
         </button>
       </nav>
       <div className="app-sidebar__bottom">
+        <button type="button" className="sidebar-get-app" onClick={onGetApp}>
+          <Smartphone size={18} aria-hidden="true" />
+          <span className="sidebar-get-app__copy">
+            <strong>Get the mobile app</strong>
+            <small>Capture assessments on iPhone &amp; iPad</small>
+          </span>
+        </button>
         <button
           type="button"
           className="profile-strip"
@@ -2266,6 +2277,45 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
   )
 }
 
+const APP_STORE_URL = 'https://apps.apple.com/au/app/rehabmetrics-iq/id6774467740'
+
+function GetAppModal({ onClose }) {
+  return (
+    <div className="modal" onClick={onClose} aria-modal="true" role="dialog" aria-labelledby="get-app-title">
+      <div className="modal-content get-app-modal-content" onClick={e => e.stopPropagation()}>
+        <header>
+          <span className="section-label">Get the mobile app</span>
+          <button aria-label="Close" onClick={onClose}>×</button>
+        </header>
+        <div className="get-app-body">
+          <p className="get-app-lead" id="get-app-title">
+            RehabMetrics IQ is on the Apple App Store. Sign in with this same account to
+            capture assessments on iPhone and iPad — they sync to the same patient records.
+          </p>
+          <div className="get-app-qr">
+            <img
+              src="/assets/landing/v2/app-store-qr.png"
+              alt="QR code linking to RehabMetrics IQ on the Apple App Store"
+              width={180}
+              height={180}
+            />
+            <p>Scan with your iPhone or iPad camera to open the App Store.</p>
+          </div>
+          <a className="appstore-btn" href={APP_STORE_URL} target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 384 512" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
+            </svg>
+            <span>
+              <small>Download on the</small>
+              <strong>App Store</strong>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AppHead() {
   return (
     <Head>
@@ -2750,6 +2800,61 @@ const globalStyles = `
     flex-shrink: 0;
   }
   .modal-content button[aria-label="Close"]:hover { color: var(--color-ink); background: var(--color-border); }
+
+  /* Modal: Get the mobile app */
+  .get-app-modal-content { max-width: 420px; }
+  .get-app-body {
+    padding: 22px 28px 28px;
+    display: grid;
+    gap: 20px;
+    justify-items: center;
+    text-align: center;
+  }
+  .get-app-lead {
+    margin: 0;
+    max-width: 340px;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .get-app-qr { display: grid; gap: 10px; justify-items: center; }
+  .get-app-qr img {
+    width: 180px;
+    height: 180px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background: #fff;
+    padding: 10px;
+    box-shadow: var(--shadow-card);
+  }
+  .get-app-qr p {
+    margin: 0;
+    max-width: 240px;
+    color: var(--color-subtle);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .get-app-modal-content .appstore-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 22px;
+    border-radius: var(--radius-md);
+    background: #000;
+    color: #fff;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .get-app-modal-content .appstore-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .get-app-modal-content .appstore-btn svg { flex-shrink: 0; }
+  .get-app-modal-content .appstore-btn span {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+    text-align: left;
+  }
+  .get-app-modal-content .appstore-btn small { font-size: 11px; color: rgba(255,255,255,0.82); }
+  .get-app-modal-content .appstore-btn strong { font-size: 18px; font-weight: 700; }
 
   .modal-helper {
     margin: 0;
@@ -3342,6 +3447,17 @@ const globalStyles = `
     border-color: rgba(255,255,255,0.4);
     color: var(--color-primary);
   }
+  .app-sidebar .sidebar-get-app {
+    background: rgba(60,172,255,0.12);
+    border-color: rgba(60,172,255,0.30);
+  }
+  .app-sidebar .sidebar-get-app:hover {
+    background: rgba(60,172,255,0.20);
+    border-color: rgba(60,172,255,0.48);
+  }
+  .app-sidebar .sidebar-get-app svg { color: var(--color-sky); }
+  .app-sidebar .sidebar-get-app__copy strong { color: #ffffff; }
+  .app-sidebar .sidebar-get-app__copy small { color: rgba(255,255,255,0.58); }
 
   .app-sidebar__logo {
     margin: 0 8px 34px;
@@ -3546,6 +3662,31 @@ const globalStyles = `
     margin-top: auto;
     padding-top: 18px;
     border-top: 1px solid var(--color-border);
+  }
+
+  .sidebar-get-app {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    min-width: 0;
+    padding: 11px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .sidebar-get-app svg { flex: 0 0 auto; }
+  .sidebar-get-app__copy { min-width: 0; display: grid; gap: 2px; }
+  .sidebar-get-app__copy strong { font-size: 13px; font-weight: 700; line-height: 1.15; }
+  .sidebar-get-app__copy small {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 11px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .profile-strip {
