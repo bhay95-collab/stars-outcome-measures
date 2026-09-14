@@ -105,3 +105,58 @@ it('attaches visible-strategy video only when it approaches the viewport', () =>
 
   expect(container.querySelector('video source')).toHaveAttribute('src', '/video.mp4')
 })
+
+it('renders the poster immediately on a constrained connection', () => {
+  mockConnection({
+    effectiveType: '2g',
+    saveData: true,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  })
+
+  const { container } = render(
+    <AdaptiveVideo
+      src="/video.mp4"
+      poster="/poster.jpg"
+      posterSources={[{ type: 'image/webp', srcSet: '/poster-640.webp 640w', sizes: '100vw' }]}
+      loadStrategy="visible"
+      width={1280}
+      height={720}
+    />
+  )
+
+  expect(container.querySelector('video source')).not.toBeInTheDocument()
+  expect(container.querySelector('.adaptive-video__poster img')).toHaveAttribute('src', '/poster.jpg')
+  expect(container.querySelector('.adaptive-video__poster source')).toHaveAttribute('srcset', '/poster-640.webp 640w')
+})
+
+it('leaves a below-the-fold poster to the browser rather than to IntersectionObserver', () => {
+  const { container } = render(
+    <AdaptiveVideo
+      src="/video.mp4"
+      poster="/poster.jpg"
+      loadStrategy="visible"
+      width={1280}
+      height={720}
+    />
+  )
+
+  const poster = container.querySelector('.adaptive-video__poster img')
+  expect(poster).toHaveAttribute('src', '/poster.jpg')
+  expect(poster).toHaveAttribute('loading', 'lazy')
+})
+
+it('lets the hero poster load eagerly at high priority', () => {
+  const { container } = render(
+    <AdaptiveVideo
+      src="/video.mp4"
+      poster="/poster.jpg"
+      posterLoading="eager"
+      fetchPriority="high"
+      width={1920}
+      height={1080}
+    />
+  )
+
+  expect(container.querySelector('.adaptive-video__poster img')).toHaveAttribute('loading', 'eager')
+})

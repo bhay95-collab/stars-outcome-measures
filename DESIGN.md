@@ -21,6 +21,7 @@ Avoid: flashy SaaS styling, generic dashboards, browser-default forms, harsh edg
 
 - **App (`pages/app.js`):** `Geist` for all UI, `Geist Mono` for numeric clinical values/scores/compact data (tabular numerals are set on `body`), `Source Serif 4` for the editorial headings — the patient-name hero (`.patient-summary-card__intro h2`) and dashboard zone titles (`.dashboard-zone__head h2`).
 - **Landing (`pages/index.js`):** `Inter` (body/UI) + `Source Serif 4` (hero/editorial headings), self-hosted via `next/font/local` from `assets/fonts/` for slow-connection performance.
+  - `next/font/local` puts `--font-inter` / `--font-source-serif` on the element carrying `inter.variable` / `sourceSerif.variable` — that is `.landing-root`, **inside** `<body>`. Custom properties inherit downwards only, so the rule that consumes them must sit on `.landing-root` or below; `body` cannot see them. `.landing-root { font-family: var(--font-inter), var(--font-sans-stack) }` is what applies Inter to the page, and `--font-sans-stack` (defined in `:root`) is the fallback both there and on `body`.
 - **Mobile:** system font stack via `mobile/src/theme` typography.
 - No browser-default form typography; numeric clinical data must be easy to scan.
 

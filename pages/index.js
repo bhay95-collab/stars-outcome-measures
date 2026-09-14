@@ -381,7 +381,6 @@ export default function Landing() {
                     },
                   ]}
                   loadStrategy="visible"
-                  deferPoster
                   width={1280}
                   height={675}
                 />
@@ -874,9 +873,14 @@ const styles = `
     --surface-muted: #f1f2f3;
     --line-strong: #c8cdd5;
     --shadow-card: 0 1px 2px rgba(23,38,59,0.06), 0 10px 24px rgba(23,38,59,0.045);
+    --font-sans-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
   html { scroll-behavior: smooth; }
-  body { background: #f2f3f4; color: var(--ink); font-family: var(--font-inter, sans-serif), sans-serif; }
+  body { background: #f2f3f4; color: var(--ink); font-family: var(--font-sans-stack); }
+  /* next/font defines --font-inter on .landing-root itself, and custom properties
+     only inherit downwards — so the rule that consumes it has to live here, not on
+     body. If the font CSS has not arrived yet, this falls back to --font-sans-stack. */
+  .landing-root { font-family: var(--font-inter), var(--font-sans-stack); }
   a { color: inherit; }
   button, input { font: inherit; }
 

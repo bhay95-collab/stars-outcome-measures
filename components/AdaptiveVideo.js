@@ -59,7 +59,6 @@ export default function AdaptiveVideo({
   height,
   loadStrategy = 'idle',
   poster,
-  deferPoster = false,
   posterLoading = 'lazy',
   posterSources = [],
   rootMargin = '320px 0px',
@@ -70,7 +69,6 @@ export default function AdaptiveVideo({
   const videoRef = useRef(null)
   const [eligible, setEligible] = useState(false)
   const [nearViewport, setNearViewport] = useState(loadStrategy === 'idle')
-  const [posterAttached, setPosterAttached] = useState(!deferPoster)
   const [sourceAttached, setSourceAttached] = useState(false)
   const [visible, setVisible] = useState(loadStrategy === 'idle')
   const [playing, setPlaying] = useState(false)
@@ -119,10 +117,6 @@ export default function AdaptiveVideo({
   }, [loadStrategy, rootMargin])
 
   useEffect(() => {
-    if (!deferPoster || nearViewport) setPosterAttached(true)
-  }, [deferPoster, nearViewport])
-
-  useEffect(() => {
     if (!eligible) {
       setSourceAttached(false)
       setPlaying(false)
@@ -164,7 +158,7 @@ export default function AdaptiveVideo({
       aria-hidden="true"
     >
       <picture className="adaptive-video__poster">
-        {posterAttached && posterSources.map(source => (
+        {posterSources.map(source => (
           <source
             key={`${source.srcSet}-${source.media || 'all'}`}
             media={source.media}
@@ -179,7 +173,7 @@ export default function AdaptiveVideo({
           fetchPriority={fetchPriority}
           height={height}
           loading={posterLoading}
-          src={posterAttached ? poster : undefined}
+          src={poster}
           width={width}
         />
       </picture>

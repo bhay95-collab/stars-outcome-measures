@@ -1,47 +1,34 @@
-import { useEffect, useRef, useState } from 'react'
-
+/**
+ * Landing-page image that defers its own download until it is near the viewport.
+ *
+ * The deferral is done by the browser (`loading="lazy"`), not by JavaScript, so
+ * the URL is present in the server-rendered HTML. That matters on slow
+ * connections: the preload scanner can queue the image while the JS bundle is
+ * still downloading, and the image still appears if the bundle never arrives.
+ */
 export default function DeferredImage({
   alt,
   className,
   decoding = 'async',
+  fetchPriority,
   height,
   loading = 'lazy',
-  rootMargin = '500px 0px',
+  sizes,
   src,
+  srcSet,
   width,
 }) {
-  const imageRef = useRef(null)
-  const [sourceAttached, setSourceAttached] = useState(false)
-
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') {
-      setSourceAttached(true)
-      return undefined
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setSourceAttached(true)
-          observer.disconnect()
-        }
-      },
-      { rootMargin, threshold: 0.01 }
-    )
-
-    if (imageRef.current) observer.observe(imageRef.current)
-    return () => observer.disconnect()
-  }, [rootMargin])
-
   return (
     <img
-      ref={imageRef}
       alt={alt}
       className={className}
       decoding={decoding}
+      fetchPriority={fetchPriority}
       height={height}
       loading={loading}
-      src={sourceAttached ? src : undefined}
+      sizes={sizes}
+      src={src}
+      srcSet={srcSet}
       width={width}
     />
   )
