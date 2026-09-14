@@ -377,7 +377,7 @@ export default function Landing() {
                     {
                       type: 'image/webp',
                       srcSet: '/assets/landing/v2/workflow-poster-640.webp 640w, /assets/landing/v2/workflow-poster-960.webp 960w, /assets/landing/v2/workflow-poster-1280.webp 1280w',
-                      sizes: '(max-width: 960px) 100vw, 360px',
+                      sizes: '(max-width: 960px) 100vw, 400px',
                     },
                   ]}
                   loadStrategy="visible"
@@ -392,7 +392,10 @@ export default function Landing() {
           <div className="clinical-band__inner">
             <figure className="image-panel image-panel--wide reveal">
               <DeferredImage
-                src="/assets/landing/v2/clinical-band.jpg"
+                src="/assets/landing/v2/clinical-band-800.jpg"
+                srcSet="/assets/landing/v2/clinical-band-400.jpg 400w, /assets/landing/v2/clinical-band-600.jpg 600w, /assets/landing/v2/clinical-band-800.jpg 800w, /assets/landing/v2/clinical-band-1200.jpg 1200w"
+                sources={[{ type: 'image/webp', srcSet: '/assets/landing/v2/clinical-band-400.webp 400w, /assets/landing/v2/clinical-band-600.webp 600w, /assets/landing/v2/clinical-band-800.webp 800w, /assets/landing/v2/clinical-band-1200.webp 1200w' }]}
+                sizes="(max-width: 700px) 88vw, (max-width: 960px) 95vw, 574px"
                 alt="Amputee patient using a prosthetic leg during rehabilitation therapy"
                 width={1400}
                 height={933}
@@ -429,7 +432,10 @@ export default function Landing() {
           <div className="founder-layout">
             <figure className="founder-portrait reveal">
               <DeferredImage
-                src="/founder-ben.jpg"
+                src="/founder-ben-560.jpg"
+                srcSet="/founder-ben-360.jpg 360w, /founder-ben-560.jpg 560w, /founder-ben-720.jpg 720w"
+                sources={[{ type: 'image/webp', srcSet: '/founder-ben-360.webp 360w, /founder-ben-560.webp 560w, /founder-ben-720.webp 720w' }]}
+                sizes="(max-width: 960px) 280px, 360px"
                 alt="Ben, founder of RehabMetrics IQ, an Australian physiotherapist"
                 width={1122}
                 height={1402}
@@ -471,7 +477,10 @@ export default function Landing() {
           <div className="pricing-layout">
             <figure className="image-panel image-panel--pricing reveal">
               <DeferredImage
-                src="/assets/landing/v2/pricing.jpg"
+                src="/assets/landing/v2/pricing-800.jpg"
+                srcSet="/assets/landing/v2/pricing-400.jpg 400w, /assets/landing/v2/pricing-600.jpg 600w, /assets/landing/v2/pricing-800.jpg 800w, /assets/landing/v2/pricing-1000.jpg 1000w"
+                sources={[{ type: 'image/webp', srcSet: '/assets/landing/v2/pricing-400.webp 400w, /assets/landing/v2/pricing-600.webp 600w, /assets/landing/v2/pricing-800.webp 800w, /assets/landing/v2/pricing-1000.webp 1000w' }]}
+                sizes="(max-width: 960px) 92vw, 370px"
                 alt="Physiotherapist guiding a patient through a rehabilitation exercise"
                 width={1000}
                 height={667}
@@ -515,7 +524,10 @@ export default function Landing() {
             <h2>Clear answers before you start.</h2>
             <figure className="image-panel image-panel--faq">
               <DeferredImage
-                src="/assets/landing/v2/faq-balance.jpg"
+                src="/assets/landing/v2/faq-balance-640.jpg"
+                srcSet="/assets/landing/v2/faq-balance-420.jpg 420w, /assets/landing/v2/faq-balance-640.jpg 640w, /assets/landing/v2/faq-balance-900.jpg 900w"
+                sources={[{ type: 'image/webp', srcSet: '/assets/landing/v2/faq-balance-420.webp 420w, /assets/landing/v2/faq-balance-640.webp 640w, /assets/landing/v2/faq-balance-900.webp 900w' }]}
+                sizes="(max-width: 700px) 90vw, (max-width: 960px) 640px, 403px"
                 alt="Patient performing single-leg balance training on a wobble board during rehabilitation"
                 width={900}
                 height={600}
@@ -634,10 +646,12 @@ function MobileAppShowcase() {
             </a>
             <div className="appstore-qr">
               <DeferredImage
-                src="/assets/landing/v2/app-store-qr.png"
+                src="/assets/landing/v2/app-store-qr-184.png"
+                srcSet="/assets/landing/v2/app-store-qr-184.png 184w, /assets/landing/v2/app-store-qr-276.png 276w"
+                sizes="92px"
                 alt="QR code linking to RehabMetrics IQ on the Apple App Store"
-                width={120}
-                height={120}
+                width={184}
+                height={184}
               />
               <p>Scan to download<br />on iPhone or iPad</p>
             </div>
@@ -1283,6 +1297,16 @@ const styles = `
     pointer-events: none;
   }
 
+  /* DeferredImage wraps its <img> in a <picture> to offer the WebP variants;
+     <picture> is inline by default, which would add a stray line-box below the
+     photo inside these fixed-height panels. */
+  .image-panel picture,
+  .founder-portrait picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .appstore-qr picture { display: block; }
   .image-panel img {
     width: 100%;
     height: 100%;
