@@ -1,6 +1,6 @@
 # Security Overview — RehabMetrics IQ
 
-Last reviewed: 2026-06-13
+Last reviewed: 2026-10-27
 
 ---
 
@@ -24,13 +24,17 @@ RLS is enabled on all tables containing clinical or user data.
 |---|---|---|
 | `patients` | Yes | `auth.uid() = user_id` |
 | `assessments` | Yes | `auth.uid() = user_id` (SELECT/INSERT/UPDATE/DELETE) |
-| `profiles` | Yes | `auth.uid() = id` |
+| `profiles` | Yes | `auth.uid() = id`. Since `20261027000000_harden_access_gate.sql`, clients (`authenticated`) may only INSERT/UPDATE `id, email, first_name, last_name, avatar_url, clinical_focus`; `anon` has no write grant. Billing/trial columns (`trial_end_date`, `subscription_*`, `stripe_*`, `is_active`) are service-role only — before this, a user could extend their own trial via the REST API. A new client-editable column must be added to that migration's GRANT pattern or the save fails with `permission denied`. |
 | `subscriptions` | Yes | `auth.uid() = user_id` |
 | `deleted_accounts` | Yes | No client SELECT — admin client only |
 | `followup_requests` / `followup_responses` | Yes | Enabled in `20260529030000_add_patient_reported_followups.sql`; public submission goes through the token-gated API route, not direct client access |
 | `acl_pathways` | Yes | Enabled in `20260628000000_add_acl_pathways.sql`; `auth.uid() = user_id` + `user_has_active_access()` (SELECT/INSERT/UPDATE/DELETE), INSERT **and UPDATE** validate patient ownership. Client mutations also carry an explicit `.eq('user_id', …)`. `graft_type` length-capped + `updated_at` trigger in `20260628010000_harden_acl_pathways.sql`. |
 | `app_store_subscriptions` / `revenuecat_webhook_events` | Yes | Enabled in `20260610090000_add_app_store_subscriptions.sql`; written server-side |
 | `leads` | Yes | Enabled in `20260602011134_add_leads_table.sql`; written via rate-limited API routes |
+
+**Access gate function.** `user_has_active_access()` (active Stripe sub, active App Store sub, or unexpired trial) is called inside the gated policies. `public.user_has_active_access()` is `SECURITY INVOKER` since `20261027000000_harden_access_gate.sql` (clears Supabase lint 0029); it relies on the select-own policies on `profiles`, `subscriptions` and `app_store_subscriptions`, and fails closed if they are removed. Never revoke its `EXECUTE` from `authenticated` — gated policies would deny every user.
+
+**Live-DB drift (found 2026-10-27, not yet captured in migrations):** live `patients`/`assessments` policies call a `private.user_has_active_access()` (SECURITY DEFINER, created outside this repo); `acl_pathways` calls the `public` one; live `followup_requests`/`followup_responses` policies do not match `20260529030000_add_patient_reported_followups.sql`. A database rebuilt from `supabase/migrations/` would not match production until this is reconciled.
 
 The `assessments` INSERT policy also validates patient ownership using `EXISTS(SELECT 1 FROM patients WHERE id = patient_id AND user_id = auth.uid())`, which prevents a user from inserting an assessment against another user's patient even if they know the patient UUID.
 
